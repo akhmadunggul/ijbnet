@@ -1,0 +1,56 @@
+cd D:\Development\SSW\ijbnet
+
+@'
+# Environment — NEVER commit
+.env
+.env.local
+.env.production
+*.env
+
+# Dependencies
+node_modules/
+.pnpm-store/
+
+# Build output
+dist/
+build/
+*.js.map
+
+# Uploads (user data — never commit)
+apps/backend/uploads/
+/app/uploads/
+
+# Logs
+*.log
+logs/
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# TypeScript cache
+*.tsbuildinfo
+
+# Sequelize
+db-config.js
+
+# Docker
+docker-compose.prod.yml
+docker-composev6.yml
+
+# Test artifacts
+coverage/
+'@ | Out-File -FilePath ".gitignore" -Encoding utf8
+
+Write-Host "Done"
+seed_candidates.sql
+docker-composev4.yml
+.claude/
+prompts/

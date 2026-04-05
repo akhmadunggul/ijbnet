@@ -1,0 +1,14 @@
+git add .gitattributes
+git commit -m "feat: IJBNet SSW platform complete (P01-P06)
+
+- Monorepo: pnpm workspaces (backend + frontend + shared)
+- Backend: Express + TypeScript + Sequelize + MySQL
+- Frontend: React 18 + Vite + TypeScript + Tailwind
+- Auth: Google OAuth + JWT + MFA (super_admin)
+- Roles: candidate, admin, manager, recruiter, super_admin
+- Features: candidate portal, admin review, recruiter selection,
+  manager batch workflow, interview scheduling, super admin panel
+- Security: AES-256-GCM encryption, field masking, audit logs
+- Compliance: UU PDP 2022, consent capture, right to erasure
+- Storage: VPS filesystem, WebP photo processing via sharp
+- i18n: Bahasa Indonesia + Japanese bilingual throughout"

@@ -1,0 +1,17 @@
+{
+  "name": "ijbnet",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "pnpm --parallel --filter './apps/*' dev",
+    "build": "pnpm --filter './packages/*' build && pnpm --filter './apps/*' build",
+    "lint": "pnpm --recursive lint",
+    "migrate": "pnpm --filter backend migrate",
+    "migrate:undo": "pnpm --filter backend migrate:undo",
+    "seed": "pnpm --filter backend seed",
+    "seed:undo": "pnpm --filter backend seed:undo"
+  },
+  "devDependencies": {
+    "typescript": "^5.4.5"
+  }
+}

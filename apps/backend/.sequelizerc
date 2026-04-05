@@ -1,0 +1,27 @@
+require('ts-node').register({
+  transpileOnly: true,
+  project: require('path').resolve(__dirname, 'tsconfig.json'),
+});
+const path = require('path');
+
+const fs = require('fs');
+const envPath = path.resolve(__dirname, '../../.env');
+if (fs.existsSync(envPath)) {
+  fs.readFileSync(envPath, 'utf8')
+    .split('\n')
+    .forEach(line => {
+      const match = line.match(/^([^#=]+)=(.*)$/);
+      if (match) {
+        const key = match[1].trim();
+        const val = match[2].trim().replace(/^['"]|['"]$/g, '');
+        if (!process.env[key]) process.env[key] = val;
+      }
+    });
+}
+
+module.exports = {
+  config:          path.resolve(__dirname, 'db-config.js'),
+  'models-path':   path.resolve(__dirname, 'src/db/models'),
+  'migrations-path': path.resolve(__dirname, 'src/db/migrations'),
+  'seeders-path':  path.resolve(__dirname, 'src/db/seeders'),
+};
