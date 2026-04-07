@@ -5,36 +5,50 @@ RUN npm install -g pnpm
 
 WORKDIR /app
 
-# Copy workspace manifests
-COPY package.json pnpm-workspace.yaml ./
-COPY apps/frontend/package.json ./apps/frontend/
+# Copy workspace manifests AND lockfile
+COPY package.json pnpm-workspace.yaml pnpm-lock.yaml ./
+COPY apps/backend/package.json ./apps/backend/
 COPY packages/shared/package.json ./packages/shared/
 
 # Install dependencies
 RUN pnpm install --frozen-lockfile
 
 # Copy source
-COPY apps/frontend ./apps/frontend
+COPY apps/backend ./apps/backend
 COPY packages/shared ./packages/shared
 
-# Set production API URL — nginx proxies /api/ to backend
-ENV VITE_API_URL=/api
+# Build shared package first
+RUN pnpm --filter @ijbnet/shared build || true
 
-# Build
-RUN pnpm --filter @ijbnet/frontend build
+# Build backend
+RUN pnpm --filter @ijbnet/backend build
 
-# ── Stage 2: Production (nginx) ──────────────────────────────────
-FROM nginx:alpine AS production
+# ── Stage 2: Production ──────────────────────────────────────────
+FROM node:20-alpine AS production
 
-# Copy built assets
-COPY --from=builder /app/apps/frontend/dist /usr/share/nginx/html
+RUN npm install -g pnpm
 
-# Copy nginx config
-COPY apps/frontend/nginx.conf /etc/nginx/conf.d/default.conf
+WORKDIR /app
 
-# Remove default nginx config
-RUN rm -f /etc/nginx/conf.d/default.conf.dpkg-old
+# Copy workspace manifests AND lockfile
+COPY package.json pnpm-workspace.yaml pnpm-lock.yaml ./
+COPY apps/backend/package.json ./apps/backend/
+COPY packages/shared/package.json ./packages/shared/
 
-EXPOSE 80
+# Install production dependencies only
+RUN pnpm install --frozen-lockfile --prod
 
-CMD ["nginx", "-g", "daemon off;"]
+# Copy built output
+COPY --from=builder /app/apps/backend/dist ./apps/backend/dist
+COPY --from=builder /app/packages/shared/dist ./packages/shared/dist
+
+# Copy sequelize config files needed at runtime
+COPY apps/backend/.sequelizerc ./apps/backend/
+COPY apps/backend/db-config.js ./apps/backend/
+
+# Create uploads directory
+RUN mkdir -p /app/uploads
+
+EXPOSE 3001
+
+CMD ["node", "apps/backend/dist/index.js"]

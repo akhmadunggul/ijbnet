@@ -5,8 +5,8 @@ RUN npm install -g pnpm
 
 WORKDIR /app
 
-# Copy workspace manifests
-COPY package.json pnpm-workspace.yaml ./
+# Copy workspace manifests AND lockfile
+COPY package.json pnpm-workspace.yaml pnpm-lock.yaml ./
 COPY apps/frontend/package.json ./apps/frontend/
 COPY packages/shared/package.json ./packages/shared/
 
@@ -25,9 +25,6 @@ RUN pnpm --filter @ijbnet/frontend build
 
 # ── Stage 2: Caddy ───────────────────────────────────────────────
 FROM caddy:alpine AS production
-
-# Install bash for healthcheck
-RUN apk add --no-cache bash
 
 # Copy built React app
 COPY --from=builder /app/apps/frontend/dist /usr/share/caddy
