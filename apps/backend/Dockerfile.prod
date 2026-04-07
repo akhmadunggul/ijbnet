@@ -26,7 +26,9 @@ RUN pnpm --filter @ijbnet/backend build
 
 # ── Stage 2: Production ──────────────────────────────────────────
 FROM node:20-alpine AS production
-
+RUN npm install -g pnpm && \
+    pnpm config set registry https://registry.npmmirror.com
+    
 RUN npm install -g pnpm
 
 WORKDIR /app
@@ -46,6 +48,9 @@ COPY --from=builder /app/packages/shared/dist ./packages/shared/dist
 # Copy sequelize config files needed at runtime
 COPY apps/backend/.sequelizerc ./apps/backend/
 COPY apps/backend/db-config.js ./apps/backend/
+COPY apps/backend/tsconfig.json ./apps/backend/
+COPY apps/backend/src/db/migrations ./apps/backend/src/db/migrations
+COPY apps/backend/src/db/seeders ./apps/backend/src/db/seeders
 
 # Create uploads directory
 RUN mkdir -p /app/uploads
