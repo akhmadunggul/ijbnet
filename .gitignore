@@ -54,3 +54,5 @@ seed_candidates.sql
 docker-composev4.yml
 .claude/
 prompts/
+'ndev-data.sql
+production configs.zip
