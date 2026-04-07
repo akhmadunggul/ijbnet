@@ -39,7 +39,7 @@ desktop.ini
 *.tsbuildinfo
 
 # Sequelize
-db-config.js
+
 
 # Docker
 
