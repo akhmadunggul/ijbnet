@@ -1,0 +1,43 @@
+# ── Stage 1: Build React app ─────────────────────────────────────
+FROM node:20-alpine AS builder
+
+RUN npm install -g pnpm
+
+WORKDIR /app
+
+# Copy workspace manifests
+COPY package.json pnpm-workspace.yaml ./
+COPY apps/frontend/package.json ./apps/frontend/
+COPY packages/shared/package.json ./packages/shared/
+
+# Install dependencies
+RUN pnpm install --frozen-lockfile
+
+# Copy source
+COPY apps/frontend ./apps/frontend
+COPY packages/shared ./packages/shared
+
+# Production API URL — Caddy proxies /api/ to backend
+ENV VITE_API_URL=/api
+
+# Build
+RUN pnpm --filter @ijbnet/frontend build
+
+# ── Stage 2: Caddy ───────────────────────────────────────────────
+FROM caddy:alpine AS production
+
+# Install bash for healthcheck
+RUN apk add --no-cache bash
+
+# Copy built React app
+COPY --from=builder /app/apps/frontend/dist /usr/share/caddy
+
+# Copy Caddyfile
+COPY Caddyfile /etc/caddy/Caddyfile
+
+# Create log directory
+RUN mkdir -p /var/log/caddy
+
+EXPOSE 80 443
+
+CMD ["caddy", "run", "--config", "/etc/caddy/Caddyfile", "--adapter", "caddyfile"]

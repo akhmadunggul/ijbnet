@@ -42,7 +42,7 @@ desktop.ini
 db-config.js
 
 # Docker
-docker-compose.prod.yml
+
 docker-composev6.yml
 
 # Test artifacts

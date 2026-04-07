@@ -1,0 +1,56 @@
+jinzai.aup.my.id {
+    # Serve React SPA
+    root * /usr/share/caddy
+    file_server
+
+    # SPA fallback — all non-file routes serve index.html
+    try_files {path} /index.html
+
+    # Proxy API and uploads to backend
+    reverse_proxy /api/* backend:3001 {
+        header_up Host {host}
+        header_up X-Real-IP {remote_host}
+        header_up X-Forwarded-For {remote_host}
+        header_up X-Forwarded-Proto {scheme}
+        flush_interval -1
+    }
+
+    # Compression
+    encode gzip zstd
+
+    # Security headers
+    header {
+        X-Frame-Options SAMEORIGIN
+        X-Content-Type-Options nosniff
+        X-XSS-Protection "1; mode=block"
+        Referrer-Policy strict-origin-when-cross-origin
+        Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
+        -Server
+    }
+
+    # Cache static assets
+    @static {
+        path *.js *.css *.png *.jpg *.jpeg *.gif *.ico *.svg *.woff *.woff2 *.ttf *.eot
+    }
+    header @static Cache-Control "public, max-age=31536000, immutable"
+
+    # No cache for index.html
+    @html {
+        path *.html
+    }
+    header @html Cache-Control "no-cache, no-store, must-revalidate"
+
+    # Logging
+    log {
+        output file /var/log/caddy/access.log {
+            roll_size 10mb
+            roll_keep 5
+        }
+    }
+}
+
+# HTTP redirect to HTTPS (Caddy handles this automatically,
+# but explicit config ensures IPv6 redirect works too)
+http://jinzai.aup.my.id {
+    redir https://jinzai.aup.my.id{uri} permanent
+}
