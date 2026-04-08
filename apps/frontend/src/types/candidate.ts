@@ -74,7 +74,8 @@ export interface CandidateData {
 }
 
 export interface CandidateMe {
-  candidate: CandidateData;
+  candidate: CandidateData | null;
+  isNewUser?: boolean;
 }
 
 export interface NotificationData {

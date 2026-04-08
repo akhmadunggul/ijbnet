@@ -55,7 +55,7 @@ const BLOCKED_FIELDS = new Set([
 router.get('/me', async (req: Request, res: Response): Promise<void> => {
   const candidate = await findMyCandidate(req.user!.sub);
   if (!candidate) {
-    res.status(404).json({ error: 'NOT_FOUND', message: 'Candidate profile not found.' });
+    res.json({ candidate: null, isNewUser: true });
     return;
   }
 

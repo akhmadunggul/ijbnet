@@ -33,7 +33,28 @@ export default function CandidateDashboard() {
   }
 
   const candidate = data?.candidate;
-  if (!candidate) return null;
+
+  if (!candidate || data?.isNewUser) {
+    return (
+      <div className="max-w-md mx-auto mt-16 text-center space-y-6">
+        <div className="text-5xl">👋</div>
+        <h1 className="text-2xl font-bold text-navy-900">
+          {lang === 'ja' ? 'ようこそ！' : 'Selamat datang!'}
+        </h1>
+        <p className="text-gray-500 text-sm">
+          {lang === 'ja'
+            ? 'プロフィールを入力してください。'
+            : 'Silakan lengkapi profil Anda.'}
+        </p>
+        <button
+          onClick={() => navigate('/portal/profile')}
+          className="inline-flex items-center gap-2 bg-navy-700 hover:bg-navy-900 text-white font-medium rounded-xl px-6 py-3 text-sm transition"
+        >
+          {lang === 'ja' ? 'プロフィールを始める' : 'Mulai Lengkapi Profil'}
+        </button>
+      </div>
+    );
+  }
 
   const { completeness, profileStatus, interviewStatus } = candidate;
   const statusCfg = STATUS_CONFIG[profileStatus] ?? STATUS_CONFIG['incomplete']!;

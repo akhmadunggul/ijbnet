@@ -6,7 +6,7 @@ import { z } from 'zod';
 import { useTranslation } from 'react-i18next';
 import { api } from '../../lib/api';
 import AuthImage from '../../components/AuthImage';
-import type { CandidateMe, CareerEntry, JapaneseTest } from '../../types/candidate';
+import type { CandidateMe, CandidateData, CareerEntry, JapaneseTest } from '../../types/candidate';
 
 // ── Zod schemas ───────────────────────────────────────────────────────────────
 const personalSchema = z.object({
@@ -178,7 +178,7 @@ function PhotoZone({
 }
 
 // ── Tab 1 — Personal ──────────────────────────────────────────────────────────
-function PersonalTab({ candidate, onSave, saving }: { candidate: CandidateMe['candidate']; onSave: (d: PersonalForm) => void; saving: boolean }) {
+function PersonalTab({ candidate, onSave, saving }: { candidate: CandidateData; onSave: (d: PersonalForm) => void; saving: boolean }) {
   const { t } = useTranslation();
   const { register, handleSubmit, formState: { isDirty, errors } } = useForm<PersonalForm>({
     resolver: zodResolver(personalSchema),
@@ -228,7 +228,7 @@ function PersonalTab({ candidate, onSave, saving }: { candidate: CandidateMe['ca
 }
 
 // ── Tab 2 — SSW ───────────────────────────────────────────────────────────────
-function SswTab({ candidate, onSave, saving }: { candidate: CandidateMe['candidate']; onSave: (d: SswForm) => void; saving: boolean }) {
+function SswTab({ candidate, onSave, saving }: { candidate: CandidateData; onSave: (d: SswForm) => void; saving: boolean }) {
   const { t } = useTranslation();
   const { register, handleSubmit, formState: { isDirty } } = useForm<SswForm>({
     resolver: zodResolver(sswSchema),
@@ -274,7 +274,7 @@ function SswTab({ candidate, onSave, saving }: { candidate: CandidateMe['candida
 // ── Tab 3 — Education ─────────────────────────────────────────────────────────
 const EDU_LEVELS = ['SD','SMP','SMA','SMK','D1','D2','D3','D4','S1','S2','S3'];
 
-function EducationTab({ candidate, onSave, saving }: { candidate: CandidateMe['candidate']; onSave: (d: EducationForm) => void; saving: boolean }) {
+function EducationTab({ candidate, onSave, saving }: { candidate: CandidateData; onSave: (d: EducationForm) => void; saving: boolean }) {
   const { t } = useTranslation();
   const { register, handleSubmit, formState: { isDirty } } = useForm<EducationForm>({
     resolver: zodResolver(educationSchema),
@@ -306,7 +306,7 @@ function EducationTab({ candidate, onSave, saving }: { candidate: CandidateMe['c
 }
 
 // ── Tab 4 — Career ────────────────────────────────────────────────────────────
-function CareerTab({ candidate, saving }: { candidate: CandidateMe['candidate']; saving: boolean }) {
+function CareerTab({ candidate, saving }: { candidate: CandidateData; saving: boolean }) {
   const { t } = useTranslation();
   const qc = useQueryClient();
   const { control, register, handleSubmit, formState: { isDirty } } = useForm<CareerForm>({
@@ -357,7 +357,7 @@ function CareerTab({ candidate, saving }: { candidate: CandidateMe['candidate'];
 // ── Tab 5 — Japanese ──────────────────────────────────────────────────────────
 const JLPT_TESTS = ['JLPT N5','JLPT N4','JLPT N3','JLPT N2','JLPT N1','JFT-Basic','BJT J1','BJT J2'];
 
-function JapaneseTab({ candidate }: { candidate: CandidateMe['candidate'] }) {
+function JapaneseTab({ candidate }: { candidate: CandidateData }) {
   const { t } = useTranslation();
   const qc = useQueryClient();
   const { control, register, handleSubmit, formState: { isDirty } } = useForm<TestForm>({
@@ -437,7 +437,7 @@ function JapaneseTab({ candidate }: { candidate: CandidateMe['candidate'] }) {
 }
 
 // ── Tab 6 — Work Plan ─────────────────────────────────────────────────────────
-function WorkplanTab({ candidate, onSave, saving }: { candidate: CandidateMe['candidate']; onSave: (d: WorkplanForm) => void; saving: boolean }) {
+function WorkplanTab({ candidate, onSave, saving }: { candidate: CandidateData; onSave: (d: WorkplanForm) => void; saving: boolean }) {
   const { t } = useTranslation();
   const { register, watch, handleSubmit, formState: { isDirty } } = useForm<WorkplanForm>({
     resolver: zodResolver(workplanSchema),
@@ -489,7 +489,7 @@ function WorkplanTab({ candidate, onSave, saving }: { candidate: CandidateMe['ca
 }
 
 // ── Tab 7 — Photos ────────────────────────────────────────────────────────────
-function PhotosTab({ candidate }: { candidate: CandidateMe['candidate'] }) {
+function PhotosTab({ candidate }: { candidate: CandidateData }) {
   const { t } = useTranslation();
   const qc = useQueryClient();
   const [urls, setUrls] = useState({ closeup: candidate.closeupUrl, fullbody: candidate.fullbodyUrl });

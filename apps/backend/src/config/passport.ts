@@ -2,7 +2,7 @@ import passport from 'passport';
 import { Strategy as GoogleStrategy } from 'passport-google-oauth20';
 import type { Profile, VerifyCallback } from 'passport-google-oauth20';
 import { config } from '../config';
-import { User } from '../db/models/index';
+import { User, Candidate } from '../db/models/index';
 
 if (config.GOOGLE_CLIENT_ID && config.GOOGLE_CLIENT_SECRET) {
   passport.use(
@@ -44,7 +44,7 @@ if (config.GOOGLE_CLIENT_ID && config.GOOGLE_CLIENT_SECRET) {
                 lastLoginAt: new Date(),
               });
             } else {
-              // No account found — create a new candidate
+              // No account found — create a new candidate user + profile
               user = await User.create({
                 email: normalizedEmail,
                 name: profile.displayName ?? null,
@@ -52,6 +52,16 @@ if (config.GOOGLE_CLIENT_ID && config.GOOGLE_CLIENT_SECRET) {
                 role: 'candidate',
                 avatarUrl: profile.photos?.[0]?.value ?? null,
                 lastLoginAt: new Date(),
+              });
+
+              const count = await Candidate.count();
+              const candidateCode = `CDT-${String(count + 1).padStart(4, '0')}`;
+              await Candidate.create({
+                userId: user.id,
+                candidateCode,
+                fullName: profile.displayName ?? '',
+                profileStatus: 'incomplete',
+                consentGiven: false,
               });
             }
           } else {
