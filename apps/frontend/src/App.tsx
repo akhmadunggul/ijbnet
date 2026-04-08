@@ -1,9 +1,7 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useAuthStore } from './store/authStore';
-
-const queryClient = new QueryClient();
-import LoginPage from './pages/LoginPage';
+import LoginPage, { OAuthCallbackPage } from './pages/LoginPage';
 import CandidateLayout from './pages/candidate/CandidateLayout';
 import CandidateDashboard from './pages/candidate/CandidateDashboard';
 import CandidateProfile from './pages/candidate/CandidateProfile';
@@ -37,6 +35,8 @@ import SuperAdminCandidates from './pages/superadmin/SuperAdminCandidates';
 import SuperAdminAuditLog from './pages/superadmin/SuperAdminAuditLog';
 import SuperAdminSettings from './pages/superadmin/SuperAdminSettings';
 import type { UserRole } from '@ijbnet/shared';
+
+const queryClient = new QueryClient();
 
 const ROLE_HOMES: Record<UserRole, string> = {
   candidate: '/portal/dashboard',
@@ -83,6 +83,7 @@ export default function App() {
 
         {/* Public */}
         <Route path="/auth/login" element={<LoginPage />} />
+        <Route path="/auth/callback" element={<OAuthCallbackPage />} />
 
         {/* Candidate portal */}
         <Route

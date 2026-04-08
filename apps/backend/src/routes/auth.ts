@@ -8,6 +8,8 @@ import { signAccessToken, signRefreshToken, verifyRefreshToken, decodeToken, ttl
 import { blacklistToken } from '../utils/redis';
 import { serializeUser } from '../serializers/candidate';
 import { authenticate, requireRole } from '../middleware/auth';
+import passport from '../config/passport';
+import { config } from '../config';
 
 const router = Router();
 
@@ -120,10 +122,32 @@ router.get('/me', authenticate, async (req: Request, res: Response): Promise<voi
   res.json({ user: serializeUser(user.toJSON() as unknown as Record<string, unknown>) });
 });
 
-// GET /api/auth/google — redirect to Google OAuth
-router.get('/google', (_req: Request, res: Response): void => {
-  res.redirect('/api/auth/google/callback');
-});
+// GET /api/auth/google — redirect to Google OAuth consent screen
+router.get('/google', passport.authenticate('google', { scope: ['profile', 'email'], session: false }));
+
+// GET /api/auth/google/callback — OAuth callback from Google
+router.get(
+  '/google/callback',
+  passport.authenticate('google', {
+    session: false,
+    failureRedirect: `${config.FRONTEND_URL}/auth/login?error=oauth_failed`,
+  }),
+  (req: Request, res: Response): void => {
+    const oauthUser = req.user as unknown as { id: string; role: string; email: string };
+    const payload = { sub: oauthUser.id, role: oauthUser.role, email: oauthUser.email };
+    const accessToken = signAccessToken(payload);
+    const refreshToken = signRefreshToken(payload);
+
+    res.cookie('refreshToken', refreshToken, {
+      httpOnly: true,
+      secure: config.NODE_ENV === 'production',
+      sameSite: 'strict',
+      maxAge: 7 * 24 * 60 * 60 * 1000,
+    });
+
+    res.redirect(`${config.FRONTEND_URL}/auth/callback?token=${accessToken}`);
+  },
+);
 
 // ── MFA Setup/Verify/Disable (super_admin only) ───────────────────────────────
 

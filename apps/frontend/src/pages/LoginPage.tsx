@@ -1,13 +1,14 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import axios from 'axios';
 import { useAuthStore } from '../store/authStore';
 import { api } from '../lib/api';
 import type { LoginResponse, MfaRequiredResponse, User } from '@ijbnet/shared';
 
 type LoginStep = 'credentials' | 'mfa';
 
-const ROLE_REDIRECTS: Record<string, string> = {
+export const ROLE_REDIRECTS: Record<string, string> = {
   candidate: '/portal/dashboard',
   admin: '/admin/dashboard',
   manager: '/manager/candidates',
@@ -161,6 +162,54 @@ export default function LoginPage() {
           </button>
         </form>
       </div>
+    </div>
+  );
+}
+
+// Handles the redirect from Google OAuth: /auth/callback?token=...
+export function OAuthCallbackPage() {
+  const navigate = useNavigate();
+  const { login } = useAuthStore();
+  const [error, setError] = useState('');
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const token = params.get('token');
+    const oauthError = params.get('error');
+
+    if (oauthError || !token) {
+      navigate('/auth/login?error=oauth_failed', { replace: true });
+      return;
+    }
+
+    // Fetch user profile using the access token received from Google OAuth
+    axios
+      .get<{ user: User }>('/api/auth/me', {
+        headers: { Authorization: `Bearer ${token}` },
+        withCredentials: true,
+      })
+      .then(({ data }) => {
+        login(token, data.user);
+        navigate(ROLE_REDIRECTS[data.user.role] ?? '/', { replace: true });
+      })
+      .catch(() => {
+        setError('oauth_failed');
+        setTimeout(() => navigate('/auth/login?error=oauth_failed', { replace: true }), 2000);
+      });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  if (error) {
+    return (
+      <div className="min-h-screen flex items-center justify-center text-red-600 text-sm">
+        Authentication failed. Redirecting…
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen flex items-center justify-center text-gray-500 text-sm">
+      Completing sign-in…
     </div>
   );
 }

@@ -8,6 +8,7 @@ import rateLimit from 'express-rate-limit';
 import { connectDB } from './db/connection';
 import { connectRedis } from './utils/redis';
 import './db/models/index'; // Initialize all models and associations
+import passport from './config/passport';
 import apiRouter from './routes/index';
 import { errorHandler, notFound } from './middleware/errorHandler';
 import { config } from './config';
@@ -36,6 +37,7 @@ app.use(morgan(config.NODE_ENV === 'production' ? 'combined' : 'dev'));
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
+app.use(passport.initialize());
 
 // ── Routes ────────────────────────────────────────────────────────────────────
 app.use('/api', apiRouter);
