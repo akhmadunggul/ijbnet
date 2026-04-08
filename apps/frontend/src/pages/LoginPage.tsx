@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import axios from 'axios';
 import { useAuthStore } from '../store/authStore';
@@ -169,13 +169,12 @@ export default function LoginPage() {
 // Handles the redirect from Google OAuth: /auth/callback?token=...
 export function OAuthCallbackPage() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { login } = useAuthStore();
-  const [error, setError] = useState('');
 
   useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    const token = params.get('token');
-    const oauthError = params.get('error');
+    const token = searchParams.get('token');
+    const oauthError = searchParams.get('error');
 
     if (oauthError || !token) {
       navigate('/auth/login?error=oauth_failed', { replace: true });
@@ -190,22 +189,12 @@ export function OAuthCallbackPage() {
       })
       .then(({ data }) => {
         login(token, data.user);
-        navigate(ROLE_REDIRECTS[data.user.role] ?? '/', { replace: true });
+        navigate(ROLE_REDIRECTS[data.user.role] ?? '/auth/login', { replace: true });
       })
       .catch(() => {
-        setError('oauth_failed');
-        setTimeout(() => navigate('/auth/login?error=oauth_failed', { replace: true }), 2000);
+        navigate('/auth/login?error=oauth_failed', { replace: true });
       });
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  if (error) {
-    return (
-      <div className="min-h-screen flex items-center justify-center text-red-600 text-sm">
-        Authentication failed. Redirecting…
-      </div>
-    );
-  }
+  }, [searchParams]);
 
   return (
     <div className="min-h-screen flex items-center justify-center text-gray-500 text-sm">
