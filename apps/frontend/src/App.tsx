@@ -1,5 +1,8 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useAuthStore } from './store/authStore';
+
+const queryClient = new QueryClient();
 import LoginPage from './pages/LoginPage';
 import CandidateLayout from './pages/candidate/CandidateLayout';
 import CandidateDashboard from './pages/candidate/CandidateDashboard';
@@ -72,6 +75,7 @@ function RootRedirect() {
 
 export default function App() {
   return (
+    <QueryClientProvider client={queryClient}>
     <BrowserRouter>
       <Routes>
         {/* Root */}
@@ -171,5 +175,6 @@ export default function App() {
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </BrowserRouter>
+    </QueryClientProvider>
   );
 }
