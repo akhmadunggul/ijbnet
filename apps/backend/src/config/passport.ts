@@ -73,6 +73,7 @@ if (config.GOOGLE_CLIENT_ID && config.GOOGLE_CLIENT_SECRET) {
 
           return done(null, user.toJSON() as unknown as Express.User);
         } catch (err) {
+          console.error('[Google OAuth Error]', err);
           return done(err as Error);
         }
       },

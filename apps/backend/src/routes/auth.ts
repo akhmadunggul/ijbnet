@@ -128,25 +128,32 @@ router.get('/google', passport.authenticate('google', { scope: ['profile', 'emai
 // GET /api/auth/google/callback — OAuth callback from Google
 router.get(
   '/google/callback',
-  passport.authenticate('google', {
-    session: false,
-    failureRedirect: `${config.FRONTEND_URL}/auth/login?error=oauth_failed`,
-  }),
-  (req: Request, res: Response): void => {
-    const oauthUser = req.user as unknown as { id: string; role: string; email: string };
-    const payload = { sub: oauthUser.id, role: oauthUser.role, email: oauthUser.email };
-    const accessToken = signAccessToken(payload);
-    const refreshToken = signRefreshToken(payload);
-
-    res.cookie('refreshToken', refreshToken, {
-      httpOnly: true,
-      secure: config.NODE_ENV === 'production',
-      sameSite: 'strict',
-      maxAge: 7 * 24 * 60 * 60 * 1000,
-    });
-
-    res.redirect(`${config.FRONTEND_URL}/auth/callback?token=${accessToken}`);
-  },
+  (req: Request, res: Response, next) => {
+    passport.authenticate('google', {
+      session: false,
+      failureRedirect: `${config.FRONTEND_URL}/auth/login?error=oauth_failed`,
+    }, (err: Error | null, user: Express.User | false, info: unknown) => {
+      if (err) {
+        console.error('[Google Callback Error]', err);
+        return res.redirect(`${config.FRONTEND_URL}/auth/login?error=oauth_failed`);
+      }
+      if (!user) {
+        console.error('[Google Callback No User]', info);
+        return res.redirect(`${config.FRONTEND_URL}/auth/login?error=oauth_failed`);
+      }
+      const oauthUser = user as unknown as { id: string; role: string; email: string };
+      const payload = { sub: oauthUser.id, role: oauthUser.role, email: oauthUser.email };
+      const accessToken = signAccessToken(payload);
+      const refreshToken = signRefreshToken(payload);
+      res.cookie('refreshToken', refreshToken, {
+        httpOnly: true,
+        secure: config.NODE_ENV === 'production',
+        sameSite: 'strict',
+        maxAge: 7 * 24 * 60 * 60 * 1000,
+      });
+      res.redirect(`${config.FRONTEND_URL}/auth/callback?token=${accessToken}`);
+    })(req, res, next);
+  }
 );
 
 // ── MFA Setup/Verify/Disable (super_admin only) ───────────────────────────────
