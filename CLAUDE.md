@@ -150,3 +150,12 @@ apps/frontend/src/
 - `multer` 1.x deprecation warning — upgrade to 2.x in P06
 - Candidate users were not in original seeder — added manually via MySQL
 - `pnpm approve-builds` required for bcrypt, esbuild, sharp on fresh installs
+
+
+## Version
+- v0.1.0 — First working deployment
+- v0.1.1 — Fix Google OAuth new user infinite loading  
+- v0.1.2 — Fix Caddyfile POST 405, Google OAuth fully working
+
+Current: v0.1.2
+Live at: https://jinzai.aup.my.id
