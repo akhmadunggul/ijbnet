@@ -17,6 +17,7 @@ import { serializeCandidate } from '../serializers/candidate';
 import { calcCompleteness } from '../utils/completeness';
 import { validateImageBuffer, savePhoto } from '../utils/storage';
 import type { PhotoSlot } from '../utils/storage';
+import { encrypt } from '../utils/crypto';
 import { v4 as uuidv4 } from 'uuid';
 
 const router = Router();
@@ -47,7 +48,7 @@ async function findMyCandidate(userId: string) {
 // ── Fields a candidate cannot update themselves ───────────────────────────────
 const BLOCKED_FIELDS = new Set([
   'candidateCode', 'userId', 'lpkId', 'profileStatus', 'isLocked',
-  'nikEncrypted', 'bankAccountEncrypted', 'internalNotes', 'id',
+  'nikEncrypted', 'nik', 'bankAccountEncrypted', 'internalNotes', 'id',
   'createdAt', 'updatedAt',
 ]);
 
@@ -114,6 +115,40 @@ router.patch('/me/consent', async (req: Request, res: Response): Promise<void> =
   });
 
   res.json({ message: 'Consent recorded.' });
+});
+
+// ── PATCH /api/candidates/me/nik ─────────────────────────────────────────────
+router.patch('/me/nik', async (req: Request, res: Response): Promise<void> => {
+  const candidate = await Candidate.findOne({ where: { userId: req.user!.sub } });
+  if (!candidate) {
+    res.status(404).json({ error: 'NOT_FOUND' });
+    return;
+  }
+  if (candidate.isLocked) {
+    res.status(403).json({ error: 'PROFILE_LOCKED', message: 'Your profile is locked by a manager.' });
+    return;
+  }
+
+  const { nik } = req.body as { nik?: string };
+  if (!nik || !/^\d{16}$/.test(nik)) {
+    res.status(422).json({ error: 'INVALID_NIK', message: 'NIK must be exactly 16 digits.' });
+    return;
+  }
+
+  await candidate.update({ nikEncrypted: encrypt(nik) });
+
+  await AuditLog.create({
+    userId: req.user!.sub,
+    action: 'UPDATE_NIK',
+    entityType: 'candidate',
+    entityId: candidate.id,
+    targetCandidateId: candidate.id,
+    ipAddress: req.ip ?? null,
+    userAgent: req.headers['user-agent'] ?? null,
+    payload: null,
+  });
+
+  res.json({ message: 'NIK updated successfully.' });
 });
 
 // ── POST /api/candidates/me/submit ───────────────────────────────────────────

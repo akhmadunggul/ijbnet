@@ -41,6 +41,7 @@ export interface CandidateData {
   dateOfBirth: string | null;
   heightCm: number | null;
   weightKg: number | null;
+  nik: string | null;
   email: string | null;
   phone: string | null;
   address: string | null;

@@ -13,6 +13,7 @@ const personalSchema = z.object({
   fullName:    z.string().min(1),
   gender:      z.enum(['M', 'F']).nullable().optional(),
   dateOfBirth: z.string().nullable().optional(),
+  nik:         z.string().refine((v) => v === '' || /^\d{16}$/.test(v), { message: 'NIK harus 16 digit angka' }).optional(),
   heightCm:    z.coerce.number().nullable().optional(),
   weightKg:    z.coerce.number().nullable().optional(),
   email:       z.string().email().nullable().optional().or(z.literal('')),
@@ -180,12 +181,20 @@ function PhotoZone({
 // ── Tab 1 — Personal ──────────────────────────────────────────────────────────
 function PersonalTab({ candidate, onSave, saving }: { candidate: CandidateData; onSave: (d: PersonalForm) => void; saving: boolean }) {
   const { t } = useTranslation();
+  const qc = useQueryClient();
+
+  const nikMutation = useMutation({
+    mutationFn: (nik: string) => api.patch('/candidates/me/nik', { nik }).then((r) => r.data),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['my-candidate'] }),
+  });
+
   const { register, handleSubmit, formState: { isDirty, errors } } = useForm<PersonalForm>({
     resolver: zodResolver(personalSchema),
     defaultValues: {
       fullName: candidate.fullName ?? '',
       gender: candidate.gender ?? undefined,
       dateOfBirth: candidate.dateOfBirth ? candidate.dateOfBirth.slice(0, 10) : '',
+      nik: candidate.nik ?? '',
       heightCm: candidate.heightCm ?? undefined,
       weightKg: candidate.weightKg ?? undefined,
       email: candidate.email ?? '',
@@ -194,8 +203,15 @@ function PersonalTab({ candidate, onSave, saving }: { candidate: CandidateData; 
     },
   });
 
+  function handlePersonalSubmit(data: PersonalForm) {
+    onSave(data);
+    if (data.nik && data.nik.trim().length === 16) {
+      nikMutation.mutate(data.nik.trim());
+    }
+  }
+
   return (
-    <form onSubmit={handleSubmit(onSave)} className="space-y-4">
+    <form onSubmit={handleSubmit(handlePersonalSubmit)} className="space-y-4">
       <Field label={t('dpFullName') + ' *'}>
         <input {...register('fullName')} className={inputCls} />
         {errors.fullName && <p className="text-xs text-red-500 mt-1">{t('errorRequired')}</p>}
@@ -208,7 +224,16 @@ function PersonalTab({ candidate, onSave, saving }: { candidate: CandidateData; 
       </Field>
       <div className="grid grid-cols-2 gap-4">
         <Field label={t('dpDob')}><input type="date" {...register('dateOfBirth')} className={inputCls} /></Field>
-        <Field label="NIK (terenkripsi)"><input disabled className={`${inputCls} bg-gray-50 text-gray-400`} placeholder="Diisi admin" /></Field>
+        <Field label={t('dpNik')}>
+          <input
+            {...register('nik')}
+            className={inputCls}
+            placeholder="16 digit NIK"
+            maxLength={16}
+            inputMode="numeric"
+          />
+          {errors.nik && <p className="text-xs text-red-500 mt-1">{errors.nik.message}</p>}
+        </Field>
       </div>
       <div className="grid grid-cols-2 gap-4">
         <Field label={t('dpHeight') + ' (cm)'}><input type="number" step="0.1" {...register('heightCm')} className={inputCls} /></Field>

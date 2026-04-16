@@ -1,4 +1,5 @@
 import type { UserRole } from '@ijbnet/shared';
+import { decryptNullable } from '../utils/crypto';
 
 const MASKED_FIELD = { masked: true, label: { id: '🔒 Dilindungi', ja: '🔒 保護中' } };
 
@@ -73,6 +74,11 @@ export function serializeCandidate(
     requestingRole === 'super_admin'
   ) {
     base['internalNotes'] = internalNotes ?? null;
+  }
+
+  // ── candidate/super_admin: decrypted NIK ──────────────────────────────────
+  if (requestingRole === 'candidate' || requestingRole === 'super_admin') {
+    base['nik'] = decryptNullable((candidate as Record<string, unknown>)['nikEncrypted'] as string | null);
   }
 
   return base;
