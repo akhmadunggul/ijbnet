@@ -16,8 +16,8 @@ Connects Indonesian LPK training centers, IJBNet staff, and Japanese recruiting 
 - P02 (Candidate Portal)  — ✅ COMPLETE — 7-tab profile, consent, photo upload, data export
 - P03 (Admin Portal)      — ✅ COMPLETE — candidate review, body check, videos, status transitions
 - P04 (Selection UI)      — ✅ COMPLETE — recruiter batch selection, quota enforcement, interview proposals
-- **P05 (Workflow)**       — 🔄 NEXT — manager portal, batch management, approval, interview scheduling, emails
-- P06 (Super Admin)       — pending
+- P05 (Workflow)          — ✅ COMPLETE — manager portal, batch management, approval, interview scheduling, emails
+- P06 (Super Admin)       — ✅ COMPLETE — user management, LPK/company management, audit logs, global settings
 
 ## Roles
 `candidate` | `admin` | `manager` | `recruiter` | `super_admin`
@@ -129,33 +129,34 @@ apps/frontend/src/
   pages/candidate/         — /portal/* (CandidateLayout + 3 pages)
   pages/admin/             — /admin/* (AdminLayout + 6 pages)
   pages/recruiter/         — /recruiter/* (RecruiterLayout + 4 pages)
-  pages/manager/           — /manager/* (placeholder → P05)
-  pages/superadmin/        — /superadmin/* (placeholder → P06)
+  pages/manager/           — /manager/* (ManagerLayout + 6 pages: dashboard, batches, batch detail, candidates, interviews, notifications)
+  pages/superadmin/        — /superadmin/* (SuperAdminLayout + 7 pages: dashboard, users, candidates, companies, LPKs, audit logs, settings)
+  emails/                  — transactional email templates (batchActivated, interviewScheduled, interviewResult, profileApproved, profileSubmitted)
 ```
 
 ---
 
-## Prompt Series (`.claude/prompts/`)
+## Prompt Series
 - **P01 — Foundation:** ✅ Scaffold, DB models, migrations, auth
 - **P02 — Candidate Portal:** ✅ Profile editor, consent, photo upload, data export
 - **P03 — Admin Portal:** ✅ Candidate review, body check, videos, status transitions
 - **P04 — Selection UI:** ✅ Recruiter batch selection, quota, interview proposals
-- **P05 — Workflow:** 🔄 Manager portal, batch management, approvals, interview scheduling, emails
-- **P06 — Super Admin:** Global privacy settings, user management, data export tools, security hardening
+- **P05 — Workflow:** ✅ Manager portal, batch management, approvals, interview scheduling, emails
+- **P06 — Super Admin:** ✅ User management, LPK/company management, audit logs, global settings
 
 ---
 
 ## Known Issues / Tech Debt
 - Sequelize model instances must always call `.toJSON()` before `res.json()` — circular ref bug
-- `multer` 1.x deprecation warning — upgrade to 2.x in P06
-- Candidate users were not in original seeder — added manually via MySQL
+- `multer` 1.x deprecation warning — upgrade to 2.x when needed
 - `pnpm approve-builds` required for bcrypt, esbuild, sharp on fresh installs
 
 
 ## Version
 - v0.1.0 — First working deployment
-- v0.1.1 — Fix Google OAuth new user infinite loading  
+- v0.1.1 — Fix Google OAuth new user infinite loading
 - v0.1.2 — Fix Caddyfile POST 405, Google OAuth fully working
+- v0.1.3 — Unlock NIK field: candidates can now self-enter encrypted NIK
 
-Current: v0.1.2
+Current: v0.1.3
 Live at: https://jinzai.aup.my.id
