@@ -3,6 +3,9 @@ import { Op } from 'sequelize';
 import { isUUID, isEmail } from 'validator';
 import bcrypt from 'bcrypt';
 import nodeCrypto from 'crypto';
+import multer from 'multer';
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+const pdfParse = require('pdf-parse') as (buf: Buffer) => Promise<{ text: string; numpages: number }>;
 import { authenticate, requireRole } from '../middleware/auth';
 import { validateUuidParam } from '../middleware/rbac';
 import {
@@ -16,11 +19,14 @@ import {
   BatchCandidate,
   InterviewProposal,
   AuditLog,
+  ConsentClause,
 } from '../db/models/index';
 import { serializeCandidate, serializeUser } from '../serializers/candidate';
 import { calcCompleteness } from '../utils/completeness';
 import { deleteCandidatePhotos } from '../utils/storage';
 import { decryptNullable } from '../utils/crypto';
+
+const pdfUpload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 10 * 1024 * 1024 } });
 
 function wrap(fn: (req: Request, res: Response) => Promise<void>) {
   return (req: Request, res: Response, next: (err?: unknown) => void) => {
@@ -33,6 +39,27 @@ function generatePassword(len = 16): string {
 }
 
 const router = Router();
+
+// ── GET /api/superadmin/consent-clause/active — PUBLIC (no auth) ──────────────
+// Candidates must read the clause before consenting, so this must be unauthenticated.
+router.get('/consent-clause/active', wrap(async (_req, res) => {
+  const clause = await ConsentClause.findOne({ where: { isActive: true } });
+  if (!clause) {
+    res.json({ clause: null });
+    return;
+  }
+  const c = clause.toJSON() as unknown as Record<string, unknown>;
+  res.json({
+    clause: {
+      id:          c['id'],
+      version:     c['version'],
+      content:     c['content'],
+      contentJa:   c['contentJa'] ?? null,
+      publishedAt: c['publishedAt'] ?? null,
+    },
+  });
+}));
+
 router.use(authenticate, requireRole('super_admin'));
 
 // ── System Stats ──────────────────────────────────────────────────────────────
@@ -491,6 +518,169 @@ router.get('/audit-logs', wrap(async (req, res) => {
   }
 
   res.json({ auditLogs: rows.map(r => r.toJSON()), total: count, page: parseInt(page, 10), pageSize: limit });
+}));
+
+// ── GET /api/superadmin/consent-clause/history ───────────────────────────────
+router.get('/consent-clause/history', wrap(async (req, res) => {
+  const page     = Math.max(1, parseInt((req.query['page'] as string) ?? '1', 10));
+  const pageSize = Math.min(100, Math.max(1, parseInt((req.query['pageSize'] as string) ?? '20', 10)));
+  const offset   = (page - 1) * pageSize;
+
+  const { count, rows } = await ConsentClause.findAndCountAll({
+    include: [
+      { model: User, as: 'publisher', attributes: ['name', 'email'], required: false },
+      { model: User, as: 'creator',   attributes: ['name', 'email'], required: false },
+      { model: ConsentClause, as: 'superseder', attributes: ['version'], required: false },
+    ],
+    order: [['publishedAt', 'DESC'], ['createdAt', 'DESC']],
+    limit:  pageSize,
+    offset,
+  });
+
+  const items = rows.map((r) => {
+    const c = r.toJSON() as unknown as Record<string, unknown>;
+    return {
+      id:            c['id'],
+      version:       c['version'],
+      content:       typeof c['content'] === 'string' ? c['content'].slice(0, 200) : null,
+      contentJa:     typeof c['contentJa'] === 'string' ? (c['contentJa'] as string).slice(0, 200) : null,
+      isActive:      c['isActive'],
+      publishedAt:   c['publishedAt'],
+      supersededAt:  c['supersededAt'],
+      sourceType:    c['sourceType'],
+      sourcePdfName: c['sourcePdfName'],
+      publisher:     c['publisher'] ?? null,
+      creator:       c['creator'] ?? null,
+      superseder:    c['superseder'] ? { version: (c['superseder'] as Record<string, unknown>)['version'] } : null,
+    };
+  });
+
+  res.json({ clauses: items, total: count, page, pageSize, totalPages: Math.ceil(count / pageSize) });
+}));
+
+// ── GET /api/superadmin/consent-clause/:id ────────────────────────────────────
+router.get('/consent-clause/:id', wrap(async (req, res) => {
+  if (!isUUID(req.params['id'] ?? '', 4)) { res.status(400).json({ error: 'INVALID_ID' }); return; }
+  const clause = await ConsentClause.findByPk(req.params['id'], {
+    include: [
+      { model: User, as: 'publisher', attributes: ['name', 'email'], required: false },
+      { model: User, as: 'creator',   attributes: ['name', 'email'], required: false },
+      { model: ConsentClause, as: 'superseder', attributes: ['version'], required: false },
+    ],
+  });
+  if (!clause) { res.status(404).json({ error: 'NOT_FOUND' }); return; }
+  res.json({ clause: clause.toJSON() });
+}));
+
+// ── POST /api/superadmin/consent-clause ───────────────────────────────────────
+router.post('/consent-clause', wrap(async (req, res) => {
+  const { content, contentJa, version, sourceType, sourcePdfName } =
+    req.body as { content?: string; contentJa?: string; version?: string; sourceType?: string; sourcePdfName?: string };
+
+  if (!content || !version) {
+    res.status(422).json({ error: 'MISSING_FIELDS', message: 'content and version are required.' });
+    return;
+  }
+  if (!/^\d+\.\d+$/.test(version)) {
+    res.status(422).json({ error: 'INVALID_VERSION', message: 'Version must be in X.Y format.' });
+    return;
+  }
+  const existing = await ConsentClause.findOne({ where: { version } });
+  if (existing) {
+    res.status(409).json({ error: 'VERSION_EXISTS', message: `Version ${version} already exists.` });
+    return;
+  }
+
+  const newId = require('uuid').v4() as string;
+
+  await sequelize.transaction(async (t) => {
+    const currentActive = await ConsentClause.findOne({ where: { isActive: true }, transaction: t });
+
+    await ConsentClause.create({
+      id:            newId,
+      version,
+      content,
+      contentJa:     contentJa ?? null,
+      isActive:      true,
+      publishedAt:   new Date(),
+      publishedBy:   req.user!.sub,
+      createdBy:     req.user!.sub,
+      sourceType:    (sourceType === 'pdf' ? 'pdf' : 'manual') as 'manual' | 'pdf',
+      sourcePdfName: sourcePdfName ?? null,
+    }, { transaction: t });
+
+    if (currentActive) {
+      await currentActive.update({
+        isActive:     false,
+        supersededAt: new Date(),
+        supersededBy: newId,
+      }, { transaction: t });
+    }
+  });
+
+  const clause = await ConsentClause.findByPk(newId);
+
+  await AuditLog.create({
+    userId:     req.user!.sub,
+    action:     'CONSENT_CLAUSE_PUBLISHED',
+    entityType: 'consent_clause',
+    entityId:   newId,
+    ipAddress:  req.ip ?? null,
+    userAgent:  req.headers['user-agent'] ?? null,
+    payload:    { version },
+  });
+
+  res.status(201).json({ clause: clause!.toJSON() });
+}));
+
+// ── POST /api/superadmin/consent-clause/extract-pdf ──────────────────────────
+router.post('/consent-clause/extract-pdf', pdfUpload.single('file'), wrap(async (req, res) => {
+  if (!req.file) {
+    res.status(422).json({ error: 'NO_FILE', message: 'PDF file is required.' });
+    return;
+  }
+  if (req.file.mimetype !== 'application/pdf') {
+    res.status(422).json({ error: 'INVALID_FILE', message: 'File must be a PDF.' });
+    return;
+  }
+
+  const result = await pdfParse(req.file.buffer);
+  res.json({
+    extractedText: result.text,
+    pageCount:     result.numpages,
+    filename:      req.file.originalname,
+  });
+}));
+
+// ── PATCH /api/superadmin/consent-clause/:id ──────────────────────────────────
+router.patch('/consent-clause/:id', wrap(async (req, res) => {
+  if (!isUUID(req.params['id'] ?? '', 4)) { res.status(400).json({ error: 'INVALID_ID' }); return; }
+
+  const clause = await ConsentClause.findByPk(req.params['id']);
+  if (!clause) { res.status(404).json({ error: 'NOT_FOUND' }); return; }
+  if (clause.isActive) {
+    res.status(403).json({ error: 'CLAUSE_ACTIVE', message: 'Cannot edit a published/active clause.' });
+    return;
+  }
+
+  const { content, contentJa } = req.body as { content?: string; contentJa?: string };
+  const updates: Partial<{ content: string; contentJa: string }> = {};
+  if (content !== undefined) updates.content = content;
+  if (contentJa !== undefined) updates.contentJa = contentJa;
+
+  await clause.update(updates);
+
+  await AuditLog.create({
+    userId:     req.user!.sub,
+    action:     'CONSENT_CLAUSE_UPDATED',
+    entityType: 'consent_clause',
+    entityId:   clause.id,
+    ipAddress:  req.ip ?? null,
+    userAgent:  req.headers['user-agent'] ?? null,
+    payload:    null,
+  });
+
+  res.json({ clause: clause.toJSON() });
 }));
 
 export default router;

@@ -16,6 +16,7 @@ const navItems = [
   { to: '/superadmin/lpks',       icon: '🏫', key: 'superadmin.lpks.title' },
   { to: '/superadmin/candidates', icon: '👥', key: 'navCandidates' },
   { to: '/superadmin/audit-log',  icon: '📋', key: 'superadmin.auditLog.title' },
+  { to: '/superadmin/consent',    icon: '📄', key: 'superadmin.consent.navLabel' },
   { to: '/superadmin/settings',   icon: '⚙️', key: 'navSettings' },
 ];
 

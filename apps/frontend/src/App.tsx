@@ -34,6 +34,7 @@ import SuperAdminLpks from './pages/superadmin/SuperAdminLpks';
 import SuperAdminCandidates from './pages/superadmin/SuperAdminCandidates';
 import SuperAdminAuditLog from './pages/superadmin/SuperAdminAuditLog';
 import SuperAdminSettings from './pages/superadmin/SuperAdminSettings';
+import SuperAdminConsent from './pages/superadmin/SuperAdminConsent';
 import type { UserRole } from '@ijbnet/shared';
 
 const queryClient = new QueryClient();
@@ -169,6 +170,7 @@ export default function App() {
           <Route path="lpks" element={<SuperAdminLpks />} />
           <Route path="candidates" element={<SuperAdminCandidates />} />
           <Route path="audit-log" element={<SuperAdminAuditLog />} />
+          <Route path="consent" element={<SuperAdminConsent />} />
           <Route path="settings" element={<SuperAdminSettings />} />
         </Route>
 

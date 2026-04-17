@@ -17,6 +17,7 @@ import { InterviewProposal, initInterviewProposal } from './InterviewProposal';
 import { Notification, initNotification } from './Notification';
 import { AuditLog, initAuditLog } from './AuditLog';
 import { UserMfaBackupCode, initUserMfaBackupCode } from './UserMfaBackupCode';
+import { ConsentClause, initConsentClause } from './ConsentClause';
 
 // Initialize all models
 initCompany(sequelize);
@@ -36,6 +37,7 @@ initInterviewProposal(sequelize);
 initNotification(sequelize);
 initAuditLog(sequelize);
 initUserMfaBackupCode(sequelize);
+initConsentClause(sequelize);
 
 // ── Associations ─────────────────────────────────────────────────────────────
 
@@ -141,6 +143,12 @@ AuditLog.belongsTo(User, { foreignKey: 'userId', as: 'user' });
 User.hasMany(UserMfaBackupCode, { foreignKey: 'userId', as: 'mfaBackupCodes', onDelete: 'CASCADE' });
 UserMfaBackupCode.belongsTo(User, { foreignKey: 'userId', as: 'user' });
 
+// ConsentClause associations
+ConsentClause.belongsTo(User, { as: 'publisher', foreignKey: 'publishedBy' });
+ConsentClause.belongsTo(User, { as: 'creator', foreignKey: 'createdBy' });
+ConsentClause.belongsTo(ConsentClause, { as: 'superseder', foreignKey: 'supersededBy' });
+Candidate.belongsTo(ConsentClause, { as: 'consentClause', foreignKey: 'consentClauseId' });
+
 export {
   sequelize,
   Company,
@@ -160,4 +168,5 @@ export {
   Notification,
   AuditLog,
   UserMfaBackupCode,
+  ConsentClause,
 };

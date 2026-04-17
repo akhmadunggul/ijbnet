@@ -10,6 +10,7 @@ export interface CandidateAttributes {
   isLocked: boolean;
   consentGiven: boolean;
   consentGivenAt: Date | null;
+  consentClauseId: string | null;
   fullName: string;
   gender: 'M' | 'F' | null;
   dateOfBirth: Date | null;
@@ -58,6 +59,7 @@ export interface CandidateCreationAttributes
     | 'isLocked'
     | 'consentGiven'
     | 'consentGivenAt'
+    | 'consentClauseId'
     | 'gender'
     | 'dateOfBirth'
     | 'heightCm'
@@ -104,6 +106,7 @@ export class Candidate
   declare isLocked: boolean;
   declare consentGiven: boolean;
   declare consentGivenAt: Date | null;
+  declare consentClauseId: string | null;
   declare fullName: string;
   declare gender: 'M' | 'F' | null;
   declare dateOfBirth: Date | null;
@@ -157,6 +160,7 @@ export function initCandidate(sequelize: Sequelize): void {
       isLocked: { type: DataTypes.BOOLEAN, defaultValue: false, allowNull: false },
       consentGiven: { type: DataTypes.BOOLEAN, defaultValue: false, allowNull: false },
       consentGivenAt: { type: DataTypes.DATE, allowNull: true },
+      consentClauseId: { type: DataTypes.UUID, allowNull: true },
       fullName: { type: DataTypes.STRING(255), allowNull: false },
       gender: { type: DataTypes.ENUM('M', 'F'), allowNull: true },
       dateOfBirth: { type: DataTypes.DATEONLY, allowNull: true },

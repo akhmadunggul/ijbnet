@@ -95,26 +95,37 @@ router.patch('/me', async (req: Request, res: Response): Promise<void> => {
 
 // ── PATCH /api/candidates/me/consent ─────────────────────────────────────────
 router.patch('/me/consent', async (req: Request, res: Response): Promise<void> => {
-  const candidate = await findMyCandidate(req.user!.sub);
-  if (!candidate) {
-    res.status(404).json({ error: 'NOT_FOUND' });
-    return;
+  try {
+    const candidate = await findMyCandidate(req.user!.sub);
+    if (!candidate) {
+      res.status(404).json({ error: 'NOT_FOUND' });
+      return;
+    }
+
+    const { clauseId } = req.body as { clauseId?: string };
+
+    await candidate.update({
+      consentGiven: true,
+      consentGivenAt: new Date(),
+      ...(clauseId ? { consentClauseId: clauseId } : {}),
+    });
+
+    await AuditLog.create({
+      userId: req.user!.sub,
+      action: 'CONSENT_GIVEN',
+      entityType: 'candidate',
+      entityId: candidate.id,
+      targetCandidateId: candidate.id,
+      ipAddress: req.ip ?? null,
+      userAgent: req.headers['user-agent'] ?? null,
+      payload: clauseId ? { clauseId } : null,
+    });
+
+    res.json({ message: 'Consent recorded.' });
+  } catch (err) {
+    console.error('[PATCH /me/consent] error:', err);
+    res.status(500).json({ error: 'INTERNAL_ERROR' });
   }
-
-  await candidate.update({ consentGiven: true, consentGivenAt: new Date() });
-
-  await AuditLog.create({
-    userId: req.user!.sub,
-    action: 'CONSENT_GIVEN',
-    entityType: 'candidate',
-    entityId: candidate.id,
-    targetCandidateId: candidate.id,
-    ipAddress: req.ip ?? null,
-    userAgent: req.headers['user-agent'] ?? null,
-    payload: null,
-  });
-
-  res.json({ message: 'Consent recorded.' });
 });
 
 // ── PATCH /api/candidates/me/nik ─────────────────────────────────────────────
