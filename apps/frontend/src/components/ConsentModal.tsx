@@ -7,18 +7,27 @@ interface ConsentModalProps {
   onDecline: () => void;
 }
 
-export default function ConsentModal({ onAccept, onDecline }: ConsentModalProps) {
+export default function ConsentModal({ onAccept }: ConsentModalProps) {
   const { t } = useTranslation();
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [declined, setDeclined] = useState(false);
 
   async function handleAccept() {
     setLoading(true);
+    setError('');
     try {
       await api.patch('/candidates/me/consent');
       onAccept();
-    } catch {
+    } catch (err) {
+      console.error('[ConsentModal] failed to record consent:', err);
+      setError('Failed to record consent. Please try again.');
       setLoading(false);
     }
+  }
+
+  function handleDecline() {
+    setDeclined(true);
   }
 
   return (
@@ -42,19 +51,29 @@ export default function ConsentModal({ onAccept, onDecline }: ConsentModalProps)
             melalui pengaturan akun.
           </p>
         </div>
+        {declined && (
+          <p className="text-sm text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2 mb-4">
+            You must agree to continue using IJBNet.
+          </p>
+        )}
+        {error && (
+          <p className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg px-3 py-2 mb-4">
+            {error}
+          </p>
+        )}
         <div className="flex gap-3 justify-end">
           <button
-            onClick={onDecline}
+            onClick={handleDecline}
             className="px-4 py-2 text-sm text-gray-600 border border-gray-200 rounded-lg hover:bg-gray-50 transition"
           >
-            {t('candidate.consent.decline')}
+            Decline
           </button>
           <button
             onClick={handleAccept}
             disabled={loading}
             className="px-5 py-2 text-sm font-medium bg-navy-700 hover:bg-navy-900 text-white rounded-lg transition disabled:opacity-60"
           >
-            {loading ? '…' : t('candidate.consent.agree')}
+            {loading ? '…' : 'Agree'}
           </button>
         </div>
       </div>
