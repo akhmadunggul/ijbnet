@@ -5,6 +5,7 @@ import axios from 'axios';
 import { useAuthStore } from '../store/authStore';
 import { api } from '../lib/api';
 import type { LoginResponse, MfaRequiredResponse, User } from '@ijbnet/shared';
+import { version } from '../../../../package.json';
 
 type LoginStep = 'credentials' | 'mfa';
 
@@ -161,6 +162,8 @@ export default function LoginPage() {
             {loading ? t('loggingIn') : t('loginSubmit')}
           </button>
         </form>
+
+        <p className="text-center text-xs text-gray-400 mt-6">v{version}</p>
       </div>
     </div>
   );
