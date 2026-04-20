@@ -94,7 +94,7 @@ router.patch('/me', async (req: Request, res: Response): Promise<void> => {
 });
 
 // ── PATCH /api/candidates/me/consent ─────────────────────────────────────────
-router.patch('/me/consent', async (req: Request, res: Response): Promise<void> => {
+router.patch('/me/consent', authenticate, requireRole('candidate'), async (req: Request, res: Response): Promise<void> => {
   try {
     const candidate = await findMyCandidate(req.user!.sub);
     if (!candidate) {
