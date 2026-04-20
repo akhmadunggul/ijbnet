@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { api } from '../lib/api';
+import axios from 'axios';
+import { useAuthStore } from '../store/authStore';
 
 interface ConsentModalProps {
   onAccept: () => void;
@@ -15,11 +16,18 @@ export default function ConsentModal({ onAccept }: ConsentModalProps) {
     setLoading(true);
     setError('');
     try {
-      await api.patch('/candidates/me/consent');
+      const token = useAuthStore.getState().accessToken;
+      await axios.patch('/api/candidates/me/consent', {}, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        withCredentials: true,
+      });
       onAccept();
     } catch (err) {
-      console.error('[ConsentModal] failed to record consent:', err);
-      setError('Failed to record consent. Please try again.');
+      console.error('[ConsentModal] error:', err);
+      setError('Gagal menyimpan persetujuan. Silakan coba lagi.');
       setLoading(false);
     }
   }
@@ -51,7 +59,7 @@ export default function ConsentModal({ onAccept }: ConsentModalProps) {
         </div>
         {declined && (
           <p className="text-sm text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2 mb-4">
-            You must agree to the data consent to use IJBNet.
+            Anda harus menyetujui penggunaan data untuk menggunakan IJBNet.
           </p>
         )}
         {error && (

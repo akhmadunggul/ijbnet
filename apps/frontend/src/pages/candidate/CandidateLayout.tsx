@@ -38,7 +38,7 @@ export default function CandidateLayout() {
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center text-sm text-gray-500">
-        {t('loading')}
+        Memuat portal kandidat…
       </div>
     );
   }
@@ -55,7 +55,7 @@ export default function CandidateLayout() {
       {showConsent && (
         <ConsentModal
           onAccept={() => setShowConsent(false)}
-          onDecline={async () => { await logout(); }}
+          onDecline={() => {}}
         />
       )}
 
