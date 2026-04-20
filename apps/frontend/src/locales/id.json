@@ -190,6 +190,13 @@
       "submitBtn": "Ajukan Profil",
       "submitConfirm": "Yakin ingin mengajukan profil? Setelah diajukan, profil tidak dapat diubah hingga review selesai.",
       "submitSuccess": "Profil berhasil diajukan.",
+      "tab1": "Data Utama",
+      "tab2": "Data SSW",
+      "tab3": "Riwayat Pendidikan",
+      "tab4": "Riwayat Pekerjaan",
+      "tab5": "Riwayat Bahasa Jepang",
+      "tab6": "Rencana Masa Depan",
+      "tab7": "Foto Diri",
       "tabs": {
         "personal": "Data Pribadi",
         "ssw": "Info SSW",
