@@ -2,7 +2,7 @@ import passport from 'passport';
 import { Strategy as GoogleStrategy } from 'passport-google-oauth20';
 import type { Profile, VerifyCallback } from 'passport-google-oauth20';
 import { config } from '../config';
-import { User } from '../db/models/index';
+import { User, Candidate } from '../db/models/index';
 
 if (config.GOOGLE_CLIENT_ID && config.GOOGLE_CLIENT_SECRET) {
   passport.use(
@@ -43,6 +43,19 @@ if (config.GOOGLE_CLIENT_ID && config.GOOGLE_CLIENT_SECRET) {
                 avatarUrl: profile.photos?.[0]?.value ?? user.avatarUrl,
                 lastLoginAt: new Date(),
               });
+
+              const existingCandidate = await Candidate.findOne({ where: { userId: user.id } });
+              if (!existingCandidate) {
+                const randCode2 = Math.random().toString(36).substring(2, 8).toUpperCase();
+                await Candidate.create({
+                  userId: user.id,
+                  candidateCode: `CDT-${randCode2}`,
+                  fullName: profile.displayName ?? '',
+                  profileStatus: 'incomplete',
+                  isLocked: false,
+                  consentGiven: false,
+                });
+              }
             } else {
               // No account found — create a new candidate user + profile
               user = await User.create({
@@ -54,13 +67,13 @@ if (config.GOOGLE_CLIENT_ID && config.GOOGLE_CLIENT_SECRET) {
                 lastLoginAt: new Date(),
               });
 
-              const { Candidate } = await import('../db/models/index');
               const randCode = Math.random().toString(36).substring(2, 8).toUpperCase();
               await Candidate.create({
                 userId: user.id,
                 candidateCode: `CDT-${randCode}`,
                 fullName: profile.displayName ?? '',
                 profileStatus: 'incomplete',
+                isLocked: false,
                 consentGiven: false,
               });
             }
@@ -69,6 +82,19 @@ if (config.GOOGLE_CLIENT_ID && config.GOOGLE_CLIENT_SECRET) {
               return done(null, false);
             }
             await user.update({ lastLoginAt: new Date() });
+
+            const existingCandidate = await Candidate.findOne({ where: { userId: user.id } });
+            if (!existingCandidate) {
+              const randCode2 = Math.random().toString(36).substring(2, 8).toUpperCase();
+              await Candidate.create({
+                userId: user.id,
+                candidateCode: `CDT-${randCode2}`,
+                fullName: profile.displayName ?? '',
+                profileStatus: 'incomplete',
+                isLocked: false,
+                consentGiven: false,
+              });
+            }
           }
 
           return done(null, user.toJSON() as unknown as Express.User);
