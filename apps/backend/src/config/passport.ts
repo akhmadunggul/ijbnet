@@ -50,7 +50,7 @@ if (config.GOOGLE_CLIENT_ID && config.GOOGLE_CLIENT_SECRET) {
                 await Candidate.create({
                   userId: user.id,
                   candidateCode: `CDT-${randCode2}`,
-                  fullName: profile.displayName ?? '',
+                  fullName: user.name ?? normalizedEmail.split('@')[0],
                   profileStatus: 'incomplete',
                   isLocked: false,
                   consentGiven: false,
@@ -71,7 +71,7 @@ if (config.GOOGLE_CLIENT_ID && config.GOOGLE_CLIENT_SECRET) {
               await Candidate.create({
                 userId: user.id,
                 candidateCode: `CDT-${randCode}`,
-                fullName: profile.displayName ?? '',
+                fullName: profile.displayName ?? normalizedEmail.split('@')[0],
                 profileStatus: 'incomplete',
                 isLocked: false,
                 consentGiven: false,
@@ -89,7 +89,7 @@ if (config.GOOGLE_CLIENT_ID && config.GOOGLE_CLIENT_SECRET) {
               await Candidate.create({
                 userId: user.id,
                 candidateCode: `CDT-${randCode2}`,
-                fullName: profile.displayName ?? '',
+                fullName: user.name ?? normalizedEmail.split('@')[0],
                 profileStatus: 'incomplete',
                 isLocked: false,
                 consentGiven: false,
