@@ -2,7 +2,7 @@ import passport from 'passport';
 import { Strategy as GoogleStrategy } from 'passport-google-oauth20';
 import type { Profile, VerifyCallback } from 'passport-google-oauth20';
 import { config } from '../config';
-import { User, Candidate } from '../db/models/index';
+import { User } from '../db/models/index';
 
 if (config.GOOGLE_CLIENT_ID && config.GOOGLE_CLIENT_SECRET) {
   passport.use(
@@ -54,11 +54,11 @@ if (config.GOOGLE_CLIENT_ID && config.GOOGLE_CLIENT_SECRET) {
                 lastLoginAt: new Date(),
               });
 
-              const count = await Candidate.count();
-              const candidateCode = `CDT-${String(count + 1).padStart(4, '0')}`;
+              const { Candidate } = await import('../db/models/index');
+              const randCode = Math.random().toString(36).substring(2, 8).toUpperCase();
               await Candidate.create({
                 userId: user.id,
-                candidateCode,
+                candidateCode: `CDT-${randCode}`,
                 fullName: profile.displayName ?? '',
                 profileStatus: 'incomplete',
                 consentGiven: false,
