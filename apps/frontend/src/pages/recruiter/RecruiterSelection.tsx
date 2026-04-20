@@ -569,7 +569,7 @@ export default function RecruiterSelection() {
   const [showConfirm, setShowConfirm] = useState(false);
   const initRef = useRef(false);
 
-  const { initialize, toggleSelect, selectedIds, limit, isAtLimit } = useSelectionStore();
+  const { initialize, toggleSelect, selectedIds, limit, isAtLimit, clearAll } = useSelectionStore();
 
   const { data, isLoading } = useQuery<RecruiterBatchResponse>({
     queryKey: ['recruiter-batch'],
@@ -597,6 +597,7 @@ export default function RecruiterSelection() {
       api.post(`/recruiter/batches/${data!.batch.id}/select`, { candidateIds }),
     onSuccess: () => {
       setShowConfirm(false);
+      clearAll();
       queryClient.invalidateQueries({ queryKey: ['recruiter-batch'] });
       initRef.current = false; // allow re-init on next load
     },
@@ -637,11 +638,11 @@ export default function RecruiterSelection() {
       <div className="flex items-start gap-4 flex-wrap">
         {/* Company card */}
         <div className="bg-white border border-gray-100 rounded-xl p-4 flex-1 min-w-64">
-          <p className="font-semibold text-navy-900">
+          <p className="font-semibold text-navy-900" style={{ fontFamily: 'system-ui, sans-serif' }}>
             {lang === 'ja' && batch.company.nameJa ? batch.company.nameJa : batch.company.name}
           </p>
           {batch.company.nameJa && lang !== 'ja' && (
-            <p className="text-xs text-gray-400">{batch.company.nameJa}</p>
+            <p className="text-xs text-gray-400" style={{ fontFamily: 'system-ui, sans-serif' }}>{batch.company.nameJa}</p>
           )}
           <p className="text-xs text-gray-400 mt-1">
             {batch.batchCode}
