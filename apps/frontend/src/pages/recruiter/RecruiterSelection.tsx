@@ -581,7 +581,7 @@ export default function RecruiterSelection() {
     if (data?.batch && !initRef.current) {
       initRef.current = true;
       const preSelected = (data.candidates ?? [])
-        .filter((bc) => bc.isSelected)
+        .filter((bc) => bc.isSelected && !bc.isConfirmed)
         .map((bc) => bc.candidateId);
       initialize(
         data.batch.id,
