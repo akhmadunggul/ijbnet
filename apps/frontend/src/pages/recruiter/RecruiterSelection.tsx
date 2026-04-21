@@ -579,6 +579,11 @@ export default function RecruiterSelection() {
   // Initialize selection store from batch data
   useEffect(() => {
     if (data?.batch && !initRef.current) {
+      const alreadyConfirmed = sessionStorage.getItem(`recruiter_confirmed_${data.batch.id}`) === 'true';
+      if (alreadyConfirmed) {
+        initRef.current = true;
+        return;
+      }
       initRef.current = true;
       const preSelected = (data.candidates ?? [])
         .filter((bc) => bc.isSelected && !bc.isConfirmed)
@@ -599,8 +604,9 @@ export default function RecruiterSelection() {
     onSuccess: () => {
       setShowConfirm(false);
       clearAll();
+      initRef.current = true; // prevent re-init after confirmation
+      sessionStorage.setItem(`recruiter_confirmed_${data!.batch.id}`, 'true');
       queryClient.invalidateQueries({ queryKey: ['recruiter-batch'] });
-      initRef.current = false; // allow re-init on next load
     },
   });
 
