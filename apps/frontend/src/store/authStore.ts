@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import type { User } from '@ijbnet/shared';
+import { useSelectionStore } from './selectionStore';
 
 interface AuthStore {
   user: User | null;
@@ -18,7 +19,10 @@ export const useAuthStore = create<AuthStore>()(
       accessToken: null,
       isLoading: false,
       login: (accessToken, user) => set({ accessToken, user }),
-      logout: () => set({ accessToken: null, user: null }),
+      logout: () => {
+        useSelectionStore.getState().clearAll();
+        set({ accessToken: null, user: null });
+      },
       setUser: (user) => set({ user }),
     }),
     {
