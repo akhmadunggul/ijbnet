@@ -611,8 +611,9 @@ export default function RecruiterSelection() {
   });
 
   const allCandidates = data?.candidates ?? [];
+  const visibleCandidates = useMemo(() => allCandidates.filter((bc) => !bc.isConfirmed), [allCandidates]);
 
-  // Build lookup map
+  // Build lookup map (includes all candidates for tray lookups)
   const candidateMap = useMemo(
     () => new Map(allCandidates.map((bc) => [bc.candidateId, bc])),
     [allCandidates],
@@ -621,13 +622,13 @@ export default function RecruiterSelection() {
   // Distinct SSW fields for filter dropdown
   const sswFields = useMemo(() => {
     const fields = new Set<string>();
-    allCandidates.forEach((bc) => {
+    visibleCandidates.forEach((bc) => {
       if (bc.candidate.sswFieldId) fields.add(bc.candidate.sswFieldId);
     });
     return [...fields];
-  }, [allCandidates]);
+  }, [visibleCandidates]);
 
-  const filtered = useMemo(() => applyFilters(allCandidates, filters), [allCandidates, filters]);
+  const filtered = useMemo(() => applyFilters(visibleCandidates, filters), [visibleCandidates, filters]);
 
   if (isLoading) return <div className="text-sm text-gray-400">{t('loading')}</div>;
   if (!data?.batch) return (
@@ -746,7 +747,7 @@ export default function RecruiterSelection() {
           {lang === 'ja' ? 'クリア' : 'Reset'}
         </button>
         <span className="text-xs text-gray-400 self-center ml-auto">
-          {filtered.length} / {allCandidates.length}
+          {filtered.length} / {visibleCandidates.length}
         </span>
       </div>
 

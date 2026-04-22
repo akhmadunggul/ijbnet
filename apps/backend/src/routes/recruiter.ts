@@ -90,7 +90,7 @@ router.get('/batch', wrap(async (req: Request, res: Response): Promise<void> => 
   }
 
   const allocations = await BatchCandidate.findAll({
-    where: { batchId: batch.id },
+    where: { batchId: batch.id, isConfirmed: false },
     include: [
       {
         model: Candidate,
