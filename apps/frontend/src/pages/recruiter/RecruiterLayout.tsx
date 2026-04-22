@@ -36,7 +36,7 @@ export default function RecruiterLayout() {
 
   const navItems = [
     { to: '/recruiter/selection', icon: '👥', ja: '選考中', id: 'Dalam Seleksi' },
-    { to: '/recruiter/confirmed', icon: '✅', ja: '確定済み', id: 'Dikonfirmasi' },
+    { to: '/recruiter/confirmed', icon: '✅', ja: '選択済み', id: 'Dipilih' },
     { to: '/recruiter/interviews', icon: '📅', ja: '面接', id: 'Wawancara' },
     { to: '/recruiter/notifications', icon: '🔔', ja: '通知', id: 'Notifikasi' },
   ];

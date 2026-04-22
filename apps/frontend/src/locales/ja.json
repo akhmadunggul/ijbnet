@@ -372,7 +372,7 @@
       "completed": "完了",
       "cancelled": "キャンセル"
     },
-    "confirmedTitle": "確定済み候補者",
+    "confirmedTitle": "選択された候補者",
     "colCandidate": "候補者",
     "colProposedDates": "提案日程",
     "colFinalDate": "確定日",
