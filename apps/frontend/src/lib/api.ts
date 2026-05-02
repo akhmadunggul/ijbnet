@@ -16,7 +16,7 @@ api.interceptors.request.use((config) => {
   // Remove Content-Type for FormData so axios sets it automatically
   // with the correct multipart boundary
   if (config.data instanceof FormData) {
-    delete config.headers['Content-Type'];
+    config.headers.delete('Content-Type');
   }
   return config;
 });

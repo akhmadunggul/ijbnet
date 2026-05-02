@@ -7,18 +7,25 @@ export type PhotoSlot = 'closeup' | 'fullbody';
 
 const MAX_SIZE_BYTES = 5 * 1024 * 1024; // 5 MB
 
-const ALLOWED_MIME_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp', 'image/gif']);
+// Inline magic-byte detection — avoids ESM/CJS incompatibility with file-type v19
+function detectMimeType(buf: Buffer): string | null {
+  if (buf.length < 12) return null;
+  // JPEG: FF D8 FF
+  if (buf[0] === 0xFF && buf[1] === 0xD8 && buf[2] === 0xFF) return 'image/jpeg';
+  // PNG: 89 50 4E 47
+  if (buf[0] === 0x89 && buf[1] === 0x50 && buf[2] === 0x4E && buf[3] === 0x47) return 'image/png';
+  // WebP: RIFF at 0..3, WEBP at 8..11
+  if (buf[0] === 0x52 && buf[1] === 0x49 && buf[2] === 0x46 && buf[3] === 0x46 &&
+      buf[8] === 0x57 && buf[9] === 0x45 && buf[10] === 0x42 && buf[11] === 0x50) return 'image/webp';
+  return null;
+}
 
-export async function validateImageBuffer(buffer: Buffer): Promise<void> {
+export function validateImageBuffer(buffer: Buffer): void {
   if (buffer.length > MAX_SIZE_BYTES) {
     throw new Error('File exceeds 5 MB limit.');
   }
-
-  // Magic-byte check using file-type (ESM v19 — dynamic import required)
-  const { fileTypeFromBuffer } = await import('file-type');
-  const result = await fileTypeFromBuffer(buffer);
-  if (!result || !ALLOWED_MIME_TYPES.has(result.mime)) {
-    throw new Error('Invalid file type. Only JPEG, PNG, WebP, and GIF are allowed.');
+  if (!detectMimeType(buffer)) {
+    throw new Error('Invalid file type. Only JPEG, PNG, and WebP are allowed.');
   }
 }
 

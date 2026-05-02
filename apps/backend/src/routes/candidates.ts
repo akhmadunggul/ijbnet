@@ -315,14 +315,21 @@ router.post(
     }
 
     try {
-      await validateImageBuffer(req.file.buffer);
+      validateImageBuffer(req.file.buffer);
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'Invalid file.';
       res.status(422).json({ error: 'INVALID_FILE', message: msg });
       return;
     }
 
-    const { urlPath } = await savePhoto(candidate.id, slot as PhotoSlot, req.file.buffer);
+    let urlPath: string;
+    try {
+      ({ urlPath } = await savePhoto(candidate.id, slot as PhotoSlot, req.file.buffer));
+    } catch (err) {
+      console.error('[photo-upload] savePhoto failed:', err);
+      res.status(500).json({ error: 'UPLOAD_FAILED', message: 'Failed to process image.' });
+      return;
+    }
 
     const updateField = slot === 'closeup' ? 'closeupUrl' : 'fullbodyUrl';
     await candidate.update({ [updateField]: urlPath });
