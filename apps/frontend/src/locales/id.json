@@ -274,6 +274,15 @@
       "save": "Simpan",
       "saving": "Menyimpan…",
       "unsaved": "Ada perubahan yang belum disimpan"
+    },
+    "photo": {
+      "closeupLabel": "Pas Foto Wajah",
+      "fullbodyLabel": "Pas Foto Seluruh Badan",
+      "spec": "JPG/PNG/WebP, maks. 5MB",
+      "dropzone": "Klik atau seret foto ke sini",
+      "uploading": "Mengunggah…",
+      "errorSize": "Ukuran file melebihi batas 5MB.",
+      "errorType": "Tipe file tidak valid. Hanya JPG, PNG, dan WebP yang diperbolehkan."
     }
   },
 

@@ -273,6 +273,15 @@
       "save": "保存",
       "saving": "保存中…",
       "unsaved": "未保存の変更があります"
+    },
+    "photo": {
+      "closeupLabel": "顔写真（パスポートサイズ）",
+      "fullbodyLabel": "全身写真",
+      "spec": "JPG/PNG/WebP、最大5MB",
+      "dropzone": "クリックまたはドラッグして写真をアップロード",
+      "uploading": "アップロード中…",
+      "errorSize": "ファイルサイズが5MBを超えています。",
+      "errorType": "無効なファイル形式です。JPG・PNG・WebPのみ対応しています。"
     }
   },
 

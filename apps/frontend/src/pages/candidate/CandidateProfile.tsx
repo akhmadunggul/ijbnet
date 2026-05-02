@@ -124,7 +124,6 @@ function PhotoZone({
     fd.append('photo', file);
     try {
       const res = await api.post<{ url: string }>(`/candidates/me/photos/${slot}`, fd, {
-        headers: { 'Content-Type': 'multipart/form-data' },
         onUploadProgress: (e) => { if (e.total) setProgress(Math.round((e.loaded / e.total) * 100)); },
       });
       onUploaded(res.data.url);
