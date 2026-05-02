@@ -228,7 +228,7 @@
       },
       "education": {
         "level": "学歴",
-        "label": "学校名",
+        "label": "学校名・大学名",
         "major": "専攻"
       },
       "career": {
