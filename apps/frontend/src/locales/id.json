@@ -270,7 +270,10 @@
         "dropHint": "Klik atau seret foto ke sini",
         "uploading": "Mengunggah…",
         "requirements": "JPG/PNG/WebP, maks. 5MB"
-      }
+      },
+      "save": "Simpan",
+      "saving": "Menyimpan…",
+      "unsaved": "Ada perubahan yang belum disimpan"
     }
   },
 

@@ -269,7 +269,10 @@
         "dropHint": "クリックまたはドラッグして写真をアップロード",
         "uploading": "アップロード中…",
         "requirements": "JPG/PNG/WebP、最大5MB"
-      }
+      },
+      "save": "保存",
+      "saving": "保存中…",
+      "unsaved": "未保存の変更があります"
     }
   },
 
