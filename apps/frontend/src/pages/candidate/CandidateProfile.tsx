@@ -321,13 +321,13 @@ function EducationTab({ candidate, onSave, saving }: { candidate: CandidateData;
 
   return (
     <form onSubmit={handleSubmit(onSave)} className="space-y-4">
-      <Field label="Education Level">
+      <Field label="Tingkat Pendidikan">
         <select {...register('eduLevel')} className={selectCls}>
           <option value="">— Pilih —</option>
           {EDU_LEVELS.map((l) => <option key={l} value={l}>{l}</option>)}
         </select>
       </Field>
-      <Field label="Education Label"><input {...register('eduLabel')} className={inputCls} placeholder="e.g. SMK Negeri 1 Jakarta" /></Field>
+      <Field label="Nama Sekolah/Kampus"><input {...register('eduLabel')} className={inputCls} placeholder="e.g. SMK Negeri 1 Jakarta" /></Field>
       <Field label="Major / Jurusan"><input {...register('eduMajor')} className={inputCls} /></Field>
       <div className="flex items-center gap-3 pt-2">
         <button type="submit" disabled={saving} className="px-4 py-2 bg-navy-700 text-white text-sm rounded-lg hover:bg-navy-900 transition disabled:opacity-60">
