@@ -157,6 +157,7 @@ apps/frontend/src/
 - v0.1.1 — Fix Google OAuth new user infinite loading
 - v0.1.2 — Fix Caddyfile POST 405, Google OAuth fully working
 - v0.1.3 — Unlock NIK field: candidates can now self-enter encrypted NIK
+- v0.1.4 — Fix candidate photo upload (file-type ESM/CJS, multipart boundary, locked profile UX)
 
-Current: v0.1.3
+Current: v0.1.4
 Live at: https://jinzai.aup.my.id
