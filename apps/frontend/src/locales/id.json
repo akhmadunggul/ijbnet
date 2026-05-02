@@ -187,6 +187,7 @@
     "profile": {
       "title": "Profil Saya",
       "lockedBanner": "Profil Anda sedang dalam review dan tidak dapat diubah.",
+      "locked": "Profil Anda telah dikunci oleh manajer. Data tidak dapat diubah.",
       "submitBtn": "Ajukan Profil",
       "submitConfirm": "Yakin ingin mengajukan profil? Setelah diajukan, profil tidak dapat diubah hingga review selesai.",
       "submitSuccess": "Profil berhasil diajukan.",

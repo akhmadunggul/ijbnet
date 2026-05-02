@@ -96,12 +96,14 @@ function PhotoZone({
   spec,
   currentUrl,
   onUploaded,
+  isLocked,
 }: {
   slot: 'closeup' | 'fullbody';
   label: string;
   spec: string;
   currentUrl: string | null;
   onUploaded: (url: string) => void;
+  isLocked: boolean;
 }) {
   const { t } = useTranslation();
   const [uploading, setUploading] = useState(false);
@@ -127,8 +129,13 @@ function PhotoZone({
         onUploadProgress: (e) => { if (e.total) setProgress(Math.round((e.loaded / e.total) * 100)); },
       });
       onUploaded(res.data.url);
-    } catch {
-      setError(t('toastError'));
+    } catch (err: unknown) {
+      const errorCode = (err as { response?: { data?: { error?: string } } })?.response?.data?.error;
+      if (errorCode === 'PROFILE_LOCKED') {
+        setError(t('candidate.profile.locked'));
+      } else {
+        setError(t('toastError'));
+      }
     } finally {
       setUploading(false);
     }
@@ -146,10 +153,10 @@ function PhotoZone({
     <div className="flex flex-col gap-3">
       <p className="text-sm font-medium text-gray-700">{label}</p>
       <div
-        className={`relative border-2 border-dashed border-gray-200 rounded-xl overflow-hidden cursor-pointer hover:border-navy-400 transition ${aspectClass} max-h-72 flex items-center justify-center bg-gray-50`}
-        onDragOver={(e) => e.preventDefault()}
-        onDrop={onDrop}
-        onClick={() => inputRef.current?.click()}
+        className={`relative border-2 border-dashed border-gray-200 rounded-xl overflow-hidden transition ${aspectClass} max-h-72 flex items-center justify-center bg-gray-50 ${!isLocked ? 'cursor-pointer hover:border-navy-400' : 'cursor-default'}`}
+        onDragOver={!isLocked ? (e) => e.preventDefault() : undefined}
+        onDrop={!isLocked ? onDrop : undefined}
+        onClick={!isLocked ? () => inputRef.current?.click() : undefined}
       >
         {(localPreview ?? currentUrl) ? (
           localPreview
@@ -158,7 +165,7 @@ function PhotoZone({
         ) : (
           <div className="text-center p-4">
             <p className="text-2xl mb-2">📷</p>
-            <p className="text-xs text-gray-400">{t('candidate.photo.dropzone')}</p>
+            {!isLocked && <p className="text-xs text-gray-400">{t('candidate.photo.dropzone')}</p>}
             <p className="text-xs text-gray-300 mt-1">{spec}</p>
           </div>
         )}
@@ -172,7 +179,10 @@ function PhotoZone({
         )}
       </div>
       {error && <p className="text-xs text-red-500">{error}</p>}
-      <input ref={inputRef} type="file" accept="image/jpeg,image/png,image/webp" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) handleFile(f); }} />
+      {isLocked
+        ? <p className="text-sm text-amber-600 mt-2">{t('candidate.profile.locked')}</p>
+        : <input ref={inputRef} type="file" accept="image/jpeg,image/png,image/webp" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) handleFile(f); }} />
+      }
     </div>
   );
 }
@@ -525,8 +535,8 @@ function PhotosTab({ candidate }: { candidate: CandidateData }) {
 
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 gap-8">
-      <PhotoZone slot="closeup" label={t('candidate.photo.closeupLabel')} spec={t('candidate.photo.spec')} currentUrl={urls.closeup} onUploaded={(url) => onUploaded('closeup', url)} />
-      <PhotoZone slot="fullbody" label={t('candidate.photo.fullbodyLabel')} spec={t('candidate.photo.spec')} currentUrl={urls.fullbody} onUploaded={(url) => onUploaded('fullbody', url)} />
+      <PhotoZone slot="closeup" label={t('candidate.photo.closeupLabel')} spec={t('candidate.photo.spec')} currentUrl={urls.closeup} onUploaded={(url) => onUploaded('closeup', url)} isLocked={candidate.isLocked} />
+      <PhotoZone slot="fullbody" label={t('candidate.photo.fullbodyLabel')} spec={t('candidate.photo.spec')} currentUrl={urls.fullbody} onUploaded={(url) => onUploaded('fullbody', url)} isLocked={candidate.isLocked} />
     </div>
   );
 }
