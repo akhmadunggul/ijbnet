@@ -35,7 +35,7 @@ export default function ManagerCandidateDetail() {
 
   const { data: candidate, isLoading } = useQuery<ManagerCandidate>({
     queryKey: ['manager-candidate', id],
-    queryFn: () => api.get(`/manager/candidates/${id}`).then((r) => r.data),
+    queryFn: () => api.get(`/manager/candidates/${id}`).then((r) => r.data.candidate),
     enabled: !!id,
     // Initialize notes when data loads
     select: (data) => {
