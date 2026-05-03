@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useParams, useNavigate } from 'react-router-dom';
@@ -37,12 +37,13 @@ export default function ManagerCandidateDetail() {
     queryKey: ['manager-candidate', id],
     queryFn: () => api.get(`/manager/candidates/${id}`).then((r) => r.data.candidate),
     enabled: !!id,
-    // Initialize notes when data loads
-    select: (data) => {
-      setNotes((prev) => (prev === '' && data.internalNotes ? data.internalNotes : prev));
-      return data;
-    },
   });
+
+  useEffect(() => {
+    if (candidate?.internalNotes && notes === '') {
+      setNotes(candidate.internalNotes);
+    }
+  }, [candidate?.internalNotes]);
 
   const saveNotesMutation = useMutation({
     mutationFn: () => api.patch(`/manager/candidates/${id}`, { internalNotes: notes }),
