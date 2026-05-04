@@ -217,7 +217,9 @@
         "weight": "Berat Badan (kg)",
         "phone": "Nomor Telepon",
         "email": "Email",
-        "address": "Alamat"
+        "address": "Alamat",
+        "lpk": "LPK / Lembaga Pelatihan",
+        "lpkPlaceholder": "Pilih LPK Anda"
       },
       "ssw": {
         "kubun": "Tipe SSW",

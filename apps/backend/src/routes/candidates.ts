@@ -12,6 +12,7 @@ import {
   AuditLog,
   Notification,
   User,
+  Lpk,
 } from '../db/models/index';
 import { serializeCandidate } from '../serializers/candidate';
 import { calcCompleteness } from '../utils/completeness';
@@ -25,6 +26,16 @@ const router = Router();
 const upload = multer({
   storage: multer.memoryStorage(),
   limits: { fileSize: 5 * 1024 * 1024 },
+});
+
+// ── GET /api/candidates/lpks — public list for onboarding dropdown ────────────
+router.get('/lpks', authenticate, requireRole('candidate'), async (_req: Request, res: Response): Promise<void> => {
+  const lpks = await Lpk.findAll({
+    where: { isActive: true },
+    attributes: ['id', 'name', 'city'],
+    order: [['name', 'ASC']],
+  });
+  res.json({ lpks: lpks.map((l) => l.toJSON()) });
 });
 
 // All candidate routes require auth + candidate role
@@ -84,6 +95,12 @@ router.patch('/me', async (req: Request, res: Response): Promise<void> => {
   const updates: Record<string, unknown> = {};
   for (const [k, v] of Object.entries(body)) {
     if (!BLOCKED_FIELDS.has(k)) updates[k] = v;
+  }
+
+  // Allow candidate to set lpkId once (only when not yet assigned)
+  if (body['lpkId'] && !candidate.lpkId) {
+    const lpk = await Lpk.findOne({ where: { id: body['lpkId'] as string, isActive: true } });
+    if (lpk) updates['lpkId'] = lpk.id;
   }
 
   await candidate.update(updates);

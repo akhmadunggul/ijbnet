@@ -63,6 +63,7 @@ export interface CandidateData {
   workplanGoal: string | null;
   workplanAfter: string | null;
   workplanExpectation: string | null;
+  lpkId: string | null;
   closeupUrl: string | null;
   fullbodyUrl: string | null;
   interviewStatus: string | null;

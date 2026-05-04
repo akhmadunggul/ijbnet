@@ -216,7 +216,9 @@
         "weight": "体重（kg）",
         "phone": "電話番号",
         "email": "メールアドレス",
-        "address": "住所"
+        "address": "住所",
+        "lpk": "LPK / 研修機関",
+        "lpkPlaceholder": "LPKを選択してください"
       },
       "ssw": {
         "kubun": "SSW区分",

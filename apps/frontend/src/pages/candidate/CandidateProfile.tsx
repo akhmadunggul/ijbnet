@@ -19,6 +19,7 @@ const personalSchema = z.object({
   email:       z.string().email().nullable().optional().or(z.literal('')),
   phone:       z.string().nullable().optional(),
   address:     z.string().nullable().optional(),
+  lpkId:       z.string().nullable().optional(),
 });
 
 const sswSchema = z.object({
@@ -192,6 +193,12 @@ function PersonalTab({ candidate, onSave, saving }: { candidate: CandidateData; 
   const { t } = useTranslation();
   const qc = useQueryClient();
 
+  const { data: lpksData } = useQuery<{ lpks: { id: string; name: string; city: string | null }[] }>({
+    queryKey: ['candidate-lpks'],
+    queryFn: () => api.get('/candidates/lpks').then((r) => r.data),
+    staleTime: 300_000,
+  });
+
   const nikMutation = useMutation({
     mutationFn: (nik: string) => api.patch('/candidates/me/nik', { nik }).then((r) => r.data),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['my-candidate'] }),
@@ -209,6 +216,7 @@ function PersonalTab({ candidate, onSave, saving }: { candidate: CandidateData; 
       email: candidate.email ?? '',
       phone: candidate.phone ?? '',
       address: candidate.address ?? '',
+      lpkId: candidate.lpkId ?? '',
     },
   });
 
@@ -218,6 +226,8 @@ function PersonalTab({ candidate, onSave, saving }: { candidate: CandidateData; 
       nikMutation.mutate(data.nik.trim());
     }
   }
+
+  const lpkLocked = !!candidate.lpkId;
 
   return (
     <form onSubmit={handleSubmit(handlePersonalSubmit)} className="space-y-4">
@@ -251,6 +261,23 @@ function PersonalTab({ candidate, onSave, saving }: { candidate: CandidateData; 
       <Field label={t('dpEmail')}><input type="email" {...register('email')} className={inputCls} /></Field>
       <Field label={t('dpPhone')}><input {...register('phone')} className={inputCls} /></Field>
       <Field label={t('dpAddress')}><textarea {...register('address')} rows={3} className={inputCls} /></Field>
+      <Field label={t('candidate.profile.personal.lpk') + ' *'}>
+        <select
+          {...register('lpkId')}
+          disabled={lpkLocked}
+          className={`${selectCls} ${lpkLocked ? 'bg-gray-50 text-gray-500 cursor-not-allowed' : ''}`}
+        >
+          <option value="">{t('candidate.profile.personal.lpkPlaceholder')}</option>
+          {(lpksData?.lpks ?? []).map((lpk) => (
+            <option key={lpk.id} value={lpk.id}>
+              {lpk.name}{lpk.city ? ` — ${lpk.city}` : ''}
+            </option>
+          ))}
+        </select>
+        {lpkLocked && (
+          <p className="text-xs text-gray-400 mt-1">{t('colLpk')} {t('candidate.profile.locked').split('.')[0]}.</p>
+        )}
+      </Field>
       <div className="flex items-center gap-3 pt-2">
         <button type="submit" disabled={saving} className="px-4 py-2 bg-navy-700 text-white text-sm rounded-lg hover:bg-navy-900 transition disabled:opacity-60">
           {saving ? t('candidate.profile.saving') : t('candidate.profile.save')}
