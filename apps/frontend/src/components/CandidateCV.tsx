@@ -6,7 +6,7 @@ export interface CandidateCVProps {
   lang?: 'id' | 'ja';
 }
 
-// ── Helpers ───────────────────────────────────────────────────────────────────
+// ── Exported helpers (used by CandidateCVPage) ────────────────────────────────
 
 export function calculateAge(dateOfBirth: string): number {
   const dob = new Date(dateOfBirth);
@@ -18,21 +18,20 @@ export function calculateAge(dateOfBirth: string): number {
 }
 
 export function formatPeriod(start?: string | null, end?: string | null): string {
-  const s = start ? start.slice(0, 7) : null;
-  const e = end ? end.slice(0, 7) : null;
-  if (s && e) return `${s} – ${e}`;
-  if (s) return `${s} –`;
-  if (e) return `– ${e}`;
+  const fmt = (d: string) => d.slice(0, 7).replace('-', '/');
+  const s = start ? fmt(start) : null;
+  const e = end ? fmt(end) : null;
+  if (s && e) return `${s} ー ${e}`;
+  if (s) return `${s} ー 現在`;
+  if (e) return `ー ${e}`;
   return '—';
 }
+
+// ── Internal helpers ──────────────────────────────────────────────────────────
 
 function v(x: unknown): string {
   if (x === null || x === undefined || x === '') return '—';
   return String(x);
-}
-
-function Chk({ checked }: { checked: boolean | null | undefined }) {
-  return <span style={{ fontSize: '1.1em', lineHeight: 1 }}>{checked ? '☑' : '☐'}</span>;
 }
 
 function padRows<T>(arr: T[] | null | undefined, min: number): (T | null)[] {
@@ -41,275 +40,75 @@ function padRows<T>(arr: T[] | null | undefined, min: number): (T | null)[] {
   return out;
 }
 
-// ── Labels ────────────────────────────────────────────────────────────────────
-
-const LABELS = {
-  id: {
-    title: 'Curriculum Vitae',
-    code: 'Kode Kandidat',
-    s1: '1. Data Pribadi',
-    s2: '2. Kontak',
-    s3: '3. Informasi SSW',
-    s4: '4. Riwayat Pendidikan',
-    s5: '5. Riwayat Pekerjaan',
-    s6: '6. Kemampuan Bahasa Jepang',
-    s7: '7. Sertifikasi & Lisensi',
-    s8: '8. PR & Motivasi',
-    s9: '9. Rencana Kerja & Keluarga',
-    fullName: 'Nama Lengkap',
-    katakana: 'Nama (Katakana)',
-    gender: 'Jenis Kelamin',
-    dob: 'Tanggal Lahir',
-    age: 'Umur',
-    blood: 'Golongan Darah',
-    religion: 'Agama',
-    height: 'Tinggi (cm)',
-    weight: 'Berat (kg)',
-    selfHeight: 'Tinggi Mandiri',
-    selfWeight: 'Berat Mandiri',
-    passport: 'Paspor',
-    visitedJapan: 'Pernah ke Jepang',
-    hobbies: 'Hobi',
-    nik: 'NIK',
-    email: 'Email',
-    phone: 'Telepon',
-    address: 'Alamat',
-    kubun: 'Tipe SSW',
-    sectorId: 'Bidang (ID)',
-    fieldId: 'Pekerjaan (ID)',
-    sectorJa: 'Bidang (JA)',
-    fieldJa: 'Pekerjaan (JA)',
-    jobCat: 'Kategori Pekerjaan',
-    jpStudy: 'Durasi Belajar Jepang',
-    highestEdu: 'Pendidikan Terakhir',
-    school: 'Sekolah / Kampus',
-    major: 'Jurusan',
-    period: 'Periode',
-    company: 'Perusahaan',
-    division: 'Divisi',
-    skillGroup: 'Kelompok Keahlian',
-    testName: 'Nama Tes',
-    score: 'Nilai',
-    pass: 'Lulus',
-    testDate: 'Tanggal',
-    certName: 'Nama Sertifikat',
-    certLevel: 'Level',
-    issuedDate: 'Tanggal Terbit',
-    issuedBy: 'Diterbitkan oleh',
-    selfPr: 'Keahlian / 得意',
-    motivation: 'Motivasi / 志望理由',
-    applyReason: 'Alasan Melamar / 応募の動機',
-    selfIntro: 'Promosi Diri / 自己PR',
-    colId: 'Bahasa Indonesia',
-    colJa: '日本語',
-    duration: 'Durasi Rencana',
-    goal: 'Tujuan',
-    after: 'Rencana Setelah Kembali',
-    expectation: 'Harapan',
-    marital: 'Status Pernikahan',
-    spouse: 'Info Pasangan',
-    children: 'Jumlah Anak',
-    accompany: 'Membawa Keluarga',
-    gM: 'Laki-laki',
-    gF: 'Perempuan',
-    yes: 'Ya',
-    no: 'Tidak',
-    masked: '🔒 Dilindungi',
-  },
-  ja: {
-    title: '履歴書',
-    code: '候補者コード',
-    s1: '1. 個人情報',
-    s2: '2. 連絡先',
-    s3: '3. SSW情報',
-    s4: '4. 学歴',
-    s5: '5. 職歴',
-    s6: '6. 日本語能力',
-    s7: '7. 資格・認定',
-    s8: '8. PRと志望動機',
-    s9: '9. 就労計画・家族情報',
-    fullName: '氏名',
-    katakana: '氏名（カタカナ）',
-    gender: '性別',
-    dob: '生年月日',
-    age: '年齢',
-    blood: '血液型',
-    religion: '宗教',
-    height: '身長（cm）',
-    weight: '体重（kg）',
-    selfHeight: '自己申告身長',
-    selfWeight: '自己申告体重',
-    passport: 'パスポート',
-    visitedJapan: '日本渡航経験',
-    hobbies: '趣味',
-    nik: 'NIK（身分証番号）',
-    email: 'メールアドレス',
-    phone: '電話番号',
-    address: '住所',
-    kubun: 'SSW区分',
-    sectorId: '分野（インドネシア語）',
-    fieldId: '職種（インドネシア語）',
-    sectorJa: '分野（日本語）',
-    fieldJa: '職種（日本語）',
-    jobCat: '職種カテゴリ',
-    jpStudy: '日本語学習期間',
-    highestEdu: '最終学歴',
-    school: '学校名',
-    major: '専攻',
-    period: '期間',
-    company: '会社名',
-    division: '部署',
-    skillGroup: 'スキルグループ',
-    testName: 'テスト名',
-    score: 'スコア',
-    pass: '合否',
-    testDate: '受験日',
-    certName: '資格名',
-    certLevel: 'レベル',
-    issuedDate: '取得日',
-    issuedBy: '発行機関',
-    selfPr: '得意なこと',
-    motivation: '志望理由',
-    applyReason: '応募の動機',
-    selfIntro: '自己PR',
-    colId: 'インドネシア語',
-    colJa: '日本語',
-    duration: '就労計画期間',
-    goal: '目標',
-    after: '帰国後の計画',
-    expectation: '期待すること',
-    marital: '婚姻状況',
-    spouse: '配偶者情報',
-    children: '子どもの人数',
-    accompany: '家族帯同',
-    gM: '男性',
-    gF: '女性',
-    yes: 'あり',
-    no: 'なし',
-    masked: '🔒 保護中',
-  },
-};
+function Chk({ checked }: { checked: boolean }) {
+  return <span style={{ fontSize: '10px' }}>{checked ? '☑' : '☐'}</span>;
+}
 
 // ── Shared style tokens ───────────────────────────────────────────────────────
 
 const FONT = "'Noto Sans JP', 'Noto Sans', 'Hiragino Kaku Gothic Pro', Arial, sans-serif";
 
-const S: Record<string, React.CSSProperties> = {
-  page: {
-    fontFamily: FONT,
-    fontSize: '11px',
-    lineHeight: 1.5,
-    color: '#1a1a1a',
-    background: '#fff',
-    padding: '24px',
-    maxWidth: '794px',
-    margin: '0 auto',
-    boxSizing: 'border-box',
-  },
-  sectionHeader: {
-    background: '#1e3a5f',
-    color: '#fff',
-    fontWeight: 700,
-    fontSize: '12px',
-    padding: '4px 10px',
-    marginTop: '16px',
-    marginBottom: '0',
-    letterSpacing: '0.03em',
-  },
-  table: {
-    width: '100%',
-    borderCollapse: 'collapse',
-    fontSize: '11px',
-  },
-  th: {
-    background: '#f0f4f8',
-    border: '1px solid #c8d4e0',
-    padding: '4px 8px',
-    fontWeight: 600,
-    textAlign: 'left' as const,
-    whiteSpace: 'nowrap' as const,
-    width: '1%',
-    color: '#1e3a5f',
-  },
-  td: {
-    border: '1px solid #c8d4e0',
-    padding: '4px 8px',
-    verticalAlign: 'top' as const,
-  },
-  tdEmpty: {
-    border: '1px solid #c8d4e0',
-    padding: '4px 8px',
-    height: '20px',
-    color: '#bbb',
-  },
-  label: {
-    background: '#f0f4f8',
-    border: '1px solid #c8d4e0',
-    padding: '4px 8px',
-    fontWeight: 600,
-    color: '#1e3a5f',
-    whiteSpace: 'nowrap' as const,
-    width: '1%',
-  },
-  value: {
-    border: '1px solid #c8d4e0',
-    padding: '4px 8px',
-    verticalAlign: 'top' as const,
-  },
-  textBlock: {
-    border: '1px solid #c8d4e0',
-    padding: '6px 8px',
-    minHeight: '60px',
-    whiteSpace: 'pre-wrap' as const,
-    verticalAlign: 'top' as const,
-  },
-  photoBox: {
-    width: '90px',
-    height: '110px',
-    border: '1px solid #c8d4e0',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    background: '#f7f9fb',
-    flexShrink: 0,
-    overflow: 'hidden',
-  },
-};
-
-// ── Print styles injected into document ──────────────────────────────────────
-
 const PRINT_CSS = `
   @media print {
-    body { margin: 0; }
-    .cv-no-print { display: none !important; }
-    .cv-root { padding: 0; box-shadow: none; }
-    .cv-page { padding: 8mm; max-width: 100%; box-shadow: none; }
-    .cv-section { page-break-inside: avoid; }
+    body { margin: 0 !important; padding: 0 !important; }
+    .no-print { display: none !important; }
+    .cv-wrapper { border: none !important; }
   }
-  @page { size: A4 portrait; margin: 8mm; }
+  @page { size: A4 portrait; margin: 0; }
 `;
 
-// ── Row helpers ───────────────────────────────────────────────────────────────
+// label cell (left side of each row)
+const LBL: React.CSSProperties = {
+  background: '#f0f0f0',
+  padding: '3px 5px',
+  fontSize: '7.5px',
+  color: '#333',
+  borderRight: '0.5px solid #ccc',
+};
 
-function KVRow({ label, value }: { label: string; value: React.ReactNode }) {
-  return (
-    <tr>
-      <td style={S.label}>{label}</td>
-      <td style={S.value}>{value}</td>
-    </tr>
-  );
-}
+// smaller label (for long bilingual labels that don't fit at 7.5px)
+const LBL_XS: React.CSSProperties = { ...LBL, fontSize: '6.8px' };
 
-function KVRow2({ pairs }: { pairs: [string, React.ReactNode][] }) {
+// value cell (right side of each row)
+const VAL: React.CSSProperties = {
+  padding: '3px 6px',
+  fontSize: '9.5px',
+};
+
+const ROW_BORDER: React.CSSProperties = { borderBottom: '0.5px solid #ccc' };
+
+// table cells
+const TH = (width?: number | string): React.CSSProperties => ({
+  border: '0.5px solid #ddd',
+  padding: '3px 6px',
+  textAlign: 'left',
+  fontWeight: 600,
+  background: '#f5f5f5',
+  fontSize: '8px',
+  ...(width != null ? { width: typeof width === 'number' ? `${width}px` : width } : {}),
+});
+
+const TD: React.CSSProperties = {
+  border: '0.5px solid #ddd',
+  padding: '3px 6px',
+  fontSize: '9px',
+  height: '18px',
+};
+
+function SectionHeader({ title }: { title: string }) {
   return (
-    <tr>
-      {pairs.map(([label, value], i) => (
-        <React.Fragment key={i}>
-          <td style={S.label}>{label}</td>
-          <td style={S.value}>{value}</td>
-        </React.Fragment>
-      ))}
-    </tr>
+    <div style={{
+      background: '#ddd',
+      textAlign: 'center',
+      fontWeight: 700,
+      padding: '3px 0',
+      borderTop: '1px solid #999',
+      borderBottom: '1px solid #999',
+      fontSize: '9px',
+      letterSpacing: '0.02em',
+    }}>
+      {title}
+    </div>
   );
 }
 
@@ -320,345 +119,367 @@ export default function CandidateCV({
   showSensitiveData = false,
   lang = 'id',
 }: CandidateCVProps) {
-  const L = LABELS[lang] ?? LABELS.id;
+  void showSensitiveData; // reserved for future caller use
+  void lang;
+
   const c = candidate ?? {};
 
   const age = c.dateOfBirth ? calculateAge(c.dateOfBirth) : null;
-  const genderLabel = c.gender === 'M' ? L.gM : c.gender === 'F' ? L.gF : '—';
+  const latestTest = Array.isArray(c.tests) && c.tests.length > 0
+    ? c.tests[c.tests.length - 1]
+    : null;
 
-  const career: any[]        = padRows(c.career, 3);
-  const eduHistory: any[]    = padRows(c.educationHistory, 3);
-  const tests: any[]         = padRows(c.tests, 3);
-  const certs: any[]         = padRows(c.certifications, 3);
+  // Merge certifications + tests into one list for section 7
+  const combinedCerts = [
+    ...(Array.isArray(c.certifications) ? c.certifications : []).map((cert: any) => ({
+      issuedDate: cert.issuedDate,
+      name: cert.certName,
+      info: [cert.certLevel, cert.issuedBy].filter(Boolean).join(' / '),
+    })),
+    ...(Array.isArray(c.tests) ? c.tests : []).map((t: any) => ({
+      issuedDate: t.testDate,
+      name: t.testName,
+      info: [
+        t.score != null ? String(t.score) : null,
+        t.pass ? '合格 ✓' : null,
+      ].filter(Boolean).join(' '),
+    })),
+  ];
+
+  const eduRows    = padRows(c.educationHistory, 4);
+  const careerRows = padRows(c.career, 4);
+  const certRows   = padRows(combinedCerts, 4);
+
+  // Resolve address: may be a masked object for recruiter view
+  const addressStr = typeof c.address === 'string' ? c.address : null;
+  const addressMasked = (c.address as any)?.masked === true;
+  const cityStr = addressStr ? addressStr.split(',')[0].trim() : '—';
 
   return (
-    <div className="cv-root" style={S.page}>
-      {/* Inject print CSS */}
+    <div
+      className="cv-wrapper"
+      style={{
+        width: '794px',
+        maxHeight: '1123px',
+        border: '1px solid #999',
+        fontFamily: FONT,
+        fontSize: '9.5px',
+        background: '#fff',
+        margin: '0 auto',
+        boxSizing: 'border-box',
+        overflow: 'hidden',
+        lineHeight: 1.4,
+      }}
+    >
       <style dangerouslySetInnerHTML={{ __html: PRINT_CSS }} />
 
-      {/* ── Header ──────────────────────────────────────────────────────── */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '12px', gap: '16px' }}>
-        <div style={{ flex: 1 }}>
-          <div style={{ fontSize: '20px', fontWeight: 700, color: '#1e3a5f', letterSpacing: '0.05em', marginBottom: '4px' }}>
-            {L.title}
+      {/* ── TITLE ROW ─────────────────────────────────────────────────────── */}
+      <div style={{
+        fontSize: '12px',
+        fontWeight: 700,
+        padding: '6px 10px',
+        borderBottom: '1.5px solid #111',
+        letterSpacing: '0.04em',
+      }}>
+        候補者データ・DATA KANDIDAT
+      </div>
+
+      {/* ── TOP SECTION: 3-column grid ────────────────────────────────────── */}
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 90px', borderBottom: '1px solid #aaa' }}>
+
+        {/* LEFT COLUMN — 6 rows, gridTemplateColumns: 90px 1fr each */}
+        <div style={{ borderRight: '1px solid #aaa' }}>
+
+          <div style={{ display: 'grid', gridTemplateColumns: '90px 1fr', ...ROW_BORDER }}>
+            <div style={LBL}>日本語レベル</div>
+            <div style={VAL}>
+              {latestTest
+                ? `${v(latestTest.testName)}${latestTest.score != null ? ` / ${latestTest.score}` : ''}`
+                : '—'}
+            </div>
           </div>
-          <div style={{ fontSize: '11px', color: '#555' }}>
-            {L.code}: <strong>{v(c.candidateCode)}</strong>
+
+          <div style={{ display: 'grid', gridTemplateColumns: '90px 1fr', ...ROW_BORDER }}>
+            <div style={LBL}>名前・Nama</div>
+            <div style={VAL}>
+              <div style={{ fontWeight: 600 }}>{v(c.fullName)}</div>
+              {c.nameKatakana && (
+                <div style={{ fontSize: '8px', color: '#555' }}>{c.nameKatakana}</div>
+              )}
+            </div>
           </div>
-          <div style={{ fontSize: '16px', fontWeight: 700, marginTop: '6px', color: '#1a1a1a' }}>
-            {v(c.fullName)}
+
+          <div style={{ display: 'grid', gridTemplateColumns: '90px 1fr', ...ROW_BORDER }}>
+            <div style={LBL_XS}>出身地・生年月日 / Tempat, Tanggal Lahir</div>
+            <div style={VAL}>
+              <div>{addressMasked ? '🔒' : cityStr}</div>
+              <div style={{ fontSize: '8.5px', color: '#444' }}>
+                {c.dateOfBirth ? c.dateOfBirth.slice(0, 10) : '—'}
+              </div>
+            </div>
           </div>
-          {c.nameKatakana && (
-            <div style={{ fontSize: '12px', color: '#444', marginTop: '2px' }}>{c.nameKatakana}</div>
+
+          <div style={{ display: 'grid', gridTemplateColumns: '90px 1fr', ...ROW_BORDER }}>
+            <div style={LBL}>性別・Jenis Kelamin</div>
+            <div style={VAL}>
+              {c.gender === 'M' ? 'Laki-laki（男）' : c.gender === 'F' ? 'Perempuan（女）' : '—'}
+            </div>
+          </div>
+
+          <div style={{ display: 'grid', gridTemplateColumns: '90px 1fr', ...ROW_BORDER }}>
+            <div style={LBL}>年齢・Usia</div>
+            <div style={VAL}>{age !== null ? `${age} tahun` : '—'}</div>
+          </div>
+
+          <div style={{ display: 'grid', gridTemplateColumns: '90px 1fr' }}>
+            <div style={LBL}>血液型・Golongan Darah</div>
+            <div style={VAL}>{c.bloodType ?? '—'}</div>
+          </div>
+        </div>
+
+        {/* MIDDLE COLUMN — 6 rows, gridTemplateColumns: 100px 1fr each */}
+        <div style={{ borderRight: '1px solid #aaa' }}>
+
+          <div style={{ display: 'grid', gridTemplateColumns: '100px 1fr', ...ROW_BORDER }}>
+            <div style={LBL}>身長・Tinggi Badan</div>
+            <div style={VAL}>
+              {(c.selfReportedHeight ?? c.heightCm) != null
+                ? `${c.selfReportedHeight ?? c.heightCm} cm`
+                : '—'}
+            </div>
+          </div>
+
+          <div style={{ display: 'grid', gridTemplateColumns: '100px 1fr', ...ROW_BORDER }}>
+            <div style={LBL}>体重・Berat Badan</div>
+            <div style={VAL}>
+              {(c.selfReportedWeight ?? c.weightKg) != null
+                ? `${c.selfReportedWeight ?? c.weightKg} kg`
+                : '—'}
+            </div>
+          </div>
+
+          <div style={{ display: 'grid', gridTemplateColumns: '100px 1fr', ...ROW_BORDER }}>
+            <div style={LBL_XS}>配偶者 / Status Pernikahan</div>
+            <div style={{ ...VAL, display: 'flex', gap: '8px', flexWrap: 'wrap', alignItems: 'center' }}>
+              <span><Chk checked={c.maritalStatus === 'married'} /> Menikah（既婚）</span>
+              <span><Chk checked={c.maritalStatus !== 'married'} /> Belum Menikah（未婚）</span>
+            </div>
+          </div>
+
+          <div style={{ display: 'grid', gridTemplateColumns: '100px 1fr', ...ROW_BORDER }}>
+            <div style={LBL}>宗教・Agama</div>
+            <div style={{ ...VAL, display: 'flex', gap: '5px', flexWrap: 'wrap', alignItems: 'center' }}>
+              {(['Islam', 'Kristen', 'Katolik', 'Budha', 'Hindu'] as const).map((r) => (
+                <span key={r}><Chk checked={c.religion === r} /> {r}</span>
+              ))}
+            </div>
+          </div>
+
+          <div style={{ display: 'grid', gridTemplateColumns: '100px 1fr', ...ROW_BORDER }}>
+            <div style={LBL_XS}>訪日経験 / Pernah ke Jepang</div>
+            <div style={{ ...VAL, display: 'flex', gap: '8px', alignItems: 'center' }}>
+              <span><Chk checked={!!c.hasVisitedJapan} /> Ada（有）</span>
+              <span><Chk checked={!c.hasVisitedJapan} /> Belum（無）</span>
+            </div>
+          </div>
+
+          <div style={{ display: 'grid', gridTemplateColumns: '100px 1fr' }}>
+            <div style={LBL_XS}>旅券の有無 / Pernah Memiliki Paspor</div>
+            <div style={{ ...VAL, display: 'flex', gap: '8px', alignItems: 'center' }}>
+              <span><Chk checked={!!c.hasPassport} /> Ada（有）</span>
+              <span><Chk checked={!c.hasPassport} /> Tidak（無）</span>
+            </div>
+          </div>
+        </div>
+
+        {/* PHOTO COLUMN — 90px wide */}
+        <div style={{
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          padding: '8px 4px',
+        }}>
+          {c.closeupUrl ? (
+            <img
+              src={c.closeupUrl}
+              alt="foto"
+              style={{ width: '70px', height: '90px', objectFit: 'cover', display: 'block' }}
+            />
+          ) : (
+            <div style={{
+              width: '70px',
+              height: '90px',
+              border: '1px solid #999',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              textAlign: 'center',
+              fontSize: '7.5px',
+              color: '#999',
+              lineHeight: 1.5,
+            }}>
+              写真 / Foto<br />3×4
+            </div>
           )}
-        </div>
-        {/* Closeup photo */}
-        <div style={S.photoBox}>
-          {c.closeupUrl
-            ? <img src={c.closeupUrl} alt="photo" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-            : <span style={{ fontSize: '28px', color: '#ccc' }}>👤</span>
-          }
-        </div>
-        {/* Full-body photo */}
-        <div style={{ ...S.photoBox, width: '60px', height: '110px' }}>
-          {c.fullbodyUrl
-            ? <img src={c.fullbodyUrl} alt="fullbody" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-            : <span style={{ fontSize: '22px', color: '#ccc' }}>🧍</span>
-          }
+          <div style={{ fontSize: '8px', color: 'red', textAlign: 'center', marginTop: '4px' }}>
+            写真・Foto
+          </div>
         </div>
       </div>
 
-      {/* ── Section 1: Personal Data ─────────────────────────────────────── */}
-      <div className="cv-section">
-        <div style={S.sectionHeader}>{L.s1}</div>
-        <table style={S.table}>
-          <tbody>
-            <KVRow2 pairs={[
-              [L.fullName, v(c.fullName)],
-              [L.katakana, v(c.nameKatakana)],
-            ]} />
-            <KVRow2 pairs={[
-              [L.gender, genderLabel],
-              [L.dob, c.dateOfBirth ? `${v(c.dateOfBirth).slice(0,10)} (${age !== null ? age + (lang === 'ja' ? '歳' : ' thn') : '—'})` : '—'],
-            ]} />
-            <KVRow2 pairs={[
-              [L.blood, v(c.bloodType)],
-              [L.religion, v(c.religion)],
-            ]} />
-            <KVRow2 pairs={[
-              [L.height, v(c.heightCm)],
-              [L.weight, v(c.weightKg)],
-            ]} />
-            <KVRow2 pairs={[
-              [L.selfHeight, v(c.selfReportedHeight)],
-              [L.selfWeight, v(c.selfReportedWeight)],
-            ]} />
-            <tr>
-              <td style={S.label}>{L.passport}</td>
-              <td style={S.value}><Chk checked={c.hasPassport} /> {c.hasPassport ? L.yes : L.no}</td>
-              <td style={S.label}>{L.visitedJapan}</td>
-              <td style={S.value}><Chk checked={c.hasVisitedJapan} /> {c.hasVisitedJapan ? L.yes : L.no}</td>
-            </tr>
-            <KVRow label={L.hobbies} value={v(c.hobbies)} />
-          </tbody>
-        </table>
+      {/* ── ADDRESS + HOBI ROW ────────────────────────────────────────────── */}
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', borderBottom: '0.5px solid #ccc' }}>
+        <div style={{ padding: '3px 6px', borderRight: '0.5px solid #ccc' }}>
+          <div style={{ fontSize: '7.5px', color: '#555', marginBottom: '2px' }}>
+            現住所・Alamat Tinggal Saat Ini
+          </div>
+          <div style={{ borderBottom: '1px dotted #999', paddingBottom: '2px', minHeight: '16px', fontSize: '9px' }}>
+            {addressMasked ? '🔒' : v(c.address)}
+          </div>
+        </div>
+        <div style={{ padding: '3px 6px' }}>
+          <div style={{ fontSize: '7.5px', color: '#555', marginBottom: '2px' }}>趣味・Hobi</div>
+          <div style={{ borderBottom: '1px dotted #999', paddingBottom: '2px', minHeight: '16px', fontSize: '9px' }}>
+            {v(c.hobbies)}
+          </div>
+        </div>
       </div>
 
-      {/* ── Section 2: Contact ───────────────────────────────────────────── */}
-      <div className="cv-section">
-        <div style={S.sectionHeader}>{L.s2}</div>
-        <table style={S.table}>
-          <tbody>
-            {showSensitiveData && (
-              <KVRow label={L.nik} value={v(c.nik)} />
-            )}
-            <KVRow
-              label={L.email}
-              value={
-                showSensitiveData
-                  ? v(c.email)
-                  : c.email?.masked
-                    ? <span style={{ color: '#888', fontStyle: 'italic' }}>{L.masked}</span>
-                    : v(c.email)
-              }
-            />
-            <KVRow
-              label={L.phone}
-              value={
-                showSensitiveData
-                  ? v(c.phone)
-                  : c.phone?.masked
-                    ? <span style={{ color: '#888', fontStyle: 'italic' }}>{L.masked}</span>
-                    : v(c.phone)
-              }
-            />
-            <KVRow
-              label={L.address}
-              value={
-                showSensitiveData
-                  ? v(c.address)
-                  : c.address?.masked
-                    ? <span style={{ color: '#888', fontStyle: 'italic' }}>{L.masked}</span>
-                    : v(c.address)
-              }
-            />
-          </tbody>
-        </table>
-      </div>
-
-      {/* ── Section 3: SSW Info ──────────────────────────────────────────── */}
-      <div className="cv-section">
-        <div style={S.sectionHeader}>{L.s3}</div>
-        <table style={S.table}>
-          <tbody>
-            <KVRow2 pairs={[
-              [L.kubun, v(c.sswKubun)],
-              [L.jobCat, v(c.jobCategory)],
-            ]} />
-            <KVRow2 pairs={[
-              [L.sectorId, v(c.sswSectorId)],
-              [L.fieldId, v(c.sswFieldId)],
-            ]} />
-            <KVRow2 pairs={[
-              [L.sectorJa, v(c.sswSectorJa)],
-              [L.fieldJa, v(c.sswFieldJa)],
-            ]} />
-            <KVRow label={L.jpStudy} value={v(c.jpStudyDuration)} />
-          </tbody>
-        </table>
-      </div>
-
-      {/* ── Section 4: Education ─────────────────────────────────────────── */}
-      <div className="cv-section">
-        <div style={S.sectionHeader}>{L.s4}</div>
-        <table style={S.table}>
-          <tbody>
-            <KVRow2 pairs={[
-              [L.highestEdu, v(c.eduLevel)],
-              [L.school, v(c.eduLabel)],
-            ]} />
-            <KVRow label={L.major} value={v(c.eduMajor)} />
-          </tbody>
-        </table>
-        {/* Education history table */}
-        <table style={{ ...S.table, marginTop: '4px' }}>
-          <thead>
-            <tr>
-              <th style={{ ...S.th, width: '40%' }}>{L.school}</th>
-              <th style={{ ...S.th, width: '30%' }}>{L.major}</th>
-              <th style={{ ...S.th, width: '30%' }}>{L.period}</th>
-            </tr>
-          </thead>
-          <tbody>
-            {eduHistory.map((row, i) => row ? (
-              <tr key={row.id ?? i}>
-                <td style={S.td}>{v(row.schoolName)}</td>
-                <td style={S.td}>{v(row.major)}</td>
-                <td style={S.td}>{formatPeriod(row.startDate, row.endDate)}</td>
+      {/* ── 学歴・Pendidikan ──────────────────────────────────────────────── */}
+      <SectionHeader title="学歴・Pendidikan" />
+      <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+        <thead>
+          <tr>
+            <th style={TH(140)}>期間・Periode</th>
+            <th style={TH()}>学校名・Nama Sekolah</th>
+            <th style={TH(160)}>専攻・Jurusan</th>
+          </tr>
+        </thead>
+        <tbody>
+          {eduRows.map((row, i) =>
+            row ? (
+              <tr key={(row as any).id ?? i}>
+                <td style={TD}>{formatPeriod((row as any).startDate, (row as any).endDate)}</td>
+                <td style={TD}>{v((row as any).schoolName)}</td>
+                <td style={TD}>{v((row as any).major)}</td>
               </tr>
             ) : (
-              <tr key={`edu-empty-${i}`}>
-                <td style={S.tdEmpty} />
-                <td style={S.tdEmpty} />
-                <td style={S.tdEmpty} />
+              <tr key={`edu-${i}`}>
+                <td style={TD} /><td style={TD} /><td style={TD} />
               </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+            )
+          )}
+        </tbody>
+      </table>
 
-      {/* ── Section 5: Career ────────────────────────────────────────────── */}
-      <div className="cv-section">
-        <div style={S.sectionHeader}>{L.s5}</div>
-        <table style={S.table}>
-          <thead>
-            <tr>
-              <th style={{ ...S.th, width: '30%' }}>{L.company}</th>
-              <th style={{ ...S.th, width: '25%' }}>{L.division}</th>
-              <th style={{ ...S.th, width: '25%' }}>{L.skillGroup}</th>
-              <th style={{ ...S.th, width: '20%' }}>{L.period}</th>
-            </tr>
-          </thead>
-          <tbody>
-            {career.map((row, i) => row ? (
-              <tr key={row.id ?? i}>
-                <td style={S.td}>{v(row.companyName)}</td>
-                <td style={S.td}>{v(row.division)}</td>
-                <td style={S.td}>{v(row.skillGroup)}</td>
-                <td style={S.td}>{v(row.period)}</td>
+      {/* ── 職歴・Pengalaman Kerja ────────────────────────────────────────── */}
+      <SectionHeader title="職歴・Pengalaman Kerja" />
+      <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+        <thead>
+          <tr>
+            <th style={TH(140)}>期間・Periode</th>
+            <th style={TH()}>会社名・Nama Perusahaan</th>
+            <th style={TH()}>職種・Uraian Pekerjaan</th>
+          </tr>
+        </thead>
+        <tbody>
+          {careerRows.map((row, i) =>
+            row ? (
+              <tr key={(row as any).id ?? i}>
+                <td style={TD}>{v((row as any).period)}</td>
+                <td style={TD}>{v((row as any).companyName)}</td>
+                <td style={TD}>
+                  {v((row as any).division) !== '—'
+                    ? v((row as any).division)
+                    : v((row as any).skillGroup)}
+                </td>
               </tr>
             ) : (
-              <tr key={`career-empty-${i}`}>
-                <td style={S.tdEmpty} />
-                <td style={S.tdEmpty} />
-                <td style={S.tdEmpty} />
-                <td style={S.tdEmpty} />
+              <tr key={`career-${i}`}>
+                <td style={TD} /><td style={TD} /><td style={TD} />
               </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+            )
+          )}
+        </tbody>
+      </table>
 
-      {/* ── Section 6: Japanese Language ─────────────────────────────────── */}
-      <div className="cv-section">
-        <div style={S.sectionHeader}>{L.s6}</div>
-        <table style={S.table}>
-          <thead>
-            <tr>
-              <th style={{ ...S.th, width: '40%' }}>{L.testName}</th>
-              <th style={{ ...S.th, width: '20%' }}>{L.score}</th>
-              <th style={{ ...S.th, width: '20%' }}>{L.pass}</th>
-              <th style={{ ...S.th, width: '20%' }}>{L.testDate}</th>
-            </tr>
-          </thead>
-          <tbody>
-            {tests.map((row, i) => row ? (
-              <tr key={row.id ?? i}>
-                <td style={S.td}>{v(row.testName)}</td>
-                <td style={S.td}>{v(row.score)}</td>
-                <td style={S.td}><Chk checked={row.pass} /> {row.pass ? L.yes : L.no}</td>
-                <td style={S.td}>{row.testDate ? v(row.testDate).slice(0, 10) : '—'}</td>
+      {/* ── 認定・Sertifikasi ─────────────────────────────────────────────── */}
+      <SectionHeader title="認定・Sertifikasi" />
+      <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+        <thead>
+          <tr>
+            <th style={TH(120)}>発行日・Tanggal Penerbitan</th>
+            <th style={TH()}>件名・Nama Sertifikat</th>
+            <th style={TH(200)}>レベルや情報</th>
+          </tr>
+        </thead>
+        <tbody>
+          {certRows.map((row, i) =>
+            row ? (
+              <tr key={i}>
+                <td style={TD}>
+                  {(row as any).issuedDate ? v((row as any).issuedDate).slice(0, 10) : '—'}
+                </td>
+                <td style={TD}>{v((row as any).name)}</td>
+                <td style={TD}>{v((row as any).info)}</td>
               </tr>
             ) : (
-              <tr key={`test-empty-${i}`}>
-                <td style={S.tdEmpty} />
-                <td style={S.tdEmpty} />
-                <td style={S.tdEmpty} />
-                <td style={S.tdEmpty} />
+              <tr key={`cert-${i}`}>
+                <td style={TD} /><td style={TD} /><td style={TD} />
               </tr>
-            ))}
-          </tbody>
-        </table>
+            )
+          )}
+        </tbody>
+      </table>
+
+      {/* ── 得意なこと・自己PR / Keahlian & Motivasi ─────────────────────── */}
+      <SectionHeader title="得意なこと・自己PR / Keahlian & Motivasi" />
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr' }}>
+        <div style={{ borderRight: '0.5px solid #ccc', borderBottom: '0.5px solid #ccc' }}>
+          <div style={{ ...LBL, display: 'block', borderRight: 'none', borderBottom: '0.5px solid #ccc' }}>
+            得意なこと / Keahlian (Bahasa Indonesia)
+          </div>
+          <div style={{ padding: '3px 6px', minHeight: '30px', fontSize: '9px', whiteSpace: 'pre-wrap' }}>
+            {v(c.selfPrId)}
+          </div>
+        </div>
+        <div style={{ borderBottom: '0.5px solid #ccc' }}>
+          <div style={{ ...LBL, display: 'block', borderRight: 'none', borderBottom: '0.5px solid #ccc' }}>
+            自己PR / Keahlian (日本語)
+          </div>
+          <div style={{ padding: '3px 6px', minHeight: '30px', fontSize: '9px', whiteSpace: 'pre-wrap' }}>
+            {v(c.selfPrJa)}
+          </div>
+        </div>
+        <div style={{ borderRight: '0.5px solid #ccc' }}>
+          <div style={{ ...LBL, display: 'block', borderRight: 'none', borderBottom: '0.5px solid #ccc' }}>
+            志望動機 / Motivasi (Bahasa Indonesia)
+          </div>
+          <div style={{ padding: '3px 6px', minHeight: '30px', fontSize: '9px', whiteSpace: 'pre-wrap' }}>
+            {v(c.motivationId)}
+          </div>
+        </div>
+        <div>
+          <div style={{ ...LBL, display: 'block', borderRight: 'none', borderBottom: '0.5px solid #ccc' }}>
+            志望動機 (日本語)
+          </div>
+          <div style={{ padding: '3px 6px', minHeight: '30px', fontSize: '9px', whiteSpace: 'pre-wrap' }}>
+            {v(c.motivationJa)}
+          </div>
+        </div>
       </div>
 
-      {/* ── Section 7: Certifications ────────────────────────────────────── */}
-      <div className="cv-section">
-        <div style={S.sectionHeader}>{L.s7}</div>
-        <table style={S.table}>
-          <thead>
-            <tr>
-              <th style={{ ...S.th, width: '35%' }}>{L.certName}</th>
-              <th style={{ ...S.th, width: '20%' }}>{L.certLevel}</th>
-              <th style={{ ...S.th, width: '20%' }}>{L.issuedDate}</th>
-              <th style={{ ...S.th, width: '25%' }}>{L.issuedBy}</th>
-            </tr>
-          </thead>
-          <tbody>
-            {certs.map((row, i) => row ? (
-              <tr key={row.id ?? i}>
-                <td style={S.td}>{v(row.certName)}</td>
-                <td style={S.td}>{v(row.certLevel)}</td>
-                <td style={S.td}>{row.issuedDate ? v(row.issuedDate).slice(0, 10) : '—'}</td>
-                <td style={S.td}>{v(row.issuedBy)}</td>
-              </tr>
-            ) : (
-              <tr key={`cert-empty-${i}`}>
-                <td style={S.tdEmpty} />
-                <td style={S.tdEmpty} />
-                <td style={S.tdEmpty} />
-                <td style={S.tdEmpty} />
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-
-      {/* ── Section 8: PR & Motivation ───────────────────────────────────── */}
-      <div className="cv-section">
-        <div style={S.sectionHeader}>{L.s8}</div>
-        <table style={S.table}>
-          <thead>
-            <tr>
-              <th style={{ ...S.th, width: '16%' }} />
-              <th style={{ ...S.th, width: '42%' }}>{L.colId}</th>
-              <th style={{ ...S.th, width: '42%' }}>{L.colJa}</th>
-            </tr>
-          </thead>
-          <tbody>
-            {([
-              [L.selfPr,     c.selfPrId,      c.selfPrJa],
-              [L.motivation, c.motivationId,  c.motivationJa],
-              [L.applyReason,c.applyReasonId, c.applyReasonJa],
-              [L.selfIntro,  c.selfIntroId,   c.selfIntroJa],
-            ] as [string, unknown, unknown][]).map(([label, idText, jaText]) => (
-              <tr key={label}>
-                <td style={{ ...S.label, verticalAlign: 'top' }}>{label}</td>
-                <td style={S.textBlock}>{v(idText)}</td>
-                <td style={{ ...S.textBlock, fontFamily: "'Noto Sans JP', sans-serif" }}>{v(jaText)}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-
-      {/* ── Section 9: Work Plan & Family ────────────────────────────────── */}
-      <div className="cv-section">
-        <div style={S.sectionHeader}>{L.s9}</div>
-        <table style={S.table}>
-          <tbody>
-            <KVRow label={L.duration} value={v(c.workplanDuration)} />
-            <tr>
-              <td style={{ ...S.label, verticalAlign: 'top' }}>{L.goal}</td>
-              <td style={{ ...S.value, whiteSpace: 'pre-wrap', minHeight: '40px' }}>{v(c.workplanGoal)}</td>
-            </tr>
-            <tr>
-              <td style={{ ...S.label, verticalAlign: 'top' }}>{L.after}</td>
-              <td style={{ ...S.value, whiteSpace: 'pre-wrap', minHeight: '40px' }}>{v(c.workplanAfter)}</td>
-            </tr>
-            <tr>
-              <td style={{ ...S.label, verticalAlign: 'top' }}>{L.expectation}</td>
-              <td style={{ ...S.value, whiteSpace: 'pre-wrap', minHeight: '40px' }}>{v(c.workplanExpectation)}</td>
-            </tr>
-            <KVRow2 pairs={[
-              [L.marital, v(c.maritalStatus)],
-              [L.spouse, v(c.spouseInfo)],
-            ]} />
-            <KVRow2 pairs={[
-              [L.children, v(c.childrenCount)],
-              [L.accompany, c.accompany === 'yes' ? L.yes : L.no],
-            ]} />
-          </tbody>
-        </table>
+      {/* ── FOOTER ────────────────────────────────────────────────────────── */}
+      <div style={{
+        padding: '3px 8px',
+        fontSize: '7.5px',
+        color: '#888',
+        borderTop: '0.5px solid #ddd',
+        textAlign: 'right',
+        letterSpacing: '0.02em',
+      }}>
+        {v(c.candidateCode)} — IJBNet
       </div>
     </div>
   );
