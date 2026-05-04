@@ -18,6 +18,8 @@ import { Notification, initNotification } from './Notification';
 import { AuditLog, initAuditLog } from './AuditLog';
 import { UserMfaBackupCode, initUserMfaBackupCode } from './UserMfaBackupCode';
 import { ConsentClause, initConsentClause } from './ConsentClause';
+import { CandidateCertification, initCandidateCertification } from './CandidateCertification';
+import { CandidateEducationHistory, initCandidateEducationHistory } from './CandidateEducationHistory';
 
 // Initialize all models
 initCompany(sequelize);
@@ -38,6 +40,8 @@ initNotification(sequelize);
 initAuditLog(sequelize);
 initUserMfaBackupCode(sequelize);
 initConsentClause(sequelize);
+initCandidateCertification(sequelize);
+initCandidateEducationHistory(sequelize);
 
 // ── Associations ─────────────────────────────────────────────────────────────
 
@@ -149,6 +153,21 @@ ConsentClause.belongsTo(User, { as: 'creator', foreignKey: 'createdBy' });
 ConsentClause.belongsTo(ConsentClause, { as: 'superseder', foreignKey: 'supersededBy' });
 Candidate.belongsTo(ConsentClause, { as: 'consentClause', foreignKey: 'consentClauseId' });
 
+// Candidate certifications & education history
+Candidate.hasMany(CandidateCertification, {
+  foreignKey: 'candidateId',
+  as: 'certifications',
+  onDelete: 'CASCADE',
+});
+CandidateCertification.belongsTo(Candidate, { foreignKey: 'candidateId', as: 'candidate' });
+
+Candidate.hasMany(CandidateEducationHistory, {
+  foreignKey: 'candidateId',
+  as: 'educationHistory',
+  onDelete: 'CASCADE',
+});
+CandidateEducationHistory.belongsTo(Candidate, { foreignKey: 'candidateId', as: 'candidate' });
+
 export {
   sequelize,
   Company,
@@ -169,4 +188,6 @@ export {
   AuditLog,
   UserMfaBackupCode,
   ConsentClause,
+  CandidateCertification,
+  CandidateEducationHistory,
 };

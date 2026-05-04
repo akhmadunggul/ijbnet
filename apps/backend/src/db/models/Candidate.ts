@@ -12,10 +12,17 @@ export interface CandidateAttributes {
   consentGivenAt: Date | null;
   consentClauseId: string | null;
   fullName: string;
+  nameKatakana: string | null;
   gender: 'M' | 'F' | null;
   dateOfBirth: Date | null;
   heightCm: number | null;
   weightKg: number | null;
+  selfReportedHeight: number | null;
+  selfReportedWeight: number | null;
+  bloodType: 'A' | 'B' | 'AB' | 'O' | 'A+' | 'B+' | 'AB+' | 'O+' | 'Unknown' | null;
+  religion: 'Islam' | 'Kristen' | 'Katolik' | 'Budha' | 'Hindu' | 'Lainnya' | null;
+  hasVisitedJapan: boolean | null;
+  hasPassport: boolean | null;
   nikEncrypted: string | null;
   email: string | null;
   phone: string | null;
@@ -34,6 +41,15 @@ export interface CandidateAttributes {
   spouseInfo: string | null;
   childrenCount: number;
   accompany: 'none' | 'yes';
+  hobbies: string | null;
+  selfPrId: string | null;
+  selfPrJa: string | null;
+  motivationId: string | null;
+  motivationJa: string | null;
+  applyReasonId: string | null;
+  applyReasonJa: string | null;
+  selfIntroId: string | null;
+  selfIntroJa: string | null;
   workplanDuration: string | null;
   workplanGoal: string | null;
   workplanAfter: string | null;
@@ -60,10 +76,17 @@ export interface CandidateCreationAttributes
     | 'consentGiven'
     | 'consentGivenAt'
     | 'consentClauseId'
+    | 'nameKatakana'
     | 'gender'
     | 'dateOfBirth'
     | 'heightCm'
     | 'weightKg'
+    | 'selfReportedHeight'
+    | 'selfReportedWeight'
+    | 'bloodType'
+    | 'religion'
+    | 'hasVisitedJapan'
+    | 'hasPassport'
     | 'nikEncrypted'
     | 'email'
     | 'phone'
@@ -82,6 +105,15 @@ export interface CandidateCreationAttributes
     | 'spouseInfo'
     | 'childrenCount'
     | 'accompany'
+    | 'hobbies'
+    | 'selfPrId'
+    | 'selfPrJa'
+    | 'motivationId'
+    | 'motivationJa'
+    | 'applyReasonId'
+    | 'applyReasonJa'
+    | 'selfIntroId'
+    | 'selfIntroJa'
     | 'workplanDuration'
     | 'workplanGoal'
     | 'workplanAfter'
@@ -108,10 +140,17 @@ export class Candidate
   declare consentGivenAt: Date | null;
   declare consentClauseId: string | null;
   declare fullName: string;
+  declare nameKatakana: string | null;
   declare gender: 'M' | 'F' | null;
   declare dateOfBirth: Date | null;
   declare heightCm: number | null;
   declare weightKg: number | null;
+  declare selfReportedHeight: number | null;
+  declare selfReportedWeight: number | null;
+  declare bloodType: 'A' | 'B' | 'AB' | 'O' | 'A+' | 'B+' | 'AB+' | 'O+' | 'Unknown' | null;
+  declare religion: 'Islam' | 'Kristen' | 'Katolik' | 'Budha' | 'Hindu' | 'Lainnya' | null;
+  declare hasVisitedJapan: boolean | null;
+  declare hasPassport: boolean | null;
   declare nikEncrypted: string | null;
   declare email: string | null;
   declare phone: string | null;
@@ -130,6 +169,15 @@ export class Candidate
   declare spouseInfo: string | null;
   declare childrenCount: number;
   declare accompany: 'none' | 'yes';
+  declare hobbies: string | null;
+  declare selfPrId: string | null;
+  declare selfPrJa: string | null;
+  declare motivationId: string | null;
+  declare motivationJa: string | null;
+  declare applyReasonId: string | null;
+  declare applyReasonJa: string | null;
+  declare selfIntroId: string | null;
+  declare selfIntroJa: string | null;
   declare workplanDuration: string | null;
   declare workplanGoal: string | null;
   declare workplanAfter: string | null;
@@ -162,10 +210,23 @@ export function initCandidate(sequelize: Sequelize): void {
       consentGivenAt: { type: DataTypes.DATE, allowNull: true },
       consentClauseId: { type: DataTypes.UUID, allowNull: true },
       fullName: { type: DataTypes.STRING(255), allowNull: false },
+      nameKatakana: { type: DataTypes.STRING(255), allowNull: true },
       gender: { type: DataTypes.ENUM('M', 'F'), allowNull: true },
       dateOfBirth: { type: DataTypes.DATEONLY, allowNull: true },
       heightCm: { type: DataTypes.DECIMAL(5, 2), allowNull: true },
       weightKg: { type: DataTypes.DECIMAL(5, 2), allowNull: true },
+      selfReportedHeight: { type: DataTypes.DECIMAL(5, 1), allowNull: true },
+      selfReportedWeight: { type: DataTypes.DECIMAL(5, 1), allowNull: true },
+      bloodType: {
+        type: DataTypes.ENUM('A', 'B', 'AB', 'O', 'A+', 'B+', 'AB+', 'O+', 'Unknown'),
+        allowNull: true,
+      },
+      religion: {
+        type: DataTypes.ENUM('Islam', 'Kristen', 'Katolik', 'Budha', 'Hindu', 'Lainnya'),
+        allowNull: true,
+      },
+      hasVisitedJapan: { type: DataTypes.BOOLEAN, allowNull: true, defaultValue: false },
+      hasPassport: { type: DataTypes.BOOLEAN, allowNull: true, defaultValue: false },
       nikEncrypted: { type: DataTypes.TEXT, allowNull: true },
       email: { type: DataTypes.STRING(255), allowNull: true },
       phone: { type: DataTypes.STRING(30), allowNull: true },
@@ -190,6 +251,15 @@ export function initCandidate(sequelize: Sequelize): void {
       spouseInfo: { type: DataTypes.STRING(100), allowNull: true },
       childrenCount: { type: DataTypes.INTEGER, defaultValue: 0, allowNull: false },
       accompany: { type: DataTypes.ENUM('none', 'yes'), defaultValue: 'none', allowNull: false },
+      hobbies: { type: DataTypes.TEXT, allowNull: true },
+      selfPrId: { type: DataTypes.TEXT, allowNull: true },
+      selfPrJa: { type: DataTypes.TEXT, allowNull: true },
+      motivationId: { type: DataTypes.TEXT, allowNull: true },
+      motivationJa: { type: DataTypes.TEXT, allowNull: true },
+      applyReasonId: { type: DataTypes.TEXT, allowNull: true },
+      applyReasonJa: { type: DataTypes.TEXT, allowNull: true },
+      selfIntroId: { type: DataTypes.TEXT, allowNull: true },
+      selfIntroJa: { type: DataTypes.TEXT, allowNull: true },
       workplanDuration: { type: DataTypes.STRING(50), allowNull: true },
       workplanGoal: { type: DataTypes.TEXT, allowNull: true },
       workplanAfter: { type: DataTypes.TEXT, allowNull: true },

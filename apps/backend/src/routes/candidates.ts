@@ -8,6 +8,8 @@ import {
   CandidateBodyCheck,
   CandidateWeeklyTest,
   CandidateIntroVideo,
+  CandidateCertification,
+  CandidateEducationHistory,
   ToolsDictionary,
   AuditLog,
   Notification,
@@ -52,6 +54,8 @@ async function findMyCandidate(userId: string) {
       { model: CandidateWeeklyTest, as: 'weeklyTests', required: false },
       { model: CandidateIntroVideo, as: 'videos', required: false },
       { model: ToolsDictionary, as: 'tools', required: false },
+      { model: CandidateCertification, as: 'certifications', required: false },
+      { model: CandidateEducationHistory, as: 'educationHistory', required: false },
     ],
   });
 }

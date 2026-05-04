@@ -7,6 +7,21 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [v0.1.5] - 2026-05-04
 
+### Added
+- **nameKatakana** field — Japanese name in katakana
+- **bloodType** field — golongan darah (A/B/AB/O/A+/B+/AB+/O+/Unknown)
+- **religion** field — agama (Islam/Kristen/Katolik/Budha/Hindu/Lainnya)
+- **hasVisitedJapan** boolean — pengalaman ke Jepang
+- **hasPassport** boolean — kepemilikan paspor
+- **hobbies** text field — hobi
+- **selfPrId / selfPrJa** fields — keahlian / 得意
+- **motivationId / motivationJa** fields — motivasi / 志望理由
+- **applyReasonId / applyReasonJa** fields — alasan melamar / 応募の動機
+- **selfIntroId / selfIntroJa** fields — promosi diri / 自己PR
+- **selfReportedHeight / selfReportedWeight** — tinggi/berat badan mandiri
+- **candidate_certifications** table — sertifikasi / 認定
+- **candidate_education_history** table — riwayat pendidikan lengkap / 学歴
+
 ### Fixed
 - **Recruiter pages empty after batch approval**: `getActiveBatch` now includes
   `approved` status so recruiters can still see confirmed candidates and
@@ -20,6 +35,10 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
   admins whose list filters by `lpkId`. Added a one-time LPK picker to the
   candidate profile personal-data tab and a `GET /api/candidates/lpks` endpoint.
   `lpkId` can now be set by the candidate once (locked after first save).
+
+### Notes
+- All new columns are nullable — no impact on existing data
+- Frontend form updates planned for v0.2.0
 
 ---
 
