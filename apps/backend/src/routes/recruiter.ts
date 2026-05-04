@@ -9,6 +9,8 @@ import {
   CandidateWeeklyTest,
   CandidateIntroVideo,
   ToolsDictionary,
+  CandidateCertification,
+  CandidateEducationHistory,
   AuditLog,
   User,
   Batch,
@@ -56,6 +58,8 @@ function candidateIncludes() {
     { model: CandidateWeeklyTest, as: 'weeklyTests', required: false },
     { model: CandidateIntroVideo, as: 'videos', required: false },
     { model: ToolsDictionary, as: 'tools', required: false },
+    { model: CandidateCertification, as: 'certifications', required: false },
+    { model: CandidateEducationHistory, as: 'educationHistory', required: false },
   ];
 }
 
@@ -275,6 +279,55 @@ router.get('/confirmed', wrap(async (req: Request, res: Response): Promise<void>
   const candidates = allocations.map((bc) => serializeBatchCandidate(bc.toJSON() as unknown as Record<string, unknown>));
 
   res.json({ candidates });
+}));
+
+// ── GET /api/recruiter/candidates/:id ────────────────────────────────────────
+router.get('/candidates/:id', wrap(async (req: Request, res: Response): Promise<void> => {
+  const { id } = req.params as { id: string };
+  if (!isUUID(id)) {
+    res.status(400).json({ error: 'BAD_REQUEST', message: 'Invalid candidate ID.' });
+    return;
+  }
+
+  const companyId = await getRecruiterCompanyId(req.user!.sub);
+  if (!companyId) {
+    res.status(403).json({ error: 'FORBIDDEN' });
+    return;
+  }
+
+  const batch = await getActiveBatch(companyId);
+  if (!batch) {
+    res.status(403).json({ error: 'FORBIDDEN', message: 'No active batch for your company.' });
+    return;
+  }
+
+  // Scope check: candidate must be allocated to this recruiter's batch
+  const allocation = await BatchCandidate.findOne({ where: { batchId: batch.id, candidateId: id } });
+  if (!allocation) {
+    res.status(403).json({ error: 'FORBIDDEN', message: 'Candidate is not in your batch.' });
+    return;
+  }
+
+  const candidate = await Candidate.findByPk(id, { include: candidateIncludes() });
+  if (!candidate) {
+    res.status(404).json({ error: 'NOT_FOUND' });
+    return;
+  }
+
+  await AuditLog.create({
+    userId: req.user!.sub,
+    action: 'VIEW_CANDIDATE',
+    entityType: 'candidate',
+    entityId: id,
+    targetCandidateId: id,
+    ipAddress: req.ip ?? null,
+    userAgent: req.headers['user-agent'] ?? null,
+    payload: null,
+  });
+
+  const data = candidate.toJSON() as unknown as Record<string, unknown>;
+  const completeness = calcCompleteness(data);
+  res.json({ candidate: { ...serializeCandidate(data, 'recruiter'), completeness } });
 }));
 
 // ── POST /api/recruiter/interviews/:batchCandidateId/propose ─────────────────
