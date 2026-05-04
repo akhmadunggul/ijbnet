@@ -158,6 +158,7 @@ apps/frontend/src/
 - v0.1.2 — Fix Caddyfile POST 405, Google OAuth fully working
 - v0.1.3 — Unlock NIK field: candidates can now self-enter encrypted NIK
 - v0.1.4 — Fix candidate photo upload (file-type ESM/CJS, multipart boundary, locked profile UX)
+- v0.1.5 — Bug fixes: recruiter page empty after batch approval, manager candidate detail blank, Google OAuth candidates invisible to admins (lpkId null)
 
-Current: v0.1.4
+Current: v0.1.5
 Live at: https://jinzai.aup.my.id

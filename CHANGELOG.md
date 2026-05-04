@@ -5,6 +5,24 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ---
 
+## [v0.1.5] - 2026-05-04
+
+### Fixed
+- **Recruiter pages empty after batch approval**: `getActiveBatch` now includes
+  `approved` status so recruiters can still see confirmed candidates and
+  interview proposals after a manager approves the batch.
+- **Manager candidate detail blank page**: `useQuery` was returning the full
+  `{ candidate: {} }` wrapper instead of unwrapping `.candidate`, causing all
+  fields to be undefined. Fixed `queryFn` and moved notes initialisation from
+  `select` (render-phase state update) to `useEffect`.
+- **Google OAuth candidates invisible to admins**: Candidates registered via
+  Google OAuth were created with `lpkId = null`, making them invisible to all
+  admins whose list filters by `lpkId`. Added a one-time LPK picker to the
+  candidate profile personal-data tab and a `GET /api/candidates/lpks` endpoint.
+  `lpkId` can now be set by the candidate once (locked after first save).
+
+---
+
 ## [v0.1.3] - 2026-04-20
 
 ### Fixed
