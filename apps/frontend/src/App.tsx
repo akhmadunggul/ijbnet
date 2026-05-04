@@ -6,6 +6,7 @@ import CandidateLayout from './pages/candidate/CandidateLayout';
 import CandidateDashboard from './pages/candidate/CandidateDashboard';
 import CandidateProfile from './pages/candidate/CandidateProfile';
 import CandidateNotifications from './pages/candidate/CandidateNotifications';
+import CandidateCVPage from './pages/candidate/CandidateCVPage';
 import AdminLayout from './pages/admin/AdminLayout';
 import AdminDashboard from './pages/admin/AdminDashboard';
 import AdminCandidates from './pages/admin/AdminCandidates';
@@ -99,6 +100,7 @@ export default function App() {
           <Route path="dashboard" element={<CandidateDashboard />} />
           <Route path="profile" element={<CandidateProfile />} />
           <Route path="notifications" element={<CandidateNotifications />} />
+          <Route path="cv" element={<CandidateCVPage />} />
         </Route>
 
         {/* Admin portal */}

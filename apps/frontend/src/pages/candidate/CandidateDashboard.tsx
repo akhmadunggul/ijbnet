@@ -123,6 +123,15 @@ export default function CandidateDashboard() {
           </div>
         )}
         <button
+          onClick={() => navigate('/portal/cv')}
+          className="flex flex-col items-center gap-2 bg-white border border-gray-100 rounded-xl p-5 hover:bg-gray-50 transition text-center"
+        >
+          <span className="text-2xl">📄</span>
+          <span className="text-sm font-medium text-gray-700">
+            {lang === 'ja' ? 'CVを見る' : 'Lihat CV / CVを見る'}
+          </span>
+        </button>
+        <button
           onClick={handleExport}
           className="flex flex-col items-center gap-2 bg-white border border-gray-100 rounded-xl p-5 hover:bg-gray-50 transition text-center"
         >
