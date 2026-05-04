@@ -6,20 +6,28 @@ import { z } from 'zod';
 import { useTranslation } from 'react-i18next';
 import { api } from '../../lib/api';
 import AuthImage from '../../components/AuthImage';
-import type { CandidateMe, CandidateData, CareerEntry, JapaneseTest } from '../../types/candidate';
+import type { CandidateMe, CandidateData, CareerEntry, JapaneseTest, CertificationEntry, EducationHistoryEntry } from '../../types/candidate';
 
 // ── Zod schemas ───────────────────────────────────────────────────────────────
 const personalSchema = z.object({
-  fullName:    z.string().min(1),
-  gender:      z.enum(['M', 'F']).nullable().optional(),
-  dateOfBirth: z.string().nullable().optional(),
-  nik:         z.string().refine((v) => v === '' || /^\d{16}$/.test(v), { message: 'NIK harus 16 digit angka' }).optional(),
-  heightCm:    z.coerce.number().nullable().optional(),
-  weightKg:    z.coerce.number().nullable().optional(),
-  email:       z.string().email().nullable().optional().or(z.literal('')),
-  phone:       z.string().nullable().optional(),
-  address:     z.string().nullable().optional(),
-  lpkId:       z.string().nullable().optional(),
+  fullName:            z.string().min(1),
+  nameKatakana:        z.string().nullable().optional(),
+  gender:              z.enum(['M', 'F']).nullable().optional(),
+  dateOfBirth:         z.string().nullable().optional(),
+  nik:                 z.string().refine((v) => v === '' || /^\d{16}$/.test(v), { message: 'NIK harus 16 digit angka' }).optional(),
+  heightCm:            z.coerce.number().nullable().optional(),
+  weightKg:            z.coerce.number().nullable().optional(),
+  selfReportedHeight:  z.coerce.number().nullable().optional(),
+  selfReportedWeight:  z.coerce.number().nullable().optional(),
+  bloodType:           z.enum(['A','B','AB','O','A+','B+','AB+','O+','Unknown']).nullable().optional(),
+  religion:            z.enum(['Islam','Kristen','Katolik','Budha','Hindu','Lainnya']).nullable().optional(),
+  hasVisitedJapan:     z.boolean().nullable().optional(),
+  hasPassport:         z.boolean().nullable().optional(),
+  hobbies:             z.string().nullable().optional(),
+  email:               z.string().email().nullable().optional().or(z.literal('')),
+  phone:               z.string().nullable().optional(),
+  address:             z.string().nullable().optional(),
+  lpkId:               z.string().nullable().optional(),
 });
 
 const sswSchema = z.object({
@@ -36,6 +44,17 @@ const educationSchema = z.object({
   eduLevel: z.string().nullable().optional(),
   eduLabel: z.string().nullable().optional(),
   eduMajor: z.string().nullable().optional(),
+});
+
+const educationHistorySchema = z.object({
+  entries: z.array(z.object({
+    id:         z.string().optional(),
+    schoolName: z.string().min(1),
+    major:      z.string().nullable().optional(),
+    startDate:  z.string().nullable().optional(),
+    endDate:    z.string().nullable().optional(),
+    sortOrder:  z.number().optional(),
+  })),
 });
 
 const careerSchema = z.object({
@@ -70,12 +89,36 @@ const workplanSchema = z.object({
   accompany:     z.enum(['none', 'yes']).optional(),
 });
 
-type PersonalForm   = z.infer<typeof personalSchema>;
-type SswForm        = z.infer<typeof sswSchema>;
-type EducationForm  = z.infer<typeof educationSchema>;
-type CareerForm     = z.infer<typeof careerSchema>;
-type TestForm       = z.infer<typeof testSchema>;
-type WorkplanForm   = z.infer<typeof workplanSchema>;
+const certificationSchema = z.object({
+  entries: z.array(z.object({
+    id:          z.string().optional(),
+    certName:    z.string().min(1),
+    certLevel:   z.string().nullable().optional(),
+    issuedDate:  z.string().nullable().optional(),
+    issuedBy:    z.string().nullable().optional(),
+  })),
+});
+
+const prMotivationSchema = z.object({
+  selfPrId:       z.string().nullable().optional(),
+  selfPrJa:       z.string().nullable().optional(),
+  motivationId:   z.string().nullable().optional(),
+  motivationJa:   z.string().nullable().optional(),
+  applyReasonId:  z.string().nullable().optional(),
+  applyReasonJa:  z.string().nullable().optional(),
+  selfIntroId:    z.string().nullable().optional(),
+  selfIntroJa:    z.string().nullable().optional(),
+});
+
+type PersonalForm          = z.infer<typeof personalSchema>;
+type SswForm               = z.infer<typeof sswSchema>;
+type EducationForm         = z.infer<typeof educationSchema>;
+type EducationHistoryForm  = z.infer<typeof educationHistorySchema>;
+type CareerForm            = z.infer<typeof careerSchema>;
+type TestForm              = z.infer<typeof testSchema>;
+type WorkplanForm          = z.infer<typeof workplanSchema>;
+type CertificationForm     = z.infer<typeof certificationSchema>;
+type PrMotivationForm      = z.infer<typeof prMotivationSchema>;
 
 // ── Shared field wrapper ──────────────────────────────────────────────────────
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
@@ -89,6 +132,7 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
 
 const inputCls = 'w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-navy-500';
 const selectCls = inputCls;
+const textareaCls = `${inputCls} resize-y`;
 
 // ── Photo upload zone ─────────────────────────────────────────────────────────
 function PhotoZone({
@@ -189,6 +233,9 @@ function PhotoZone({
 }
 
 // ── Tab 1 — Personal ──────────────────────────────────────────────────────────
+const BLOOD_TYPES = ['A','B','AB','O','A+','B+','AB+','O+','Unknown'] as const;
+const RELIGIONS   = ['Islam','Kristen','Katolik','Budha','Hindu','Lainnya'] as const;
+
 function PersonalTab({ candidate, onSave, saving }: { candidate: CandidateData; onSave: (d: PersonalForm) => void; saving: boolean }) {
   const { t } = useTranslation();
   const qc = useQueryClient();
@@ -207,16 +254,24 @@ function PersonalTab({ candidate, onSave, saving }: { candidate: CandidateData; 
   const { register, handleSubmit, formState: { isDirty, errors } } = useForm<PersonalForm>({
     resolver: zodResolver(personalSchema),
     defaultValues: {
-      fullName: candidate.fullName ?? '',
-      gender: candidate.gender ?? undefined,
-      dateOfBirth: candidate.dateOfBirth ? candidate.dateOfBirth.slice(0, 10) : '',
-      nik: candidate.nik ?? '',
-      heightCm: candidate.heightCm ?? undefined,
-      weightKg: candidate.weightKg ?? undefined,
-      email: candidate.email ?? '',
-      phone: candidate.phone ?? '',
-      address: candidate.address ?? '',
-      lpkId: candidate.lpkId ?? '',
+      fullName:           candidate.fullName ?? '',
+      nameKatakana:       candidate.nameKatakana ?? '',
+      gender:             candidate.gender ?? undefined,
+      dateOfBirth:        candidate.dateOfBirth ? candidate.dateOfBirth.slice(0, 10) : '',
+      nik:                candidate.nik ?? '',
+      heightCm:           candidate.heightCm ?? undefined,
+      weightKg:           candidate.weightKg ?? undefined,
+      selfReportedHeight: candidate.selfReportedHeight ?? undefined,
+      selfReportedWeight: candidate.selfReportedWeight ?? undefined,
+      bloodType:          candidate.bloodType ?? undefined,
+      religion:           candidate.religion ?? undefined,
+      hasVisitedJapan:    candidate.hasVisitedJapan ?? false,
+      hasPassport:        candidate.hasPassport ?? false,
+      hobbies:            candidate.hobbies ?? '',
+      email:              candidate.email ?? '',
+      phone:              candidate.phone ?? '',
+      address:            candidate.address ?? '',
+      lpkId:              candidate.lpkId ?? '',
     },
   });
 
@@ -231,36 +286,64 @@ function PersonalTab({ candidate, onSave, saving }: { candidate: CandidateData; 
 
   return (
     <form onSubmit={handleSubmit(handlePersonalSubmit)} className="space-y-4">
-      <Field label={t('dpFullName') + ' *'}>
-        <input {...register('fullName')} className={inputCls} />
-        {errors.fullName && <p className="text-xs text-red-500 mt-1">{t('errorRequired')}</p>}
-      </Field>
-      <Field label={t('dpGender')}>
+      <div className="grid grid-cols-2 gap-4">
+        <Field label={t('candidate.profile.personal.fullName') + ' *'}>
+          <input {...register('fullName')} className={inputCls} />
+          {errors.fullName && <p className="text-xs text-red-500 mt-1">{t('errorRequired')}</p>}
+        </Field>
+        <Field label={t('candidate.profile.personal.nameKatakana')}>
+          <input {...register('nameKatakana')} className={inputCls} placeholder="例: ヤマダ タロウ" />
+        </Field>
+      </div>
+      <Field label={t('candidate.profile.personal.gender')}>
         <div className="flex gap-4 pt-1">
-          <label className="flex items-center gap-2 text-sm"><input type="radio" value="M" {...register('gender')} /> {t('dpGender') === 'Gender' ? 'Male' : 'Laki-laki / 男性'}</label>
-          <label className="flex items-center gap-2 text-sm"><input type="radio" value="F" {...register('gender')} /> {t('dpGender') === 'Gender' ? 'Female' : 'Perempuan / 女性'}</label>
+          <label className="flex items-center gap-2 text-sm"><input type="radio" value="M" {...register('gender')} /> {t('candidate.profile.personal.genderM')} / 男性</label>
+          <label className="flex items-center gap-2 text-sm"><input type="radio" value="F" {...register('gender')} /> {t('candidate.profile.personal.genderF')} / 女性</label>
         </div>
       </Field>
       <div className="grid grid-cols-2 gap-4">
-        <Field label={t('dpDob')}><input type="date" {...register('dateOfBirth')} className={inputCls} /></Field>
+        <Field label={t('candidate.profile.personal.dob')}><input type="date" {...register('dateOfBirth')} className={inputCls} /></Field>
         <Field label={t('dpNik')}>
-          <input
-            {...register('nik')}
-            className={inputCls}
-            placeholder="16 digit NIK"
-            maxLength={16}
-            inputMode="numeric"
-          />
+          <input {...register('nik')} className={inputCls} placeholder="16 digit NIK" maxLength={16} inputMode="numeric" />
           {errors.nik && <p className="text-xs text-red-500 mt-1">{errors.nik.message}</p>}
         </Field>
       </div>
       <div className="grid grid-cols-2 gap-4">
-        <Field label={t('dpHeight') + ' (cm)'}><input type="number" step="0.1" {...register('heightCm')} className={inputCls} /></Field>
-        <Field label={t('dpWeight') + ' (kg)'}><input type="number" step="0.1" {...register('weightKg')} className={inputCls} /></Field>
+        <Field label={t('candidate.profile.personal.bloodType')}>
+          <select {...register('bloodType')} className={selectCls}>
+            <option value="">— Pilih —</option>
+            {BLOOD_TYPES.map((b) => <option key={b} value={b}>{b}</option>)}
+          </select>
+        </Field>
+        <Field label={t('candidate.profile.personal.religion')}>
+          <select {...register('religion')} className={selectCls}>
+            <option value="">— Pilih —</option>
+            {RELIGIONS.map((r) => <option key={r} value={r}>{r}</option>)}
+          </select>
+        </Field>
       </div>
-      <Field label={t('dpEmail')}><input type="email" {...register('email')} className={inputCls} /></Field>
-      <Field label={t('dpPhone')}><input {...register('phone')} className={inputCls} /></Field>
-      <Field label={t('dpAddress')}><textarea {...register('address')} rows={3} className={inputCls} /></Field>
+      <div className="grid grid-cols-2 gap-4">
+        <Field label={t('candidate.profile.personal.height') + ' (cm)'}><input type="number" step="0.1" {...register('heightCm')} className={inputCls} /></Field>
+        <Field label={t('candidate.profile.personal.weight') + ' (kg)'}><input type="number" step="0.1" {...register('weightKg')} className={inputCls} /></Field>
+      </div>
+      <div className="grid grid-cols-2 gap-4">
+        <Field label={t('candidate.profile.personal.selfReportedHeight')}><input type="number" step="0.1" {...register('selfReportedHeight')} className={inputCls} /></Field>
+        <Field label={t('candidate.profile.personal.selfReportedWeight')}><input type="number" step="0.1" {...register('selfReportedWeight')} className={inputCls} /></Field>
+      </div>
+      <div className="flex gap-6 pt-1">
+        <label className="flex items-center gap-2 text-sm">
+          <input type="checkbox" {...register('hasVisitedJapan')} className="h-4 w-4 accent-navy-700" />
+          {t('candidate.profile.personal.hasVisitedJapan')}
+        </label>
+        <label className="flex items-center gap-2 text-sm">
+          <input type="checkbox" {...register('hasPassport')} className="h-4 w-4 accent-navy-700" />
+          {t('candidate.profile.personal.hasPassport')}
+        </label>
+      </div>
+      <Field label={t('candidate.profile.personal.hobbies')}><input {...register('hobbies')} className={inputCls} /></Field>
+      <Field label={t('candidate.profile.personal.email')}><input type="email" {...register('email')} className={inputCls} /></Field>
+      <Field label={t('candidate.profile.personal.phone')}><input {...register('phone')} className={inputCls} /></Field>
+      <Field label={t('candidate.profile.personal.address')}><textarea {...register('address')} rows={3} className={inputCls} /></Field>
       <Field label={t('candidate.profile.personal.lpk') + ' *'}>
         <select
           {...register('lpkId')}
@@ -275,7 +358,7 @@ function PersonalTab({ candidate, onSave, saving }: { candidate: CandidateData; 
           ))}
         </select>
         {lpkLocked && (
-          <p className="text-xs text-gray-400 mt-1">{t('colLpk')} {t('candidate.profile.locked').split('.')[0]}.</p>
+          <p className="text-xs text-gray-400 mt-1">{t('colLpk')} — {t('candidate.profile.locked').split('.')[0]}.</p>
         )}
       </Field>
       <div className="flex items-center gap-3 pt-2">
@@ -306,7 +389,7 @@ function SswTab({ candidate, onSave, saving }: { candidate: CandidateData; onSav
 
   return (
     <form onSubmit={handleSubmit(onSave)} className="space-y-4">
-      <Field label={t('sswTitle') + ' — ' + t('sswKubun')}>
+      <Field label={t('sswTitle') + ' — ' + t('candidate.profile.ssw.kubun')}>
         <div className="flex gap-4 pt-1">
           <label className="flex items-center gap-2 text-sm"><input type="radio" value="SSW1" {...register('sswKubun')} /> SSW1</label>
           <label className="flex items-center gap-2 text-sm"><input type="radio" value="SSW2" {...register('sswKubun')} /> SSW2</label>
@@ -314,14 +397,14 @@ function SswTab({ candidate, onSave, saving }: { candidate: CandidateData; onSav
       </Field>
       <Field label="Job Category"><input {...register('jobCategory')} className={inputCls} /></Field>
       <div className="grid grid-cols-2 gap-4">
-        <Field label={t('sswSector') + ' (ID)'}><input {...register('sswSectorId')} className={inputCls} /></Field>
-        <Field label={t('sswField') + ' (ID)'}><input {...register('sswFieldId')} className={inputCls} /></Field>
+        <Field label={t('candidate.profile.ssw.sectorId')}><input {...register('sswSectorId')} className={inputCls} /></Field>
+        <Field label={t('candidate.profile.ssw.fieldId')}><input {...register('sswFieldId')} className={inputCls} /></Field>
       </div>
       <div className="grid grid-cols-2 gap-4">
-        <Field label={t('sswSector') + ' (JA)'}><input {...register('sswSectorJa')} className={inputCls} /></Field>
-        <Field label={t('sswField') + ' (JA)'}><input {...register('sswFieldJa')} className={inputCls} /></Field>
+        <Field label={t('candidate.profile.ssw.sectorJa')}><input {...register('sswSectorJa')} className={inputCls} /></Field>
+        <Field label={t('candidate.profile.ssw.fieldJa')}><input {...register('sswFieldJa')} className={inputCls} /></Field>
       </div>
-      <Field label={t('sswStudy')}><input {...register('jpStudyDuration')} className={inputCls} placeholder="18 bulan" /></Field>
+      <Field label={t('candidate.profile.ssw.jpStudy')}><input {...register('jpStudyDuration')} className={inputCls} placeholder="18 bulan" /></Field>
       <div className="flex items-center gap-3 pt-2">
         <button type="submit" disabled={saving} className="px-4 py-2 bg-navy-700 text-white text-sm rounded-lg hover:bg-navy-900 transition disabled:opacity-60">
           {saving ? t('candidate.profile.saving') : t('candidate.profile.save')}
@@ -337,7 +420,9 @@ const EDU_LEVELS = ['SD','SMP','SMA','SMK','D1','D2','D3','D4','S1','S2','S3'];
 
 function EducationTab({ candidate, onSave, saving }: { candidate: CandidateData; onSave: (d: EducationForm) => void; saving: boolean }) {
   const { t } = useTranslation();
-  const { register, handleSubmit, formState: { isDirty } } = useForm<EducationForm>({
+  const qc = useQueryClient();
+
+  const { register: reg, handleSubmit, formState: { isDirty } } = useForm<EducationForm>({
     resolver: zodResolver(educationSchema),
     defaultValues: {
       eduLevel: candidate.eduLevel ?? '',
@@ -346,23 +431,91 @@ function EducationTab({ candidate, onSave, saving }: { candidate: CandidateData;
     },
   });
 
+  const historyForm = useForm<EducationHistoryForm>({
+    defaultValues: {
+      entries: (candidate.educationHistory ?? []).map((e, i) => ({
+        ...e,
+        startDate: e.startDate ? e.startDate.slice(0, 10) : '',
+        endDate: e.endDate ? e.endDate.slice(0, 10) : '',
+        sortOrder: e.sortOrder ?? i,
+      })),
+    },
+  });
+  const { fields, append, remove, move } = useFieldArray({ control: historyForm.control, name: 'entries' });
+
+  const historyMutation = useMutation({
+    mutationFn: (data: EducationHistoryForm) =>
+      api.put('/candidates/me/education-history', data).then((r) => r.data),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['my-candidate'] }),
+  });
+
   return (
-    <form onSubmit={handleSubmit(onSave)} className="space-y-4">
-      <Field label={t('candidate.profile.education.level')}>
-        <select {...register('eduLevel')} className={selectCls}>
-          <option value="">— Pilih —</option>
-          {EDU_LEVELS.map((l) => <option key={l} value={l}>{l}</option>)}
-        </select>
-      </Field>
-      <Field label={t('candidate.profile.education.label')}><input {...register('eduLabel')} className={inputCls} placeholder="e.g. SMK Negeri 1 Jakarta" /></Field>
-      <Field label="Major / Jurusan"><input {...register('eduMajor')} className={inputCls} /></Field>
-      <div className="flex items-center gap-3 pt-2">
-        <button type="submit" disabled={saving} className="px-4 py-2 bg-navy-700 text-white text-sm rounded-lg hover:bg-navy-900 transition disabled:opacity-60">
-          {saving ? t('candidate.profile.saving') : t('candidate.profile.save')}
-        </button>
-        {isDirty && <span className="text-xs text-amber-600">{t('candidate.profile.unsaved')}</span>}
+    <div className="space-y-8">
+      {/* Highest education level */}
+      <div>
+        <p className="text-sm font-semibold text-gray-700 mb-4">{t('candidate.profile.education.level')}</p>
+        <form onSubmit={handleSubmit(onSave)} className="space-y-4">
+          <Field label={t('candidate.profile.education.level')}>
+            <select {...reg('eduLevel')} className={selectCls}>
+              <option value="">— Pilih —</option>
+              {EDU_LEVELS.map((l) => <option key={l} value={l}>{l}</option>)}
+            </select>
+          </Field>
+          <Field label={t('candidate.profile.education.label')}><input {...reg('eduLabel')} className={inputCls} placeholder="e.g. SMK Negeri 1 Jakarta" /></Field>
+          <Field label={t('candidate.profile.education.major')}><input {...reg('eduMajor')} className={inputCls} /></Field>
+          <div className="flex items-center gap-3">
+            <button type="submit" disabled={saving} className="px-4 py-2 bg-navy-700 text-white text-sm rounded-lg hover:bg-navy-900 transition disabled:opacity-60">
+              {saving ? t('candidate.profile.saving') : t('candidate.profile.save')}
+            </button>
+            {isDirty && <span className="text-xs text-amber-600">{t('candidate.profile.unsaved')}</span>}
+          </div>
+        </form>
       </div>
-    </form>
+
+      <hr className="border-gray-100" />
+
+      {/* Full education history */}
+      <div>
+        <p className="text-sm font-semibold text-gray-700 mb-4">{t('candidate.profile.education.historyTitle')}</p>
+        <form onSubmit={historyForm.handleSubmit((d) => historyMutation.mutate(d))} className="space-y-4">
+          {fields.map((field, i) => (
+            <div key={field.id} className="border border-gray-100 rounded-xl p-4 space-y-3 bg-gray-50">
+              <div className="flex items-center justify-between">
+                <p className="text-xs font-medium text-gray-500">#{i + 1}</p>
+                <div className="flex gap-1">
+                  <button type="button" disabled={i === 0} onClick={() => move(i, i - 1)} className="text-xs px-2 py-1 border rounded hover:bg-white disabled:opacity-30">▲</button>
+                  <button type="button" disabled={i === fields.length - 1} onClick={() => move(i, i + 1)} className="text-xs px-2 py-1 border rounded hover:bg-white disabled:opacity-30">▼</button>
+                  <button type="button" onClick={() => remove(i)} className="text-xs px-2 py-1 border border-red-200 text-red-500 rounded hover:bg-red-50">✕</button>
+                </div>
+              </div>
+              <Field label={t('candidate.profile.education.schoolName')}>
+                <input {...historyForm.register(`entries.${i}.schoolName`)} className={inputCls} />
+              </Field>
+              <Field label={t('candidate.profile.education.major')}>
+                <input {...historyForm.register(`entries.${i}.major`)} className={inputCls} />
+              </Field>
+              <div className="grid grid-cols-2 gap-3">
+                <Field label={t('candidate.profile.education.startDate')}><input type="date" {...historyForm.register(`entries.${i}.startDate`)} className={inputCls} /></Field>
+                <Field label={t('candidate.profile.education.endDate')}><input type="date" {...historyForm.register(`entries.${i}.endDate`)} className={inputCls} /></Field>
+              </div>
+            </div>
+          ))}
+          <button
+            type="button"
+            onClick={() => append({ schoolName: '', major: '', startDate: '', endDate: '', sortOrder: fields.length })}
+            className="text-sm text-navy-600 hover:underline"
+          >
+            + {t('candidate.profile.education.addEntry')}
+          </button>
+          <div className="flex items-center gap-3 pt-2">
+            <button type="submit" disabled={historyMutation.isPending} className="px-4 py-2 bg-navy-700 text-white text-sm rounded-lg hover:bg-navy-900 transition disabled:opacity-60">
+              {historyMutation.isPending ? t('candidate.profile.saving') : t('candidate.profile.save')}
+            </button>
+            {historyForm.formState.isDirty && <span className="text-xs text-amber-600">{t('candidate.profile.unsaved')}</span>}
+          </div>
+        </form>
+      </div>
+    </div>
   );
 }
 
@@ -395,15 +548,15 @@ function CareerTab({ candidate, saving }: { candidate: CandidateData; saving: bo
             </div>
           </div>
           <div className="grid grid-cols-2 gap-3">
-            <Field label="Company Name"><input {...register(`entries.${i}.companyName`)} className={inputCls} /></Field>
-            <Field label="Division"><input {...register(`entries.${i}.division`)} className={inputCls} /></Field>
-            <Field label="Skill Group"><input {...register(`entries.${i}.skillGroup`)} className={inputCls} /></Field>
-            <Field label="Period"><input {...register(`entries.${i}.period`)} className={inputCls} placeholder="Jan 2022 – Mar 2024" /></Field>
+            <Field label={t('candidate.profile.career.company')}><input {...register(`entries.${i}.companyName`)} className={inputCls} /></Field>
+            <Field label={t('candidate.profile.career.division')}><input {...register(`entries.${i}.division`)} className={inputCls} /></Field>
+            <Field label={t('candidate.profile.career.skillGroup')}><input {...register(`entries.${i}.skillGroup`)} className={inputCls} /></Field>
+            <Field label={t('candidate.profile.career.period')}><input {...register(`entries.${i}.period`)} className={inputCls} placeholder="Jan 2022 – Mar 2024" /></Field>
           </div>
         </div>
       ))}
       <button type="button" onClick={() => append({ companyName: '', division: '', skillGroup: '', period: '', sortOrder: fields.length })} className="text-sm text-navy-600 hover:underline">
-        + Add Entry
+        + {t('candidate.profile.career.addEntry')}
       </button>
       <div className="flex items-center gap-3 pt-2">
         <button type="submit" disabled={careerMutation.isPending} className="px-4 py-2 bg-navy-700 text-white text-sm rounded-lg hover:bg-navy-900 transition disabled:opacity-60">
@@ -423,7 +576,7 @@ function JapaneseTab({ candidate }: { candidate: CandidateData }) {
   const qc = useQueryClient();
   const { control, register, handleSubmit, formState: { isDirty } } = useForm<TestForm>({
     defaultValues: {
-      entries: (candidate.tests ?? []).map((t) => ({ ...t, testDate: t.testDate ? t.testDate.slice(0, 10) : '' })),
+      entries: (candidate.tests ?? []).map((tst) => ({ ...tst, testDate: tst.testDate ? tst.testDate.slice(0, 10) : '' })),
     },
   });
   const { fields, append, remove } = useFieldArray({ control, name: 'entries' });
@@ -441,18 +594,18 @@ function JapaneseTab({ candidate }: { candidate: CandidateData }) {
           <div key={field.id} className="border border-gray-100 rounded-xl p-4 space-y-3 bg-gray-50">
             <div className="flex justify-between">
               <p className="text-xs font-medium text-gray-500">Test #{i + 1}</p>
-              <button type="button" onClick={() => remove(i)} className="text-xs text-red-500 hover:underline">Remove</button>
+              <button type="button" onClick={() => remove(i)} className="text-xs text-red-500 hover:underline">{t('btnDelete')}</button>
             </div>
             <div className="grid grid-cols-2 gap-3">
-              <Field label="Test Name">
+              <Field label={t('candidate.profile.japanese.testName')}>
                 <select {...register(`entries.${i}.testName`)} className={selectCls}>
                   <option value="">— Pilih —</option>
                   {JLPT_TESTS.map((n) => <option key={n} value={n}>{n}</option>)}
                 </select>
               </Field>
-              <Field label="Score"><input type="number" {...register(`entries.${i}.score`)} className={inputCls} /></Field>
-              <Field label="Test Date"><input type="date" {...register(`entries.${i}.testDate`)} className={inputCls} /></Field>
-              <Field label="Pass">
+              <Field label={t('candidate.profile.japanese.score')}><input type="number" {...register(`entries.${i}.score`)} className={inputCls} /></Field>
+              <Field label={t('candidate.profile.japanese.testDate')}><input type="date" {...register(`entries.${i}.testDate`)} className={inputCls} /></Field>
+              <Field label={t('candidate.profile.japanese.pass')}>
                 <div className="flex items-center gap-2 pt-2">
                   <input type="checkbox" {...register(`entries.${i}.pass`)} className="h-4 w-4 accent-navy-700" />
                   <span className="text-sm text-gray-600">Lulus / 合格</span>
@@ -462,7 +615,7 @@ function JapaneseTab({ candidate }: { candidate: CandidateData }) {
           </div>
         ))}
         <button type="button" onClick={() => append({ testName: '', score: undefined, pass: false, testDate: '' })} className="text-sm text-navy-600 hover:underline">
-          + Add Test
+          + {t('candidate.profile.japanese.addTest')}
         </button>
         <div className="flex items-center gap-3">
           <button type="submit" disabled={testsMutation.isPending} className="px-4 py-2 bg-navy-700 text-white text-sm rounded-lg hover:bg-navy-900 transition disabled:opacity-60">
@@ -474,12 +627,12 @@ function JapaneseTab({ candidate }: { candidate: CandidateData }) {
 
       {/* Weekly tests — read-only */}
       <div>
-        <p className="text-sm font-medium text-gray-700 mb-3">Weekly Test Scores (read-only)</p>
+        <p className="text-sm font-medium text-gray-700 mb-3">{t('candidate.profile.japanese.weeklyTests')} (read-only)</p>
         {(candidate.weeklyTests ?? []).length === 0 ? (
           <p className="text-xs text-gray-400">{t('noData')}</p>
         ) : (
           <table className="w-full text-sm border-collapse">
-            <thead><tr className="text-left text-xs text-gray-500 border-b">{['Course','Week','Score','Date'].map((h) => <th key={h} className="pb-2 pr-4">{h}</th>)}</tr></thead>
+            <thead><tr className="text-left text-xs text-gray-500 border-b">{[t('candidate.profile.japanese.course'), t('candidate.profile.japanese.week'), t('candidate.profile.japanese.score'), 'Date'].map((h) => <th key={h} className="pb-2 pr-4">{h}</th>)}</tr></thead>
             <tbody>
               {candidate.weeklyTests.map((wt) => (
                 <tr key={wt.id} className="border-b border-gray-50">
@@ -517,25 +670,28 @@ function WorkplanTab({ candidate, onSave, saving }: { candidate: CandidateData; 
 
   return (
     <form onSubmit={handleSubmit(onSave)} className="space-y-4">
-      <Field label={t('workplanDuration')}><input {...register('workplanDuration')} className={inputCls} placeholder="3 tahun" /></Field>
-      <Field label={t('workplanGoal')}><textarea {...register('workplanGoal')} rows={3} className={inputCls} /></Field>
-      <Field label={t('workplanAfter')}><textarea {...register('workplanAfter')} rows={3} className={inputCls} /></Field>
-      <Field label={t('workplanExpectation')}><textarea {...register('workplanExpectation')} rows={3} className={inputCls} /></Field>
-      <Field label="Marital Status">
+      <Field label={t('candidate.profile.workplan.duration')}><input {...register('workplanDuration')} className={inputCls} placeholder="3 tahun" /></Field>
+      <Field label={t('candidate.profile.workplan.goal')}><textarea {...register('workplanGoal')} rows={3} className={textareaCls} /></Field>
+      <Field label={t('candidate.profile.workplan.after')}><textarea {...register('workplanAfter')} rows={3} className={textareaCls} /></Field>
+      <Field label={t('candidate.profile.workplan.expectation')}><textarea {...register('workplanExpectation')} rows={3} className={textareaCls} /></Field>
+      <Field label={t('candidate.profile.workplan.marital')}>
         <select {...register('maritalStatus')} className={selectCls}>
           <option value="">—</option>
-          {['single','married','divorced','widowed'].map((s) => <option key={s} value={s}>{s}</option>)}
+          <option value="single">{t('candidate.profile.workplan.maritalSingle')}</option>
+          <option value="married">{t('candidate.profile.workplan.maritalMarried')}</option>
+          <option value="divorced">{t('candidate.profile.workplan.maritalDivorced')}</option>
+          <option value="widowed">{t('candidate.profile.workplan.maritalWidowed')}</option>
         </select>
       </Field>
       {marital === 'married' && (
-        <Field label="Spouse Info"><input {...register('spouseInfo')} className={inputCls} /></Field>
+        <Field label={t('candidate.profile.workplan.spouse')}><input {...register('spouseInfo')} className={inputCls} /></Field>
       )}
       <div className="grid grid-cols-2 gap-4">
-        <Field label="Children Count"><input type="number" min={0} {...register('childrenCount')} className={inputCls} /></Field>
-        <Field label="Accompany Family">
+        <Field label={t('candidate.profile.workplan.children')}><input type="number" min={0} {...register('childrenCount')} className={inputCls} /></Field>
+        <Field label={t('candidate.profile.workplan.accompany')}>
           <div className="flex gap-4 pt-1">
-            <label className="flex items-center gap-2 text-sm"><input type="radio" value="none" {...register('accompany')} /> No</label>
-            <label className="flex items-center gap-2 text-sm"><input type="radio" value="yes" {...register('accompany')} /> Yes</label>
+            <label className="flex items-center gap-2 text-sm"><input type="radio" value="none" {...register('accompany')} /> {t('candidate.profile.workplan.accompanyNone')}</label>
+            <label className="flex items-center gap-2 text-sm"><input type="radio" value="yes" {...register('accompany')} /> {t('candidate.profile.workplan.accompanyYes')}</label>
           </div>
         </Field>
       </div>
@@ -568,8 +724,148 @@ function PhotosTab({ candidate }: { candidate: CandidateData }) {
   );
 }
 
+// ── Tab 8 — Certifications ────────────────────────────────────────────────────
+function CertificationsTab({ candidate }: { candidate: CandidateData }) {
+  const { t } = useTranslation();
+  const qc = useQueryClient();
+  const { control, register, handleSubmit, formState: { isDirty } } = useForm<CertificationForm>({
+    defaultValues: {
+      entries: (candidate.certifications ?? []).map((c) => ({
+        ...c,
+        issuedDate: c.issuedDate ? c.issuedDate.slice(0, 10) : '',
+      })),
+    },
+  });
+  const { fields, append, remove } = useFieldArray({ control, name: 'entries' });
+
+  const certMutation = useMutation({
+    mutationFn: (data: CertificationForm) =>
+      api.put('/candidates/me/certifications', data).then((r) => r.data),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['my-candidate'] }),
+  });
+
+  return (
+    <form onSubmit={handleSubmit((d) => certMutation.mutate(d))} className="space-y-4">
+      {fields.map((field, i) => (
+        <div key={field.id} className="border border-gray-100 rounded-xl p-4 space-y-3 bg-gray-50">
+          <div className="flex justify-between items-center">
+            <p className="text-xs font-medium text-gray-500">#{i + 1}</p>
+            <button type="button" onClick={() => remove(i)} className="text-xs text-red-500 hover:underline">{t('btnDelete')}</button>
+          </div>
+          <Field label={t('candidate.profile.certifications.certName') + ' *'}>
+            <input {...register(`entries.${i}.certName`)} className={inputCls} />
+          </Field>
+          <div className="grid grid-cols-2 gap-3">
+            <Field label={t('candidate.profile.certifications.certLevel')}>
+              <input {...register(`entries.${i}.certLevel`)} className={inputCls} />
+            </Field>
+            <Field label={t('candidate.profile.certifications.issuedDate')}>
+              <input type="date" {...register(`entries.${i}.issuedDate`)} className={inputCls} />
+            </Field>
+          </div>
+          <Field label={t('candidate.profile.certifications.issuedBy')}>
+            <input {...register(`entries.${i}.issuedBy`)} className={inputCls} />
+          </Field>
+        </div>
+      ))}
+      <button
+        type="button"
+        onClick={() => append({ certName: '', certLevel: '', issuedDate: '', issuedBy: '' })}
+        className="text-sm text-navy-600 hover:underline"
+      >
+        + {t('candidate.profile.certifications.addEntry')}
+      </button>
+      <div className="flex items-center gap-3 pt-2">
+        <button type="submit" disabled={certMutation.isPending} className="px-4 py-2 bg-navy-700 text-white text-sm rounded-lg hover:bg-navy-900 transition disabled:opacity-60">
+          {certMutation.isPending ? t('candidate.profile.saving') : t('candidate.profile.save')}
+        </button>
+        {isDirty && <span className="text-xs text-amber-600">{t('candidate.profile.unsaved')}</span>}
+      </div>
+    </form>
+  );
+}
+
+// ── Tab 9 — PR & Motivation ───────────────────────────────────────────────────
+function PrMotivationTab({ candidate, onSave, saving }: { candidate: CandidateData; onSave: (d: PrMotivationForm) => void; saving: boolean }) {
+  const { t } = useTranslation();
+  const { register, handleSubmit, formState: { isDirty } } = useForm<PrMotivationForm>({
+    resolver: zodResolver(prMotivationSchema),
+    defaultValues: {
+      selfPrId:      candidate.selfPrId ?? '',
+      selfPrJa:      candidate.selfPrJa ?? '',
+      motivationId:  candidate.motivationId ?? '',
+      motivationJa:  candidate.motivationJa ?? '',
+      applyReasonId: candidate.applyReasonId ?? '',
+      applyReasonJa: candidate.applyReasonJa ?? '',
+      selfIntroId:   candidate.selfIntroId ?? '',
+      selfIntroJa:   candidate.selfIntroJa ?? '',
+    },
+  });
+
+  return (
+    <form onSubmit={handleSubmit(onSave)} className="space-y-6">
+      <p className="text-xs text-gray-500">{t('candidate.profile.prMotivation.bilingualHint')}</p>
+
+      <div className="space-y-2">
+        <p className="text-sm font-semibold text-gray-700">{t('candidate.profile.prMotivation.selfPr')}</p>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <Field label="Indonesia">
+            <textarea {...register('selfPrId')} rows={4} className={textareaCls} />
+          </Field>
+          <Field label="日本語">
+            <textarea {...register('selfPrJa')} rows={4} className={textareaCls} />
+          </Field>
+        </div>
+      </div>
+
+      <div className="space-y-2">
+        <p className="text-sm font-semibold text-gray-700">{t('candidate.profile.prMotivation.motivation')}</p>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <Field label="Indonesia">
+            <textarea {...register('motivationId')} rows={4} className={textareaCls} />
+          </Field>
+          <Field label="日本語">
+            <textarea {...register('motivationJa')} rows={4} className={textareaCls} />
+          </Field>
+        </div>
+      </div>
+
+      <div className="space-y-2">
+        <p className="text-sm font-semibold text-gray-700">{t('candidate.profile.prMotivation.applyReason')}</p>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <Field label="Indonesia">
+            <textarea {...register('applyReasonId')} rows={4} className={textareaCls} />
+          </Field>
+          <Field label="日本語">
+            <textarea {...register('applyReasonJa')} rows={4} className={textareaCls} />
+          </Field>
+        </div>
+      </div>
+
+      <div className="space-y-2">
+        <p className="text-sm font-semibold text-gray-700">{t('candidate.profile.prMotivation.selfIntro')}</p>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <Field label="Indonesia">
+            <textarea {...register('selfIntroId')} rows={4} className={textareaCls} />
+          </Field>
+          <Field label="日本語">
+            <textarea {...register('selfIntroJa')} rows={4} className={textareaCls} />
+          </Field>
+        </div>
+      </div>
+
+      <div className="flex items-center gap-3 pt-2">
+        <button type="submit" disabled={saving} className="px-4 py-2 bg-navy-700 text-white text-sm rounded-lg hover:bg-navy-900 transition disabled:opacity-60">
+          {saving ? t('candidate.profile.saving') : t('candidate.profile.save')}
+        </button>
+        {isDirty && <span className="text-xs text-amber-600">{t('candidate.profile.unsaved')}</span>}
+      </div>
+    </form>
+  );
+}
+
 // ── Main CandidateProfile ─────────────────────────────────────────────────────
-const TABS = ['tab1','tab2','tab3','tab4','tab5','tab6','tab7'] as const;
+const TABS = ['tab1','tab2','tab3','tab4','tab5','tab6','tab7','tab8','tab9'] as const;
 type TabKey = typeof TABS[number];
 
 export default function CandidateProfile() {
@@ -615,6 +911,8 @@ export default function CandidateProfile() {
     tab5: t('candidate.profile.tab5'),
     tab6: t('candidate.profile.tab6'),
     tab7: t('candidate.profile.tab7'),
+    tab8: t('candidate.profile.tab8'),
+    tab9: t('candidate.profile.tab9'),
   };
 
   return (
@@ -631,14 +929,14 @@ export default function CandidateProfile() {
             disabled={submitMutation.isPending}
             className="px-4 py-2 bg-green-600 text-white text-sm rounded-lg hover:bg-green-700 transition disabled:opacity-60 shrink-0"
           >
-            {submitMutation.isPending ? '…' : t('candidate.profile.submit')}
+            {submitMutation.isPending ? '…' : t('candidate.profile.submitBtn')}
           </button>
         )}
       </div>
 
       {isLocked && (
         <div className="mb-4 bg-amber-50 border border-amber-200 rounded-lg px-4 py-3 text-sm text-amber-700">
-          🔒 {t('candidate.profile.locked')}
+          {t('candidate.profile.lockedBanner')}
         </div>
       )}
 
@@ -668,6 +966,8 @@ export default function CandidateProfile() {
         {activeTab === 'tab5' && <JapaneseTab candidate={candidate} />}
         {activeTab === 'tab6' && <WorkplanTab candidate={candidate} onSave={(d) => handleSave(d as Record<string, unknown>)} saving={saving} />}
         {activeTab === 'tab7' && <PhotosTab candidate={candidate} />}
+        {activeTab === 'tab8' && <CertificationsTab candidate={candidate} />}
+        {activeTab === 'tab9' && <PrMotivationTab candidate={candidate} onSave={(d) => handleSave(d as Record<string, unknown>)} saving={saving} />}
       </div>
     </div>
   );

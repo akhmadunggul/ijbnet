@@ -29,6 +29,23 @@ export interface CareerEntry {
   sortOrder: number;
 }
 
+export interface CertificationEntry {
+  id?: string;
+  certName: string;
+  certLevel: string | null;
+  issuedDate: string | null;
+  issuedBy: string | null;
+}
+
+export interface EducationHistoryEntry {
+  id?: string;
+  schoolName: string;
+  major: string | null;
+  startDate: string | null;
+  endDate: string | null;
+  sortOrder: number;
+}
+
 export interface CandidateData {
   id: string;
   candidateCode: string;
@@ -37,10 +54,18 @@ export interface CandidateData {
   consentGiven: boolean;
   consentGivenAt: string | null;
   fullName: string;
+  nameKatakana: string | null;
   gender: 'M' | 'F' | null;
   dateOfBirth: string | null;
   heightCm: number | null;
   weightKg: number | null;
+  selfReportedHeight: number | null;
+  selfReportedWeight: number | null;
+  bloodType: 'A' | 'B' | 'AB' | 'O' | 'A+' | 'B+' | 'AB+' | 'O+' | 'Unknown' | null;
+  religion: 'Islam' | 'Kristen' | 'Katolik' | 'Budha' | 'Hindu' | 'Lainnya' | null;
+  hasVisitedJapan: boolean | null;
+  hasPassport: boolean | null;
+  hobbies: string | null;
   nik: string | null;
   email: string | null;
   phone: string | null;
@@ -59,6 +84,14 @@ export interface CandidateData {
   spouseInfo: string | null;
   childrenCount: number;
   accompany: 'none' | 'yes';
+  selfPrId: string | null;
+  selfPrJa: string | null;
+  motivationId: string | null;
+  motivationJa: string | null;
+  applyReasonId: string | null;
+  applyReasonJa: string | null;
+  selfIntroId: string | null;
+  selfIntroJa: string | null;
   workplanDuration: string | null;
   workplanGoal: string | null;
   workplanAfter: string | null;
@@ -71,6 +104,8 @@ export interface CandidateData {
   tests: JapaneseTest[];
   weeklyTests: WeeklyTest[];
   career: CareerEntry[];
+  certifications: CertificationEntry[];
+  educationHistory: EducationHistoryEntry[];
   videos: unknown[];
   tools: unknown[];
 }

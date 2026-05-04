@@ -208,12 +208,20 @@
       },
       "personal": {
         "fullName": "氏名",
+        "nameKatakana": "氏名（カタカナ）",
         "gender": "性別",
         "genderM": "男性",
         "genderF": "女性",
         "dob": "生年月日",
         "height": "身長（cm）",
         "weight": "体重（kg）",
+        "selfReportedHeight": "自己申告身長（cm）",
+        "selfReportedWeight": "自己申告体重（kg）",
+        "bloodType": "血液型",
+        "religion": "宗教",
+        "hasVisitedJapan": "日本渡航経験",
+        "hasPassport": "パスポート所持",
+        "hobbies": "趣味",
         "phone": "電話番号",
         "email": "メールアドレス",
         "address": "住所",
@@ -229,9 +237,14 @@
         "jpStudy": "日本語学習期間"
       },
       "education": {
-        "level": "学歴",
-        "label": "学校名・大学名",
-        "major": "専攻"
+        "level": "最終学歴",
+        "label": "学校名・大学名（最終）",
+        "major": "専攻",
+        "historyTitle": "学歴詳細",
+        "addEntry": "学歴を追加",
+        "schoolName": "学校名・大学名",
+        "startDate": "開始",
+        "endDate": "終了"
       },
       "career": {
         "addEntry": "職歴を追加",
@@ -272,6 +285,26 @@
         "dropHint": "クリックまたはドラッグして写真をアップロード",
         "uploading": "アップロード中…",
         "requirements": "JPG/PNG/WebP、最大5MB"
+      },
+      "tab8": "資格・認定",
+      "tab9": "PRと志望動機",
+      "certifications": {
+        "addEntry": "資格を追加",
+        "certName": "資格名",
+        "certLevel": "レベル",
+        "issuedDate": "取得日",
+        "issuedBy": "発行機関"
+      },
+      "prMotivation": {
+        "selfPr": "得意なこと（インドネシア語）",
+        "selfPrJa": "得意なこと（日本語）",
+        "motivation": "志望理由（インドネシア語）",
+        "motivationJa": "志望理由（日本語）",
+        "applyReason": "応募の動機（インドネシア語）",
+        "applyReasonJa": "応募の動機（日本語）",
+        "selfIntro": "自己PR（インドネシア語）",
+        "selfIntroJa": "自己PR（日本語）",
+        "bilingualHint": "インドネシア語と日本語それぞれの欄に記入してください"
       },
       "save": "保存",
       "saving": "保存中…",

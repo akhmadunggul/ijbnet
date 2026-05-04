@@ -5,6 +5,33 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ---
 
+## [v0.2.0] - 2026-05-04
+
+### Added
+- **Candidate profile — 9 tabs**: Two new tabs added to the candidate profile editor:
+  - **Tab 8 — Sertifikasi / 資格**: Full CRUD for `candidate_certifications` (certName, certLevel, issuedDate, issuedBy) via `PUT /api/candidates/me/certifications`
+  - **Tab 9 — PR & Motivasi / PRと志望動機**: Bilingual text fields for selfPrId/Ja, motivationId/Ja, applyReasonId/Ja, selfIntroId/Ja saved via `PATCH /api/candidates/me`
+- **Extended Personal tab (Tab 1)**:
+  - nameKatakana, bloodType (enum), religion (enum)
+  - hasVisitedJapan / hasPassport (boolean checkboxes)
+  - selfReportedHeight / selfReportedWeight
+  - hobbies
+- **Extended Education tab (Tab 3)**:
+  - Full education history CRUD (fieldArray with sortOrder) via `PUT /api/candidates/me/education-history`
+  - Existing single-level edu fields retained above the history list
+- **Backend CRUD endpoints**:
+  - `PUT /api/candidates/me/certifications` — bulk replace certifications
+  - `PUT /api/candidates/me/education-history` — bulk replace education history
+- **Admin & Manager candidate includes**: `certifications` and `educationHistory` now included in `findScopedCandidate` (admin) and `candidateIncludes()` (manager)
+- **i18n coverage**: All new fields keyed in both `id.json` and `ja.json`
+
+### Notes
+- Career labels in Tab 4 now use i18n keys (previously hardcoded English)
+- Japanese tab uses i18n keys for labels (previously hardcoded)
+- Workplan tab now uses i18n keys for marital status options
+
+---
+
 ## [v0.1.5] - 2026-05-04
 
 ### Added

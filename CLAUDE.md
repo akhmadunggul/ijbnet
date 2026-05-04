@@ -159,6 +159,7 @@ apps/frontend/src/
 - v0.1.3 — Unlock NIK field: candidates can now self-enter encrypted NIK
 - v0.1.4 — Fix candidate photo upload (file-type ESM/CJS, multipart boundary, locked profile UX)
 - v0.1.5 — Bug fixes: recruiter page empty after batch approval, manager candidate detail blank, Google OAuth candidates invisible to admins (lpkId null)
+- v0.2.0 — Full CV form update: 9-tab candidate profile, certifications, education history, bilingual PR/motivation fields, extended personal tab
 
-Current: v0.1.5
+Current: v0.2.0
 Live at: https://jinzai.aup.my.id

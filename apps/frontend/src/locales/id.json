@@ -209,12 +209,20 @@
       },
       "personal": {
         "fullName": "Nama Lengkap",
+        "nameKatakana": "Nama (Katakana)",
         "gender": "Jenis Kelamin",
         "genderM": "Laki-laki",
         "genderF": "Perempuan",
         "dob": "Tanggal Lahir",
         "height": "Tinggi Badan (cm)",
         "weight": "Berat Badan (kg)",
+        "selfReportedHeight": "Tinggi Badan Mandiri (cm)",
+        "selfReportedWeight": "Berat Badan Mandiri (kg)",
+        "bloodType": "Golongan Darah",
+        "religion": "Agama",
+        "hasVisitedJapan": "Pernah ke Jepang",
+        "hasPassport": "Memiliki Paspor",
+        "hobbies": "Hobi",
         "phone": "Nomor Telepon",
         "email": "Email",
         "address": "Alamat",
@@ -231,8 +239,13 @@
       },
       "education": {
         "level": "Jenjang Pendidikan",
-        "label": "Nama Sekolah/Kampus",
-        "major": "Jurusan"
+        "label": "Nama Sekolah/Kampus (Terakhir)",
+        "major": "Jurusan",
+        "historyTitle": "Riwayat Pendidikan Lengkap",
+        "addEntry": "Tambah Riwayat Pendidikan",
+        "schoolName": "Nama Sekolah/Kampus",
+        "startDate": "Mulai",
+        "endDate": "Selesai"
       },
       "career": {
         "addEntry": "Tambah Riwayat",
@@ -273,6 +286,26 @@
         "dropHint": "Klik atau seret foto ke sini",
         "uploading": "Mengunggah…",
         "requirements": "JPG/PNG/WebP, maks. 5MB"
+      },
+      "tab8": "Sertifikasi",
+      "tab9": "PR & Motivasi",
+      "certifications": {
+        "addEntry": "Tambah Sertifikasi",
+        "certName": "Nama Sertifikat",
+        "certLevel": "Level/Tingkat",
+        "issuedDate": "Tanggal Terbit",
+        "issuedBy": "Diterbitkan oleh"
+      },
+      "prMotivation": {
+        "selfPr": "Keahlian (Indonesia)",
+        "selfPrJa": "得意なこと (Jepang)",
+        "motivation": "Motivasi (Indonesia)",
+        "motivationJa": "志望理由 (Jepang)",
+        "applyReason": "Alasan Melamar (Indonesia)",
+        "applyReasonJa": "応募の動機 (Jepang)",
+        "selfIntro": "Promosi Diri (Indonesia)",
+        "selfIntroJa": "自己PR (Jepang)",
+        "bilingualHint": "Isi dalam Bahasa Indonesia dan Jepang sesuai kolom masing-masing"
       },
       "save": "Simpan",
       "saving": "Menyimpan…",

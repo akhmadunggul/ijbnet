@@ -274,6 +274,83 @@ router.put('/me/career', async (req: Request, res: Response): Promise<void> => {
   res.json({ career: career.map((c) => c.toJSON()) });
 });
 
+// ── PUT /api/candidates/me/certifications ─────────────────────────────────────
+router.put('/me/certifications', async (req: Request, res: Response): Promise<void> => {
+  const candidate = await Candidate.findOne({ where: { userId: req.user!.sub } });
+  if (!candidate) {
+    res.status(404).json({ error: 'NOT_FOUND' });
+    return;
+  }
+  if (candidate.isLocked) {
+    res.status(403).json({ error: 'PROFILE_LOCKED' });
+    return;
+  }
+
+  const { entries } = req.body as { entries: Array<{
+    certName?: string; certLevel?: string; issuedDate?: string; issuedBy?: string;
+  }> };
+
+  await CandidateCertification.destroy({ where: { candidateId: candidate.id } });
+
+  if (entries?.length) {
+    await CandidateCertification.bulkCreate(
+      entries.map((e) => ({
+        id: uuidv4(),
+        candidateId: candidate.id,
+        certName: e.certName ?? '',
+        certLevel: e.certLevel ?? null,
+        issuedDate: e.issuedDate ?? null,
+        issuedBy: e.issuedBy ?? null,
+      })),
+    );
+  }
+
+  const certifications = await CandidateCertification.findAll({
+    where: { candidateId: candidate.id },
+    order: [['createdAt', 'ASC']],
+  });
+  res.json({ certifications: certifications.map((c) => c.toJSON()) });
+});
+
+// ── PUT /api/candidates/me/education-history ──────────────────────────────────
+router.put('/me/education-history', async (req: Request, res: Response): Promise<void> => {
+  const candidate = await Candidate.findOne({ where: { userId: req.user!.sub } });
+  if (!candidate) {
+    res.status(404).json({ error: 'NOT_FOUND' });
+    return;
+  }
+  if (candidate.isLocked) {
+    res.status(403).json({ error: 'PROFILE_LOCKED' });
+    return;
+  }
+
+  const { entries } = req.body as { entries: Array<{
+    schoolName?: string; major?: string; startDate?: string; endDate?: string; sortOrder?: number;
+  }> };
+
+  await CandidateEducationHistory.destroy({ where: { candidateId: candidate.id } });
+
+  if (entries?.length) {
+    await CandidateEducationHistory.bulkCreate(
+      entries.map((e, i) => ({
+        id: uuidv4(),
+        candidateId: candidate.id,
+        schoolName: e.schoolName ?? '',
+        major: e.major ?? null,
+        startDate: e.startDate ?? null,
+        endDate: e.endDate ?? null,
+        sortOrder: e.sortOrder ?? i,
+      })),
+    );
+  }
+
+  const educationHistory = await CandidateEducationHistory.findAll({
+    where: { candidateId: candidate.id },
+    order: [['sortOrder', 'ASC']],
+  });
+  res.json({ educationHistory: educationHistory.map((e) => e.toJSON()) });
+});
+
 // ── PUT /api/candidates/me/tests ──────────────────────────────────────────────
 router.put('/me/tests', async (req: Request, res: Response): Promise<void> => {
   const candidate = await Candidate.findOne({ where: { userId: req.user!.sub } });
