@@ -5,6 +5,14 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ---
 
+## [v0.2.1] - 2026-05-04
+
+### In Progress
+- CV page implementation for all portals (Stage 1-4)
+- Missing CV fields added to database schema
+
+---
+
 ## [v0.2.0] - 2026-05-04
 
 ### Added
