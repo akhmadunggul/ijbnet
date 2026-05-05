@@ -426,7 +426,7 @@ export default function CandidateCV({
           </tr>
           <tr className="cv-row-md">
             <td style={{ ...TD, height: '40px', whiteSpace: 'pre-wrap' }}>
-              {v(c.selfPrId)}
+              {v(c.selfIntroId)}
             </td>
           </tr>
         </tbody>
@@ -437,13 +437,30 @@ export default function CandidateCV({
         <tbody>
           <tr>
             <td style={ST}>
-              Motivasi ingin bekerja di Jepang / Alasan melamar Pekerjaan Ini<br />
-              志望理由 ・ 応募の動機
+              Motivasi ingin bekerja di Jepang<br />
+              志望理由
             </td>
           </tr>
           <tr className="cv-row-lg">
-            <td style={{ ...TD, height: '60px', whiteSpace: 'pre-wrap' }}>
+            <td style={{ ...TD, height: '50px', whiteSpace: 'pre-wrap' }}>
               {v(c.motivationId)}
+            </td>
+          </tr>
+        </tbody>
+      </table>
+
+      {/* ── Alasan Melamar ── */}
+      <table className="cv-tbl" style={S.table}>
+        <tbody>
+          <tr>
+            <td style={ST}>
+              Alasan Melamar Pekerjaan Ini<br />
+              応募の動機
+            </td>
+          </tr>
+          <tr className="cv-row-lg">
+            <td style={{ ...TD, height: '50px', whiteSpace: 'pre-wrap' }}>
+              {v(c.applyReasonId)}
             </td>
           </tr>
         </tbody>
@@ -457,7 +474,7 @@ export default function CandidateCV({
           </tr>
           <tr className="cv-row-lg">
             <td style={{ ...TD, height: '60px', whiteSpace: 'pre-wrap' }}>
-              {v(c.selfIntroId)}
+              {v(c.selfPrId)}
             </td>
           </tr>
         </tbody>
