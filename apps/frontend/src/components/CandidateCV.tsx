@@ -48,8 +48,40 @@ const PRINT_CSS = `
   @media print {
     body { margin: 0 !important; padding: 0 !important; }
     .no-print { display: none !important; }
+
+    /* Shrink container */
+    .cv-con {
+      padding: 6px 10px !important;
+      font-size: 10px !important;
+      border-width: 1px !important;
+      width: 100% !important;
+      box-sizing: border-box !important;
+    }
+
+    /* Compact title */
+    .cv-title {
+      font-size: 14px !important;
+      margin-bottom: 8px !important;
+    }
+
+    /* Tighter table gaps */
+    .cv-tbl { margin-bottom: 4px !important; }
+
+    /* Compact cells */
+    .cv-con td, .cv-con th {
+      padding: 3px 4px !important;
+      font-size: 10px !important;
+    }
+
+    /* Shrink empty filler rows */
+    .cv-row-sm { height: 16px !important; min-height: 0 !important; }
+    .cv-row-md { height: 22px !important; min-height: 0 !important; }
+    .cv-row-lg { height: 30px !important; min-height: 0 !important; }
+
+    /* Photo section gap */
+    .cv-info-wrap { margin-bottom: 4px !important; }
   }
-  @page { size: A4 portrait; margin: 10mm; }
+  @page { size: A4 portrait; margin: 5mm; }
 `;
 
 const S = {
@@ -193,14 +225,14 @@ export default function CandidateCV({
   const ST = S.sectionTitle;
 
   return (
-    <div style={S.container}>
+    <div className="cv-con" style={S.container}>
       <style dangerouslySetInnerHTML={{ __html: PRINT_CSS }} />
 
       {/* ── Title ── */}
-      <div style={S.headerTitle}>候補者データ ・ DATA KANDIDAT</div>
+      <div className="cv-title" style={S.headerTitle}>候補者データ ・ DATA KANDIDAT</div>
 
       {/* ── Photo (float right) + basic info table (float left) ── */}
-      <div style={{ overflow: 'hidden', marginBottom: '15px' }}>
+      <div className="cv-info-wrap" style={{ overflow: 'hidden', marginBottom: '15px' }}>
         <div style={S.photoBox}>
           {c.closeupUrl ? (
             <img
@@ -213,7 +245,7 @@ export default function CandidateCV({
           )}
         </div>
 
-        <table style={{ ...S.table, width: 'calc(100% - 140px)', float: 'left', marginBottom: 0 }}>
+        <table className="cv-tbl" style={{ ...S.table, width: 'calc(100% - 140px)', float: 'left', marginBottom: 0 }}>
           <tbody>
             <tr>
               <td style={{ ...TD, width: '20%' }}>Nama<br />氏名</td>
@@ -253,7 +285,7 @@ export default function CandidateCV({
       </div>
 
       {/* ── Height / Weight / JP Level ── */}
-      <table style={S.table}>
+      <table className="cv-tbl" style={S.table}>
         <tbody>
           <tr>
             <td style={{ ...TD, width: '16%' }}>Tinggi Badan<br />身長</td>
@@ -267,7 +299,7 @@ export default function CandidateCV({
       </table>
 
       {/* ── Japan / Passport / Address / Hobi ── */}
-      <table style={S.table}>
+      <table className="cv-tbl" style={S.table}>
         <tbody>
           <tr>
             <td style={{ ...TD, width: '25%' }}>
@@ -291,7 +323,7 @@ export default function CandidateCV({
       </table>
 
       {/* ── Pendidikan ── */}
-      <table style={S.table}>
+      <table className="cv-tbl" style={S.table}>
         <tbody>
           <tr>
             <td style={ST} colSpan={3}>Pendidikan ・ 学歴</td>
@@ -303,7 +335,7 @@ export default function CandidateCV({
           </tr>
           {eduRows.map((row, i) =>
             row ? (
-              <tr key={(row as any).id ?? i}>
+              <tr className="cv-row-sm" key={(row as any).id ?? i}>
                 <td style={{ ...TD, height: '25px' }}>
                   {formatPeriod((row as any).startDate, (row as any).endDate)}
                 </td>
@@ -311,7 +343,7 @@ export default function CandidateCV({
                 <td style={TD}>{v((row as any).major)}</td>
               </tr>
             ) : (
-              <tr key={`edu-${i}`}>
+              <tr className="cv-row-sm" key={`edu-${i}`}>
                 <td style={{ ...TD, height: '25px' }} />
                 <td style={TD} />
                 <td style={TD} />
@@ -322,7 +354,7 @@ export default function CandidateCV({
       </table>
 
       {/* ── Pengalaman Kerja ── */}
-      <table style={S.table}>
+      <table className="cv-tbl" style={S.table}>
         <tbody>
           <tr>
             <td style={ST} colSpan={3}>Pengalaman Kerja ・ 職歴</td>
@@ -334,7 +366,7 @@ export default function CandidateCV({
           </tr>
           {careerRows.map((row, i) =>
             row ? (
-              <tr key={(row as any).id ?? i}>
+              <tr className="cv-row-md" key={(row as any).id ?? i}>
                 <td style={{ ...TD, height: '40px' }}>{v((row as any).period)}</td>
                 <td style={TD}>{v((row as any).companyName)}</td>
                 <td style={TD}>
@@ -342,7 +374,7 @@ export default function CandidateCV({
                 </td>
               </tr>
             ) : (
-              <tr key={`career-${i}`}>
+              <tr className="cv-row-md" key={`career-${i}`}>
                 <td style={{ ...TD, height: '40px' }} />
                 <td style={TD} />
                 <td style={TD} />
@@ -353,7 +385,7 @@ export default function CandidateCV({
       </table>
 
       {/* ── Sertifikasi ── */}
-      <table style={S.table}>
+      <table className="cv-tbl" style={S.table}>
         <tbody>
           <tr>
             <td style={ST} colSpan={3}>Sertifikasi ・ 資格・公的認定</td>
@@ -371,7 +403,7 @@ export default function CandidateCV({
                 <td style={TD}>{(row as any).info}</td>
               </tr>
             ) : (
-              <tr key={`cert-${i}`}>
+              <tr className="cv-row-sm" key={`cert-${i}`}>
                 <td style={{ ...TD, height: '25px' }} />
                 <td style={TD} />
                 <td style={TD} />
@@ -382,7 +414,7 @@ export default function CandidateCV({
       </table>
 
       {/* ── Skill ── */}
-      <table style={S.table}>
+      <table className="cv-tbl" style={S.table}>
         <tbody>
           <tr>
             <td style={ST}>
@@ -392,7 +424,7 @@ export default function CandidateCV({
               </span>
             </td>
           </tr>
-          <tr>
+          <tr className="cv-row-md">
             <td style={{ ...TD, height: '40px', whiteSpace: 'pre-wrap' }}>
               {v(c.selfPrId)}
             </td>
@@ -401,7 +433,7 @@ export default function CandidateCV({
       </table>
 
       {/* ── Motivasi ── */}
-      <table style={S.table}>
+      <table className="cv-tbl" style={S.table}>
         <tbody>
           <tr>
             <td style={ST}>
@@ -409,7 +441,7 @@ export default function CandidateCV({
               志望理由 ・ 応募の動機
             </td>
           </tr>
-          <tr>
+          <tr className="cv-row-lg">
             <td style={{ ...TD, height: '60px', whiteSpace: 'pre-wrap' }}>
               {v(c.motivationId)}
             </td>
@@ -418,12 +450,12 @@ export default function CandidateCV({
       </table>
 
       {/* ── Promosi Diri ── */}
-      <table style={{ ...S.table, marginBottom: 0 }}>
+      <table className="cv-tbl" style={{ ...S.table, marginBottom: 0 }}>
         <tbody>
           <tr>
             <td style={ST}>Promosi Diri<br />自己PR</td>
           </tr>
-          <tr>
+          <tr className="cv-row-lg">
             <td style={{ ...TD, height: '60px', whiteSpace: 'pre-wrap' }}>
               {v(c.selfIntroId)}
             </td>
