@@ -251,7 +251,7 @@ function PersonalTab({ candidate, onSave, saving }: { candidate: CandidateData; 
     onSuccess: () => qc.invalidateQueries({ queryKey: ['my-candidate'] }),
   });
 
-  const { register, handleSubmit, formState: { isDirty, errors } } = useForm<PersonalForm>({
+  const { register, handleSubmit, reset, formState: { isDirty, errors } } = useForm<PersonalForm>({
     resolver: zodResolver(personalSchema),
     defaultValues: {
       fullName:           candidate.fullName ?? '',
@@ -275,8 +275,9 @@ function PersonalTab({ candidate, onSave, saving }: { candidate: CandidateData; 
     },
   });
 
-  function handlePersonalSubmit(data: PersonalForm) {
-    onSave(data);
+  async function handlePersonalSubmit(data: PersonalForm) {
+    await onSave(data);
+    reset(data);
     if (data.nik && data.nik.trim().length === 16) {
       nikMutation.mutate(data.nik.trim());
     }
@@ -374,7 +375,7 @@ function PersonalTab({ candidate, onSave, saving }: { candidate: CandidateData; 
 // ── Tab 2 — SSW ───────────────────────────────────────────────────────────────
 function SswTab({ candidate, onSave, saving }: { candidate: CandidateData; onSave: (d: SswForm) => void; saving: boolean }) {
   const { t } = useTranslation();
-  const { register, handleSubmit, formState: { isDirty } } = useForm<SswForm>({
+  const { register, handleSubmit, reset, formState: { isDirty } } = useForm<SswForm>({
     resolver: zodResolver(sswSchema),
     defaultValues: {
       jobCategory: candidate.jobCategory ?? '',
@@ -388,7 +389,7 @@ function SswTab({ candidate, onSave, saving }: { candidate: CandidateData; onSav
   });
 
   return (
-    <form onSubmit={handleSubmit(onSave)} className="space-y-4">
+    <form onSubmit={handleSubmit(async (d) => { await onSave(d); reset(d); })} className="space-y-4">
       <Field label={t('sswTitle') + ' — ' + t('candidate.profile.ssw.kubun')}>
         <div className="flex gap-4 pt-1">
           <label className="flex items-center gap-2 text-sm"><input type="radio" value="SSW1" {...register('sswKubun')} /> SSW1</label>
@@ -422,7 +423,7 @@ function EducationTab({ candidate, onSave, saving }: { candidate: CandidateData;
   const { t } = useTranslation();
   const qc = useQueryClient();
 
-  const { register: reg, handleSubmit, formState: { isDirty } } = useForm<EducationForm>({
+  const { register: reg, handleSubmit, reset, formState: { isDirty } } = useForm<EducationForm>({
     resolver: zodResolver(educationSchema),
     defaultValues: {
       eduLevel: candidate.eduLevel ?? '',
@@ -446,7 +447,10 @@ function EducationTab({ candidate, onSave, saving }: { candidate: CandidateData;
   const historyMutation = useMutation({
     mutationFn: (data: EducationHistoryForm) =>
       api.put('/candidates/me/education-history', data).then((r) => r.data),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['my-candidate'] }),
+    onSuccess: (_data, variables) => {
+      qc.invalidateQueries({ queryKey: ['my-candidate'] });
+      historyForm.reset(variables);
+    },
   });
 
   return (
@@ -454,7 +458,7 @@ function EducationTab({ candidate, onSave, saving }: { candidate: CandidateData;
       {/* Highest education level */}
       <div>
         <p className="text-sm font-semibold text-gray-700 mb-4">{t('candidate.profile.education.level')}</p>
-        <form onSubmit={handleSubmit(onSave)} className="space-y-4">
+        <form onSubmit={handleSubmit(async (d) => { await onSave(d); reset(d); })} className="space-y-4">
           <Field label={t('candidate.profile.education.level')}>
             <select {...reg('eduLevel')} className={selectCls}>
               <option value="">— Pilih —</option>
@@ -523,7 +527,7 @@ function EducationTab({ candidate, onSave, saving }: { candidate: CandidateData;
 function CareerTab({ candidate, saving }: { candidate: CandidateData; saving: boolean }) {
   const { t } = useTranslation();
   const qc = useQueryClient();
-  const { control, register, handleSubmit, formState: { isDirty } } = useForm<CareerForm>({
+  const { control, register, handleSubmit, reset, formState: { isDirty } } = useForm<CareerForm>({
     defaultValues: {
       entries: (candidate.career ?? []).map((c, i) => ({ ...c, sortOrder: c.sortOrder ?? i })),
     },
@@ -532,7 +536,10 @@ function CareerTab({ candidate, saving }: { candidate: CandidateData; saving: bo
 
   const careerMutation = useMutation({
     mutationFn: (data: CareerForm) => api.put('/candidates/me/career', data).then((r) => r.data),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['my-candidate'] }),
+    onSuccess: (_data, variables) => {
+      qc.invalidateQueries({ queryKey: ['my-candidate'] });
+      reset(variables);
+    },
   });
 
   return (
@@ -574,7 +581,7 @@ const JLPT_TESTS = ['JLPT N5','JLPT N4','JLPT N3','JLPT N2','JLPT N1','JFT-Basic
 function JapaneseTab({ candidate }: { candidate: CandidateData }) {
   const { t } = useTranslation();
   const qc = useQueryClient();
-  const { control, register, handleSubmit, formState: { isDirty } } = useForm<TestForm>({
+  const { control, register, handleSubmit, reset, formState: { isDirty } } = useForm<TestForm>({
     defaultValues: {
       entries: (candidate.tests ?? []).map((tst) => ({ ...tst, testDate: tst.testDate ? tst.testDate.slice(0, 10) : '' })),
     },
@@ -583,7 +590,10 @@ function JapaneseTab({ candidate }: { candidate: CandidateData }) {
 
   const testsMutation = useMutation({
     mutationFn: (data: TestForm) => api.put('/candidates/me/tests', data).then((r) => r.data),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['my-candidate'] }),
+    onSuccess: (_data, variables) => {
+      qc.invalidateQueries({ queryKey: ['my-candidate'] });
+      reset(variables);
+    },
   });
 
   return (
@@ -653,7 +663,7 @@ function JapaneseTab({ candidate }: { candidate: CandidateData }) {
 // ── Tab 6 — Work Plan ─────────────────────────────────────────────────────────
 function WorkplanTab({ candidate, onSave, saving }: { candidate: CandidateData; onSave: (d: WorkplanForm) => void; saving: boolean }) {
   const { t } = useTranslation();
-  const { register, watch, handleSubmit, formState: { isDirty } } = useForm<WorkplanForm>({
+  const { register, watch, handleSubmit, reset, formState: { isDirty } } = useForm<WorkplanForm>({
     resolver: zodResolver(workplanSchema),
     defaultValues: {
       workplanDuration:    candidate.workplanDuration ?? '',
@@ -669,7 +679,7 @@ function WorkplanTab({ candidate, onSave, saving }: { candidate: CandidateData; 
   const marital = watch('maritalStatus');
 
   return (
-    <form onSubmit={handleSubmit(onSave)} className="space-y-4">
+    <form onSubmit={handleSubmit(async (d) => { await onSave(d); reset(d); })} className="space-y-4">
       <Field label={t('candidate.profile.workplan.duration')}><input {...register('workplanDuration')} className={inputCls} placeholder="3 tahun" /></Field>
       <Field label={t('candidate.profile.workplan.goal')}><textarea {...register('workplanGoal')} rows={3} className={textareaCls} /></Field>
       <Field label={t('candidate.profile.workplan.after')}><textarea {...register('workplanAfter')} rows={3} className={textareaCls} /></Field>
@@ -728,7 +738,7 @@ function PhotosTab({ candidate }: { candidate: CandidateData }) {
 function CertificationsTab({ candidate }: { candidate: CandidateData }) {
   const { t } = useTranslation();
   const qc = useQueryClient();
-  const { control, register, handleSubmit, formState: { isDirty } } = useForm<CertificationForm>({
+  const { control, register, handleSubmit, reset, formState: { isDirty } } = useForm<CertificationForm>({
     defaultValues: {
       entries: (candidate.certifications ?? []).map((c) => ({
         ...c,
@@ -741,7 +751,10 @@ function CertificationsTab({ candidate }: { candidate: CandidateData }) {
   const certMutation = useMutation({
     mutationFn: (data: CertificationForm) =>
       api.put('/candidates/me/certifications', data).then((r) => r.data),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['my-candidate'] }),
+    onSuccess: (_data, variables) => {
+      qc.invalidateQueries({ queryKey: ['my-candidate'] });
+      reset(variables);
+    },
   });
 
   return (
@@ -788,7 +801,7 @@ function CertificationsTab({ candidate }: { candidate: CandidateData }) {
 // ── Tab 9 — PR & Motivation ───────────────────────────────────────────────────
 function PrMotivationTab({ candidate, onSave, saving }: { candidate: CandidateData; onSave: (d: PrMotivationForm) => void; saving: boolean }) {
   const { t } = useTranslation();
-  const { register, handleSubmit, formState: { isDirty } } = useForm<PrMotivationForm>({
+  const { register, handleSubmit, reset, formState: { isDirty } } = useForm<PrMotivationForm>({
     resolver: zodResolver(prMotivationSchema),
     defaultValues: {
       selfPrId:      candidate.selfPrId ?? '',
@@ -803,7 +816,7 @@ function PrMotivationTab({ candidate, onSave, saving }: { candidate: CandidateDa
   });
 
   return (
-    <form onSubmit={handleSubmit(onSave)} className="space-y-6">
+    <form onSubmit={handleSubmit(async (d) => { await onSave(d); reset(d); })} className="space-y-6">
       <p className="text-xs text-gray-500">{t('candidate.profile.prMotivation.bilingualHint')}</p>
 
       <div className="space-y-2">
