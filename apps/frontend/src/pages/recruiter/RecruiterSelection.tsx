@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '../../lib/api';
 import AuthImage from '../../components/AuthImage';
@@ -557,6 +558,7 @@ function ConfirmDialog({
 export default function RecruiterSelection() {
   const { t, i18n } = useTranslation();
   const lang = i18n.language;
+  const navigate = useNavigate();
   const queryClient = useQueryClient();
 
   const [filters, setFilters] = useState<Filters>({
@@ -847,10 +849,10 @@ export default function RecruiterSelection() {
                     </td>
                     <td className="px-3 py-3 text-center">
                       <button
-                        onClick={() => setProfileBc(bc)}
+                        onClick={() => navigate(`/recruiter/candidates/${bc.candidateId}/cv`)}
                         className="text-xs text-navy-600 hover:underline"
                       >
-                        {lang === 'ja' ? '詳細' : 'Detail'}
+                        {lang === 'ja' ? 'CV' : 'CV'}
                       </button>
                     </td>
                     <td className="px-3 py-3 text-center">

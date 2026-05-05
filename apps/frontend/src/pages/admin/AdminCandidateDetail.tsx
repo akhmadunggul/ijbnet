@@ -147,6 +147,12 @@ export default function AdminCandidateDetail() {
           )}
           {/* Quick nav */}
           <button
+            onClick={() => navigate(`/admin/candidates/${c.id}/cv`)}
+            className="px-3 py-2 rounded-lg text-sm border border-gray-200 hover:bg-gray-50 transition"
+          >
+            {lang === 'ja' ? 'CV' : 'Lihat CV'}
+          </button>
+          <button
             onClick={() => navigate(`/admin/body-check/${c.id}`)}
             className="px-3 py-2 rounded-lg text-sm border border-gray-200 hover:bg-gray-50 transition"
           >

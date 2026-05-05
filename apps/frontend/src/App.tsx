@@ -11,11 +11,13 @@ import AdminLayout from './pages/admin/AdminLayout';
 import AdminDashboard from './pages/admin/AdminDashboard';
 import AdminCandidates from './pages/admin/AdminCandidates';
 import AdminCandidateDetail from './pages/admin/AdminCandidateDetail';
+import AdminCandidateCVPage from './pages/admin/AdminCandidateCVPage';
 import AdminBodyCheck from './pages/admin/AdminBodyCheck';
 import AdminVideos from './pages/admin/AdminVideos';
 import AdminNotifications from './pages/admin/AdminNotifications';
 import RecruiterLayout from './pages/recruiter/RecruiterLayout';
 import RecruiterSelection from './pages/recruiter/RecruiterSelection';
+import RecruiterCandidateCVPage from './pages/recruiter/RecruiterCandidateCVPage';
 import RecruiterConfirmed from './pages/recruiter/RecruiterConfirmed';
 import RecruiterInterviews from './pages/recruiter/RecruiterInterviews';
 import RecruiterNotifications from './pages/recruiter/RecruiterNotifications';
@@ -23,6 +25,7 @@ import ManagerLayout from './pages/manager/ManagerLayout';
 import ManagerDashboard from './pages/manager/ManagerDashboard';
 import ManagerCandidates from './pages/manager/ManagerCandidates';
 import ManagerCandidateDetail from './pages/manager/ManagerCandidateDetail';
+import ManagerCandidateCVPage from './pages/manager/ManagerCandidateCVPage';
 import ManagerBatches from './pages/manager/ManagerBatches';
 import ManagerBatchDetail from './pages/manager/ManagerBatchDetail';
 import ManagerInterviews from './pages/manager/ManagerInterviews';
@@ -116,6 +119,7 @@ export default function App() {
           <Route path="dashboard" element={<AdminDashboard />} />
           <Route path="candidates" element={<AdminCandidates />} />
           <Route path="candidates/:id" element={<AdminCandidateDetail />} />
+          <Route path="candidates/:id/cv" element={<AdminCandidateCVPage />} />
           <Route path="body-check/:id" element={<AdminBodyCheck />} />
           <Route path="videos/:id" element={<AdminVideos />} />
           <Route path="notifications" element={<AdminNotifications />} />
@@ -134,6 +138,7 @@ export default function App() {
           <Route path="dashboard" element={<ManagerDashboard />} />
           <Route path="candidates" element={<ManagerCandidates />} />
           <Route path="candidates/:id" element={<ManagerCandidateDetail />} />
+          <Route path="candidates/:id/cv" element={<ManagerCandidateCVPage />} />
           <Route path="batches" element={<ManagerBatches />} />
           <Route path="batches/:id" element={<ManagerBatchDetail />} />
           <Route path="interviews" element={<ManagerInterviews />} />
@@ -151,6 +156,7 @@ export default function App() {
         >
           <Route index element={<Navigate to="selection" replace />} />
           <Route path="selection" element={<RecruiterSelection />} />
+          <Route path="candidates/:id/cv" element={<RecruiterCandidateCVPage />} />
           <Route path="confirmed" element={<RecruiterConfirmed />} />
           <Route path="interviews" element={<RecruiterInterviews />} />
           <Route path="notifications" element={<RecruiterNotifications />} />

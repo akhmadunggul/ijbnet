@@ -209,12 +209,20 @@ export default function ManagerCandidates() {
                       )}
                     </td>
                     <td className="px-4 py-3">
-                      <button
-                        onClick={() => navigate(`/manager/candidates/${c.id}`)}
-                        className="text-xs text-navy-600 hover:text-navy-800 font-medium hover:underline"
-                      >
-                        {t('btnView')}
-                      </button>
+                      <div className="flex items-center gap-3">
+                        <button
+                          onClick={() => navigate(`/manager/candidates/${c.id}`)}
+                          className="text-xs text-navy-600 hover:text-navy-800 font-medium hover:underline"
+                        >
+                          {t('btnView')}
+                        </button>
+                        <button
+                          onClick={() => navigate(`/manager/candidates/${c.id}/cv`)}
+                          className="text-xs text-gray-500 hover:text-gray-700 font-medium hover:underline"
+                        >
+                          CV
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))}
