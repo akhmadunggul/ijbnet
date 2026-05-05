@@ -49,37 +49,32 @@ const PRINT_CSS = `
     body { margin: 0 !important; padding: 0 !important; }
     .no-print { display: none !important; }
 
-    /* Shrink container */
     .cv-con {
-      padding: 6px 10px !important;
-      font-size: 10px !important;
+      padding: 4px 8px !important;
+      font-size: 9px !important;
       border-width: 1px !important;
       width: 100% !important;
       box-sizing: border-box !important;
     }
 
-    /* Compact title */
     .cv-title {
-      font-size: 14px !important;
-      margin-bottom: 8px !important;
+      font-size: 12px !important;
+      margin-bottom: 4px !important;
     }
 
-    /* Tighter table gaps */
-    .cv-tbl { margin-bottom: 4px !important; }
+    .cv-tbl { margin-bottom: 2px !important; }
 
-    /* Compact cells */
     .cv-con td, .cv-con th {
-      padding: 3px 4px !important;
-      font-size: 10px !important;
+      padding: 2px 3px !important;
+      font-size: 9px !important;
+      line-height: 1.3 !important;
     }
 
-    /* Shrink empty filler rows */
-    .cv-row-sm { height: 16px !important; min-height: 0 !important; }
-    .cv-row-md { height: 22px !important; min-height: 0 !important; }
-    .cv-row-lg { height: 30px !important; min-height: 0 !important; }
+    .cv-row-sm { height: 13px !important; min-height: 0 !important; }
+    .cv-row-md { height: 18px !important; min-height: 0 !important; }
+    .cv-row-lg { height: 24px !important; min-height: 0 !important; }
 
-    /* Photo section gap */
-    .cv-info-wrap { margin-bottom: 4px !important; }
+    .cv-info-wrap { margin-bottom: 2px !important; }
   }
   @page { size: A4 portrait; margin: 5mm; }
 `;
