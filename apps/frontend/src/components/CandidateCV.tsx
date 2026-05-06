@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 
 export interface CandidateCVProps {
   candidate: any;
@@ -141,6 +141,36 @@ export default function CandidateCV({
 }: CandidateCVProps) {
   void showSensitiveData;
   void lang;
+
+  // A4 minus 5 mm margins each side + 1 mm safety buffer = 285 mm usable height.
+  // beforeprint fires after @media print rules are active, so scrollHeight reflects
+  // the already-compact print layout. zoom (unlike transform) collapses layout space,
+  // so the browser never paginates beyond one page.
+  useEffect(() => {
+    const PAGE_H_PX = 285 * (96 / 25.4); // ≈ 1077 CSS px
+
+    function beforePrint() {
+      const el = document.querySelector<HTMLElement>('.cv-con');
+      if (!el) return;
+      el.style.zoom = ''; // clear any leftover before measuring
+      const h = el.scrollHeight;
+      if (h > PAGE_H_PX) {
+        el.style.zoom = String(PAGE_H_PX / h);
+      }
+    }
+
+    function afterPrint() {
+      const el = document.querySelector<HTMLElement>('.cv-con');
+      if (el) el.style.zoom = '';
+    }
+
+    window.addEventListener('beforeprint', beforePrint);
+    window.addEventListener('afterprint', afterPrint);
+    return () => {
+      window.removeEventListener('beforeprint', beforePrint);
+      window.removeEventListener('afterprint', afterPrint);
+    };
+  }, []);
 
   const c = candidate ?? {};
 
