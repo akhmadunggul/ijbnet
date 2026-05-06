@@ -181,15 +181,10 @@ router.post('/batches/:batchId/select', wrap(async (req: Request, res: Response)
 
   const newSet = new Set(candidateIds);
 
-  // Cannot deselect already-confirmed candidates
+  // Confirmed candidates are immutable — always keep them in the set
+  // regardless of whether the frontend included them in the submission.
   for (const [cid, alloc] of allocMap) {
-    if (alloc.isConfirmed && !newSet.has(cid)) {
-      res.status(422).json({
-        error: 'CANNOT_DESELECT_CONFIRMED',
-        message: `Candidate ${cid} is already confirmed and cannot be deselected.`,
-      });
-      return;
-    }
+    if (alloc.isConfirmed) newSet.add(cid);
   }
 
   // Update selections
