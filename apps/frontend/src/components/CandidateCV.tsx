@@ -1,4 +1,5 @@
 import React from 'react';
+import AuthImage from './AuthImage';
 
 export interface CandidateCVProps {
   candidate: any;
@@ -229,10 +230,11 @@ export default function CandidateCV({
       <div className="cv-info-wrap" style={{ overflow: 'hidden', marginBottom: '15px' }}>
         <div style={S.photoBox}>
           {c.closeupUrl ? (
-            <img
+            <AuthImage
               src={c.closeupUrl}
               alt="foto"
               style={{ width: '120px', height: '150px', objectFit: 'cover', display: 'block', lineHeight: 'normal' }}
+              fallback={<span style={{ lineHeight: '150px', color: '#999' }}>…</span>}
             />
           ) : (
             'Foto'

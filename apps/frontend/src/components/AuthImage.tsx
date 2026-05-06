@@ -1,14 +1,15 @@
-import { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useAuthStore } from '../store/authStore';
 
 interface AuthImageProps {
   src: string | null | undefined;
   alt: string;
   className?: string;
+  style?: React.CSSProperties;
   fallback?: React.ReactNode;
 }
 
-export default function AuthImage({ src, alt, className, fallback }: AuthImageProps) {
+export default function AuthImage({ src, alt, className, style, fallback }: AuthImageProps) {
   const { accessToken } = useAuthStore();
   const [objectUrl, setObjectUrl] = useState<string | null>(null);
 
@@ -27,5 +28,5 @@ export default function AuthImage({ src, alt, className, fallback }: AuthImagePr
   }, [src, accessToken]);
 
   if (!objectUrl) return <>{fallback ?? null}</>;
-  return <img src={objectUrl} alt={alt} className={className} />;
+  return <img src={objectUrl} alt={alt} className={className} style={style} />;
 }
