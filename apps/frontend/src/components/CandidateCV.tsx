@@ -51,11 +51,10 @@ const PRINT_CSS = `
 
     .cv-con {
       padding: 6px 10px !important;
-      font-size: 10px !important;
+      font-size: 12px !important;
       border-width: 1px !important;
       width: 100% !important;
       box-sizing: border-box !important;
-      zoom: 0.93;
     }
 
     .cv-title {
@@ -67,14 +66,18 @@ const PRINT_CSS = `
 
     .cv-con td, .cv-con th {
       padding: 3px 4px !important;
-      font-size: 10px !important;
+      font-size: 12px !important;
     }
 
-    .cv-row-sm { height: 16px !important; min-height: 0 !important; }
-    .cv-row-md { height: 22px !important; min-height: 0 !important; }
-    .cv-row-lg { height: 30px !important; min-height: 0 !important; }
+    .cv-row-sm { height: 18px !important; min-height: 0 !important; }
+    .cv-row-md { height: 24px !important; min-height: 0 !important; }
+    .cv-row-lg { height: 32px !important; min-height: 0 !important; }
 
     .cv-info-wrap { margin-bottom: 4px !important; }
+
+    /* Clip free-text cells so content never pushes the layout onto page 2 */
+    .cv-text-2 { max-height: 32px; overflow: hidden; }
+    .cv-text-3 { max-height: 48px; overflow: hidden; }
   }
   @page { size: A4 portrait; margin: 5mm; }
 `;
@@ -420,8 +423,8 @@ export default function CandidateCV({
             </td>
           </tr>
           <tr className="cv-row-md">
-            <td style={{ ...TD, height: '40px', whiteSpace: 'pre-wrap' }}>
-              {v(c.selfIntroId)}
+            <td style={{ ...TD, height: '40px' }}>
+              <div className="cv-text-2" style={{ whiteSpace: 'pre-wrap' }}>{v(c.selfIntroId)}</div>
             </td>
           </tr>
         </tbody>
@@ -437,8 +440,8 @@ export default function CandidateCV({
             </td>
           </tr>
           <tr className="cv-row-lg">
-            <td style={{ ...TD, height: '50px', whiteSpace: 'pre-wrap' }}>
-              {v(c.motivationId)}
+            <td style={{ ...TD, height: '50px' }}>
+              <div className="cv-text-3" style={{ whiteSpace: 'pre-wrap' }}>{v(c.motivationId)}</div>
             </td>
           </tr>
         </tbody>
@@ -454,8 +457,8 @@ export default function CandidateCV({
             </td>
           </tr>
           <tr className="cv-row-lg">
-            <td style={{ ...TD, height: '50px', whiteSpace: 'pre-wrap' }}>
-              {v(c.applyReasonId)}
+            <td style={{ ...TD, height: '50px' }}>
+              <div className="cv-text-3" style={{ whiteSpace: 'pre-wrap' }}>{v(c.applyReasonId)}</div>
             </td>
           </tr>
         </tbody>
@@ -468,8 +471,8 @@ export default function CandidateCV({
             <td style={ST}>Promosi Diri<br />自己PR</td>
           </tr>
           <tr className="cv-row-lg">
-            <td style={{ ...TD, height: '60px', whiteSpace: 'pre-wrap' }}>
-              {v(c.selfPrId)}
+            <td style={{ ...TD, height: '60px' }}>
+              <div className="cv-text-3" style={{ whiteSpace: 'pre-wrap' }}>{v(c.selfPrId)}</div>
             </td>
           </tr>
         </tbody>

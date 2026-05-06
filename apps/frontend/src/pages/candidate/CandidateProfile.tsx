@@ -100,14 +100,14 @@ const certificationSchema = z.object({
 });
 
 const prMotivationSchema = z.object({
-  selfPrId:       z.string().nullable().optional(),
-  selfPrJa:       z.string().nullable().optional(),
-  motivationId:   z.string().nullable().optional(),
-  motivationJa:   z.string().nullable().optional(),
-  applyReasonId:  z.string().nullable().optional(),
-  applyReasonJa:  z.string().nullable().optional(),
-  selfIntroId:    z.string().nullable().optional(),
-  selfIntroJa:    z.string().nullable().optional(),
+  selfPrId:       z.string().max(300).nullable().optional(),
+  selfPrJa:       z.string().max(150).nullable().optional(),
+  motivationId:   z.string().max(300).nullable().optional(),
+  motivationJa:   z.string().max(150).nullable().optional(),
+  applyReasonId:  z.string().max(300).nullable().optional(),
+  applyReasonJa:  z.string().max(150).nullable().optional(),
+  selfIntroId:    z.string().max(200).nullable().optional(),
+  selfIntroJa:    z.string().max(100).nullable().optional(),
 });
 
 type PersonalForm          = z.infer<typeof personalSchema>;
@@ -823,10 +823,10 @@ function PrMotivationTab({ candidate, onSave, saving }: { candidate: CandidateDa
         <p className="text-sm font-semibold text-gray-700">{t('candidate.profile.prMotivation.selfPr')}</p>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <Field label="Indonesia">
-            <textarea {...register('selfPrId')} rows={4} className={textareaCls} />
+            <textarea {...register('selfPrId')} rows={4} maxLength={300} className={textareaCls} />
           </Field>
           <Field label="日本語">
-            <textarea {...register('selfPrJa')} rows={4} className={textareaCls} />
+            <textarea {...register('selfPrJa')} rows={4} maxLength={150} className={textareaCls} />
           </Field>
         </div>
       </div>
@@ -835,10 +835,10 @@ function PrMotivationTab({ candidate, onSave, saving }: { candidate: CandidateDa
         <p className="text-sm font-semibold text-gray-700">{t('candidate.profile.prMotivation.motivation')}</p>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <Field label="Indonesia">
-            <textarea {...register('motivationId')} rows={4} className={textareaCls} />
+            <textarea {...register('motivationId')} rows={4} maxLength={300} className={textareaCls} />
           </Field>
           <Field label="日本語">
-            <textarea {...register('motivationJa')} rows={4} className={textareaCls} />
+            <textarea {...register('motivationJa')} rows={4} maxLength={150} className={textareaCls} />
           </Field>
         </div>
       </div>
@@ -847,10 +847,10 @@ function PrMotivationTab({ candidate, onSave, saving }: { candidate: CandidateDa
         <p className="text-sm font-semibold text-gray-700">{t('candidate.profile.prMotivation.applyReason')}</p>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <Field label="Indonesia">
-            <textarea {...register('applyReasonId')} rows={4} className={textareaCls} />
+            <textarea {...register('applyReasonId')} rows={4} maxLength={300} className={textareaCls} />
           </Field>
           <Field label="日本語">
-            <textarea {...register('applyReasonJa')} rows={4} className={textareaCls} />
+            <textarea {...register('applyReasonJa')} rows={4} maxLength={150} className={textareaCls} />
           </Field>
         </div>
       </div>
@@ -859,10 +859,10 @@ function PrMotivationTab({ candidate, onSave, saving }: { candidate: CandidateDa
         <p className="text-sm font-semibold text-gray-700">{t('candidate.profile.prMotivation.selfIntro')}</p>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <Field label="Indonesia">
-            <textarea {...register('selfIntroId')} rows={4} className={textareaCls} />
+            <textarea {...register('selfIntroId')} rows={4} maxLength={200} className={textareaCls} />
           </Field>
           <Field label="日本語">
-            <textarea {...register('selfIntroJa')} rows={4} className={textareaCls} />
+            <textarea {...register('selfIntroJa')} rows={4} maxLength={100} className={textareaCls} />
           </Field>
         </div>
       </div>
