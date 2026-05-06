@@ -15,6 +15,7 @@ export interface CandidateAttributes {
   nameKatakana: string | null;
   gender: 'M' | 'F' | null;
   dateOfBirth: Date | null;
+  birthPlace: string | null;
   heightCm: number | null;
   weightKg: number | null;
   selfReportedHeight: number | null;
@@ -79,6 +80,7 @@ export interface CandidateCreationAttributes
     | 'nameKatakana'
     | 'gender'
     | 'dateOfBirth'
+    | 'birthPlace'
     | 'heightCm'
     | 'weightKg'
     | 'selfReportedHeight'
@@ -143,6 +145,7 @@ export class Candidate
   declare nameKatakana: string | null;
   declare gender: 'M' | 'F' | null;
   declare dateOfBirth: Date | null;
+  declare birthPlace: string | null;
   declare heightCm: number | null;
   declare weightKg: number | null;
   declare selfReportedHeight: number | null;
@@ -213,6 +216,7 @@ export function initCandidate(sequelize: Sequelize): void {
       nameKatakana: { type: DataTypes.STRING(255), allowNull: true },
       gender: { type: DataTypes.ENUM('M', 'F'), allowNull: true },
       dateOfBirth: { type: DataTypes.DATEONLY, allowNull: true },
+      birthPlace: { type: DataTypes.STRING(255), allowNull: true },
       heightCm: { type: DataTypes.DECIMAL(5, 2), allowNull: true },
       weightKg: { type: DataTypes.DECIMAL(5, 2), allowNull: true },
       selfReportedHeight: { type: DataTypes.DECIMAL(5, 1), allowNull: true },

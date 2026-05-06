@@ -14,6 +14,7 @@ const personalSchema = z.object({
   nameKatakana:        z.string().nullable().optional(),
   gender:              z.enum(['M', 'F']).nullable().optional(),
   dateOfBirth:         z.string().nullable().optional(),
+  birthPlace:          z.string().nullable().optional(),
   nik:                 z.string().refine((v) => v === '' || /^\d{16}$/.test(v), { message: 'NIK harus 16 digit angka' }).optional(),
   heightCm:            z.coerce.number().nullable().optional(),
   weightKg:            z.coerce.number().nullable().optional(),
@@ -258,6 +259,7 @@ function PersonalTab({ candidate, onSave, saving }: { candidate: CandidateData; 
       nameKatakana:       candidate.nameKatakana ?? '',
       gender:             candidate.gender ?? undefined,
       dateOfBirth:        candidate.dateOfBirth ? candidate.dateOfBirth.slice(0, 10) : '',
+      birthPlace:         candidate.birthPlace ?? '',
       nik:                candidate.nik ?? '',
       heightCm:           candidate.heightCm ?? undefined,
       weightKg:           candidate.weightKg ?? undefined,
@@ -304,18 +306,21 @@ function PersonalTab({ candidate, onSave, saving }: { candidate: CandidateData; 
       </Field>
       <div className="grid grid-cols-2 gap-4">
         <Field label={t('candidate.profile.personal.dob')}><input type="date" {...register('dateOfBirth')} className={inputCls} /></Field>
+        <Field label={t('candidate.profile.personal.birthPlace')}><input {...register('birthPlace')} className={inputCls} placeholder="Kota / 市区町村" /></Field>
+      </div>
+      <div className="grid grid-cols-2 gap-4">
         <Field label={t('dpNik')}>
           <input {...register('nik')} className={inputCls} placeholder="16 digit NIK" maxLength={16} inputMode="numeric" />
           {errors.nik && <p className="text-xs text-red-500 mt-1">{errors.nik.message}</p>}
         </Field>
-      </div>
-      <div className="grid grid-cols-2 gap-4">
         <Field label={t('candidate.profile.personal.bloodType')}>
           <select {...register('bloodType')} className={selectCls}>
             <option value="">— Pilih —</option>
             {BLOOD_TYPES.map((b) => <option key={b} value={b}>{b}</option>)}
           </select>
         </Field>
+      </div>
+      <div className="grid grid-cols-2 gap-4">
         <Field label={t('candidate.profile.personal.religion')}>
           <select {...register('religion')} className={selectCls}>
             <option value="">— Pilih —</option>

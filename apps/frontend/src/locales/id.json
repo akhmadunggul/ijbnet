@@ -214,6 +214,7 @@
         "genderM": "Laki-laki",
         "genderF": "Perempuan",
         "dob": "Tanggal Lahir",
+        "birthPlace": "Tempat Lahir",
         "height": "Tinggi Badan (cm)",
         "weight": "Berat Badan (kg)",
         "selfReportedHeight": "Tinggi Badan Mandiri (cm)",

@@ -191,13 +191,8 @@ export default function CandidateCV({
     c.hasPassport === true  ? 'Ada（有）' :
     c.hasPassport === false ? 'Tidak（無）' : '';
 
-  // Birthplace: first segment of address + date of birth
-  const cityStr =
-    typeof c.address === 'string' && c.address
-      ? c.address.split(',')[0].trim()
-      : '';
   const dobStr = c.dateOfBirth ? c.dateOfBirth.slice(0, 10) : '';
-  const birthDisplay = [cityStr, dobStr].filter(Boolean).join(', ');
+  const birthDisplay = [v(c.birthPlace), dobStr].filter(Boolean).join(', ');
 
   // Merge certifications + tests into one list
   const combinedCerts = [

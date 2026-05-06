@@ -136,6 +136,7 @@ module.exports = {
     const resolvedC1Id = await upsertCandidate(candidate1Id, 'CDT-0142', 'Ahmad Fauzi', {
       gender: 'M',
       dateOfBirth: new Date('1997-05-12'),
+      birthPlace: 'Surabaya',
       sswKubun: 'SSW1',
       sswSectorId: 'Manufaktur',
       sswFieldId: 'Pemesinan',
@@ -149,6 +150,7 @@ module.exports = {
     const resolvedC2Id = await upsertCandidate(candidate2Id, 'CDT-0181', 'Hendra Kusuma', {
       gender: 'M',
       dateOfBirth: new Date('1995-08-23'),
+      birthPlace: 'Bandung',
       sswKubun: 'SSW2',
       sswSectorId: 'Konstruksi',
       sswFieldId: 'Pengelasan',
@@ -162,6 +164,7 @@ module.exports = {
     const resolvedC3Id = await upsertCandidate(candidate3Id, 'CDT-0138', 'Budi Santoso', {
       gender: 'M',
       dateOfBirth: new Date('1998-02-07'),
+      birthPlace: 'Yogyakarta',
       sswKubun: 'SSW1',
       sswSectorId: 'Perawatan',
       sswFieldId: 'Perawatan Lansia',

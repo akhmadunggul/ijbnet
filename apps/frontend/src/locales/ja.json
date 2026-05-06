@@ -213,6 +213,7 @@
         "genderM": "男性",
         "genderF": "女性",
         "dob": "生年月日",
+        "birthPlace": "出生地",
         "height": "身長（cm）",
         "weight": "体重（kg）",
         "selfReportedHeight": "自己申告身長（cm）",

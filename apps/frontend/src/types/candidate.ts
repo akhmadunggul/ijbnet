@@ -57,6 +57,7 @@ export interface CandidateData {
   nameKatakana: string | null;
   gender: 'M' | 'F' | null;
   dateOfBirth: string | null;
+  birthPlace: string | null;
   heightCm: number | null;
   weightKg: number | null;
   selfReportedHeight: number | null;
