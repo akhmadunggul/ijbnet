@@ -34,6 +34,11 @@ function v(x: unknown): string {
   return String(x);
 }
 
+function trunc(text: string, max: number): string {
+  if (text.length <= max) return text;
+  return text.slice(0, max).trimEnd() + '…';
+}
+
 function padRows<T>(arr: T[] | null | undefined, min: number): (T | null)[] {
   const out: (T | null)[] = [...(arr ?? [])];
   while (out.length < min) out.push(null);
@@ -74,10 +79,6 @@ const PRINT_CSS = `
     .cv-row-lg { height: 32px !important; min-height: 0 !important; }
 
     .cv-info-wrap { margin-bottom: 4px !important; }
-
-    /* Clip free-text cells so content never pushes the layout onto page 2 */
-    .cv-text-2 { max-height: 32px; overflow: hidden; }
-    .cv-text-3 { max-height: 48px; overflow: hidden; }
   }
   @page { size: A4 portrait; margin: 5mm; }
 `;
@@ -423,8 +424,8 @@ export default function CandidateCV({
             </td>
           </tr>
           <tr className="cv-row-md">
-            <td style={{ ...TD, height: '40px' }}>
-              <div className="cv-text-2" style={{ whiteSpace: 'pre-wrap' }}>{v(c.selfIntroId)}</div>
+            <td style={{ ...TD, height: '40px', whiteSpace: 'pre-wrap' }}>
+              {trunc(v(c.selfIntroId), 200)}
             </td>
           </tr>
         </tbody>
@@ -440,8 +441,8 @@ export default function CandidateCV({
             </td>
           </tr>
           <tr className="cv-row-lg">
-            <td style={{ ...TD, height: '50px' }}>
-              <div className="cv-text-3" style={{ whiteSpace: 'pre-wrap' }}>{v(c.motivationId)}</div>
+            <td style={{ ...TD, height: '50px', whiteSpace: 'pre-wrap' }}>
+              {trunc(v(c.motivationId), 300)}
             </td>
           </tr>
         </tbody>
@@ -457,8 +458,8 @@ export default function CandidateCV({
             </td>
           </tr>
           <tr className="cv-row-lg">
-            <td style={{ ...TD, height: '50px' }}>
-              <div className="cv-text-3" style={{ whiteSpace: 'pre-wrap' }}>{v(c.applyReasonId)}</div>
+            <td style={{ ...TD, height: '50px', whiteSpace: 'pre-wrap' }}>
+              {trunc(v(c.applyReasonId), 300)}
             </td>
           </tr>
         </tbody>
@@ -471,8 +472,8 @@ export default function CandidateCV({
             <td style={ST}>Promosi Diri<br />自己PR</td>
           </tr>
           <tr className="cv-row-lg">
-            <td style={{ ...TD, height: '60px' }}>
-              <div className="cv-text-3" style={{ whiteSpace: 'pre-wrap' }}>{v(c.selfPrId)}</div>
+            <td style={{ ...TD, height: '60px', whiteSpace: 'pre-wrap' }}>
+              {trunc(v(c.selfPrId), 300)}
             </td>
           </tr>
         </tbody>
