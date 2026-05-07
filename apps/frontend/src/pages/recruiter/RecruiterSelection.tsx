@@ -581,6 +581,11 @@ export default function RecruiterSelection() {
   // Initialize selection store from batch data
   useEffect(() => {
     if (data?.batch && !initRef.current) {
+      const alreadyConfirmed = sessionStorage.getItem(`recruiter_confirmed_${data.batch.id}`) === 'true';
+      if (alreadyConfirmed) {
+        initRef.current = true;
+        return; // keep store empty — card display falls back to bc.isSelected
+      }
       initRef.current = true;
       const preSelected = (data.candidates ?? [])
         .filter((bc) => bc.isSelected && !bc.isConfirmed)
@@ -600,7 +605,9 @@ export default function RecruiterSelection() {
       api.post(`/recruiter/batches/${data!.batch.id}/select`, { candidateIds }),
     onSuccess: () => {
       setShowConfirm(false);
-      initRef.current = false; // allow re-init from fresh data after refetch
+      clearAll(); // hide tray; cards fall back to bc.isSelected for visual state
+      initRef.current = true; // prevent re-init — store stays empty until session resets
+      sessionStorage.setItem(`recruiter_confirmed_${data!.batch.id}`, 'true');
       queryClient.invalidateQueries({ queryKey: ['recruiter-batch'] });
     },
   });
@@ -775,7 +782,10 @@ export default function RecruiterSelection() {
                 const c = bc.candidate;
                 const age = calcAge(c.dateOfBirth);
                 const highest = getHighestJlpt(c.tests ?? []);
-                const isSelected = selectedIds.has(bc.candidateId);
+                // When store is empty (post-confirmation, no pending edits) fall back to DB state
+                const isSelected = selectedIds.size > 0
+                  ? selectedIds.has(bc.candidateId)
+                  : bc.isSelected && !bc.isConfirmed;
                 const rowBg = bc.isConfirmed
                   ? 'bg-green-50'
                   : isSelected
