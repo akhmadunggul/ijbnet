@@ -782,10 +782,7 @@ export default function RecruiterSelection() {
                 const c = bc.candidate;
                 const age = calcAge(c.dateOfBirth);
                 const highest = getHighestJlpt(c.tests ?? []);
-                // When store is empty (post-confirmation, no pending edits) fall back to DB state
-                const isSelected = selectedIds.size > 0
-                  ? selectedIds.has(bc.candidateId)
-                  : bc.isSelected && !bc.isConfirmed;
+                const isSelected = (bc.isSelected && !bc.isConfirmed) || selectedIds.has(bc.candidateId);
                 const rowBg = bc.isConfirmed
                   ? 'bg-green-50'
                   : isSelected
@@ -887,7 +884,13 @@ export default function RecruiterSelection() {
           candidateMap={candidateMap}
           lang={lang}
           isPending={confirmMutation.isPending}
-          onConfirm={() => confirmMutation.mutate([...selectedIds])}
+          onConfirm={() => {
+              // Always include existing DB-selected (non-confirmed) IDs so they are never deselected
+              const dbSelected = allCandidates
+                .filter((bc) => bc.isSelected && !bc.isConfirmed)
+                .map((bc) => bc.candidateId);
+              confirmMutation.mutate([...new Set([...dbSelected, ...selectedIds])]);
+            }}
           onCancel={() => setShowConfirm(false)}
         />
       )}
