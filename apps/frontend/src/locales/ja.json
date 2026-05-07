@@ -233,9 +233,11 @@
         "kubun": "SSW区分",
         "sectorJa": "分野（日本語）",
         "fieldJa": "職種（日本語）",
-        "sectorId": "分野（インドネシア語）",
-        "fieldId": "職種（インドネシア語）",
-        "jpStudy": "日本語学習期間"
+        "sectorId": "分野",
+        "fieldId": "職種",
+        "jpStudy": "日本語学習期間",
+        "selectSector": "分野を選択",
+        "selectField": "職種を選択"
       },
       "education": {
         "level": "最終学歴",

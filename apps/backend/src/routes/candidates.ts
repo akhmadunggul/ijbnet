@@ -15,6 +15,7 @@ import {
   Notification,
   User,
   Lpk,
+  SswSectorField,
 } from '../db/models/index';
 import { serializeCandidate } from '../serializers/candidate';
 import { calcCompleteness } from '../utils/completeness';
@@ -28,6 +29,16 @@ const router = Router();
 const upload = multer({
   storage: multer.memoryStorage(),
   limits: { fileSize: 5 * 1024 * 1024 },
+});
+
+// ── GET /api/candidates/ssw-options — SSW sector/field lookup (all auth roles) ─
+router.get('/ssw-options', authenticate, async (_req: Request, res: Response): Promise<void> => {
+  const rows = await SswSectorField.findAll({
+    where: { isActive: true },
+    order: [['sortOrder', 'ASC']],
+    attributes: ['id', 'kubun', 'sectorId', 'sectorJa', 'fieldId', 'fieldJa', 'sortOrder'],
+  });
+  res.json(rows.map((r) => r.toJSON()));
 });
 
 // ── GET /api/candidates/lpks — public list for onboarding dropdown ────────────

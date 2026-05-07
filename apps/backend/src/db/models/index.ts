@@ -20,6 +20,7 @@ import { UserMfaBackupCode, initUserMfaBackupCode } from './UserMfaBackupCode';
 import { ConsentClause, initConsentClause } from './ConsentClause';
 import { CandidateCertification, initCandidateCertification } from './CandidateCertification';
 import { CandidateEducationHistory, initCandidateEducationHistory } from './CandidateEducationHistory';
+import { SswSectorField, initSswSectorField } from './SswSectorField';
 
 // Initialize all models
 initCompany(sequelize);
@@ -42,6 +43,7 @@ initUserMfaBackupCode(sequelize);
 initConsentClause(sequelize);
 initCandidateCertification(sequelize);
 initCandidateEducationHistory(sequelize);
+initSswSectorField(sequelize);
 
 // ── Associations ─────────────────────────────────────────────────────────────
 
@@ -190,4 +192,5 @@ export {
   ConsentClause,
   CandidateCertification,
   CandidateEducationHistory,
+  SswSectorField,
 };

@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback } from 'react';
+import { useState, useRef, useCallback, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useForm, useFieldArray } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -378,39 +378,115 @@ function PersonalTab({ candidate, onSave, saving }: { candidate: CandidateData; 
 }
 
 // ── Tab 2 — SSW ───────────────────────────────────────────────────────────────
+interface SswOption { id: string; kubun: 'SSW1' | 'SSW2'; sectorId: string; sectorJa: string; fieldId: string; fieldJa: string; }
+
 function SswTab({ candidate, onSave, saving }: { candidate: CandidateData; onSave: (d: SswForm) => void; saving: boolean }) {
   const { t } = useTranslation();
-  const { register, handleSubmit, reset, formState: { isDirty } } = useForm<SswForm>({
+
+  const { data: sswOptions = [] } = useQuery<SswOption[]>({
+    queryKey: ['ssw-options'],
+    queryFn: () => api.get('/candidates/ssw-options').then((r) => r.data),
+    staleTime: Infinity,
+  });
+
+  const { register, handleSubmit, reset, watch, setValue, formState: { isDirty } } = useForm<SswForm>({
     resolver: zodResolver(sswSchema),
     defaultValues: {
-      jobCategory: candidate.jobCategory ?? '',
-      sswKubun: candidate.sswKubun ?? undefined,
-      sswSectorId: candidate.sswSectorId ?? '',
-      sswFieldId: candidate.sswFieldId ?? '',
-      sswSectorJa: candidate.sswSectorJa ?? '',
-      sswFieldJa: candidate.sswFieldJa ?? '',
+      jobCategory:     candidate.jobCategory ?? '',
+      sswKubun:        candidate.sswKubun ?? undefined,
+      sswSectorId:     candidate.sswSectorId ?? '',
+      sswFieldId:      candidate.sswFieldId ?? '',
+      sswSectorJa:     candidate.sswSectorJa ?? '',
+      sswFieldJa:      candidate.sswFieldJa ?? '',
       jpStudyDuration: candidate.jpStudyDuration ?? '',
     },
   });
 
+  const kubun     = watch('sswKubun');
+  const sectorId  = watch('sswSectorId');
+  const sectorJa  = watch('sswSectorJa');
+  const fieldJa   = watch('sswFieldJa');
+
+  const sectors = useMemo(() => {
+    const seen = new Set<string>();
+    return sswOptions.filter((o) => o.kubun === kubun && !seen.has(o.sectorId) && seen.add(o.sectorId));
+  }, [sswOptions, kubun]);
+
+  const fields = useMemo(
+    () => sswOptions.filter((o) => o.kubun === kubun && o.sectorId === sectorId),
+    [sswOptions, kubun, sectorId],
+  );
+
+  const handleSectorChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const val = e.target.value;
+    const match = sswOptions.find((o) => o.kubun === kubun && o.sectorId === val);
+    setValue('sswSectorId', val,              { shouldDirty: true });
+    setValue('sswSectorJa', match?.sectorJa ?? '', { shouldDirty: true });
+    setValue('sswFieldId',  '',               { shouldDirty: true });
+    setValue('sswFieldJa',  '',               { shouldDirty: true });
+    setValue('jobCategory', '',               { shouldDirty: true });
+  };
+
+  const handleFieldChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const val = e.target.value;
+    const match = sswOptions.find((o) => o.kubun === kubun && o.sectorId === sectorId && o.fieldId === val);
+    setValue('sswFieldId',  val,              { shouldDirty: true });
+    setValue('sswFieldJa',  match?.fieldJa ?? '', { shouldDirty: true });
+    setValue('jobCategory', val,              { shouldDirty: true });
+  };
+
   return (
     <form onSubmit={handleSubmit(async (d) => { await onSave(d); reset(d); })} className="space-y-4">
+      {/* Kubun */}
       <Field label={t('sswTitle') + ' — ' + t('candidate.profile.ssw.kubun')}>
         <div className="flex gap-4 pt-1">
           <label className="flex items-center gap-2 text-sm"><input type="radio" value="SSW1" {...register('sswKubun')} /> SSW1</label>
           <label className="flex items-center gap-2 text-sm"><input type="radio" value="SSW2" {...register('sswKubun')} /> SSW2</label>
         </div>
       </Field>
-      <Field label="Job Category"><input {...register('jobCategory')} className={inputCls} /></Field>
-      <div className="grid grid-cols-2 gap-4">
-        <Field label={t('candidate.profile.ssw.sectorId')}><input {...register('sswSectorId')} className={inputCls} /></Field>
-        <Field label={t('candidate.profile.ssw.fieldId')}><input {...register('sswFieldId')} className={inputCls} /></Field>
-      </div>
-      <div className="grid grid-cols-2 gap-4">
-        <Field label={t('candidate.profile.ssw.sectorJa')}><input {...register('sswSectorJa')} className={inputCls} /></Field>
-        <Field label={t('candidate.profile.ssw.fieldJa')}><input {...register('sswFieldJa')} className={inputCls} /></Field>
-      </div>
-      <Field label={t('candidate.profile.ssw.jpStudy')}><input {...register('jpStudyDuration')} className={inputCls} placeholder="18 bulan" /></Field>
+
+      {/* Sector dropdown */}
+      <Field label={t('candidate.profile.ssw.sectorId')}>
+        <select
+          value={sectorId ?? ''}
+          onChange={handleSectorChange}
+          disabled={!kubun}
+          className={inputCls}
+        >
+          <option value="">— {t('candidate.profile.ssw.selectSector')} —</option>
+          {sectors.map((s) => (
+            <option key={s.sectorId} value={s.sectorId}>{s.sectorId}</option>
+          ))}
+        </select>
+        {sectorJa && <p className="text-xs text-gray-400 mt-1">{sectorJa}</p>}
+      </Field>
+
+      {/* Field dropdown */}
+      <Field label={t('candidate.profile.ssw.fieldId')}>
+        <select
+          value={watch('sswFieldId') ?? ''}
+          onChange={handleFieldChange}
+          disabled={!sectorId}
+          className={inputCls}
+        >
+          <option value="">— {t('candidate.profile.ssw.selectField')} —</option>
+          {fields.map((f) => (
+            <option key={f.fieldId} value={f.fieldId}>{f.fieldId}</option>
+          ))}
+        </select>
+        {fieldJa && <p className="text-xs text-gray-400 mt-1">{fieldJa}</p>}
+      </Field>
+
+      {/* Hidden inputs to carry Ja values and jobCategory into form data */}
+      <input type="hidden" {...register('sswSectorJa')} />
+      <input type="hidden" {...register('sswFieldJa')} />
+      <input type="hidden" {...register('jobCategory')} />
+
+      {/* Study duration */}
+      <Field label={t('candidate.profile.ssw.jpStudy')}>
+        <input {...register('jpStudyDuration')} className={inputCls} placeholder="18 bulan" />
+      </Field>
+
       <div className="flex items-center gap-3 pt-2">
         <button type="submit" disabled={saving} className="px-4 py-2 bg-navy-700 text-white text-sm rounded-lg hover:bg-navy-900 transition disabled:opacity-60">
           {saving ? t('candidate.profile.saving') : t('candidate.profile.save')}

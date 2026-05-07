@@ -234,9 +234,11 @@
         "kubun": "Tipe SSW",
         "sectorJa": "Bidang (Jepang)",
         "fieldJa": "Jenis Pekerjaan (Jepang)",
-        "sectorId": "Bidang (Indonesia)",
-        "fieldId": "Jenis Pekerjaan (Indonesia)",
-        "jpStudy": "Durasi Belajar Bahasa Jepang"
+        "sectorId": "Bidang",
+        "fieldId": "Jenis Pekerjaan",
+        "jpStudy": "Durasi Belajar Bahasa Jepang",
+        "selectSector": "Pilih Bidang",
+        "selectField": "Pilih Jenis Pekerjaan"
       },
       "education": {
         "level": "Jenjang Pendidikan",
