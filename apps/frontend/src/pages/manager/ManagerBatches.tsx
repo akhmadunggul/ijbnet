@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
@@ -75,6 +75,17 @@ export default function ManagerBatches() {
     queryFn: () => api.get('/manager/companies').then((r) => r.data),
     staleTime: 300_000,
   });
+
+  const { data: sswOptions = [] } = useQuery<{ kubun: string; sectorId: string; sectorJa: string; fieldId: string; fieldJa: string }[]>({
+    queryKey: ['ssw-options'],
+    queryFn: () => api.get('/candidates/ssw-options').then((r) => r.data),
+    staleTime: Infinity,
+  });
+
+  const allFields = useMemo(() => {
+    const seen = new Set<string>();
+    return sswOptions.filter((o) => !seen.has(o.fieldId) && seen.add(o.fieldId));
+  }, [sswOptions]);
 
   const createMutation = useMutation({
     mutationFn: (payload: Record<string, unknown>) => api.post('/manager/batches', payload),
@@ -280,12 +291,18 @@ export default function ManagerBatches() {
                 <label className="text-xs font-medium text-gray-500 block mb-1">
                   {t('manager.batches.sswFieldFilter')}
                 </label>
-                <input
-                  type="text"
+                <select
                   value={form.sswFieldFilter}
                   onChange={(e) => setForm((f) => ({ ...f, sswFieldFilter: e.target.value }))}
                   className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-navy-300"
-                />
+                >
+                  <option value="">— {lang === 'ja' ? 'すべての職種' : 'Semua Jenis Pekerjaan'} —</option>
+                  {allFields.map((f) => (
+                    <option key={f.fieldId} value={f.fieldId}>
+                      {f.fieldId}{f.fieldJa ? ` / ${f.fieldJa}` : ''}
+                    </option>
+                  ))}
+                </select>
               </div>
               <div>
                 <label className="text-xs font-medium text-gray-500 block mb-1">
