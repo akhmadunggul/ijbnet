@@ -6,6 +6,8 @@ import { useAuthStore } from '../store/authStore';
 import { api } from '../lib/api';
 import type { LoginResponse, MfaRequiredResponse, User } from '@ijbnet/shared';
 import { version } from '../../../../package.json';
+import ijbnetLogo from '../assets/IJBNet_LOGO.png';
+import jobagusLogo from '../assets/logo-jobagus.png';
 
 type LoginStep = 'credentials' | 'mfa';
 
@@ -72,7 +74,8 @@ export default function LoginPage() {
         {i18n.language === 'id' ? '日本語' : 'Indonesia'}
       </button>
 
-      <div className="w-full max-w-md bg-white rounded-2xl shadow-lg p-8">
+      <div className="w-full max-w-md flex flex-col gap-4">
+    <div className="bg-white rounded-2xl shadow-lg p-8">
         {/* Logo */}
         <div className="text-center mb-8">
           <h1 className="font-serif text-3xl text-navy-900">IJBNet</h1>
@@ -165,6 +168,14 @@ export default function LoginPage() {
 
         <p className="text-center text-xs text-gray-400 mt-6">v{version}</p>
       </div>
+
+      {/* Powered by */}
+      <div className="flex items-center justify-center gap-4 py-2">
+        <span className="text-xs text-gray-400 font-medium whitespace-nowrap">Powered by</span>
+        <img src={ijbnetLogo} alt="IJBNet" className="h-8 w-auto object-contain" />
+        <img src={jobagusLogo} alt="Jobagus" className="h-8 w-auto object-contain" />
+      </div>
+    </div>
     </div>
   );
 }
