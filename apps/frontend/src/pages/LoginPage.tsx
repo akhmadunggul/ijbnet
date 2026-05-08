@@ -8,6 +8,7 @@ import type { LoginResponse, MfaRequiredResponse, User } from '@ijbnet/shared';
 import { version } from '../../../../package.json';
 import ijbnetLogo from '../assets/IJBNet_LOGO.png';
 import jobagusLogo from '../assets/logo-jobagus.png';
+import gakkenLogo from '../assets/Gakken_company_logo.svg.png';
 
 type LoginStep = 'credentials' | 'mfa';
 
@@ -175,6 +176,7 @@ export default function LoginPage() {
         <div className="flex items-center justify-center gap-6">
           <img src={ijbnetLogo} alt="IJBNet" className="h-16 w-auto object-contain" />
           <img src={jobagusLogo} alt="Jobagus" className="h-16 w-auto object-contain" />
+          <img src={gakkenLogo} alt="Gakken" className="h-16 w-auto object-contain" />
         </div>
       </div>
     </div>
