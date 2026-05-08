@@ -61,10 +61,10 @@ export default function CandidateDashboard() {
 
   async function handleExport() {
     const res = await api.get('/candidates/me/export', { responseType: 'blob' });
-    const url = window.URL.createObjectURL(new Blob([res.data], { type: 'application/json' }));
+    const url = window.URL.createObjectURL(new Blob([res.data], { type: 'application/pdf' }));
     const a = document.createElement('a');
     a.href = url;
-    a.download = `${candidate?.candidateCode ?? 'export'}-data.json`;
+    a.download = `${candidate?.candidateCode ?? 'export'}-data.pdf`;
     document.body.appendChild(a);
     a.click();
     a.remove();
