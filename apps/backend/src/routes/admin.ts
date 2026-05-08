@@ -20,6 +20,8 @@ import { calcCompleteness } from '../utils/completeness';
 import { encryptNullable } from '../utils/crypto';
 import { notifyUser, notifyByRole } from '../utils/notify';
 import { extractYoutubeId } from '../utils/youtube';
+import { recordTimelineEvent } from '../utils/timeline';
+import { CandidateTimeline } from '../db/models/CandidateTimeline';
 import { isUUID } from 'validator';
 import { v4 as uuidv4 } from 'uuid';
 
@@ -230,6 +232,15 @@ router.patch('/candidates/:id/status', async (req: Request, res: Response): Prom
   }
 
   await audit(req, 'UPDATE_STATUS', candidate.id, { from, to: status });
+
+  const eventMap: Record<string, 'profile_under_review' | 'profile_approved' | 'profile_rejected'> = {
+    under_review: 'profile_under_review',
+    approved: 'profile_approved',
+    rejected: 'profile_rejected',
+  };
+  if (eventMap[status]) {
+    await recordTimelineEvent(candidate.id, eventMap[status]!, req.user!.sub, 'admin');
+  }
 
   res.json({ message: 'Status updated.', status });
 });
@@ -590,6 +601,29 @@ router.get('/dashboard', async (req: Request, res: Response): Promise<void> => {
     },
     recentLogs: recentLogs.map((l) => l.toJSON()),
   });
+});
+
+// ── GET /api/admin/candidates/:id/timeline ────────────────────────────────────
+router.get('/candidates/:id/timeline', async (req: Request, res: Response): Promise<void> => {
+  const lpkId = await getAdminLpkId(req.user!.sub);
+  if (!lpkId) {
+    res.status(403).json({ error: 'FORBIDDEN' });
+    return;
+  }
+
+  const candidate = await Candidate.findOne({ where: { id: req.params['id'], lpkId }, attributes: ['id'] });
+  if (!candidate) {
+    res.status(404).json({ error: 'NOT_FOUND' });
+    return;
+  }
+
+  const events = await CandidateTimeline.findAll({
+    where: { candidateId: candidate.id },
+    include: [{ model: User, as: 'actor', attributes: ['id', 'name', 'role'], required: false }],
+    order: [['occurredAt', 'ASC']],
+  });
+
+  res.json({ timeline: events.map((e) => e.toJSON()) });
 });
 
 export default router;

@@ -674,5 +674,30 @@
       "selectDate": "日程を選択",
       "customDate": "その他の日程"
     }
+  },
+  "timeline": {
+    "title": "ステータス履歴",
+    "empty": "履歴はまだありません。",
+    "confirmDate": "日程を確認",
+    "confirmDateSuccess": "面接日程を確認しました。",
+    "acceptCandidate": "候補者を承認",
+    "acceptSuccess": "候補者を承認しました。",
+    "events": {
+      "registered": "登録済み",
+      "consent_given": "同意済み",
+      "profile_submitted": "プロフィール提出済み",
+      "profile_under_review": "審査中",
+      "profile_approved": "プロフィール承認済み",
+      "profile_rejected": "プロフィール却下",
+      "batch_allocated": "バッチに割り当て済み",
+      "recruiter_selected": "採用担当者に選択済み",
+      "interview_proposed": "面接日程提案済み",
+      "interview_date_confirmed": "候補者が面接日程を確認済み",
+      "interview_scheduled": "面接日程確定済み",
+      "manager_confirmed": "マネージャー確認済み",
+      "interview_passed": "面接合格",
+      "interview_failed": "面接不合格",
+      "recruiter_accepted": "採用担当者承認済み"
+    }
   }
 }

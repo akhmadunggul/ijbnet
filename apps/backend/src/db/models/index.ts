@@ -21,6 +21,7 @@ import { ConsentClause, initConsentClause } from './ConsentClause';
 import { CandidateCertification, initCandidateCertification } from './CandidateCertification';
 import { CandidateEducationHistory, initCandidateEducationHistory } from './CandidateEducationHistory';
 import { SswSectorField, initSswSectorField } from './SswSectorField';
+import { CandidateTimeline, initCandidateTimeline } from './CandidateTimeline';
 
 // Initialize all models
 initCompany(sequelize);
@@ -44,6 +45,7 @@ initConsentClause(sequelize);
 initCandidateCertification(sequelize);
 initCandidateEducationHistory(sequelize);
 initSswSectorField(sequelize);
+initCandidateTimeline(sequelize);
 
 // ── Associations ─────────────────────────────────────────────────────────────
 
@@ -155,6 +157,15 @@ ConsentClause.belongsTo(User, { as: 'creator', foreignKey: 'createdBy' });
 ConsentClause.belongsTo(ConsentClause, { as: 'superseder', foreignKey: 'supersededBy' });
 Candidate.belongsTo(ConsentClause, { as: 'consentClause', foreignKey: 'consentClauseId' });
 
+// Candidate timeline
+Candidate.hasMany(CandidateTimeline, {
+  foreignKey: 'candidateId',
+  as: 'timeline',
+  onDelete: 'CASCADE',
+});
+CandidateTimeline.belongsTo(Candidate, { foreignKey: 'candidateId', as: 'candidate' });
+CandidateTimeline.belongsTo(User, { foreignKey: 'actorId', as: 'actor' });
+
 // Candidate certifications & education history
 Candidate.hasMany(CandidateCertification, {
   foreignKey: 'candidateId',
@@ -193,4 +204,5 @@ export {
   CandidateCertification,
   CandidateEducationHistory,
   SswSectorField,
+  CandidateTimeline,
 };

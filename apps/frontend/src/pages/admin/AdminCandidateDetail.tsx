@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '../../lib/api';
 import AuthImage from '../../components/AuthImage';
+import CandidateTimeline from '../../components/CandidateTimeline';
 import type { AdminCandidate, AuditLogEntry } from '../../types/admin';
 
 interface CandidateDetailResponse {
@@ -296,6 +297,14 @@ export default function AdminCandidateDetail() {
         >
           {saveNotesMutation.isPending ? '…' : t('admin.notes.save')}
         </button>
+      </Section>
+
+      {/* Timeline */}
+      <Section title={lang === 'ja' ? 'ステータス履歴' : 'Riwayat Status'}>
+        <CandidateTimeline
+          endpoint={`/admin/candidates/${id}/timeline`}
+          queryKey={['admin-timeline', id!]}
+        />
       </Section>
 
       {/* Audit trail */}

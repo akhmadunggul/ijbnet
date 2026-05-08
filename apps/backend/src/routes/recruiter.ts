@@ -21,6 +21,8 @@ import {
 import { serializeCandidate } from '../serializers/candidate';
 import { calcCompleteness } from '../utils/completeness';
 import { notifyByRole, notifyUser } from '../utils/notify';
+import { recordTimelineEvent } from '../utils/timeline';
+import { CandidateTimeline } from '../db/models/CandidateTimeline';
 import { isUUID } from 'validator';
 import { v4 as uuidv4 } from 'uuid';
 
@@ -217,10 +219,10 @@ router.post('/batches/:batchId/select', wrap(async (req: Request, res: Response)
     batch.id,
   );
 
-  // Audit each selected candidate
+  // Audit + timeline each selected candidate
   await Promise.all(
-    candidateIds.map((cid) =>
-      AuditLog.create({
+    candidateIds.map(async (cid) => {
+      await AuditLog.create({
         userId: req.user!.sub,
         action: 'BATCH_SELECT',
         entityType: 'batch_candidate',
@@ -229,8 +231,12 @@ router.post('/batches/:batchId/select', wrap(async (req: Request, res: Response)
         ipAddress: req.ip ?? null,
         userAgent: req.headers['user-agent'] ?? null,
         payload: { batchId },
-      }),
-    ),
+      });
+      const wasSelected = allocMap.get(cid)?.isSelected ?? false;
+      if (!wasSelected) {
+        await recordTimelineEvent(cid, 'recruiter_selected', req.user!.sub, 'recruiter', { batchId });
+      }
+    }),
   );
 
   // Return updated counts + batch status
@@ -428,6 +434,14 @@ router.post('/interviews/:batchCandidateId/propose', wrap(async (req: Request, r
     payload: { proposedDates, batchCandidateId },
   });
 
+  await recordTimelineEvent(
+    allocation.candidateId,
+    'interview_proposed',
+    req.user!.sub,
+    'recruiter',
+    { proposalId: proposal.id, proposedDates },
+  );
+
   res.status(201).json({ proposal: proposal.toJSON() });
 }));
 
@@ -479,6 +493,126 @@ router.get('/interviews', wrap(async (req: Request, res: Response): Promise<void
   });
 
   res.json({ proposals: proposals.map((p) => p.toJSON()) });
+}));
+
+// ── POST /api/recruiter/interviews/:proposalId/accept ─────────────────────────
+router.post('/interviews/:proposalId/accept', wrap(async (req: Request, res: Response): Promise<void> => {
+  const { proposalId } = req.params as { proposalId: string };
+  if (!isUUID(proposalId)) {
+    res.status(400).json({ error: 'BAD_REQUEST' });
+    return;
+  }
+
+  const companyId = await getRecruiterCompanyId(req.user!.sub);
+  if (!companyId) {
+    res.status(403).json({ error: 'FORBIDDEN' });
+    return;
+  }
+
+  const proposal = await InterviewProposal.findByPk(proposalId, {
+    include: [
+      {
+        model: BatchCandidate,
+        as: 'batchCandidate',
+        include: [
+          { model: Batch, as: 'batch', attributes: ['id', 'companyId'] },
+          { model: Candidate, as: 'candidate', attributes: ['id', 'interviewStatus', 'candidateCode', 'fullName'] },
+        ],
+      },
+    ],
+  });
+
+  if (!proposal) {
+    res.status(404).json({ error: 'NOT_FOUND' });
+    return;
+  }
+
+  const bcData = (proposal as unknown as Record<string, unknown>)['batchCandidate'] as Record<string, unknown> | null;
+  const batchData = (bcData?.['batch'] as Record<string, unknown>) ?? null;
+  if (!batchData || batchData['companyId'] !== companyId) {
+    res.status(403).json({ error: 'FORBIDDEN' });
+    return;
+  }
+
+  const candidateData = (bcData?.['candidate'] as Record<string, unknown>) ?? null;
+  const candidateId = candidateData?.['id'] as string | null;
+  const interviewStatus = candidateData?.['interviewStatus'] as string | null;
+
+  if (interviewStatus !== 'pass') {
+    res.status(422).json({ error: 'INVALID_STATE', message: 'Can only accept a candidate who passed the interview.' });
+    return;
+  }
+
+  if (!candidateId) {
+    res.status(404).json({ error: 'NOT_FOUND' });
+    return;
+  }
+
+  const alreadyAccepted = await CandidateTimeline.findOne({
+    where: { candidateId, event: 'recruiter_accepted' },
+  });
+  if (alreadyAccepted) {
+    res.status(422).json({ error: 'ALREADY_ACCEPTED', message: 'Candidate already accepted.' });
+    return;
+  }
+
+  await recordTimelineEvent(candidateId, 'recruiter_accepted', req.user!.sub, 'recruiter', { proposalId });
+
+  await AuditLog.create({
+    userId: req.user!.sub,
+    action: 'RECRUITER_ACCEPT',
+    entityType: 'interview_proposal',
+    entityId: proposalId,
+    targetCandidateId: candidateId,
+    ipAddress: req.ip ?? null,
+    userAgent: req.headers['user-agent'] ?? null,
+    payload: { proposalId },
+  });
+
+  res.json({ message: 'Candidate accepted.' });
+}));
+
+// ── GET /api/recruiter/candidates/:id/timeline ────────────────────────────────
+router.get('/candidates/:id/timeline', wrap(async (req: Request, res: Response): Promise<void> => {
+  const { id } = req.params as { id: string };
+  if (!isUUID(id)) {
+    res.status(400).json({ error: 'BAD_REQUEST' });
+    return;
+  }
+
+  const companyId = await getRecruiterCompanyId(req.user!.sub);
+  if (!companyId) {
+    res.status(403).json({ error: 'FORBIDDEN' });
+    return;
+  }
+
+  const batch = await getActiveBatch(companyId);
+  if (!batch) {
+    res.status(403).json({ error: 'FORBIDDEN' });
+    return;
+  }
+
+  const allocation = await BatchCandidate.findOne({ where: { batchId: batch.id, candidateId: id } });
+  if (!allocation) {
+    res.status(403).json({ error: 'FORBIDDEN', message: 'Candidate is not in your batch.' });
+    return;
+  }
+
+  // Recruiters see only post-allocation events
+  const RECRUITER_EVENTS = [
+    'batch_allocated', 'recruiter_selected', 'interview_proposed',
+    'interview_date_confirmed', 'interview_scheduled', 'manager_confirmed',
+    'interview_passed', 'interview_failed', 'recruiter_accepted',
+  ];
+
+  const { Op } = await import('sequelize');
+  const events = await CandidateTimeline.findAll({
+    where: { candidateId: id, event: { [Op.in]: RECRUITER_EVENTS } },
+    include: [{ model: User, as: 'actor', attributes: ['id', 'name', 'role'], required: false }],
+    order: [['occurredAt', 'ASC']],
+  });
+
+  res.json({ timeline: events.map((e) => e.toJSON()) });
 }));
 
 export default router;

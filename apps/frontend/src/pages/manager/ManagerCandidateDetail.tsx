@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useParams, useNavigate } from 'react-router-dom';
 import { api } from '../../lib/api';
+import CandidateTimeline from '../../components/CandidateTimeline';
 import type { ManagerCandidate } from '../../types/manager';
 
 const STATUS_CONFIG: Record<string, { key: string; color: string }> = {
@@ -125,6 +126,14 @@ export default function ManagerCandidateDetail() {
           </p>
         </div>
       )}
+
+      {/* Timeline */}
+      <div className="bg-white border border-gray-100 rounded-xl p-5 shadow-sm">
+        <CandidateTimeline
+          endpoint={`/manager/candidates/${id}/timeline`}
+          queryKey={['manager-timeline', id!]}
+        />
+      </div>
 
       {/* Internal notes */}
       <div className="bg-white border border-gray-100 rounded-xl p-5 shadow-sm">

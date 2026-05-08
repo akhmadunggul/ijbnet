@@ -20,7 +20,11 @@ import {
   Lpk,
   SswSectorField,
   ConsentClause,
+  CandidateTimeline,
+  BatchCandidate,
+  InterviewProposal,
 } from '../db/models/index';
+import { recordTimelineEvent } from '../utils/timeline';
 import { serializeCandidate } from '../serializers/candidate';
 import { calcCompleteness } from '../utils/completeness';
 import { validateImageBuffer, savePhoto } from '../utils/storage';
@@ -168,6 +172,8 @@ router.patch('/me/consent', authenticate, requireRole('candidate'), async (req: 
       payload: clauseId ? { clauseId } : null,
     });
 
+    await recordTimelineEvent(candidate.id, 'consent_given', req.user!.sub, 'candidate');
+
     res.json({ message: 'Consent recorded.' });
   } catch (err) {
     console.error('[PATCH /me/consent] error:', err);
@@ -260,6 +266,8 @@ router.post('/me/submit', async (req: Request, res: Response): Promise<void> => 
     userAgent: req.headers['user-agent'] ?? null,
     payload: null,
   });
+
+  await recordTimelineEvent(candidate.id, 'profile_submitted', req.user!.sub, 'candidate');
 
   res.json({ message: 'Profile submitted successfully.' });
 });
@@ -720,6 +728,72 @@ ${bodyCheck ? `
   } finally {
     await browser.close();
   }
+});
+
+// ── GET /api/candidates/me/timeline ──────────────────────────────────────────
+router.get('/me/timeline', authenticate, requireRole('candidate'), async (req: Request, res: Response): Promise<void> => {
+  const candidate = await Candidate.findOne({ where: { userId: req.user!.sub }, attributes: ['id'] });
+  if (!candidate) {
+    res.status(404).json({ error: 'NOT_FOUND' });
+    return;
+  }
+
+  const events = await CandidateTimeline.findAll({
+    where: { candidateId: candidate.id },
+    include: [{ model: User, as: 'actor', attributes: ['id', 'name', 'role'], required: false }],
+    order: [['occurredAt', 'ASC']],
+  });
+
+  res.json({ timeline: events.map((e) => e.toJSON()) });
+});
+
+// ── PATCH /api/candidates/me/interviews/:proposalId/confirm-date ──────────────
+router.patch('/me/interviews/:proposalId/confirm-date', authenticate, requireRole('candidate'), async (req: Request, res: Response): Promise<void> => {
+  const { proposalId } = req.params as { proposalId: string };
+
+  const candidate = await Candidate.findOne({ where: { userId: req.user!.sub }, attributes: ['id'] });
+  if (!candidate) {
+    res.status(404).json({ error: 'NOT_FOUND' });
+    return;
+  }
+
+  const proposal = await InterviewProposal.findByPk(proposalId, {
+    include: [{ model: BatchCandidate, as: 'batchCandidate', attributes: ['id', 'candidateId'] }],
+  });
+
+  if (!proposal) {
+    res.status(404).json({ error: 'NOT_FOUND' });
+    return;
+  }
+
+  const bc = (proposal as unknown as Record<string, unknown>)['batchCandidate'] as { candidateId: string } | null;
+  if (!bc || bc.candidateId !== candidate.id) {
+    res.status(403).json({ error: 'FORBIDDEN' });
+    return;
+  }
+
+  if (proposal.status !== 'scheduled') {
+    res.status(422).json({ error: 'INVALID_STATE', message: 'Interview must be scheduled before confirming.' });
+    return;
+  }
+
+  const alreadyConfirmed = await CandidateTimeline.findOne({
+    where: { candidateId: candidate.id, event: 'interview_date_confirmed' },
+  });
+  if (alreadyConfirmed) {
+    res.status(422).json({ error: 'ALREADY_CONFIRMED', message: 'Interview date already confirmed.' });
+    return;
+  }
+
+  await recordTimelineEvent(
+    candidate.id,
+    'interview_date_confirmed',
+    req.user!.sub,
+    'candidate',
+    { proposalId, finalDate: proposal.finalDate },
+  );
+
+  res.json({ message: 'Interview date confirmed.' });
 });
 
 export default router;

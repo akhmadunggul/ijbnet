@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useQuery } from '@tanstack/react-query';
 import { api } from '../../lib/api';
+import CandidateTimeline from '../../components/CandidateTimeline';
 import type { CandidateMe, NotificationData } from '../../types/candidate';
 
 const STATUS_CONFIG: Record<string, { label: string; labelJa: string; color: string; bg: string }> = {
@@ -163,6 +164,14 @@ export default function CandidateDashboard() {
           </span>
           {exportError && <span className="text-xs text-red-500 mt-1">{exportError}</span>}
         </button>
+      </div>
+
+      {/* Status timeline */}
+      <div className="bg-white border border-gray-100 rounded-xl p-5">
+        <CandidateTimeline
+          endpoint="/candidates/me/timeline"
+          queryKey={['my-timeline']}
+        />
       </div>
 
       {/* Notification preview */}

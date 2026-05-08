@@ -675,5 +675,30 @@
       "selectDate": "Pilih tanggal",
       "customDate": "Tanggal lain"
     }
+  },
+  "timeline": {
+    "title": "Riwayat Status",
+    "empty": "Belum ada riwayat.",
+    "confirmDate": "Konfirmasi Jadwal",
+    "confirmDateSuccess": "Jadwal wawancara dikonfirmasi.",
+    "acceptCandidate": "Terima Kandidat",
+    "acceptSuccess": "Kandidat berhasil diterima.",
+    "events": {
+      "registered": "Terdaftar",
+      "consent_given": "Persetujuan Diberikan",
+      "profile_submitted": "Profil Diajukan",
+      "profile_under_review": "Sedang Direview",
+      "profile_approved": "Profil Disetujui",
+      "profile_rejected": "Profil Ditolak",
+      "batch_allocated": "Dialokasikan ke Batch",
+      "recruiter_selected": "Dipilih Rekruter",
+      "interview_proposed": "Jadwal Wawancara Diusulkan",
+      "interview_date_confirmed": "Jadwal Wawancara Dikonfirmasi Kandidat",
+      "interview_scheduled": "Jadwal Wawancara Ditetapkan",
+      "manager_confirmed": "Dikonfirmasi Manager",
+      "interview_passed": "Lulus Wawancara",
+      "interview_failed": "Tidak Lulus Wawancara",
+      "recruiter_accepted": "Diterima Rekruter"
+    }
   }
 }

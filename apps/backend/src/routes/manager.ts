@@ -33,6 +33,8 @@ import {
 import {
   interviewResultHtml, interviewResultSubject,
 } from '../emails/interviewResult';
+import { recordTimelineEvent } from '../utils/timeline';
+import { CandidateTimeline } from '../db/models/CandidateTimeline';
 import { isUUID } from 'validator';
 import { v4 as uuidv4 } from 'uuid';
 import { config } from '../config';
@@ -471,6 +473,10 @@ router.post('/batches/:id/allocate', wrap(async (req: Request, res: Response): P
       }
 
       await audit(req, 'BATCH_ALLOCATE', 'batch_candidate', bc.id, cid, { batchId: id });
+
+      if (created) {
+        await recordTimelineEvent(cid, 'batch_allocated', req.user!.sub, 'manager', { batchId: id });
+      }
     }),
   );
 
@@ -558,6 +564,7 @@ router.patch('/batches/:batchId/candidates/:candidateId/approve', wrap(async (re
   }
 
   await audit(req, 'BATCH_APPROVE', 'batch_candidate', bc.id, candidateId, { batchId });
+  await recordTimelineEvent(candidateId, 'manager_confirmed', req.user!.sub, 'manager', { batchId });
 
   res.json({ message: 'Candidate approved.' });
 }));
@@ -623,6 +630,7 @@ router.post('/batches/:id/approve-all', wrap(async (req: Request, res: Response)
       }
 
       await audit(req, 'BATCH_APPROVE', 'batch_candidate', bc.id, bc.candidateId, { batchId: id });
+      await recordTimelineEvent(bc.candidateId, 'manager_confirmed', req.user!.sub, 'manager', { batchId: id });
     }),
   );
 
@@ -784,6 +792,10 @@ router.patch('/interviews/:proposalId/finalize', wrap(async (req: Request, res: 
 
   await audit(req, 'INTERVIEW_FINALIZE', 'interview_proposal', proposalId, candidateId ?? undefined, { finalDate });
 
+  if (candidateId) {
+    await recordTimelineEvent(candidateId, 'interview_scheduled', req.user!.sub, 'manager', { proposalId, finalDate });
+  }
+
   res.json({ proposal: proposal.toJSON() });
 }));
 
@@ -868,7 +880,40 @@ router.patch('/interviews/:proposalId/result', wrap(async (req: Request, res: Re
 
   await audit(req, 'INTERVIEW_RESULT', 'interview_proposal', proposalId, candidateId ?? undefined, { result });
 
+  if (candidateId && (result === 'pass' || result === 'fail')) {
+    await recordTimelineEvent(
+      candidateId,
+      result === 'pass' ? 'interview_passed' : 'interview_failed',
+      req.user!.sub,
+      'manager',
+      { proposalId, result },
+    );
+  }
+
   res.json({ proposal: proposal.toJSON() });
+}));
+
+// ── GET /api/manager/candidates/:id/timeline ─────────────────────────────────
+router.get('/candidates/:id/timeline', wrap(async (req: Request, res: Response): Promise<void> => {
+  const { id } = req.params as { id: string };
+  if (!isUUID(id)) {
+    res.status(400).json({ error: 'BAD_REQUEST' });
+    return;
+  }
+
+  const candidate = await Candidate.findByPk(id, { attributes: ['id'] });
+  if (!candidate) {
+    res.status(404).json({ error: 'NOT_FOUND' });
+    return;
+  }
+
+  const events = await CandidateTimeline.findAll({
+    where: { candidateId: id },
+    include: [{ model: User, as: 'actor', attributes: ['id', 'name', 'role'], required: false }],
+    order: [['occurredAt', 'ASC']],
+  });
+
+  res.json({ timeline: events.map((e) => e.toJSON()) });
 }));
 
 export default router;
