@@ -33,7 +33,7 @@ export default function CandidateCVPage() {
 
   return (
     <div className="max-w-4xl mx-auto space-y-4">
-      <div className="flex items-center justify-between no-print">
+      <div className="flex items-center justify-between print:hidden">
         <div>
           <h1 className="text-xl font-semibold text-navy-900">
             {lang === 'ja' ? '自分のCV' : 'CV Saya'}

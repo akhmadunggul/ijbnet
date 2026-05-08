@@ -69,7 +69,7 @@ export default function CandidateLayout() {
 
       {/* Sidebar */}
       <aside
-        className={`fixed inset-y-0 left-0 z-30 w-60 flex flex-col transition-transform lg:translate-x-0 lg:static lg:z-auto ${
+        className={`print:hidden fixed inset-y-0 left-0 z-30 w-60 flex flex-col transition-transform lg:translate-x-0 lg:static lg:z-auto ${
           sidebarOpen ? 'translate-x-0' : '-translate-x-full'
         }`}
         style={{ background: '#1A2E44' }}
@@ -121,7 +121,7 @@ export default function CandidateLayout() {
       {/* Main content */}
       <div className="flex-1 flex flex-col min-w-0">
         {/* Top bar */}
-        <header className="sticky top-0 z-10 bg-white border-b border-gray-100 flex items-center gap-3 px-4 h-14 shadow-sm">
+        <header className="print:hidden sticky top-0 z-10 bg-white border-b border-gray-100 flex items-center gap-3 px-4 h-14 shadow-sm">
           <button
             className="lg:hidden text-gray-500 hover:text-gray-700 p-1"
             onClick={() => setSidebarOpen(true)}
@@ -148,7 +148,7 @@ export default function CandidateLayout() {
         </header>
 
         {/* Page */}
-        <main className="flex-1 p-4 md:p-6 overflow-auto">
+        <main className="flex-1 p-4 md:p-6 print:p-0 overflow-auto">
           <Outlet />
         </main>
       </div>
