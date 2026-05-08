@@ -372,7 +372,7 @@ function ProfileModal({ bc, lang, onClose }: { bc: RecruiterBatchCandidate | nul
 
           {/* SSW */}
           <div>
-            <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">SSW</p>
+            <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">{lang === 'ja' ? 'プログラム' : 'Program'}</p>
             <Row label={lang === 'ja' ? '区分' : 'Tipe'} value={c.sswKubun} />
             <Row label={lang === 'ja' ? '分野' : 'Bidang'} value={lang === 'ja' ? c.sswSectorJa : c.sswSectorId} />
             <Row label={lang === 'ja' ? '職種' : 'Pekerjaan'} value={lang === 'ja' ? c.sswFieldJa : c.sswFieldId} />
@@ -764,7 +764,7 @@ export default function RecruiterSelection() {
                 <th className="px-3 py-3 text-left text-xs font-medium text-gray-400">{lang === 'ja' ? '氏名' : 'Nama'}</th>
                 <th className="px-3 py-3 text-left text-xs font-medium text-gray-400">{lang === 'ja' ? '性別/年齢' : 'J/U'}</th>
                 <th className="px-3 py-3 text-left text-xs font-medium text-gray-400">{lang === 'ja' ? '学歴' : 'Pendidikan'}</th>
-                <th className="px-3 py-3 text-left text-xs font-medium text-gray-400">{lang === 'ja' ? 'SSW分野' : 'Bidang SSW'}</th>
+                <th className="px-3 py-3 text-left text-xs font-medium text-gray-400">{lang === 'ja' ? 'プログラム' : 'Program'}</th>
                 <th className="px-3 py-3 text-left text-xs font-medium text-gray-400">{lang === 'ja' ? '日本語' : 'Bahasa JP'}</th>
                 <th className="px-3 py-3 text-left text-xs font-medium text-gray-400">{lang === 'ja' ? '体力検査' : 'Cek Fisik'}</th>
                 <th className="px-3 py-3 text-center text-xs font-medium text-gray-400">{lang === 'ja' ? '動画' : 'Video'}</th>
