@@ -26,8 +26,11 @@ RUN pnpm --filter @ijbnet/backend build
 
 # ── Stage 2: Production ──────────────────────────────────────────
 FROM node:20-alpine AS production
-RUN npm install -g pnpm@10.33.0 && \
+RUN apk add --no-cache chromium && \
+    npm install -g pnpm@10.33.0 && \
     pnpm config set registry https://registry.npmmirror.com
+
+ENV CHROME_PATH=/usr/bin/chromium-browser
 
 WORKDIR /app
 

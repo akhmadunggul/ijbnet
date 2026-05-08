@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useQuery } from '@tanstack/react-query';
@@ -17,6 +18,8 @@ export default function CandidateDashboard() {
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
   const lang = i18n.language;
+  const [exporting, setExporting] = useState(false);
+  const [exportError, setExportError] = useState<string | null>(null);
 
   const { data, isLoading } = useQuery<CandidateMe>({
     queryKey: ['my-candidate'],
@@ -60,15 +63,23 @@ export default function CandidateDashboard() {
   const statusCfg = STATUS_CONFIG[profileStatus] ?? STATUS_CONFIG['incomplete']!;
 
   async function handleExport() {
-    const res = await api.get('/candidates/me/export', { responseType: 'blob' });
-    const url = window.URL.createObjectURL(new Blob([res.data], { type: 'application/pdf' }));
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `${candidate?.candidateCode ?? 'export'}-data.pdf`;
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
-    window.URL.revokeObjectURL(url);
+    setExporting(true);
+    setExportError(null);
+    try {
+      const res = await api.get('/candidates/me/export', { responseType: 'blob' });
+      const url = window.URL.createObjectURL(new Blob([res.data], { type: 'application/pdf' }));
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${candidate?.candidateCode ?? 'export'}-data.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      window.URL.revokeObjectURL(url);
+    } catch {
+      setExportError(lang === 'ja' ? 'ダウンロードに失敗しました。' : 'Gagal mengunduh data. Coba lagi.');
+    } finally {
+      setExporting(false);
+    }
   }
 
   return (
@@ -141,10 +152,16 @@ export default function CandidateDashboard() {
         </button>
         <button
           onClick={handleExport}
-          className="flex flex-col items-center gap-2 bg-white border border-gray-100 rounded-xl p-5 hover:bg-gray-50 transition text-center"
+          disabled={exporting}
+          className="flex flex-col items-center gap-2 bg-white border border-gray-100 rounded-xl p-5 hover:bg-gray-50 transition text-center disabled:opacity-60 disabled:cursor-not-allowed"
         >
-          <span className="text-2xl">📥</span>
-          <span className="text-sm font-medium text-gray-700">{t('candidate.dashboard.downloadData')}</span>
+          <span className="text-2xl">{exporting ? '⏳' : '📥'}</span>
+          <span className="text-sm font-medium text-gray-700">
+            {exporting
+              ? (lang === 'ja' ? '生成中…' : 'Membuat PDF…')
+              : t('candidate.dashboard.downloadData')}
+          </span>
+          {exportError && <span className="text-xs text-red-500 mt-1">{exportError}</span>}
         </button>
       </div>
 
