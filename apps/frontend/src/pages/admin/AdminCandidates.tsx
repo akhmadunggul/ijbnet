@@ -125,7 +125,7 @@ export default function AdminCandidates() {
               <tr>
                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">{t('admin.candidates.colCode')}</th>
                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">{t('admin.candidates.colName')}</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">SSW</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">{t('colSSW')}</th>
                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">{t('admin.candidates.colStatus')}</th>
                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">{t('admin.candidates.colCompleteness')}</th>
                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">{t('admin.candidates.colBodyCheck')}</th>
