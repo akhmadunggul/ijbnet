@@ -165,6 +165,7 @@ apps/frontend/src/
 - v0.2.3 — Candidate data export: formatted PDF via puppeteer-core (10 sections, IJBNet branding); fix export button loading state + Chromium in Docker
 - v0.2.4 — CV bilingual labels consolidated to single line (・ separator); print fix; login page Powered By logos; root package.json version sync
 - v0.2.5 — Version-aware consent: consentUpToDate field, superadmin push-to-all-users, ConsentModal loads real clause from DB
+- v0.2.6 — Add Trainee as third kubun category; ENUM migration, model/type/UI updates across all roles
 
-Current: v0.2.5
+Current: v0.2.6
 Live at: https://jinzai.aup.my.id
