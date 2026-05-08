@@ -170,10 +170,12 @@ export default function LoginPage() {
       </div>
 
       {/* Powered by */}
-      <div className="flex items-center justify-center gap-4 py-2">
-        <span className="text-xs text-gray-400 font-medium whitespace-nowrap">Powered by</span>
-        <img src={ijbnetLogo} alt="IJBNet" className="h-8 w-auto object-contain" />
-        <img src={jobagusLogo} alt="Jobagus" className="h-8 w-auto object-contain" />
+      <div className="flex flex-col items-center gap-3 py-2">
+        <span className="text-xs text-gray-400 font-medium">Powered by</span>
+        <div className="flex items-center justify-center gap-6">
+          <img src={ijbnetLogo} alt="IJBNet" className="h-16 w-auto object-contain" />
+          <img src={jobagusLogo} alt="Jobagus" className="h-16 w-auto object-contain" />
+        </div>
       </div>
     </div>
     </div>
