@@ -53,6 +53,8 @@ export interface CandidateData {
   isLocked: boolean;
   consentGiven: boolean;
   consentGivenAt: string | null;
+  consentUpToDate: boolean;
+  activeConsentClauseId: string | null;
   fullName: string;
   nameKatakana: string | null;
   gender: 'M' | 'F' | null;

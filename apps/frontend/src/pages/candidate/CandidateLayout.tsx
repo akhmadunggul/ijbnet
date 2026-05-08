@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '../../hooks/useAuth';
 import { api } from '../../lib/api';
 import ConsentModal from '../../components/ConsentModal';
@@ -11,8 +11,8 @@ export default function CandidateLayout() {
   const { t, i18n } = useTranslation();
   const { logout } = useAuth();
   const navigate = useNavigate();
+  const qc = useQueryClient();
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [consentChecked, setConsentChecked] = useState(false);
   const [showConsent, setShowConsent] = useState(false);
 
   const { data, isLoading } = useQuery<CandidateMe>({
@@ -22,12 +22,12 @@ export default function CandidateLayout() {
   });
 
   useEffect(() => {
-    if (!data || consentChecked) return;
-    setConsentChecked(true);
-    if (!data.candidate?.consentGiven) {
-      setShowConsent(true);
-    }
-  }, [data, consentChecked]);
+    if (!data) return;
+    const needsConsent =
+      !data.candidate?.consentGiven ||
+      data.candidate?.consentUpToDate === false;
+    setShowConsent(needsConsent);
+  }, [data]);
 
   const unreadCount: number = useQuery<{ unreadCount: number }>({
     queryKey: ['notifications-count'],
@@ -54,7 +54,11 @@ export default function CandidateLayout() {
       {/* Consent modal — blocks portal until accepted */}
       {showConsent && (
         <ConsentModal
-          onAccept={() => setShowConsent(false)}
+          activeClauseId={data?.candidate?.activeConsentClauseId ?? null}
+          onAccept={() => {
+            setShowConsent(false);
+            void qc.invalidateQueries({ queryKey: ['my-candidate'] });
+          }}
           onDecline={() => {}}
         />
       )}

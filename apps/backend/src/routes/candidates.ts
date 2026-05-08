@@ -19,6 +19,7 @@ import {
   User,
   Lpk,
   SswSectorField,
+  ConsentClause,
 } from '../db/models/index';
 import { serializeCandidate } from '../serializers/candidate';
 import { calcCompleteness } from '../utils/completeness';
@@ -92,8 +93,19 @@ router.get('/me', async (req: Request, res: Response): Promise<void> => {
   const data = candidate.toJSON() as unknown as Record<string, unknown>;
   const completeness = calcCompleteness(data);
 
+  const activeClause = await ConsentClause.findOne({ where: { isActive: true }, attributes: ['id'] });
+  const consentUpToDate =
+    candidate.consentGiven === true &&
+    activeClause !== null &&
+    candidate.consentClauseId === activeClause.id;
+
   res.json({
-    candidate: { ...serializeCandidate(data, 'candidate'), completeness },
+    candidate: {
+      ...serializeCandidate(data, 'candidate'),
+      completeness,
+      consentUpToDate,
+      activeConsentClauseId: activeClause?.id ?? null,
+    },
   });
 });
 

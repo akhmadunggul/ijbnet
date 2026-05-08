@@ -607,7 +607,11 @@
       "errorVersionExists": "Versi sudah ada.",
       "errorVersionFormat": "Format versi tidak valid. Gunakan X.Y",
       "errorMissingFields": "Konten dan versi wajib diisi.",
-      "errorExtract": "Gagal mengekstrak teks dari PDF."
+      "errorExtract": "Gagal mengekstrak teks dari PDF.",
+      "pushBtn": "Push ke Semua Pengguna",
+      "pushConfirm": "Yakin ingin memaksa semua kandidat untuk menyetujui ulang?",
+      "pushWarning": "Semua kandidat akan diminta menyetujui klausul ini kembali saat login berikutnya.",
+      "pushSuccess": "Berhasil! {{count}} kandidat akan diminta menyetujui ulang."
     }
   },
 

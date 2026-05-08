@@ -186,6 +186,10 @@ export default function SuperAdminConsent() {
   const [pdfError, setPdfError] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  // Push state
+  const [confirmPush, setConfirmPush] = useState(false);
+  const [pushResult, setPushResult] = useState<number | null>(null);
+
   // History
   const [historyPage, setHistoryPage] = useState(1);
   const [drawerClauseId, setDrawerClauseId] = useState<string | null>(null);
@@ -226,6 +230,18 @@ export default function SuperAdminConsent() {
       else if (msg === 'MISSING_FIELDS') setPublishError(t('superadmin.consent.errorMissingFields'));
       else setPublishError(t('toastError'));
       setConfirmPublish(false);
+    },
+  });
+
+  const pushMutation = useMutation({
+    mutationFn: (clauseId: string) =>
+      api.post<{ affectedCandidates: number }>(`/superadmin/consent-clause/${clauseId}/push`).then((r) => r.data),
+    onSuccess: (data) => {
+      setPushResult(data.affectedCandidates);
+      setConfirmPush(false);
+    },
+    onError: () => {
+      setConfirmPush(false);
     },
   });
 
@@ -284,7 +300,46 @@ export default function SuperAdminConsent() {
           )}
         </div>
         {activeClause ? (
-          <ActiveClauseCard clause={activeClause} onViewFull={() => setDrawerClauseId(activeClause.id)} />
+          <>
+            <ActiveClauseCard clause={activeClause} onViewFull={() => setDrawerClauseId(activeClause.id)} />
+
+            {/* Push to all users */}
+            <div className="mt-4 pt-4 border-t border-green-200">
+              {pushResult !== null && (
+                <p className="text-sm text-green-700 font-medium mb-3">
+                  ✓ {t('superadmin.consent.pushSuccess', { count: pushResult })}
+                </p>
+              )}
+              {!confirmPush ? (
+                <button
+                  onClick={() => { setPushResult(null); setConfirmPush(true); }}
+                  className="text-sm bg-amber-600 hover:bg-amber-700 text-white font-medium px-4 py-2 rounded-lg transition"
+                >
+                  {t('superadmin.consent.pushBtn')}
+                </button>
+              ) : (
+                <div className="bg-red-50 border border-red-200 rounded-lg p-4 space-y-2">
+                  <p className="text-sm font-medium text-red-800">{t('superadmin.consent.pushConfirm')}</p>
+                  <p className="text-xs text-red-700">{t('superadmin.consent.pushWarning')}</p>
+                  <div className="flex gap-2 mt-2">
+                    <button
+                      onClick={() => pushMutation.mutate(activeClause.id)}
+                      disabled={pushMutation.isPending}
+                      className="text-sm bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 disabled:opacity-50 transition"
+                    >
+                      {pushMutation.isPending ? '…' : t('superadmin.consent.pushBtn')}
+                    </button>
+                    <button
+                      onClick={() => setConfirmPush(false)}
+                      className="text-sm border border-gray-200 px-4 py-2 rounded-lg hover:bg-gray-50 transition"
+                    >
+                      {t('btnCancel')}
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          </>
         ) : (
           <p className="text-sm text-amber-700">{t('superadmin.consent.noActive')}</p>
         )}

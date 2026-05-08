@@ -606,7 +606,11 @@
       "errorVersionExists": "バージョンが既に存在します。",
       "errorVersionFormat": "バージョン形式が無効です。X.Y形式を使用してください",
       "errorMissingFields": "コンテンツとバージョンは必須です。",
-      "errorExtract": "PDFからテキストを抽出できませんでした。"
+      "errorExtract": "PDFからテキストを抽出できませんでした。",
+      "pushBtn": "全ユーザーにプッシュ",
+      "pushConfirm": "全候補者に再同意を要求しますか？",
+      "pushWarning": "全ての候補者は次回ログイン時にこの条項に再同意する必要があります。",
+      "pushSuccess": "完了！{{count}}名の候補者が再同意を求められます。"
     }
   },
 

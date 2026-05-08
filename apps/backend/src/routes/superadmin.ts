@@ -683,4 +683,35 @@ router.patch('/consent-clause/:id', wrap(async (req, res) => {
   res.json({ clause: clause.toJSON() });
 }));
 
+// ── POST /api/superadmin/consent-clause/:id/push ──────────────────────────────
+// Forces all candidates to re-accept the current active clause by clearing their
+// stored consentClauseId (non-destructive — consentGiven history is preserved).
+router.post('/consent-clause/:id/push', wrap(async (req, res) => {
+  if (!isUUID(req.params['id'] ?? '', 4)) { res.status(400).json({ error: 'INVALID_ID' }); return; }
+
+  const clause = await ConsentClause.findByPk(req.params['id']);
+  if (!clause) { res.status(404).json({ error: 'NOT_FOUND' }); return; }
+  if (!clause.isActive) {
+    res.status(422).json({ error: 'CLAUSE_NOT_ACTIVE', message: 'Only the active clause can be pushed.' });
+    return;
+  }
+
+  const [affectedCandidates] = await Candidate.update(
+    { consentClauseId: null as unknown as string },
+    { where: {} },
+  );
+
+  await AuditLog.create({
+    userId:     req.user!.sub,
+    action:     'CONSENT_PUSH',
+    entityType: 'consent_clause',
+    entityId:   clause.id,
+    ipAddress:  req.ip ?? null,
+    userAgent:  req.headers['user-agent'] ?? null,
+    payload:    null,
+  });
+
+  res.json({ message: 'Consent push complete.', affectedCandidates });
+}));
+
 export default router;
