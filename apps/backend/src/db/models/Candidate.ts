@@ -32,7 +32,7 @@ export interface CandidateAttributes {
   eduLabel: string | null;
   eduMajor: string | null;
   jobCategory: string | null;
-  sswKubun: 'SSW1' | 'SSW2' | null;
+  sswKubun: 'SSW1' | 'SSW2' | 'Trainee' | null;
   sswSectorJa: string | null;
   sswFieldJa: string | null;
   sswSectorId: string | null;
@@ -162,7 +162,7 @@ export class Candidate
   declare eduLabel: string | null;
   declare eduMajor: string | null;
   declare jobCategory: string | null;
-  declare sswKubun: 'SSW1' | 'SSW2' | null;
+  declare sswKubun: 'SSW1' | 'SSW2' | 'Trainee' | null;
   declare sswSectorJa: string | null;
   declare sswFieldJa: string | null;
   declare sswSectorId: string | null;
@@ -242,7 +242,7 @@ export function initCandidate(sequelize: Sequelize): void {
       eduLabel: { type: DataTypes.STRING(100), allowNull: true },
       eduMajor: { type: DataTypes.STRING(100), allowNull: true },
       jobCategory: { type: DataTypes.STRING(50), allowNull: true },
-      sswKubun: { type: DataTypes.ENUM('SSW1', 'SSW2'), allowNull: true },
+      sswKubun: { type: DataTypes.ENUM('SSW1', 'SSW2', 'Trainee'), allowNull: true },
       sswSectorJa: { type: DataTypes.STRING(100), allowNull: true },
       sswFieldJa: { type: DataTypes.STRING(100), allowNull: true },
       sswSectorId: { type: DataTypes.STRING(100), allowNull: true },

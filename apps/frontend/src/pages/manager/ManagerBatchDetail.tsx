@@ -131,6 +131,7 @@ export default function ManagerBatchDetail() {
                 <option value="">{t('filterAll')} SSW</option>
                 <option value="SSW1">SSW1</option>
                 <option value="SSW2">SSW2</option>
+                <option value="Trainee">Trainee</option>
               </select>
             </div>
             <div className="space-y-1 max-h-96 overflow-y-auto">

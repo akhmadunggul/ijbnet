@@ -33,7 +33,7 @@ const personalSchema = z.object({
 
 const sswSchema = z.object({
   jobCategory:    z.string().nullable().optional(),
-  sswKubun:       z.enum(['SSW1', 'SSW2']).nullable().optional(),
+  sswKubun:       z.enum(['SSW1', 'SSW2', 'Trainee']).nullable().optional(),
   sswSectorId:    z.string().nullable().optional(),
   sswFieldId:     z.string().nullable().optional(),
   sswSectorJa:    z.string().nullable().optional(),
@@ -378,7 +378,7 @@ function PersonalTab({ candidate, onSave, saving }: { candidate: CandidateData; 
 }
 
 // ── Tab 2 — SSW ───────────────────────────────────────────────────────────────
-interface SswOption { id: string; kubun: 'SSW1' | 'SSW2'; sectorId: string; sectorJa: string; fieldId: string; fieldJa: string; }
+interface SswOption { id: string; kubun: 'SSW1' | 'SSW2' | 'Trainee'; sectorId: string; sectorJa: string; fieldId: string; fieldJa: string; }
 
 function SswTab({ candidate, onSave, saving }: { candidate: CandidateData; onSave: (d: SswForm) => void; saving: boolean }) {
   const { t } = useTranslation();
@@ -442,40 +442,44 @@ function SswTab({ candidate, onSave, saving }: { candidate: CandidateData; onSav
         <div className="flex gap-4 pt-1">
           <label className="flex items-center gap-2 text-sm"><input type="radio" value="SSW1" {...register('sswKubun')} /> SSW1</label>
           <label className="flex items-center gap-2 text-sm"><input type="radio" value="SSW2" {...register('sswKubun')} /> SSW2</label>
+          <label className="flex items-center gap-2 text-sm"><input type="radio" value="Trainee" {...register('sswKubun')} /> Trainee</label>
         </div>
       </Field>
 
-      {/* Sector dropdown */}
-      <Field label={t('candidate.profile.ssw.sectorId')}>
-        <select
-          value={sectorId ?? ''}
-          onChange={handleSectorChange}
-          disabled={!kubun}
-          className={inputCls}
-        >
-          <option value="">— {t('candidate.profile.ssw.selectSector')} —</option>
-          {sectors.map((s) => (
-            <option key={s.sectorId} value={s.sectorId}>{s.sectorId}</option>
-          ))}
-        </select>
-        {sectorJa && <p className="text-xs text-gray-400 mt-1">{sectorJa}</p>}
-      </Field>
+      {/* Sector/Field dropdowns — not applicable for Trainee */}
+      {kubun !== 'Trainee' && (
+        <>
+          <Field label={t('candidate.profile.ssw.sectorId')}>
+            <select
+              value={sectorId ?? ''}
+              onChange={handleSectorChange}
+              disabled={!kubun}
+              className={inputCls}
+            >
+              <option value="">— {t('candidate.profile.ssw.selectSector')} —</option>
+              {sectors.map((s) => (
+                <option key={s.sectorId} value={s.sectorId}>{s.sectorId}</option>
+              ))}
+            </select>
+            {sectorJa && <p className="text-xs text-gray-400 mt-1">{sectorJa}</p>}
+          </Field>
 
-      {/* Field dropdown */}
-      <Field label={t('candidate.profile.ssw.fieldId')}>
-        <select
-          value={watch('sswFieldId') ?? ''}
-          onChange={handleFieldChange}
-          disabled={!sectorId}
-          className={inputCls}
-        >
-          <option value="">— {t('candidate.profile.ssw.selectField')} —</option>
-          {fields.map((f) => (
-            <option key={f.fieldId} value={f.fieldId}>{f.fieldId}</option>
-          ))}
-        </select>
-        {fieldJa && <p className="text-xs text-gray-400 mt-1">{fieldJa}</p>}
-      </Field>
+          <Field label={t('candidate.profile.ssw.fieldId')}>
+            <select
+              value={watch('sswFieldId') ?? ''}
+              onChange={handleFieldChange}
+              disabled={!sectorId}
+              className={inputCls}
+            >
+              <option value="">— {t('candidate.profile.ssw.selectField')} —</option>
+              {fields.map((f) => (
+                <option key={f.fieldId} value={f.fieldId}>{f.fieldId}</option>
+              ))}
+            </select>
+            {fieldJa && <p className="text-xs text-gray-400 mt-1">{fieldJa}</p>}
+          </Field>
+        </>
+      )}
 
       {/* Hidden inputs to carry Ja values and jobCategory into form data */}
       <input type="hidden" {...register('sswSectorJa')} />

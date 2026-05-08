@@ -77,7 +77,7 @@ export interface CandidateData {
   eduLabel: string | null;
   eduMajor: string | null;
   jobCategory: string | null;
-  sswKubun: 'SSW1' | 'SSW2' | null;
+  sswKubun: 'SSW1' | 'SSW2' | 'Trainee' | null;
   sswSectorJa: string | null;
   sswFieldJa: string | null;
   sswSectorId: string | null;

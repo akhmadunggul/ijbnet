@@ -103,6 +103,7 @@ export default function AdminCandidates() {
           <option value="">{lang === 'ja' ? 'SSW全て' : 'Semua SSW'}</option>
           <option value="SSW1">SSW1</option>
           <option value="SSW2">SSW2</option>
+          <option value="Trainee">Trainee</option>
         </select>
         <button
           onClick={applyFilters}

@@ -2,7 +2,7 @@ import { DataTypes, Model, Optional, Sequelize } from 'sequelize';
 
 export interface SswSectorFieldAttributes {
   id: string;
-  kubun: 'SSW1' | 'SSW2';
+  kubun: 'SSW1' | 'SSW2' | 'Trainee';
   sectorId: string;
   sectorJa: string;
   fieldId: string;
@@ -20,7 +20,7 @@ export class SswSectorField
   extends Model<SswSectorFieldAttributes, SswSectorFieldCreationAttributes>
   implements SswSectorFieldAttributes {
   declare id: string;
-  declare kubun: 'SSW1' | 'SSW2';
+  declare kubun: 'SSW1' | 'SSW2' | 'Trainee';
   declare sectorId: string;
   declare sectorJa: string;
   declare fieldId: string;
@@ -35,7 +35,7 @@ export function initSswSectorField(sequelize: Sequelize): void {
   SswSectorField.init(
     {
       id:        { type: DataTypes.UUID, defaultValue: DataTypes.UUIDV4, primaryKey: true },
-      kubun:     { type: DataTypes.ENUM('SSW1', 'SSW2'), allowNull: false },
+      kubun:     { type: DataTypes.ENUM('SSW1', 'SSW2', 'Trainee'), allowNull: false },
       sectorId:  { type: DataTypes.STRING(120), allowNull: false },
       sectorJa:  { type: DataTypes.STRING(120), allowNull: false },
       fieldId:   { type: DataTypes.STRING(120), allowNull: false },

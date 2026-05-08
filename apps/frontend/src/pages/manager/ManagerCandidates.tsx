@@ -138,6 +138,7 @@ export default function ManagerCandidates() {
           <option value="">{t('filterAll')} SSW</option>
           <option value="SSW1">SSW1</option>
           <option value="SSW2">SSW2</option>
+          <option value="Trainee">Trainee</option>
         </select>
         <select
           value={lpkId}

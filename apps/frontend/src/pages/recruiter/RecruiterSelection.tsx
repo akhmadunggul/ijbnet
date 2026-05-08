@@ -677,7 +677,7 @@ export default function RecruiterSelection() {
           className="border border-gray-200 rounded-lg px-3 py-1.5 text-sm min-w-48 flex-1 focus:outline-none focus:ring-2 focus:ring-navy-300"
         />
         {/* SSW kubun */}
-        {(['ALL', 'SSW1', 'SSW2'] as const).map((v) => (
+        {(['ALL', 'SSW1', 'SSW2', 'Trainee'] as const).map((v) => (
           <button
             key={v}
             onClick={() => setFilters((f) => ({ ...f, sswKubun: v }))}
