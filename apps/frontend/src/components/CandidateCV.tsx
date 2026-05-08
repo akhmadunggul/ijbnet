@@ -248,7 +248,7 @@ export default function CandidateCV({
         <table className="cv-tbl" style={{ ...S.table, width: 'calc(100% - 140px)', float: 'left', marginBottom: 0 }}>
           <tbody>
             <tr>
-              <td style={{ ...TD, width: '20%' }}>Nama<br />氏名</td>
+              <td style={{ ...TD, width: '20%' }}>Nama ・ 氏名</td>
               <td style={TD} colSpan={3}>
                 <div>{v(c.fullName)}</div>
                 {c.nameKatakana && (
@@ -259,23 +259,21 @@ export default function CandidateCV({
               </td>
             </tr>
             <tr>
-              <td style={{ ...TD, width: '20%' }}>
-                Tempat, Tanggal Lahir<br />出身地 生年月日
-              </td>
+              <td style={{ ...TD, width: '20%' }}>Tempat, Tgl Lahir ・ 出身地 生年月日</td>
               <td style={{ ...TD, width: '30%' }}>{birthDisplay}</td>
-              <td style={{ ...TD, width: '20%' }}>Jenis Kelamin<br />性別</td>
+              <td style={{ ...TD, width: '20%' }}>Jenis Kelamin ・ 性別</td>
               <td style={TD}>{genderLabel}</td>
             </tr>
             <tr>
-              <td style={TD}>Usia<br />年齢</td>
+              <td style={TD}>Usia ・ 年齢</td>
               <td style={TD}>{age !== null ? `${age} tahun` : ''}</td>
-              <td style={TD}>Agama<br />宗教</td>
+              <td style={TD}>Agama ・ 宗教</td>
               <td style={TD}>{v(c.religion)}</td>
             </tr>
             <tr>
-              <td style={TD}>Golongan Darah<br />血液型</td>
+              <td style={TD}>Gol. Darah ・ 血液型</td>
               <td style={TD}>{v(c.bloodType)}</td>
-              <td style={TD}>Status Pernikahan<br />結婚歴</td>
+              <td style={TD}>Status Nikah ・ 結婚歴</td>
               <td style={TD}>
                 {c.maritalStatus ? (maritalLabel[c.maritalStatus] ?? v(c.maritalStatus)) : ''}
               </td>
@@ -288,11 +286,11 @@ export default function CandidateCV({
       <table className="cv-tbl" style={S.table}>
         <tbody>
           <tr>
-            <td style={{ ...TD, width: '16%' }}>Tinggi Badan<br />身長</td>
+            <td style={{ ...TD, width: '16%' }}>Tinggi ・ 身長</td>
             <td style={{ ...TD, width: '17%' }}>{heightDisplay}</td>
-            <td style={{ ...TD, width: '16%' }}>Berat Badan<br />体重</td>
+            <td style={{ ...TD, width: '16%' }}>Berat ・ 体重</td>
             <td style={{ ...TD, width: '17%' }}>{weightDisplay}</td>
-            <td style={{ ...TD, width: '16%' }}>日本レベル<br />Level Jepang</td>
+            <td style={{ ...TD, width: '16%' }}>Level JP ・ 日本語レベル</td>
             <td style={{ ...TD, width: '18%' }}>{jpLevelDisplay}</td>
           </tr>
         </tbody>
@@ -302,21 +300,17 @@ export default function CandidateCV({
       <table className="cv-tbl" style={S.table}>
         <tbody>
           <tr>
-            <td style={{ ...TD, width: '25%' }}>
-              Pernah ke Jepang<br />日本滞在経験
-            </td>
+            <td style={{ ...TD, width: '25%' }}>Pernah ke Jepang ・ 日本滞在経験</td>
             <td style={{ ...TD, width: '25%' }}>{japanDisplay}</td>
-            <td style={{ ...TD, width: '25%' }}>
-              Pernah Memiliki (Paspor/Visa)<br />ビザ・パスポートの有無
-            </td>
+            <td style={{ ...TD, width: '25%' }}>Paspor / Visa ・ パスポート／ビザ</td>
             <td style={{ ...TD, width: '25%' }}>{passportDisplay}</td>
           </tr>
           <tr>
-            <td style={TD}>Alamat Tinggal Saat Ini<br />現住所</td>
+            <td style={TD}>Alamat ・ 現住所</td>
             <td style={TD} colSpan={3}>{addressDisplay}</td>
           </tr>
           <tr>
-            <td style={TD}>Hobi<br />趣味</td>
+            <td style={TD}>Hobi ・ 趣味</td>
             <td style={TD} colSpan={3}>{v(c.hobbies)}</td>
           </tr>
         </tbody>
@@ -329,9 +323,9 @@ export default function CandidateCV({
             <td style={ST} colSpan={3}>Pendidikan ・ 学歴</td>
           </tr>
           <tr style={{ textAlign: 'center' }}>
-            <td style={{ ...TD, width: '30%' }}>Periode<br />期間</td>
-            <td style={{ ...TD, width: '40%' }}>Nama Sekolah<br />学校名</td>
-            <td style={{ ...TD, width: '30%' }}>Jurusan<br />専攻</td>
+            <td style={{ ...TD, width: '30%' }}>Periode ・ 期間</td>
+            <td style={{ ...TD, width: '40%' }}>Nama Sekolah ・ 学校名</td>
+            <td style={{ ...TD, width: '30%' }}>Jurusan ・ 専攻</td>
           </tr>
           {eduRows.map((row, i) =>
             row ? (
@@ -360,9 +354,9 @@ export default function CandidateCV({
             <td style={ST} colSpan={3}>Pengalaman Kerja ・ 職歴</td>
           </tr>
           <tr style={{ textAlign: 'center' }}>
-            <td style={{ ...TD, width: '30%' }}>Periode<br />期間</td>
-            <td style={{ ...TD, width: '30%' }}>Nama Perusahaan<br />会社名</td>
-            <td style={{ ...TD, width: '40%' }}>Uraian Pekerjaan<br />業務内容</td>
+            <td style={{ ...TD, width: '30%' }}>Periode ・ 期間</td>
+            <td style={{ ...TD, width: '30%' }}>Nama Perusahaan ・ 会社名</td>
+            <td style={{ ...TD, width: '40%' }}>Uraian Pekerjaan ・ 業務内容</td>
           </tr>
           {careerRows.map((row, i) =>
             row ? (
@@ -391,9 +385,9 @@ export default function CandidateCV({
             <td style={ST} colSpan={3}>Sertifikasi ・ 資格・公的認定</td>
           </tr>
           <tr style={{ textAlign: 'center' }}>
-            <td style={{ ...TD, width: '20%' }}>Tanggal Penerbitan<br />発行日</td>
-            <td style={{ ...TD, width: '40%' }}>Nama Sertifikat<br />名称</td>
-            <td style={{ ...TD, width: '40%' }}>Level, Keterangan<br />レベルや詳細</td>
+            <td style={{ ...TD, width: '20%' }}>Tgl Penerbitan ・ 発行日</td>
+            <td style={{ ...TD, width: '40%' }}>Nama Sertifikat ・ 名称</td>
+            <td style={{ ...TD, width: '40%' }}>Level, Keterangan ・ レベルや詳細</td>
           </tr>
           {certRows.map((row, i) =>
             row ? (
@@ -436,10 +430,7 @@ export default function CandidateCV({
       <table className="cv-tbl" style={S.table}>
         <tbody>
           <tr>
-            <td style={ST}>
-              Motivasi ingin bekerja di Jepang<br />
-              志望理由
-            </td>
+            <td style={ST}>Motivasi ingin bekerja di Jepang ・ 志望理由</td>
           </tr>
           <tr className="cv-row-lg">
             <td style={{ ...TD, height: '50px', whiteSpace: 'pre-wrap' }}>
@@ -453,10 +444,7 @@ export default function CandidateCV({
       <table className="cv-tbl" style={S.table}>
         <tbody>
           <tr>
-            <td style={ST}>
-              Alasan Melamar Pekerjaan Ini<br />
-              応募の動機
-            </td>
+            <td style={ST}>Alasan Melamar Pekerjaan Ini ・ 応募の動機</td>
           </tr>
           <tr className="cv-row-lg">
             <td style={{ ...TD, height: '50px', whiteSpace: 'pre-wrap' }}>
@@ -470,7 +458,7 @@ export default function CandidateCV({
       <table className="cv-tbl" style={{ ...S.table, marginBottom: 0 }}>
         <tbody>
           <tr>
-            <td style={ST}>Promosi Diri<br />自己PR</td>
+            <td style={ST}>Promosi Diri ・ 自己PR</td>
           </tr>
           <tr className="cv-row-lg">
             <td style={{ ...TD, height: '60px', whiteSpace: 'pre-wrap' }}>
