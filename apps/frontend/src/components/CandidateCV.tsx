@@ -55,6 +55,10 @@ const PRINT_CSS = `
     body { margin: 0 !important; padding: 0 !important; }
     .no-print { display: none !important; }
 
+    /* Hide layout chrome — sidebar, topbar, page padding */
+    aside, header { display: none !important; }
+    main { padding: 0 !important; overflow: visible !important; }
+
     .cv-con {
       padding: 6px 10px !important;
       font-size: 12px !important;
