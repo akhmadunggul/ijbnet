@@ -59,8 +59,16 @@ export default function CandidateDashboard() {
   const { completeness, profileStatus, interviewStatus } = candidate;
   const statusCfg = STATUS_CONFIG[profileStatus] ?? STATUS_CONFIG['incomplete']!;
 
-  function handleExport() {
-    window.location.href = '/api/candidates/me/export';
+  async function handleExport() {
+    const res = await api.get('/candidates/me/export', { responseType: 'blob' });
+    const url = window.URL.createObjectURL(new Blob([res.data], { type: 'application/json' }));
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${candidate?.candidateCode ?? 'export'}-data.json`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    window.URL.revokeObjectURL(url);
   }
 
   return (
