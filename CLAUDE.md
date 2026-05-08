@@ -162,6 +162,7 @@ apps/frontend/src/
 - v0.2.0 — Full CV form update: 9-tab candidate profile, certifications, education history, bilingual PR/motivation fields, extended personal tab
 - v0.2.1 — SSW sector/field lookup table with cascading dropdowns; sswFieldFilter dropdown in batch creation
 - v0.2.2 — Fix SSW dropdowns empty: move base data from seeder into migrations (000018, 000019); add 7 new SSW1 sectors and expand SSW2 to 11 sectors
+- v0.2.3 — Candidate data export: formatted PDF via puppeteer-core (10 sections, IJBNet branding); fix export button loading state + Chromium in Docker
 
-Current: v0.2.2
+Current: v0.2.3
 Live at: https://jinzai.aup.my.id
