@@ -676,13 +676,13 @@
       "customDate": "その他の日程"
     }
   },
-  "navRequests": "採用リクエスト",
+  "navRequests": "候補者依頼",
 
   "requests": {
-    "title": "採用リクエスト",
-    "subtitle": "IJBNetマネージャーに候補者のリクエストを送信します。適切な候補者を選定いたします。",
-    "managerTitle": "採用リクエスト管理",
-    "historyTitle": "リクエスト履歴",
+    "title": "候補者依頼",
+    "subtitle": "IJBNetマネージャーに候補者の依頼を送信します。適切な候補者を選定いたします。",
+    "managerTitle": "候補者依頼管理",
+    "historyTitle": "依頼履歴",
     "code": "コード",
     "kubun": "区分",
     "sector": "分野",
@@ -693,8 +693,8 @@
     "notes": "備考",
     "managerNotes": "マネージャーメモ",
     "batch": "バッチ",
-    "noRequests": "リクエストはありません。",
-    "noRequestsYet": "送信したリクエストがここに表示されます。",
+    "noRequests": "依頼はありません。",
+    "noRequestsYet": "送信した依頼がここに表示されます。",
     "status": {
       "pending":   "審査待ち",
       "confirmed": "確認済み",
@@ -702,27 +702,27 @@
       "closed":    "終了"
     },
     "form": {
-      "title":         "新規リクエストを送信",
-      "description":   "以下のフォームに入力して、IJBNetマネージャーに候補者のリクエストを送信してください。",
-      "newBtn":        "+ 新規リクエスト",
-      "submitBtn":     "リクエストを送信",
-      "submitSuccess": "リクエストを送信しました。IJBNetマネージャーが対応いたします。",
+      "title":         "新規依頼を送信",
+      "description":   "以下のフォームに入力して、IJBNetマネージャーに候補者の依頼を送信してください。",
+      "newBtn":        "+ 新規依頼",
+      "submitBtn":     "依頼を送信",
+      "submitSuccess": "依頼を送信しました。IJBNetマネージャーが対応いたします。",
       "selectSector":  "分野を選択",
       "selectField":   "職種を選択",
       "countHint":     "必要な候補者数",
       "notesHint":     "追加要件、特別な資格など"
     },
     "confirm": {
-      "title":   "リクエストを確認",
+      "title":   "依頼を確認",
       "btn":     "確認",
       "hint":    "デフォルトは希望人数の2倍",
-      "success": "リクエストを確認しました。バッチが自動作成されました。"
+      "success": "依頼を確認しました。バッチが自動作成されました。"
     },
     "reject": {
-      "title":   "リクエストを却下",
+      "title":   "依頼を却下",
       "btn":     "却下",
       "notes":   "却下理由",
-      "success": "リクエストを却下しました。"
+      "success": "依頼を却下しました。"
     }
   },
 

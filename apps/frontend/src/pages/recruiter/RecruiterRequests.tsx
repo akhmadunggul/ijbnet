@@ -231,8 +231,8 @@ export default function RecruiterRequests() {
           <div>
             <button
               type="submit"
-              disabled={submitMutation.isPending || !form.sswSectorId || !form.sswFieldId}
-              className="px-6 py-2.5 bg-navy-800 text-white text-sm font-medium rounded-lg hover:bg-navy-700 disabled:opacity-50 transition"
+              disabled={submitMutation.isPending}
+              className="px-6 py-2.5 bg-navy-800 text-white text-sm font-medium rounded-lg hover:bg-navy-700 disabled:opacity-60 transition"
             >
               {submitMutation.isPending ? t('loading') : t('requests.form.submitBtn')}
             </button>
