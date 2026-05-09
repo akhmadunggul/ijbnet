@@ -79,7 +79,7 @@ export default function LoginPage() {
         {/* Logo */}
         <div className="text-center mb-8">
           <h1 className="font-serif text-3xl text-navy-900">IJBNet</h1>
-          <p className="text-sm text-navy-500 mt-1">SSW Placement Platform</p>
+          <p className="text-sm text-navy-500 mt-1">Platform Penempatan Pemagang dan SSW</p>
         </div>
 
         {/* Google OAuth */}
