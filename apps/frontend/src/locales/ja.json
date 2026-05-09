@@ -680,6 +680,7 @@
     "empty": "履歴はまだありません。",
     "duration": "ステージ期間",
     "ongoing": "経過中",
+    "pending": "待機中",
     "confirmDate": "日程を確認",
     "confirmDateSuccess": "面接日程を確認しました。",
     "acceptCandidate": "候補者を承認",
