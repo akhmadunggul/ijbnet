@@ -455,7 +455,7 @@ router.post('/batches/:id/allocate', wrap(async (req: Request, res: Response): P
     candidateIds.map(async (cid) => {
       if (!isUUID(cid)) return;
 
-      const candidate = await Candidate.findByPk(cid, { attributes: ['id', 'profileStatus'] });
+      const candidate = await Candidate.findByPk(cid, { attributes: ['id', 'profileStatus', 'userId'] });
       if (!candidate || candidate.profileStatus !== 'approved') return;
 
       const [bc, created] = await BatchCandidate.findOrCreate({
@@ -477,6 +477,16 @@ router.post('/batches/:id/allocate', wrap(async (req: Request, res: Response): P
 
       if (created) {
         await recordTimelineEvent(cid, 'batch_allocated', req.user!.sub, 'manager', { batchId: id });
+        if (candidate.userId) {
+          await notifyUser(
+            candidate.userId,
+            'BATCH_ALLOCATED',
+            'Anda masuk dalam proses rekrutmen',
+            'Profil Anda telah dipilih untuk masuk ke dalam proses penempatan.',
+            'batch',
+            id,
+          );
+        }
       }
     }),
   );

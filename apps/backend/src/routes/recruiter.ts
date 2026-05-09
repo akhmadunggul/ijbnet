@@ -236,6 +236,17 @@ router.post('/batches/:batchId/select', wrap(async (req: Request, res: Response)
       const wasSelected = allocMap.get(cid)?.isSelected ?? false;
       if (!wasSelected) {
         await recordTimelineEvent(cid, 'recruiter_selected', req.user!.sub, 'recruiter', { batchId });
+        const cand = await Candidate.findByPk(cid, { attributes: ['userId'] });
+        if (cand?.userId) {
+          await notifyUser(
+            cand.userId,
+            'RECRUITER_SELECTED',
+            'Anda dipilih oleh rekruter',
+            'Rekruter telah memilih Anda sebagai kandidat untuk proses wawancara selanjutnya.',
+            'batch',
+            batchId,
+          );
+        }
       }
     }),
   );
