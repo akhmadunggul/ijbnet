@@ -135,7 +135,7 @@ export default function RecruiterRequests() {
 
       {/* New Request Form — always visible */}
       <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-6">
-        <h2 className="text-base font-semibold text-navy-800 mb-1">{t('requests.form.title')}</h2>
+        <h2 className="text-base font-semibold text-navy-700 mb-1">{t('requests.form.title')}</h2>
         <p className="text-xs text-gray-400 mb-5">{t('requests.form.description')}</p>
 
         <form onSubmit={handleSubmit} className="space-y-5">
@@ -151,7 +151,7 @@ export default function RecruiterRequests() {
                     value={k}
                     checked={form.kubun === k}
                     onChange={() => setForm((f) => ({ ...f, kubun: k, sswSectorId: '', sswFieldId: '' }))}
-                    className="accent-navy-800 w-4 h-4"
+                    className="accent-navy-700 w-4 h-4"
                   />
                   <span className="text-sm font-medium text-gray-700">{k}</span>
                 </label>
@@ -166,7 +166,7 @@ export default function RecruiterRequests() {
               <select
                 value={form.sswSectorId}
                 onChange={(e) => setForm((f) => ({ ...f, sswSectorId: e.target.value, sswFieldId: '' }))}
-                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-navy-300"
+                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-navy-100"
                 required
               >
                 <option value="">{t('requests.form.selectSector')}</option>
@@ -182,7 +182,7 @@ export default function RecruiterRequests() {
               <select
                 value={form.sswFieldId}
                 onChange={(e) => setForm((f) => ({ ...f, sswFieldId: e.target.value }))}
-                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm bg-white disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-navy-300"
+                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm bg-white disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-navy-100"
                 required
                 disabled={!form.sswSectorId}
               >
@@ -206,7 +206,7 @@ export default function RecruiterRequests() {
                 max={200}
                 value={form.requestedCount}
                 onChange={(e) => setForm((f) => ({ ...f, requestedCount: Number(e.target.value) }))}
-                className="w-28 border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-navy-300"
+                className="w-28 border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-navy-100"
                 required
               />
               <span className="text-xs text-gray-400">{t('requests.form.countHint')}</span>
@@ -224,7 +224,7 @@ export default function RecruiterRequests() {
               onChange={(e) => setForm((f) => ({ ...f, notes: e.target.value }))}
               rows={3}
               placeholder={t('requests.form.notesHint')}
-              className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-navy-300"
+              className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-navy-100"
             />
           </div>
 
@@ -232,7 +232,7 @@ export default function RecruiterRequests() {
             <button
               type="submit"
               disabled={submitMutation.isPending}
-              className="px-6 py-2.5 bg-navy-800 text-white text-sm font-medium rounded-lg hover:bg-navy-700 disabled:opacity-60 transition"
+              className="px-6 py-2.5 bg-navy-700 text-white text-sm font-medium rounded-lg hover:bg-navy-900 disabled:opacity-60 transition"
             >
               {submitMutation.isPending ? t('loading') : t('requests.form.submitBtn')}
             </button>
@@ -242,7 +242,7 @@ export default function RecruiterRequests() {
 
       {/* Requests history */}
       <div>
-        <h2 className="text-base font-semibold text-navy-800 mb-3">{t('requests.historyTitle')}</h2>
+        <h2 className="text-base font-semibold text-navy-700 mb-3">{t('requests.historyTitle')}</h2>
         <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
           {isLoading ? (
             <div className="p-8 text-center text-gray-400 text-sm">{t('loading')}</div>
@@ -267,7 +267,7 @@ export default function RecruiterRequests() {
                 <tbody className="divide-y divide-gray-50">
                   {requests.map((req) => (
                     <tr key={req.id} className="hover:bg-gray-50 transition">
-                      <td className="px-4 py-3 font-mono font-medium text-navy-800 text-xs">{req.requestCode}</td>
+                      <td className="px-4 py-3 font-mono font-medium text-navy-700 text-xs">{req.requestCode}</td>
                       <td className="px-4 py-3">
                         <span className="px-2 py-0.5 bg-navy-50 text-navy-700 rounded text-xs font-medium">{req.kubun}</span>
                       </td>
