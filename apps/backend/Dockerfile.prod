@@ -54,13 +54,10 @@ COPY apps/backend/tsconfig.json ./apps/backend/
 COPY apps/backend/src/db/migrations ./apps/backend/src/db/migrations
 COPY apps/backend/src/db/seeders ./apps/backend/src/db/seeders
 
-# Entrypoint: auto-migrate then start server
-COPY apps/backend/docker-entrypoint.sh ./
-RUN chmod +x /app/docker-entrypoint.sh
-
 # Create uploads directory
 RUN mkdir -p /app/uploads
 
 EXPOSE 3001
 
-ENTRYPOINT ["/app/docker-entrypoint.sh"]
+# Auto-migrate then start server
+CMD ["sh", "-c", "cd /app/apps/backend && npx sequelize-cli db:migrate && exec node /app/apps/backend/dist/apps/backend/src/index.js"]
