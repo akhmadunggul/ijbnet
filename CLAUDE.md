@@ -173,6 +173,7 @@ apps/frontend/src/
 - v0.2.11 — Trainee sector/field data (7 sectors, 33 fields); auto-migrate on container startup; Docker pnpm cache mounts
 - v0.2.12 — Recruitment request workflow: recruiter submits request → manager confirms + auto-creates batch (1.5× quota); full bilingual UI
 - v0.2.13 — Full end-to-end recruitment flow: manager selects candidates (2×) from pool on confirm; candidate picks preferred interview date on dashboard; manager sees candidate preference when finalising; menu renamed to Permintaan Kandidat
+- v0.3.0 — Recruiter Permintaan Kandidat page redesign: always-visible form, correct 候補者依頼 Japanese translation, fix invisible submit button (navy-800 undefined in Tailwind palette)
 
-Current: v0.2.13
+Current: v0.3.0
 Live at: https://jinzai.aup.my.id
