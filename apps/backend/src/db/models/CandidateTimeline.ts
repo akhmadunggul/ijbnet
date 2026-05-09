@@ -25,12 +25,13 @@ export interface CandidateTimelineAttributes {
   actorRole: string | null;
   metadata: Record<string, unknown> | null;
   occurredAt: Date;
+  durationHours: number | null;
   createdAt?: Date;
   updatedAt?: Date;
 }
 
 export interface CandidateTimelineCreationAttributes
-  extends Optional<CandidateTimelineAttributes, 'id' | 'actorId' | 'actorRole' | 'metadata'> {}
+  extends Optional<CandidateTimelineAttributes, 'id' | 'actorId' | 'actorRole' | 'metadata' | 'durationHours'> {}
 
 export class CandidateTimeline
   extends Model<CandidateTimelineAttributes, CandidateTimelineCreationAttributes>
@@ -42,6 +43,7 @@ export class CandidateTimeline
   declare actorRole: string | null;
   declare metadata: Record<string, unknown> | null;
   declare occurredAt: Date;
+  declare durationHours: number | null;
   declare readonly createdAt: Date;
   declare readonly updatedAt: Date;
 }
@@ -75,6 +77,7 @@ export function initCandidateTimeline(sequelize: Sequelize): void {
       actorRole: { type: DataTypes.STRING(50), allowNull: true },
       metadata: { type: DataTypes.JSON, allowNull: true },
       occurredAt: { type: DataTypes.DATE, allowNull: false },
+      durationHours: { type: DataTypes.DECIMAL(10, 4), allowNull: true, defaultValue: null },
     },
     {
       sequelize,

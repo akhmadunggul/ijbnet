@@ -679,6 +679,8 @@
   "timeline": {
     "title": "Riwayat Status",
     "empty": "Belum ada riwayat.",
+    "duration": "Durasi tahap",
+    "ongoing": "Berlangsung",
     "confirmDate": "Konfirmasi Jadwal",
     "confirmDateSuccess": "Jadwal wawancara dikonfirmasi.",
     "acceptCandidate": "Terima Kandidat",

@@ -20,7 +20,7 @@ import { calcCompleteness } from '../utils/completeness';
 import { encryptNullable } from '../utils/crypto';
 import { notifyUser, notifyByRole } from '../utils/notify';
 import { extractYoutubeId } from '../utils/youtube';
-import { recordTimelineEvent } from '../utils/timeline';
+import { recordTimelineEvent, currentAgeHours } from '../utils/timeline';
 import { CandidateTimeline } from '../db/models/CandidateTimeline';
 import { isUUID } from 'validator';
 import { v4 as uuidv4 } from 'uuid';
@@ -623,7 +623,13 @@ router.get('/candidates/:id/timeline', async (req: Request, res: Response): Prom
     order: [['occurredAt', 'ASC']],
   });
 
-  res.json({ timeline: events.map((e) => e.toJSON()) });
+  res.json({
+    timeline: events.map((e, i) => {
+      const json = e.toJSON() as unknown as Record<string, unknown>;
+      if (i === events.length - 1) json['currentAgeHours'] = currentAgeHours(e.occurredAt);
+      return json;
+    }),
+  });
 });
 
 export default router;

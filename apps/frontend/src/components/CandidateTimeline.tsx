@@ -26,6 +26,8 @@ interface TimelineEvent {
   actorRole: string | null;
   actor?: { name?: string; role?: string } | null;
   metadata?: Record<string, unknown> | null;
+  durationHours?: number | null;
+  currentAgeHours?: number | null;
 }
 
 interface TimelineResponse {
@@ -57,14 +59,19 @@ function formatDate(iso: string) {
   });
 }
 
+function formatDuration(hours: number): string {
+  if (hours < 1) return '< 1 jam';
+  if (hours < 24) return `${Math.round(hours)} jam`;
+  const days = Math.floor(hours / 24);
+  const remHours = Math.round(hours % 24);
+  if (remHours === 0) return `${days} hari`;
+  return `${days} hari ${remHours} jam`;
+}
+
 interface Props {
-  /** API endpoint to fetch timeline, e.g. /admin/candidates/:id/timeline */
   endpoint: string;
-  /** queryKey for react-query caching */
   queryKey: string[];
-  /** If set, show "Confirm Date" button for this proposal */
   pendingInterviewConfirmProposalId?: string | null;
-  /** If set (recruiter view), show "Accept Candidate" button for this proposal */
   pendingAcceptProposalId?: string | null;
 }
 
@@ -98,7 +105,6 @@ export default function CandidateTimeline({
   const hasConfirmed = events.some((e) => e.event === 'interview_date_confirmed');
   const hasAccepted = events.some((e) => e.event === 'recruiter_accepted');
 
-  // Auto-detect proposalId from timeline when not explicitly passed
   const scheduledEvent = events.find((e) => e.event === 'interview_scheduled');
   const autoProposalId = scheduledEvent?.metadata?.proposalId as string | null | undefined;
   const effectiveConfirmProposalId = pendingInterviewConfirmProposalId ?? autoProposalId ?? null;
@@ -115,27 +121,39 @@ export default function CandidateTimeline({
         <p className="text-sm text-gray-400">{t('timeline.empty')}</p>
       ) : (
         <ol className="relative border-l border-gray-200 ml-3 space-y-5">
-          {events.map((ev) => (
-            <li key={ev.id} className="ml-5">
-              <span
-                className={`absolute -left-2.5 flex items-center justify-center w-5 h-5 rounded-full ring-4 ring-white ${EVENT_COLORS[ev.event] ?? 'bg-gray-300'}`}
-              />
-              <div className="flex flex-col gap-0.5">
-                <p className="text-sm font-medium text-gray-800">
-                  {t(`timeline.events.${ev.event}` as const)}
-                </p>
-                <p className="text-xs text-gray-400">{formatDate(ev.occurredAt)}</p>
-                {ev.actor?.name && (
-                  <p className="text-xs text-gray-400">
-                    {ev.actor.name}
-                    {ev.actor.role && (
-                      <span className="ml-1 capitalize text-gray-300">({ev.actor.role})</span>
-                    )}
+          {events.map((ev) => {
+            const displayHours = ev.durationHours ?? ev.currentAgeHours ?? null;
+            const isCurrent = ev.currentAgeHours != null;
+
+            return (
+              <li key={ev.id} className="ml-5">
+                <span
+                  className={`absolute -left-2.5 flex items-center justify-center w-5 h-5 rounded-full ring-4 ring-white ${EVENT_COLORS[ev.event] ?? 'bg-gray-300'}`}
+                />
+                <div className="flex flex-col gap-0.5">
+                  <p className="text-sm font-medium text-gray-800">
+                    {t(`timeline.events.${ev.event}` as const)}
                   </p>
-                )}
-              </div>
-            </li>
-          ))}
+                  <p className="text-xs text-gray-400">{formatDate(ev.occurredAt)}</p>
+                  {ev.actor?.name && (
+                    <p className="text-xs text-gray-400">
+                      {ev.actor.name}
+                      {ev.actor.role && (
+                        <span className="ml-1 capitalize text-gray-300">({ev.actor.role})</span>
+                      )}
+                    </p>
+                  )}
+                  {displayHours != null && (
+                    <p className={`text-xs font-medium mt-0.5 ${isCurrent ? 'text-amber-500' : 'text-gray-400'}`}>
+                      {isCurrent
+                        ? `${t('timeline.ongoing')}: ${formatDuration(displayHours)}`
+                        : `${t('timeline.duration')}: ${formatDuration(displayHours)}`}
+                    </p>
+                  )}
+                </div>
+              </li>
+            );
+          })}
         </ol>
       )}
 

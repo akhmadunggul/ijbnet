@@ -24,7 +24,7 @@ import {
   BatchCandidate,
   InterviewProposal,
 } from '../db/models/index';
-import { recordTimelineEvent } from '../utils/timeline';
+import { recordTimelineEvent, currentAgeHours } from '../utils/timeline';
 import { serializeCandidate } from '../serializers/candidate';
 import { calcCompleteness } from '../utils/completeness';
 import { validateImageBuffer, savePhoto } from '../utils/storage';
@@ -33,6 +33,16 @@ import { encrypt } from '../utils/crypto';
 import { v4 as uuidv4 } from 'uuid';
 
 const router = Router();
+
+function serializeTimeline(events: CandidateTimeline[]): unknown[] {
+  return events.map((e, i) => {
+    const json = e.toJSON() as unknown as Record<string, unknown>;
+    if (i === events.length - 1) {
+      json['currentAgeHours'] = currentAgeHours(e.occurredAt);
+    }
+    return json;
+  });
+}
 
 const upload = multer({
   storage: multer.memoryStorage(),
@@ -744,7 +754,7 @@ router.get('/me/timeline', authenticate, requireRole('candidate'), async (req: R
     order: [['occurredAt', 'ASC']],
   });
 
-  res.json({ timeline: events.map((e) => e.toJSON()) });
+  res.json({ timeline: serializeTimeline(events) });
 });
 
 // ── PATCH /api/candidates/me/interviews/:proposalId/confirm-date ──────────────
