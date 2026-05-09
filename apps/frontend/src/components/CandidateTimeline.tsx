@@ -64,9 +64,9 @@ function formatDate(iso: string) {
   });
 }
 
-function formatDays(hours: number): string {
+function formatDays(hours: number, unit: string): string {
   const days = Math.round(hours / 24);
-  return days < 1 ? '< 1 hari' : `${days} hari`;
+  return days < 1 ? `< 1 ${unit}` : `${days} ${unit}`;
 }
 
 interface Props {
@@ -225,12 +225,12 @@ export default function CandidateTimeline({
                       {/* Duration or ongoing age */}
                       {ev.durationHours != null && (
                         <p className="text-xs text-gray-400">
-                          {t('timeline.duration')}: {formatDays(ev.durationHours)}
+                          {t('timeline.duration')}: {formatDays(ev.durationHours, t('timeline.dayUnit'))}
                         </p>
                       )}
                       {ev.currentAgeHours != null && (
                         <p className="text-xs font-medium text-amber-500">
-                          {t('timeline.ongoing')}: {formatDays(ev.currentAgeHours)}
+                          {t('timeline.ongoing')}: {formatDays(ev.currentAgeHours, t('timeline.dayUnit'))}
                         </p>
                       )}
 
@@ -293,7 +293,7 @@ export default function CandidateTimeline({
                     <p className="text-xs text-gray-400 mt-0.5">{formatDate(negativeTerminal.occurredAt)}</p>
                     {negativeTerminal.durationHours != null && (
                       <p className="text-xs text-gray-400">
-                        {t('timeline.duration')}: {formatDays(negativeTerminal.durationHours)}
+                        {t('timeline.duration')}: {formatDays(negativeTerminal.durationHours, t('timeline.dayUnit'))}
                       </p>
                     )}
                   </div>

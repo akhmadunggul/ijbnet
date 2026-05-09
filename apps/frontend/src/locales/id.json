@@ -682,6 +682,7 @@
     "duration": "Durasi tahap",
     "ongoing": "Berlangsung",
     "pending": "Menunggu",
+    "dayUnit": "hari",
     "confirmDate": "Konfirmasi Jadwal",
     "confirmDateSuccess": "Jadwal wawancara dikonfirmasi.",
     "acceptCandidate": "Terima Kandidat",
