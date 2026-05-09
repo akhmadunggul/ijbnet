@@ -175,6 +175,7 @@
 
   "loading": "Memuat…",
   "noData": "Tidak ada data.",
+  "optional": "opsional",
   "comingSoon": "Segera hadir.",
 
   "candidate": {
@@ -679,19 +680,22 @@
   "navRequests": "Permintaan",
 
   "requests": {
-    "title": "Permintaan Rekrutmen",
-    "managerTitle": "Permintaan Rekrutmen",
+    "title": "Permintaan Kandidat",
+    "subtitle": "Ajukan permintaan kandidat kepada Manager IJBNet. Kami akan mencarikan kandidat yang sesuai.",
+    "managerTitle": "Permintaan Kandidat",
+    "historyTitle": "Riwayat Permintaan",
     "code": "Kode",
     "kubun": "Tipe Program",
     "sector": "Bidang",
     "field": "Jenis Pekerjaan",
-    "requestedCount": "Jumlah Diminta",
+    "requestedCount": "Jumlah Vacancy",
     "allocatedCount": "Kuota Dialokasikan",
     "status": "Status",
     "notes": "Catatan",
     "managerNotes": "Catatan Manager",
     "batch": "Batch",
-    "noRequests": "Belum ada permintaan rekrutmen.",
+    "noRequests": "Belum ada permintaan.",
+    "noRequestsYet": "Permintaan yang Anda ajukan akan muncul di sini.",
     "status": {
       "pending":   "Menunggu",
       "confirmed": "Dikonfirmasi",
@@ -700,13 +704,14 @@
     },
     "form": {
       "title":         "Ajukan Permintaan Baru",
+      "description":   "Isi form berikut untuk mengajukan permintaan kandidat kepada Manager IJBNet.",
       "newBtn":        "+ Permintaan Baru",
-      "submitBtn":     "Ajukan",
-      "submitSuccess": "Permintaan berhasil diajukan.",
+      "submitBtn":     "Ajukan Permintaan",
+      "submitSuccess": "Permintaan berhasil diajukan. Manager IJBNet akan segera menindaklanjuti.",
       "selectSector":  "Pilih Bidang",
       "selectField":   "Pilih Jenis Pekerjaan",
       "countHint":     "Jumlah kandidat yang dibutuhkan",
-      "notesHint":     "Kualifikasi tambahan (opsional)"
+      "notesHint":     "Kualifikasi tambahan, persyaratan khusus, dsb."
     },
     "confirm": {
       "title":   "Konfirmasi Permintaan",

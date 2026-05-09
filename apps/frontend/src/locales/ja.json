@@ -174,6 +174,7 @@
 
   "loading": "読み込み中…",
   "noData": "データがありません。",
+  "optional": "任意",
   "comingSoon": "近日公開予定。",
 
   "candidate": {
@@ -679,18 +680,21 @@
 
   "requests": {
     "title": "採用リクエスト",
+    "subtitle": "IJBNetマネージャーに候補者のリクエストを送信します。適切な候補者を選定いたします。",
     "managerTitle": "採用リクエスト管理",
+    "historyTitle": "リクエスト履歴",
     "code": "コード",
     "kubun": "区分",
     "sector": "分野",
     "field": "職種",
-    "requestedCount": "希望人数",
+    "requestedCount": "募集人数",
     "allocatedCount": "割当人数",
     "status": "ステータス",
     "notes": "備考",
     "managerNotes": "マネージャーメモ",
     "batch": "バッチ",
-    "noRequests": "採用リクエストはありません。",
+    "noRequests": "リクエストはありません。",
+    "noRequestsYet": "送信したリクエストがここに表示されます。",
     "status": {
       "pending":   "審査待ち",
       "confirmed": "確認済み",
@@ -699,13 +703,14 @@
     },
     "form": {
       "title":         "新規リクエストを送信",
+      "description":   "以下のフォームに入力して、IJBNetマネージャーに候補者のリクエストを送信してください。",
       "newBtn":        "+ 新規リクエスト",
-      "submitBtn":     "送信",
-      "submitSuccess": "リクエストを送信しました。",
+      "submitBtn":     "リクエストを送信",
+      "submitSuccess": "リクエストを送信しました。IJBNetマネージャーが対応いたします。",
       "selectSector":  "分野を選択",
       "selectField":   "職種を選択",
       "countHint":     "必要な候補者数",
-      "notesHint":     "追加要件（任意）"
+      "notesHint":     "追加要件、特別な資格など"
     },
     "confirm": {
       "title":   "リクエストを確認",
