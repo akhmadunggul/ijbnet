@@ -686,6 +686,8 @@
     "confirmDateSuccess": "Jadwal wawancara dikonfirmasi.",
     "acceptCandidate": "Terima Kandidat",
     "acceptSuccess": "Kandidat berhasil diterima.",
+    "issueProvisional": "Terbitkan Surat Penerimaan Sementara",
+    "provisionalSuccess": "Surat penerimaan sementara (仮内定) berhasil diterbitkan.",
     "events": {
       "registered": "Terdaftar",
       "consent_given": "Persetujuan Diberikan",
@@ -701,7 +703,8 @@
       "manager_confirmed": "Dikonfirmasi Manager",
       "interview_passed": "Lulus Wawancara",
       "interview_failed": "Tidak Lulus Wawancara",
-      "recruiter_accepted": "Diterima Rekruter"
+      "recruiter_accepted": "Diterima Rekruter",
+      "provisional_acceptance": "Surat Penerimaan Sementara (仮内定)"
     }
   }
 }

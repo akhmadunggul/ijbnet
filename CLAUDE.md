@@ -167,7 +167,8 @@ apps/frontend/src/
 - v0.2.5 — Version-aware consent: consentUpToDate field, superadmin push-to-all-users, ConsentModal loads real clause from DB
 - v0.2.6 — Add Trainee as third kubun category; ENUM migration, model/type/UI updates across all roles
 - v0.2.7 — Rename SSW column/tab to Program across admin, manager, candidate, and recruiter portals
-- v0.2.8 — Candidate status timeline: per-stage history, duration tracking (stored in hours, displayed in days)
+- v0.2.8 — Candidate status timeline: full process stepper, per-stage duration tracking (hours stored, days displayed)
+- v0.2.9 — Add 仮内定 (provisional acceptance) as final timeline step; manager can issue from candidate detail page
 
-Current: v0.2.8
+Current: v0.2.9
 Live at: https://jinzai.aup.my.id

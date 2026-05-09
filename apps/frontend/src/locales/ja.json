@@ -685,6 +685,8 @@
     "confirmDateSuccess": "面接日程を確認しました。",
     "acceptCandidate": "候補者を承認",
     "acceptSuccess": "候補者を承認しました。",
+    "issueProvisional": "仮内定を発行",
+    "provisionalSuccess": "仮内定を発行しました。",
     "events": {
       "registered": "登録済み",
       "consent_given": "同意済み",
@@ -700,7 +702,8 @@
       "manager_confirmed": "マネージャー確認済み",
       "interview_passed": "面接合格",
       "interview_failed": "面接不合格",
-      "recruiter_accepted": "採用担当者承認済み"
+      "recruiter_accepted": "採用担当者承認済み",
+      "provisional_acceptance": "仮内定"
     }
   }
 }

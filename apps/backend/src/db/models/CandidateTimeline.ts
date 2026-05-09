@@ -15,7 +15,8 @@ export type TimelineEventType =
   | 'manager_confirmed'
   | 'interview_passed'
   | 'interview_failed'
-  | 'recruiter_accepted';
+  | 'recruiter_accepted'
+  | 'provisional_acceptance';
 
 export interface CandidateTimelineAttributes {
   id: string;
@@ -70,6 +71,7 @@ export function initCandidateTimeline(sequelize: Sequelize): void {
           'interview_passed',
           'interview_failed',
           'recruiter_accepted',
+          'provisional_acceptance',
         ),
         allowNull: false,
       },

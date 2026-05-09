@@ -132,6 +132,7 @@ export default function ManagerCandidateDetail() {
         <CandidateTimeline
           endpoint={`/manager/candidates/${id}/timeline`}
           queryKey={['manager-timeline', id!]}
+          provisionalAcceptanceCandidateId={candidate.profileStatus === 'confirmed' ? id : null}
         />
       </div>
 

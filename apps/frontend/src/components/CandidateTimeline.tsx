@@ -17,7 +17,8 @@ type TimelineEventType =
   | 'interview_passed'
   | 'interview_failed'
   | 'recruiter_accepted'
-  | 'manager_confirmed';
+  | 'manager_confirmed'
+  | 'provisional_acceptance';
 
 interface TimelineEvent {
   id: string;
@@ -48,6 +49,7 @@ const PROCESS_STEPS: TimelineEventType[] = [
   'interview_passed',
   'recruiter_accepted',
   'manager_confirmed',
+  'provisional_acceptance',
 ];
 
 // Negative terminal events that end the process early
@@ -72,6 +74,7 @@ interface Props {
   queryKey: string[];
   pendingInterviewConfirmProposalId?: string | null;
   pendingAcceptProposalId?: string | null;
+  provisionalAcceptanceCandidateId?: string | null;
 }
 
 export default function CandidateTimeline({
@@ -79,6 +82,7 @@ export default function CandidateTimeline({
   queryKey,
   pendingInterviewConfirmProposalId,
   pendingAcceptProposalId,
+  provisionalAcceptanceCandidateId,
 }: Props) {
   const { t } = useTranslation();
   const qc = useQueryClient();
@@ -97,6 +101,12 @@ export default function CandidateTimeline({
   const acceptMutation = useMutation({
     mutationFn: (proposalId: string) =>
       api.post(`/recruiter/interviews/${proposalId}/accept`),
+    onSuccess: () => qc.invalidateQueries({ queryKey }),
+  });
+
+  const provisionalMutation = useMutation({
+    mutationFn: (candidateId: string) =>
+      api.post(`/manager/candidates/${candidateId}/provisional-acceptance`),
     onSuccess: () => qc.invalidateQueries({ queryKey }),
   });
 
@@ -124,6 +134,7 @@ export default function CandidateTimeline({
 
   const hasConfirmed = eventMap.has('interview_date_confirmed');
   const hasAccepted = eventMap.has('recruiter_accepted');
+  const hasProvisionalAcceptance = eventMap.has('provisional_acceptance');
 
   const scheduledEvent = eventMap.get('interview_scheduled');
   const autoProposalId = scheduledEvent?.metadata?.proposalId as string | null | undefined;
@@ -244,6 +255,17 @@ export default function CandidateTimeline({
                           {acceptMutation.isPending ? '…' : t('timeline.acceptCandidate')}
                         </button>
                       )}
+
+                      {/* Provisional acceptance action inline (manager only) */}
+                      {step === 'manager_confirmed' && provisionalAcceptanceCandidateId && !hasProvisionalAcceptance && (
+                        <button
+                          onClick={() => provisionalMutation.mutate(provisionalAcceptanceCandidateId)}
+                          disabled={provisionalMutation.isPending}
+                          className="mt-1.5 px-3 py-1 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-medium rounded-lg transition disabled:opacity-50"
+                        >
+                          {provisionalMutation.isPending ? '…' : t('timeline.issueProvisional')}
+                        </button>
+                      )}
                     </div>
                   )}
 
@@ -287,6 +309,9 @@ export default function CandidateTimeline({
       )}
       {acceptMutation.isSuccess && (
         <p className="mt-2 text-sm text-green-600">{t('timeline.acceptSuccess')}</p>
+      )}
+      {provisionalMutation.isSuccess && (
+        <p className="mt-2 text-sm text-green-600">{t('timeline.provisionalSuccess')}</p>
       )}
     </div>
   );

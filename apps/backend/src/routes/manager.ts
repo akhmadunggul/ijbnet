@@ -893,6 +893,48 @@ router.patch('/interviews/:proposalId/result', wrap(async (req: Request, res: Re
   res.json({ proposal: proposal.toJSON() });
 }));
 
+// ── POST /api/manager/candidates/:id/provisional-acceptance ──────────────────
+router.post('/candidates/:id/provisional-acceptance', wrap(async (req: Request, res: Response): Promise<void> => {
+  const { id } = req.params as { id: string };
+  if (!isUUID(id)) {
+    res.status(400).json({ error: 'BAD_REQUEST' });
+    return;
+  }
+
+  const candidate = await Candidate.findByPk(id, {
+    attributes: ['id', 'fullName', 'email', 'userId', 'profileStatus'],
+  });
+  if (!candidate) {
+    res.status(404).json({ error: 'NOT_FOUND' });
+    return;
+  }
+
+  const existing = await CandidateTimeline.findOne({
+    where: { candidateId: id, event: 'provisional_acceptance' },
+  });
+  if (existing) {
+    res.status(409).json({ error: 'ALREADY_ISSUED' });
+    return;
+  }
+
+  await recordTimelineEvent(id, 'provisional_acceptance', req.user!.sub, 'manager');
+
+  if (candidate.userId) {
+    await notifyUser(
+      candidate.userId,
+      'PROVISIONAL_ACCEPTANCE',
+      '仮内定が発行されました / Surat Penerimaan Sementara Diterbitkan',
+      `Selamat ${candidate.fullName}! Surat penerimaan sementara (仮内定) telah diterbitkan.`,
+      'candidate',
+      id,
+    );
+  }
+
+  await audit(req, 'PROVISIONAL_ACCEPTANCE', 'candidate', id, id);
+
+  res.json({ message: 'Provisional acceptance issued.' });
+}));
+
 // ── GET /api/manager/candidates/:id/timeline ─────────────────────────────────
 router.get('/candidates/:id/timeline', wrap(async (req: Request, res: Response): Promise<void> => {
   const { id } = req.params as { id: string };
