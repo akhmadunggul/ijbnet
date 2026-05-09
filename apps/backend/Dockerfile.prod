@@ -10,8 +10,10 @@ COPY package.json pnpm-workspace.yaml pnpm-lock.yaml ./
 COPY apps/backend/package.json ./apps/backend/
 COPY packages/shared/package.json ./packages/shared/
 
-# Install dependencies (shamefully-hoist so tsc/ts-node are on PATH for all packages)
-RUN pnpm install --frozen-lockfile --shamefully-hoist
+# Install dependencies — cache mount keeps the pnpm store across builds
+# so packages are not re-downloaded even when lock file changes
+RUN --mount=type=cache,id=ijbnet-pnpm,target=/root/.local/share/pnpm/store \
+    pnpm install --frozen-lockfile --shamefully-hoist
 
 # Copy source
 COPY apps/backend ./apps/backend
@@ -37,8 +39,9 @@ COPY package.json pnpm-workspace.yaml pnpm-lock.yaml ./
 COPY apps/backend/package.json ./apps/backend/
 COPY packages/shared/package.json ./packages/shared/
 
-# Install production dependencies only
-RUN pnpm install --frozen-lockfile --shamefully-hoist
+# Install runtime dependencies — same cache mount as builder
+RUN --mount=type=cache,id=ijbnet-pnpm,target=/root/.local/share/pnpm/store \
+    pnpm install --frozen-lockfile --shamefully-hoist
 
 # Copy built output
 COPY --from=builder /app/apps/backend/dist ./apps/backend/dist
