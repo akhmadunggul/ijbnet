@@ -676,6 +676,52 @@
       "customDate": "Tanggal lain"
     }
   },
+  "navRequests": "Permintaan",
+
+  "requests": {
+    "title": "Permintaan Rekrutmen",
+    "managerTitle": "Permintaan Rekrutmen",
+    "code": "Kode",
+    "kubun": "Tipe Program",
+    "sector": "Bidang",
+    "field": "Jenis Pekerjaan",
+    "requestedCount": "Jumlah Diminta",
+    "allocatedCount": "Kuota Dialokasikan",
+    "status": "Status",
+    "notes": "Catatan",
+    "managerNotes": "Catatan Manager",
+    "batch": "Batch",
+    "noRequests": "Belum ada permintaan rekrutmen.",
+    "status": {
+      "pending":   "Menunggu",
+      "confirmed": "Dikonfirmasi",
+      "rejected":  "Ditolak",
+      "closed":    "Ditutup"
+    },
+    "form": {
+      "title":         "Ajukan Permintaan Baru",
+      "newBtn":        "+ Permintaan Baru",
+      "submitBtn":     "Ajukan",
+      "submitSuccess": "Permintaan berhasil diajukan.",
+      "selectSector":  "Pilih Bidang",
+      "selectField":   "Pilih Jenis Pekerjaan",
+      "countHint":     "Jumlah kandidat yang dibutuhkan",
+      "notesHint":     "Kualifikasi tambahan (opsional)"
+    },
+    "confirm": {
+      "title":   "Konfirmasi Permintaan",
+      "btn":     "Konfirmasi",
+      "hint":    "Default 1.5× jumlah yang diminta",
+      "success": "Permintaan dikonfirmasi. Batch dibuat otomatis."
+    },
+    "reject": {
+      "title":   "Tolak Permintaan",
+      "btn":     "Tolak",
+      "notes":   "Alasan penolakan",
+      "success": "Permintaan ditolak."
+    }
+  },
+
   "timeline": {
     "title": "Riwayat Status",
     "empty": "Belum ada riwayat.",

@@ -17,6 +17,7 @@ import {
   BatchCandidate,
   InterviewProposal,
   Company,
+  RecruitmentRequest,
 } from '../db/models/index';
 import { serializeCandidate } from '../serializers/candidate';
 import { calcCompleteness } from '../utils/completeness';
@@ -619,6 +620,76 @@ router.get('/candidates/:id/timeline', wrap(async (req: Request, res: Response):
       return json;
     }),
   });
+}));
+
+// ── POST /api/recruiter/requests ─────────────────────────────────────────────
+router.post('/requests', wrap(async (req: Request, res: Response): Promise<void> => {
+  const companyId = await getRecruiterCompanyId(req.user!.sub);
+  if (!companyId) { res.status(403).json({ error: 'NO_COMPANY' }); return; }
+
+  const { kubun, sswSectorId, sswSectorJa, sswFieldId, sswFieldJa, requestedCount, notes } = req.body as {
+    kubun: string; sswSectorId: string; sswSectorJa: string;
+    sswFieldId: string; sswFieldJa: string; requestedCount: number; notes?: string;
+  };
+
+  if (!kubun || !sswSectorId || !sswFieldId || !requestedCount || requestedCount < 1) {
+    res.status(400).json({ error: 'BAD_REQUEST' }); return;
+  }
+
+  const count = await RecruitmentRequest.count({ where: { companyId } });
+  const requestCode = `REQ-${String(count + 1).padStart(3, '0')}`;
+
+  const request = await RecruitmentRequest.create({
+    requestCode,
+    companyId,
+    requestedBy: req.user!.sub,
+    kubun: kubun as 'SSW1' | 'SSW2' | 'Trainee',
+    sswSectorId,
+    sswSectorJa: sswSectorJa ?? '',
+    sswFieldId,
+    sswFieldJa: sswFieldJa ?? '',
+    requestedCount: Number(requestedCount),
+    notes: notes ?? null,
+  });
+
+  res.status(201).json({ request: request.toJSON() });
+}));
+
+// ── GET /api/recruiter/requests ───────────────────────────────────────────────
+router.get('/requests', wrap(async (req: Request, res: Response): Promise<void> => {
+  const companyId = await getRecruiterCompanyId(req.user!.sub);
+  if (!companyId) { res.status(403).json({ error: 'NO_COMPANY' }); return; }
+
+  const requests = await RecruitmentRequest.findAll({
+    where: { companyId },
+    include: [
+      { model: User, as: 'requester', attributes: ['id', 'name'] },
+      { model: Batch, as: 'batch', attributes: ['id', 'batchCode', 'name', 'status', 'quotaTotal'] },
+    ],
+    order: [['createdAt', 'DESC']],
+  });
+
+  res.json({ requests: requests.map((r) => r.toJSON()) });
+}));
+
+// ── GET /api/recruiter/requests/:id ──────────────────────────────────────────
+router.get('/requests/:id', wrap(async (req: Request, res: Response): Promise<void> => {
+  const { id } = req.params as { id: string };
+  if (!isUUID(id)) { res.status(400).json({ error: 'BAD_REQUEST' }); return; }
+
+  const companyId = await getRecruiterCompanyId(req.user!.sub);
+  if (!companyId) { res.status(403).json({ error: 'NO_COMPANY' }); return; }
+
+  const request = await RecruitmentRequest.findOne({
+    where: { id, companyId },
+    include: [
+      { model: User, as: 'requester', attributes: ['id', 'name'] },
+      { model: Batch, as: 'batch', attributes: ['id', 'batchCode', 'name', 'status', 'quotaTotal'] },
+    ],
+  });
+
+  if (!request) { res.status(404).json({ error: 'NOT_FOUND' }); return; }
+  res.json({ request: request.toJSON() });
 }));
 
 export default router;

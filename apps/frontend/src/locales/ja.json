@@ -675,6 +675,52 @@
       "customDate": "その他の日程"
     }
   },
+  "navRequests": "採用リクエスト",
+
+  "requests": {
+    "title": "採用リクエスト",
+    "managerTitle": "採用リクエスト管理",
+    "code": "コード",
+    "kubun": "区分",
+    "sector": "分野",
+    "field": "職種",
+    "requestedCount": "希望人数",
+    "allocatedCount": "割当人数",
+    "status": "ステータス",
+    "notes": "備考",
+    "managerNotes": "マネージャーメモ",
+    "batch": "バッチ",
+    "noRequests": "採用リクエストはありません。",
+    "status": {
+      "pending":   "審査待ち",
+      "confirmed": "確認済み",
+      "rejected":  "却下",
+      "closed":    "終了"
+    },
+    "form": {
+      "title":         "新規リクエストを送信",
+      "newBtn":        "+ 新規リクエスト",
+      "submitBtn":     "送信",
+      "submitSuccess": "リクエストを送信しました。",
+      "selectSector":  "分野を選択",
+      "selectField":   "職種を選択",
+      "countHint":     "必要な候補者数",
+      "notesHint":     "追加要件（任意）"
+    },
+    "confirm": {
+      "title":   "リクエストを確認",
+      "btn":     "確認",
+      "hint":    "デフォルトは希望人数の1.5倍",
+      "success": "リクエストを確認しました。バッチが自動作成されました。"
+    },
+    "reject": {
+      "title":   "リクエストを却下",
+      "btn":     "却下",
+      "notes":   "却下理由",
+      "success": "リクエストを却下しました。"
+    }
+  },
+
   "timeline": {
     "title": "ステータス履歴",
     "empty": "履歴はまだありません。",

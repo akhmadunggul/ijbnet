@@ -21,6 +21,7 @@ import RecruiterCandidateCVPage from './pages/recruiter/RecruiterCandidateCVPage
 import RecruiterConfirmed from './pages/recruiter/RecruiterConfirmed';
 import RecruiterInterviews from './pages/recruiter/RecruiterInterviews';
 import RecruiterNotifications from './pages/recruiter/RecruiterNotifications';
+import RecruiterRequests from './pages/recruiter/RecruiterRequests';
 import ManagerLayout from './pages/manager/ManagerLayout';
 import ManagerDashboard from './pages/manager/ManagerDashboard';
 import ManagerCandidates from './pages/manager/ManagerCandidates';
@@ -30,6 +31,7 @@ import ManagerBatches from './pages/manager/ManagerBatches';
 import ManagerBatchDetail from './pages/manager/ManagerBatchDetail';
 import ManagerInterviews from './pages/manager/ManagerInterviews';
 import ManagerNotifications from './pages/manager/ManagerNotifications';
+import ManagerRequests from './pages/manager/ManagerRequests';
 import SuperAdminLayout from './pages/superadmin/SuperAdminLayout';
 import SuperAdminDashboard from './pages/superadmin/SuperAdminDashboard';
 import SuperAdminUsers from './pages/superadmin/SuperAdminUsers';
@@ -47,7 +49,7 @@ const ROLE_HOMES: Record<UserRole, string> = {
   candidate: '/portal/dashboard',
   admin: '/admin/dashboard',
   manager: '/manager/dashboard',
-  recruiter: '/recruiter/selection',
+  recruiter: '/recruiter/requests',
   super_admin: '/superadmin/dashboard',
 };
 
@@ -141,6 +143,7 @@ export default function App() {
           <Route path="candidates/:id/cv" element={<ManagerCandidateCVPage />} />
           <Route path="batches" element={<ManagerBatches />} />
           <Route path="batches/:id" element={<ManagerBatchDetail />} />
+          <Route path="requests" element={<ManagerRequests />} />
           <Route path="interviews" element={<ManagerInterviews />} />
           <Route path="notifications" element={<ManagerNotifications />} />
         </Route>
@@ -154,7 +157,8 @@ export default function App() {
             </ProtectedRoute>
           }
         >
-          <Route index element={<Navigate to="selection" replace />} />
+          <Route index element={<Navigate to="requests" replace />} />
+          <Route path="requests" element={<RecruiterRequests />} />
           <Route path="selection" element={<RecruiterSelection />} />
           <Route path="candidates/:id/cv" element={<RecruiterCandidateCVPage />} />
           <Route path="confirmed" element={<RecruiterConfirmed />} />

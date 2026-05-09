@@ -13,6 +13,7 @@ const navItems = [
   { to: '/manager/dashboard',      icon: '📊', key: 'navDashboard' },
   { to: '/manager/candidates',     icon: '👥', key: 'navCandidates' },
   { to: '/manager/batches',        icon: '📦', key: 'navBatches' },
+  { to: '/manager/requests',       icon: '📋', key: 'navRequests' },
   { to: '/manager/interviews',     icon: '📅', key: 'navInterviews' },
   { to: '/manager/notifications',  icon: '🔔', key: 'navNotifications' },
 ];

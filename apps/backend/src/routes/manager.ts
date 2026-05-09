@@ -18,6 +18,7 @@ import {
   BatchCandidate,
   InterviewProposal,
   Company,
+  RecruitmentRequest,
 } from '../db/models/index';
 import { serializeCandidate } from '../serializers/candidate';
 import { calcCompleteness } from '../utils/completeness';
@@ -962,6 +963,133 @@ router.get('/candidates/:id/timeline', wrap(async (req: Request, res: Response):
       return json;
     }),
   });
+}));
+
+// ── GET /api/manager/requests ─────────────────────────────────────────────────
+router.get('/requests', wrap(async (req: Request, res: Response): Promise<void> => {
+  const { status } = req.query as { status?: string };
+  const where: Record<string, unknown> = {};
+  if (status) where['status'] = status;
+
+  const requests = await RecruitmentRequest.findAll({
+    where,
+    include: [
+      { model: Company, as: 'company', attributes: ['id', 'name', 'nameJa'] },
+      { model: User, as: 'requester', attributes: ['id', 'name'] },
+      { model: Batch, as: 'batch', attributes: ['id', 'batchCode', 'name', 'status', 'quotaTotal'] },
+    ],
+    order: [['createdAt', 'DESC']],
+  });
+
+  res.json({ requests: requests.map((r) => r.toJSON()) });
+}));
+
+// ── GET /api/manager/requests/:id ────────────────────────────────────────────
+router.get('/requests/:id', wrap(async (req: Request, res: Response): Promise<void> => {
+  const { id } = req.params as { id: string };
+  if (!isUUID(id)) { res.status(400).json({ error: 'BAD_REQUEST' }); return; }
+
+  const request = await RecruitmentRequest.findByPk(id, {
+    include: [
+      { model: Company, as: 'company', attributes: ['id', 'name', 'nameJa'] },
+      { model: User, as: 'requester', attributes: ['id', 'name'] },
+      { model: Batch, as: 'batch', attributes: ['id', 'batchCode', 'name', 'status', 'quotaTotal'] },
+    ],
+  });
+
+  if (!request) { res.status(404).json({ error: 'NOT_FOUND' }); return; }
+  res.json({ request: request.toJSON() });
+}));
+
+// ── POST /api/manager/requests/:id/confirm ────────────────────────────────────
+router.post('/requests/:id/confirm', wrap(async (req: Request, res: Response): Promise<void> => {
+  const { id } = req.params as { id: string };
+  if (!isUUID(id)) { res.status(400).json({ error: 'BAD_REQUEST' }); return; }
+
+  const request = await RecruitmentRequest.findByPk(id, {
+    include: [{ model: Company, as: 'company', attributes: ['id', 'name', 'nameJa'] }],
+  });
+  if (!request) { res.status(404).json({ error: 'NOT_FOUND' }); return; }
+  if (request.status !== 'pending') { res.status(409).json({ error: 'NOT_PENDING' }); return; }
+
+  const { allocatedCount, managerNotes, expiryDate } = req.body as {
+    allocatedCount?: number; managerNotes?: string; expiryDate?: string;
+  };
+
+  const allocated = Number(allocatedCount) || Math.ceil(request.requestedCount * 1.5);
+  const companyData = (request as unknown as Record<string, unknown>)['company'] as Record<string, unknown> | null;
+  const companyName = (companyData?.['name'] as string) ?? 'Company';
+
+  // Auto-generate batch label
+  const batchCode = request.requestCode;
+  const batchName = `[${request.requestCode}] ${request.sswFieldId} (${request.kubun}) — ${companyName}`;
+
+  const batch = await Batch.create({
+    batchCode,
+    name: batchName,
+    companyId: request.companyId,
+    quotaTotal: allocated,
+    interviewCandidateLimit: allocated,
+    sswFieldFilter: request.sswFieldId,
+    status: 'active',
+    expiryDate: expiryDate ? new Date(expiryDate) : null,
+    createdBy: req.user!.sub,
+  });
+
+  await request.update({
+    status: 'confirmed',
+    allocatedCount: allocated,
+    batchId: batch.id,
+    managerNotes: managerNotes ?? null,
+    confirmedAt: new Date(),
+  });
+
+  // Notify the recruiter who submitted the request
+  const requester = await User.findByPk(request.requestedBy, { attributes: ['id', 'name'] });
+  if (requester) {
+    await notifyUser(
+      requester.id,
+      'REQUEST_CONFIRMED',
+      `Permintaan ${request.requestCode} dikonfirmasi`,
+      `Permintaan Anda untuk ${request.sswFieldId} (${request.kubun}) telah dikonfirmasi. ${allocated} kandidat dialokasikan.`,
+      'batch',
+      batch.id,
+    );
+  }
+
+  await audit(req, 'REQUEST_CONFIRMED', 'recruitment_request', id, undefined, { batchId: batch.id, allocated });
+
+  res.json({ request: request.toJSON(), batch: batch.toJSON() });
+}));
+
+// ── POST /api/manager/requests/:id/reject ────────────────────────────────────
+router.post('/requests/:id/reject', wrap(async (req: Request, res: Response): Promise<void> => {
+  const { id } = req.params as { id: string };
+  if (!isUUID(id)) { res.status(400).json({ error: 'BAD_REQUEST' }); return; }
+
+  const request = await RecruitmentRequest.findByPk(id);
+  if (!request) { res.status(404).json({ error: 'NOT_FOUND' }); return; }
+  if (request.status !== 'pending') { res.status(409).json({ error: 'NOT_PENDING' }); return; }
+
+  const { managerNotes } = req.body as { managerNotes?: string };
+
+  await request.update({ status: 'rejected', managerNotes: managerNotes ?? null });
+
+  const requester = await User.findByPk(request.requestedBy, { attributes: ['id'] });
+  if (requester) {
+    await notifyUser(
+      requester.id,
+      'REQUEST_REJECTED',
+      `Permintaan ${request.requestCode} ditolak`,
+      `Permintaan Anda untuk ${request.sswFieldId} (${request.kubun}) tidak dapat diproses saat ini.`,
+      'recruitment_request',
+      id,
+    );
+  }
+
+  await audit(req, 'REQUEST_REJECTED', 'recruitment_request', id);
+
+  res.json({ request: request.toJSON() });
 }));
 
 export default router;

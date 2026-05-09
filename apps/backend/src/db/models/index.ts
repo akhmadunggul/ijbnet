@@ -22,6 +22,7 @@ import { CandidateCertification, initCandidateCertification } from './CandidateC
 import { CandidateEducationHistory, initCandidateEducationHistory } from './CandidateEducationHistory';
 import { SswSectorField, initSswSectorField } from './SswSectorField';
 import { CandidateTimeline, initCandidateTimeline } from './CandidateTimeline';
+import { RecruitmentRequest, initRecruitmentRequest } from './RecruitmentRequest';
 
 // Initialize all models
 initCompany(sequelize);
@@ -46,6 +47,7 @@ initCandidateCertification(sequelize);
 initCandidateEducationHistory(sequelize);
 initSswSectorField(sequelize);
 initCandidateTimeline(sequelize);
+initRecruitmentRequest(sequelize);
 
 // ── Associations ─────────────────────────────────────────────────────────────
 
@@ -166,6 +168,12 @@ Candidate.hasMany(CandidateTimeline, {
 CandidateTimeline.belongsTo(Candidate, { foreignKey: 'candidateId', as: 'candidate' });
 CandidateTimeline.belongsTo(User, { foreignKey: 'actorId', as: 'actor' });
 
+// RecruitmentRequest
+Company.hasMany(RecruitmentRequest, { foreignKey: 'companyId', as: 'recruitmentRequests' });
+RecruitmentRequest.belongsTo(Company, { foreignKey: 'companyId', as: 'company' });
+RecruitmentRequest.belongsTo(User, { foreignKey: 'requestedBy', as: 'requester' });
+RecruitmentRequest.belongsTo(Batch, { foreignKey: 'batchId', as: 'batch' });
+
 // Candidate certifications & education history
 Candidate.hasMany(CandidateCertification, {
   foreignKey: 'candidateId',
@@ -205,4 +213,5 @@ export {
   CandidateEducationHistory,
   SswSectorField,
   CandidateTimeline,
+  RecruitmentRequest,
 };

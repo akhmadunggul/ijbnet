@@ -128,8 +128,8 @@ apps/frontend/src/
   pages/LoginPage.tsx      — login with Google + email/password + TOTP
   pages/candidate/         — /portal/* (CandidateLayout + 3 pages)
   pages/admin/             — /admin/* (AdminLayout + 6 pages)
-  pages/recruiter/         — /recruiter/* (RecruiterLayout + 4 pages)
-  pages/manager/           — /manager/* (ManagerLayout + 6 pages: dashboard, batches, batch detail, candidates, interviews, notifications)
+  pages/recruiter/         — /recruiter/* (RecruiterLayout + 5 pages: requests, selection, confirmed, interviews, notifications)
+  pages/manager/           — /manager/* (ManagerLayout + 7 pages: dashboard, batches, batch detail, candidates, requests, interviews, notifications)
   pages/superadmin/        — /superadmin/* (SuperAdminLayout + 7 pages: dashboard, users, candidates, companies, LPKs, audit logs, settings)
   emails/                  — transactional email templates (batchActivated, interviewScheduled, interviewResult, profileApproved, profileSubmitted)
 ```
@@ -171,6 +171,7 @@ apps/frontend/src/
 - v0.2.9 — Add 仮内定 (provisional acceptance) as final timeline step; manager can issue from candidate detail page
 - v0.2.10 — Timeline stepper shows all 14 steps (completed + current + upcoming); duration display i18n (hari/日)
 - v0.2.11 — Trainee sector/field data (7 sectors, 33 fields); auto-migrate on container startup; Docker pnpm cache mounts
+- v0.2.12 — Recruitment request workflow: recruiter submits request → manager confirms + auto-creates batch (1.5× quota); full bilingual UI
 
-Current: v0.2.11
+Current: v0.2.12
 Live at: https://jinzai.aup.my.id
