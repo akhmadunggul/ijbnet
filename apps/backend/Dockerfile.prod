@@ -51,9 +51,13 @@ COPY apps/backend/tsconfig.json ./apps/backend/
 COPY apps/backend/src/db/migrations ./apps/backend/src/db/migrations
 COPY apps/backend/src/db/seeders ./apps/backend/src/db/seeders
 
+# Entrypoint: auto-migrate then start server
+COPY apps/backend/docker-entrypoint.sh ./
+RUN chmod +x /app/docker-entrypoint.sh
+
 # Create uploads directory
 RUN mkdir -p /app/uploads
 
 EXPOSE 3001
 
-CMD ["node", "apps/backend/dist/apps/backend/src/index.js"]
+ENTRYPOINT ["/app/docker-entrypoint.sh"]
