@@ -172,6 +172,7 @@ apps/frontend/src/
 - v0.2.10 — Timeline stepper shows all 14 steps (completed + current + upcoming); duration display i18n (hari/日)
 - v0.2.11 — Trainee sector/field data (7 sectors, 33 fields); auto-migrate on container startup; Docker pnpm cache mounts
 - v0.2.12 — Recruitment request workflow: recruiter submits request → manager confirms + auto-creates batch (1.5× quota); full bilingual UI
+- v0.2.13 — Full end-to-end recruitment flow: manager selects candidates (2×) from pool on confirm; candidate picks preferred interview date on dashboard; manager sees candidate preference when finalising; menu renamed to Permintaan Kandidat
 
-Current: v0.2.12
+Current: v0.2.13
 Live at: https://jinzai.aup.my.id

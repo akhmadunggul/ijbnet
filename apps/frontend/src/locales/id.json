@@ -711,7 +711,7 @@
     "confirm": {
       "title":   "Konfirmasi Permintaan",
       "btn":     "Konfirmasi",
-      "hint":    "Default 1.5× jumlah yang diminta",
+      "hint":    "Default 2× jumlah yang diminta",
       "success": "Permintaan dikonfirmasi. Batch dibuat otomatis."
     },
     "reject": {

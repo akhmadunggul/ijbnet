@@ -25,6 +25,7 @@ import {
   InterviewProposal,
 } from '../db/models/index';
 import { recordTimelineEvent, currentAgeHours } from '../utils/timeline';
+import { notifyUser } from '../utils/notify';
 import { serializeCandidate } from '../serializers/candidate';
 import { calcCompleteness } from '../utils/completeness';
 import { validateImageBuffer, savePhoto } from '../utils/storage';
@@ -757,53 +758,84 @@ router.get('/me/timeline', authenticate, requireRole('candidate'), async (req: R
   res.json({ timeline: serializeTimeline(events) });
 });
 
+// ── GET /api/candidates/me/interview/pending ──────────────────────────────────
+// Returns the first pending interview proposal for this candidate (status = proposed)
+router.get('/me/interview/pending', authenticate, requireRole('candidate'), async (req: Request, res: Response): Promise<void> => {
+  const candidate = await Candidate.findOne({ where: { userId: req.user!.sub }, attributes: ['id'] });
+  if (!candidate) { res.json({ proposal: null }); return; }
+
+  const bcs = await BatchCandidate.findAll({
+    where: { candidateId: candidate.id, isSelected: true },
+    attributes: ['id'],
+  });
+  const bcIds = bcs.map((b) => b.id);
+  if (!bcIds.length) { res.json({ proposal: null }); return; }
+
+  const { Op } = await import('sequelize');
+  const proposal = await InterviewProposal.findOne({
+    where: { batchCandidateId: { [Op.in]: bcIds }, status: 'proposed' },
+    order: [['createdAt', 'DESC']],
+  });
+
+  res.json({ proposal: proposal ? proposal.toJSON() : null });
+});
+
 // ── PATCH /api/candidates/me/interviews/:proposalId/confirm-date ──────────────
+// Candidate selects their preferred date from the recruiter's proposed options.
+// This is called BEFORE the manager finalises. Records interview_date_confirmed.
 router.patch('/me/interviews/:proposalId/confirm-date', authenticate, requireRole('candidate'), async (req: Request, res: Response): Promise<void> => {
   const { proposalId } = req.params as { proposalId: string };
 
   const candidate = await Candidate.findOne({ where: { userId: req.user!.sub }, attributes: ['id'] });
-  if (!candidate) {
-    res.status(404).json({ error: 'NOT_FOUND' });
-    return;
-  }
+  if (!candidate) { res.status(404).json({ error: 'NOT_FOUND' }); return; }
 
   const proposal = await InterviewProposal.findByPk(proposalId, {
     include: [{ model: BatchCandidate, as: 'batchCandidate', attributes: ['id', 'candidateId'] }],
   });
-
-  if (!proposal) {
-    res.status(404).json({ error: 'NOT_FOUND' });
-    return;
-  }
+  if (!proposal) { res.status(404).json({ error: 'NOT_FOUND' }); return; }
 
   const bc = (proposal as unknown as Record<string, unknown>)['batchCandidate'] as { candidateId: string } | null;
   if (!bc || bc.candidateId !== candidate.id) {
-    res.status(403).json({ error: 'FORBIDDEN' });
-    return;
+    res.status(403).json({ error: 'FORBIDDEN' }); return;
   }
 
-  if (proposal.status !== 'scheduled') {
-    res.status(422).json({ error: 'INVALID_STATE', message: 'Interview must be scheduled before confirming.' });
-    return;
+  if (proposal.status !== 'proposed') {
+    res.status(422).json({ error: 'INVALID_STATE', message: 'Proposal is no longer open for date selection.' }); return;
   }
 
-  const alreadyConfirmed = await CandidateTimeline.findOne({
-    where: { candidateId: candidate.id, event: 'interview_date_confirmed' },
-  });
-  if (alreadyConfirmed) {
-    res.status(422).json({ error: 'ALREADY_CONFIRMED', message: 'Interview date already confirmed.' });
-    return;
+  const { date } = req.body as { date?: string };
+  if (!date || !Array.isArray(proposal.proposedDates) || !proposal.proposedDates.includes(date)) {
+    res.status(400).json({ error: 'BAD_REQUEST', message: 'Date must be one of the proposed dates.' }); return;
   }
+
+  if (proposal.candidatePreferredDate) {
+    res.status(409).json({ error: 'ALREADY_CONFIRMED', message: 'Preferred date already selected.' }); return;
+  }
+
+  await proposal.update({ candidatePreferredDate: date });
 
   await recordTimelineEvent(
     candidate.id,
     'interview_date_confirmed',
     req.user!.sub,
     'candidate',
-    { proposalId, finalDate: proposal.finalDate },
+    { proposalId, candidatePreferredDate: date },
   );
 
-  res.json({ message: 'Interview date confirmed.' });
+  // Notify managers that candidate has confirmed their preferred date
+  const managers = await User.findAll({ where: { role: 'manager', isActive: true }, attributes: ['id'] });
+  await Promise.all(managers.map((m) =>
+    notifyUser(
+      m.id,
+      'CANDIDATE_DATE_CONFIRMED',
+      'Kandidat mengkonfirmasi jadwal wawancara',
+      `Kandidat telah memilih tanggal wawancara: ${date}. Silakan tetapkan jadwal final.`,
+      'interview_proposal',
+      proposalId,
+    ),
+  ));
+
+  res.json({ message: 'Preferred date confirmed.', candidatePreferredDate: date });
 });
 
 export default router;

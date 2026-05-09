@@ -35,7 +35,7 @@ export default function RecruiterLayout() {
   const company = batchData?.batch?.company;
 
   const navItems = [
-    { to: '/recruiter/requests',      icon: '📋', ja: '採用リクエスト', id: 'Permintaan' },
+    { to: '/recruiter/requests',      icon: '📋', ja: '採用リクエスト', id: 'Permintaan Kandidat' },
     { to: '/recruiter/selection',     icon: '👥', ja: '選考中',         id: 'Dalam Seleksi' },
     { to: '/recruiter/confirmed',     icon: '✅', ja: '選択済み',        id: 'Dipilih' },
     { to: '/recruiter/interviews',    icon: '📅', ja: '面接',            id: 'Wawancara' },

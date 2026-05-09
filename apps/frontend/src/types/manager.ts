@@ -60,6 +60,7 @@ export interface ManagerInterview {
   id: string;
   status: 'proposed' | 'scheduled' | 'completed' | 'cancelled';
   proposedDates: string[] | null;
+  candidatePreferredDate: string | null;
   finalDate: string | null;
   createdAt: string;
   batchCandidate?: {

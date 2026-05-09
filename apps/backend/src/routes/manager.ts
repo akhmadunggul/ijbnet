@@ -994,6 +994,32 @@ router.get('/requests', wrap(async (req: Request, res: Response): Promise<void> 
   res.json({ requests: requests.map((r) => r.toJSON()) });
 }));
 
+// ── GET /api/manager/requests/:id/pool ───────────────────────────────────────
+router.get('/requests/:id/pool', wrap(async (req: Request, res: Response): Promise<void> => {
+  const { id } = req.params as { id: string };
+  if (!isUUID(id)) { res.status(400).json({ error: 'BAD_REQUEST' }); return; }
+
+  const request = await RecruitmentRequest.findByPk(id, { attributes: ['id', 'kubun', 'sswFieldId', 'status'] });
+  if (!request) { res.status(404).json({ error: 'NOT_FOUND' }); return; }
+
+  const where: Record<string, unknown> = { profileStatus: 'approved' };
+  if (request.kubun) where['sswKubun'] = request.kubun;
+  if (request.sswFieldId) where['sswFieldId'] = request.sswFieldId;
+
+  const candidates = await Candidate.findAll({
+    where,
+    attributes: ['id', 'candidateCode', 'fullName', 'gender', 'dateOfBirth', 'sswKubun', 'sswFieldId', 'closeupUrl', 'lpkId'],
+    include: [
+      { model: CandidateBodyCheck, as: 'bodyCheck', attributes: ['result'], required: false },
+      { model: CandidateJapaneseTest, as: 'tests', attributes: ['testName', 'pass', 'score'], required: false },
+    ],
+    order: [['candidateCode', 'ASC']],
+    limit: 200,
+  });
+
+  res.json({ candidates: candidates.map((c) => c.toJSON()) });
+}));
+
 // ── GET /api/manager/requests/:id ────────────────────────────────────────────
 router.get('/requests/:id', wrap(async (req: Request, res: Response): Promise<void> => {
   const { id } = req.params as { id: string };
@@ -1022,11 +1048,11 @@ router.post('/requests/:id/confirm', wrap(async (req: Request, res: Response): P
   if (!request) { res.status(404).json({ error: 'NOT_FOUND' }); return; }
   if (request.status !== 'pending') { res.status(409).json({ error: 'NOT_PENDING' }); return; }
 
-  const { allocatedCount, managerNotes, expiryDate } = req.body as {
-    allocatedCount?: number; managerNotes?: string; expiryDate?: string;
+  const { allocatedCount, managerNotes, expiryDate, candidateIds } = req.body as {
+    allocatedCount?: number; managerNotes?: string; expiryDate?: string; candidateIds?: string[];
   };
 
-  const allocated = Number(allocatedCount) || Math.ceil(request.requestedCount * 1.5);
+  const allocated = Number(allocatedCount) || request.requestedCount * 2;
   const companyData = (request as unknown as Record<string, unknown>)['company'] as Record<string, unknown> | null;
   const companyName = (companyData?.['name'] as string) ?? 'Company';
 
@@ -1039,7 +1065,7 @@ router.post('/requests/:id/confirm', wrap(async (req: Request, res: Response): P
     name: batchName,
     companyId: request.companyId,
     quotaTotal: allocated,
-    interviewCandidateLimit: allocated,
+    interviewCandidateLimit: request.requestedCount,
     sswFieldFilter: request.sswFieldId,
     status: 'active',
     expiryDate: expiryDate ? new Date(expiryDate) : null,
@@ -1053,6 +1079,39 @@ router.post('/requests/:id/confirm', wrap(async (req: Request, res: Response): P
     managerNotes: managerNotes ?? null,
     confirmedAt: new Date(),
   });
+
+  // Allocate selected candidates immediately if provided
+  if (Array.isArray(candidateIds) && candidateIds.length > 0) {
+    const now = new Date();
+    await Promise.allSettled(
+      candidateIds.filter((cid) => isUUID(cid)).map(async (cid) => {
+        const candidate = await Candidate.findByPk(cid, { attributes: ['id', 'profileStatus', 'userId'] });
+        if (!candidate || candidate.profileStatus !== 'approved') return;
+
+        const [bc, created] = await BatchCandidate.findOrCreate({
+          where: { batchId: batch.id, candidateId: cid },
+          defaults: { id: uuidv4(), batchId: batch.id, candidateId: cid, allocatedBy: req.user!.sub, allocatedAt: now },
+        });
+
+        if (!created) await bc.update({ allocatedBy: req.user!.sub, allocatedAt: now });
+        await audit(req, 'BATCH_ALLOCATE', 'batch_candidate', bc.id, cid, { batchId: batch.id });
+
+        if (created) {
+          await recordTimelineEvent(cid, 'batch_allocated', req.user!.sub, 'manager', { batchId: batch.id });
+          if (candidate.userId) {
+            await notifyUser(
+              candidate.userId,
+              'BATCH_ALLOCATED',
+              'Anda masuk dalam proses rekrutmen',
+              `Profil Anda telah dipilih untuk posisi ${request.sswFieldId} (${request.kubun}).`,
+              'batch',
+              batch.id,
+            );
+          }
+        }
+      }),
+    );
+  }
 
   // Notify the recruiter who submitted the request
   const requester = await User.findByPk(request.requestedBy, { attributes: ['id', 'name'] });

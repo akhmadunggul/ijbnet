@@ -204,6 +204,14 @@ export default function ManagerInterviews() {
           <div className="bg-white rounded-2xl shadow-xl p-6 w-full max-w-md mx-4 space-y-4">
             <h2 className="text-lg font-semibold text-navy-900">{t('manager.interviews.finalize')}</h2>
 
+            {/* Candidate's preferred date hint */}
+            {finalizeInterview.candidatePreferredDate && (
+              <div className="bg-green-50 border border-green-200 rounded-lg px-3 py-2 text-xs text-green-800">
+                ✓ {lang === 'ja' ? '候補者の希望日: ' : 'Tanggal pilihan kandidat: '}
+                <strong>{finalizeInterview.candidatePreferredDate}</strong>
+              </div>
+            )}
+
             {/* Proposed dates as radio buttons */}
             {finalizeInterview.proposedDates && finalizeInterview.proposedDates.length > 0 && (
               <div className="space-y-2">
@@ -218,7 +226,14 @@ export default function ManagerInterviews() {
                       onChange={() => { setSelectedDate(d); setUseCustom(false); }}
                       className="accent-navy-700"
                     />
-                    <span className="text-sm text-gray-700">{formatDateShort(d, lang)}</span>
+                    <span className="text-sm text-gray-700">
+                      {formatDateShort(d, lang)}
+                      {d === finalizeInterview.candidatePreferredDate && (
+                        <span className="ml-2 text-xs text-green-600 font-medium">
+                          {lang === 'ja' ? '(候補者の希望)' : '(pilihan kandidat)'}
+                        </span>
+                      )}
+                    </span>
                   </label>
                 ))}
               </div>

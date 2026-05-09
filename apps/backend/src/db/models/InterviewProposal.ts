@@ -5,6 +5,7 @@ export interface InterviewProposalAttributes {
   batchCandidateId: string;
   proposedBy: string | null;
   proposedDates: string[] | null;
+  candidatePreferredDate: string | null;
   finalDate: Date | null;
   status: 'proposed' | 'scheduled' | 'completed' | 'cancelled';
   createdAt?: Date;
@@ -14,7 +15,7 @@ export interface InterviewProposalAttributes {
 export interface InterviewProposalCreationAttributes
   extends Optional<
     InterviewProposalAttributes,
-    'id' | 'proposedBy' | 'proposedDates' | 'finalDate' | 'status'
+    'id' | 'proposedBy' | 'proposedDates' | 'candidatePreferredDate' | 'finalDate' | 'status'
   > {}
 
 export class InterviewProposal
@@ -24,6 +25,7 @@ export class InterviewProposal
   declare batchCandidateId: string;
   declare proposedBy: string | null;
   declare proposedDates: string[] | null;
+  declare candidatePreferredDate: string | null;
   declare finalDate: Date | null;
   declare status: 'proposed' | 'scheduled' | 'completed' | 'cancelled';
   declare readonly createdAt: Date;
@@ -37,6 +39,7 @@ export function initInterviewProposal(sequelize: Sequelize): void {
       batchCandidateId: { type: DataTypes.UUID, allowNull: false },
       proposedBy: { type: DataTypes.UUID, allowNull: true },
       proposedDates: { type: DataTypes.JSON, allowNull: true },
+      candidatePreferredDate: { type: DataTypes.DATEONLY, allowNull: true },
       finalDate: { type: DataTypes.DATEONLY, allowNull: true },
       status: {
         type: DataTypes.ENUM('proposed', 'scheduled', 'completed', 'cancelled'),

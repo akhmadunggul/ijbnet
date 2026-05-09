@@ -1,10 +1,17 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '../../lib/api';
 import CandidateTimeline from '../../components/CandidateTimeline';
 import type { CandidateMe, NotificationData } from '../../types/candidate';
+
+interface PendingProposal {
+  id: string;
+  proposedDates: string[];
+  candidatePreferredDate: string | null;
+  status: string;
+}
 
 const STATUS_CONFIG: Record<string, { label: string; labelJa: string; color: string; bg: string }> = {
   incomplete:   { label: 'Profil belum lengkap', labelJa: 'プロフィール未完成', color: 'text-gray-600',  bg: 'bg-gray-50 border-gray-200' },
@@ -19,8 +26,10 @@ export default function CandidateDashboard() {
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
   const lang = i18n.language;
+  const qc = useQueryClient();
   const [exporting, setExporting] = useState(false);
   const [exportError, setExportError] = useState<string | null>(null);
+  const [dateToast, setDateToast] = useState('');
 
   const { data, isLoading } = useQuery<CandidateMe>({
     queryKey: ['my-candidate'],
@@ -30,6 +39,22 @@ export default function CandidateDashboard() {
   const { data: notifData } = useQuery<{ notifications: NotificationData[] }>({
     queryKey: ['notifications-preview'],
     queryFn: () => api.get('/notifications?limit=3&unread=true').then((r) => r.data),
+  });
+
+  const { data: pendingProposalData } = useQuery<{ proposal: PendingProposal | null }>({
+    queryKey: ['my-pending-proposal'],
+    queryFn: () => api.get('/candidates/me/interview/pending').then((r) => r.data),
+    refetchInterval: 60_000,
+  });
+
+  const confirmDateMutation = useMutation({
+    mutationFn: ({ proposalId, date }: { proposalId: string; date: string }) =>
+      api.patch(`/candidates/me/interviews/${proposalId}/confirm-date`, { date }).then((r) => r.data),
+    onSuccess: (_data, vars) => {
+      qc.invalidateQueries({ queryKey: ['my-pending-proposal'] });
+      qc.invalidateQueries({ queryKey: ['my-timeline'] });
+      setDateToast(vars.date);
+    },
   });
 
   if (isLoading) {
@@ -165,6 +190,48 @@ export default function CandidateDashboard() {
           {exportError && <span className="text-xs text-red-500 mt-1">{exportError}</span>}
         </button>
       </div>
+
+      {/* Interview date selection — shown when recruiter has proposed dates */}
+      {pendingProposalData?.proposal && (
+        <div className="bg-white border border-amber-200 rounded-xl p-5 space-y-3">
+          <div className="flex items-center gap-2">
+            <span className="text-xl">📅</span>
+            <p className="text-sm font-semibold text-amber-800">
+              {lang === 'ja' ? '面接日程の確認をお願いします' : 'Pilih tanggal wawancara yang tersedia'}
+            </p>
+          </div>
+
+          {pendingProposalData.proposal.candidatePreferredDate ? (
+            <div className="bg-green-50 border border-green-200 rounded-lg px-4 py-3 text-sm text-green-800">
+              ✓ {lang === 'ja' ? '選択済み: ' : 'Sudah dipilih: '}
+              <strong>{pendingProposalData.proposal.candidatePreferredDate}</strong>
+              {' — '}{lang === 'ja' ? 'マネージャーが日程を確定します。' : 'Manager akan menetapkan jadwal final.'}
+            </div>
+          ) : dateToast ? (
+            <div className="bg-green-50 border border-green-200 rounded-lg px-4 py-3 text-sm text-green-800">
+              ✓ {lang === 'ja' ? '選択しました: ' : 'Dipilih: '}<strong>{dateToast}</strong>
+            </div>
+          ) : (
+            <>
+              <p className="text-xs text-gray-500">
+                {lang === 'ja' ? '以下の日程から都合の良い日を選択してください:' : 'Pilih tanggal yang sesuai dengan jadwal Anda:'}
+              </p>
+              <div className="flex flex-wrap gap-2">
+                {(pendingProposalData.proposal.proposedDates ?? []).map((d) => (
+                  <button
+                    key={d}
+                    onClick={() => confirmDateMutation.mutate({ proposalId: pendingProposalData.proposal!.id, date: d })}
+                    disabled={confirmDateMutation.isPending}
+                    className="px-4 py-2 border-2 border-amber-300 text-amber-800 rounded-lg text-sm font-medium hover:bg-amber-50 hover:border-amber-400 disabled:opacity-50 transition"
+                  >
+                    {d}
+                  </button>
+                ))}
+              </div>
+            </>
+          )}
+        </div>
+      )}
 
       {/* Status timeline */}
       <div className="bg-white border border-gray-100 rounded-xl p-5">
