@@ -446,8 +446,8 @@ function SswTab({ candidate, onSave, saving }: { candidate: CandidateData; onSav
         </div>
       </Field>
 
-      {/* Sector/Field dropdowns — not applicable for Trainee */}
-      {kubun !== 'Trainee' && (
+      {/* Sector/Field dropdowns */}
+      {kubun && (
         <>
           <Field label={t('candidate.profile.ssw.sectorId')}>
             <select
