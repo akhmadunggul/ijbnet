@@ -169,6 +169,7 @@ apps/frontend/src/
 - v0.2.7 — Rename SSW column/tab to Program across admin, manager, candidate, and recruiter portals
 - v0.2.8 — Candidate status timeline: full process stepper, per-stage duration tracking (hours stored, days displayed)
 - v0.2.9 — Add 仮内定 (provisional acceptance) as final timeline step; manager can issue from candidate detail page
+- v0.2.10 — Timeline stepper shows all 14 steps (completed + current + upcoming); duration display i18n (hari/日)
 
-Current: v0.2.9
+Current: v0.2.10
 Live at: https://jinzai.aup.my.id
