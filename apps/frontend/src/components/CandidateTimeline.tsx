@@ -60,12 +60,8 @@ function formatDate(iso: string) {
 }
 
 function formatDuration(hours: number): string {
-  if (hours < 1) return '< 1 jam';
-  if (hours < 24) return `${Math.round(hours)} jam`;
-  const days = Math.floor(hours / 24);
-  const remHours = Math.round(hours % 24);
-  if (remHours === 0) return `${days} hari`;
-  return `${days} hari ${remHours} jam`;
+  const days = Math.round(hours / 24);
+  return days < 1 ? '< 1 hari' : `${days} hari`;
 }
 
 interface Props {
