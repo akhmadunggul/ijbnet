@@ -170,6 +170,7 @@ apps/frontend/src/
 - v0.2.8 — Candidate status timeline: full process stepper, per-stage duration tracking (hours stored, days displayed)
 - v0.2.9 — Add 仮内定 (provisional acceptance) as final timeline step; manager can issue from candidate detail page
 - v0.2.10 — Timeline stepper shows all 14 steps (completed + current + upcoming); duration display i18n (hari/日)
+- v0.2.11 — Trainee sector/field data (7 sectors, 33 fields); auto-migrate on container startup; Docker pnpm cache mounts
 
-Current: v0.2.10
+Current: v0.2.11
 Live at: https://jinzai.aup.my.id
