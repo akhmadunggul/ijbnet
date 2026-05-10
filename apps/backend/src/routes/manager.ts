@@ -1010,7 +1010,7 @@ router.get('/requests/:id/pool', wrap(async (req: Request, res: Response): Promi
     where,
     attributes: ['id', 'candidateCode', 'fullName', 'gender', 'dateOfBirth', 'sswKubun', 'sswFieldId', 'closeupUrl', 'lpkId'],
     include: [
-      { model: CandidateBodyCheck, as: 'bodyCheck', attributes: ['result'], required: false },
+      { model: CandidateBodyCheck, as: 'bodyCheck', attributes: [['overallResult', 'result']], required: false },
       { model: CandidateJapaneseTest, as: 'tests', attributes: ['testName', 'pass', 'score'], required: false },
     ],
     order: [['candidateCode', 'ASC']],
