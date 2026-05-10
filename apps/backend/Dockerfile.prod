@@ -1,7 +1,8 @@
 # ── Stage 1: Build ──────────────────────────────────────────────
 FROM node:20-alpine AS builder
 
-RUN npm install -g pnpm@10.33.0
+RUN apk add --no-cache python3 make g++ && \
+    npm install -g pnpm@10.33.0
 
 WORKDIR /app
 
@@ -27,7 +28,7 @@ RUN pnpm --filter @ijbnet/backend build
 
 # ── Stage 2: Production ──────────────────────────────────────────
 FROM node:20-alpine AS production
-RUN apk add --no-cache chromium && \
+RUN apk add --no-cache python3 make g++ chromium && \
     npm install -g pnpm@10.33.0
 
 ENV CHROME_PATH=/usr/bin/chromium-browser
