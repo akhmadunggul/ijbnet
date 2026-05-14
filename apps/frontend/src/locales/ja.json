@@ -757,5 +757,13 @@
       "recruiter_accepted": "採用担当者承認済み",
       "provisional_acceptance": "仮内定"
     }
-  }
+  },
+  "privacyPolicy": "プライバシーポリシー",
+  "termsOfService": "利用規約",
+  "privacyStatement": "IJBNetプライバシーステートメント",
+  "loginTermsPrefix": "アカウントを作成することで、",
+  "loginTermsSuffix": "に同意したことになります。",
+  "loginPrivacyPrefix": "IJBNetのプライバシーについては、",
+  "loginPrivacySuffix": "をご覧ください。",
+  "loginEmailNotice": "アカウントに関するメールをお送りすることがあります。"
 }

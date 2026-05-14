@@ -27,11 +27,13 @@ RUN pnpm --filter @ijbnet/frontend build
 # ── Stage 2: Caddy ───────────────────────────────────────────────
 FROM caddy:alpine AS production
 
+ARG CADDY_ENV=staging
+
 # Copy built React app
 COPY --from=builder /app/apps/frontend/dist /usr/share/caddy
 
-# Copy Caddyfile
-COPY Caddyfile /etc/caddy/Caddyfile
+# Copy environment-specific Caddyfile
+COPY Caddyfile.${CADDY_ENV} /etc/caddy/Caddyfile
 
 # Create log directory
 RUN mkdir -p /var/log/caddy

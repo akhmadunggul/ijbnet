@@ -166,7 +166,25 @@ export default function LoginPage() {
           </button>
         </form>
 
-        <p className="text-center text-xs text-gray-400 mt-6">v{version}</p>
+        <div className="mt-6 space-y-1 text-center text-xs text-gray-500">
+          <p>
+            {t('loginTermsPrefix')}
+            <a href="/termsofservice.html" target="_blank" rel="noopener noreferrer" className="text-navy-700 underline hover:text-navy-900">
+              {t('termsOfService')}
+            </a>
+            {t('loginTermsSuffix')}
+          </p>
+          <p>
+            {t('loginPrivacyPrefix')}
+            <a href="/privacy.html" target="_blank" rel="noopener noreferrer" className="text-navy-700 underline hover:text-navy-900">
+              {t('privacyStatement')}
+            </a>
+            {t('loginPrivacySuffix')}
+          </p>
+          <p>{t('loginEmailNotice')}</p>
+        </div>
+
+        <p className="text-center text-xs text-gray-400 mt-3">v{version}</p>
       </div>
 
       {/* Powered by */}

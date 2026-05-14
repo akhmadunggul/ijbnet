@@ -758,5 +758,13 @@
       "recruiter_accepted": "Diterima Rekruter",
       "provisional_acceptance": "Surat Penerimaan Sementara (仮内定)"
     }
-  }
+  },
+  "privacyPolicy": "Kebijakan Privasi",
+  "termsOfService": "Syarat Layanan",
+  "privacyStatement": "Pernyataan Privasi IJBNet",
+  "loginTermsPrefix": "Dengan membuat akun, Anda menyetujui ",
+  "loginTermsSuffix": ".",
+  "loginPrivacyPrefix": "Untuk informasi lebih lanjut tentang praktik privasi IJBNet, lihat ",
+  "loginPrivacySuffix": ".",
+  "loginEmailNotice": "Kami sesekali akan mengirimkan email terkait akun Anda."
 }

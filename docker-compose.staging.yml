@@ -64,7 +64,7 @@ services:
       context: .
       dockerfile: apps/frontend/Dockerfile.caddy
       args:
-        CADDY_ENV: prod
+        CADDY_ENV: staging
     container_name: ijbnet_frontend
     restart: unless-stopped
     ports:
