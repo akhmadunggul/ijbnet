@@ -176,4 +176,4 @@ apps/frontend/src/
 - v0.3.0 — Recruiter Permintaan Kandidat page redesign: always-visible form, correct 候補者依頼 Japanese translation, fix invisible submit button (navy-800 undefined in Tailwind palette)
 
 Current: v0.3.0
-Live at: https://jinzai.aup.my.id
+Live at: https://jinzai.jobagus.id

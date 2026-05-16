@@ -41,12 +41,6 @@ const sswSchema = z.object({
   jpStudyDuration:z.string().nullable().optional(),
 });
 
-const educationSchema = z.object({
-  eduLevel: z.string().nullable().optional(),
-  eduLabel: z.string().nullable().optional(),
-  eduMajor: z.string().nullable().optional(),
-});
-
 const educationHistorySchema = z.object({
   entries: z.array(z.object({
     id:         z.string().optional(),
@@ -113,7 +107,6 @@ const prMotivationSchema = z.object({
 
 type PersonalForm          = z.infer<typeof personalSchema>;
 type SswForm               = z.infer<typeof sswSchema>;
-type EducationForm         = z.infer<typeof educationSchema>;
 type EducationHistoryForm  = z.infer<typeof educationHistorySchema>;
 type CareerForm            = z.infer<typeof careerSchema>;
 type TestForm              = z.infer<typeof testSchema>;
@@ -502,20 +495,9 @@ function SswTab({ candidate, onSave, saving }: { candidate: CandidateData; onSav
 }
 
 // ── Tab 3 — Education ─────────────────────────────────────────────────────────
-const EDU_LEVELS = ['SD','SMP','SMA','SMK','D1','D2','D3','D4','S1','S2','S3'];
-
-function EducationTab({ candidate, onSave, saving }: { candidate: CandidateData; onSave: (d: EducationForm) => void; saving: boolean }) {
+function EducationTab({ candidate }: { candidate: CandidateData }) {
   const { t } = useTranslation();
   const qc = useQueryClient();
-
-  const { register: reg, handleSubmit, reset, formState: { isDirty } } = useForm<EducationForm>({
-    resolver: zodResolver(educationSchema),
-    defaultValues: {
-      eduLevel: candidate.eduLevel ?? '',
-      eduLabel: candidate.eduLabel ?? '',
-      eduMajor: candidate.eduMajor ?? '',
-    },
-  });
 
   const historyForm = useForm<EducationHistoryForm>({
     defaultValues: {
@@ -540,29 +522,6 @@ function EducationTab({ candidate, onSave, saving }: { candidate: CandidateData;
 
   return (
     <div className="space-y-8">
-      {/* Highest education level */}
-      <div>
-        <p className="text-sm font-semibold text-gray-700 mb-4">{t('candidate.profile.education.level')}</p>
-        <form onSubmit={handleSubmit(async (d) => { await onSave(d); reset(d); })} className="space-y-4">
-          <Field label={t('candidate.profile.education.level')}>
-            <select {...reg('eduLevel')} className={selectCls}>
-              <option value="">— Pilih —</option>
-              {EDU_LEVELS.map((l) => <option key={l} value={l}>{l}</option>)}
-            </select>
-          </Field>
-          <Field label={t('candidate.profile.education.label')}><input {...reg('eduLabel')} className={inputCls} placeholder="e.g. SMK Negeri 1 Jakarta" /></Field>
-          <Field label={t('candidate.profile.education.major')}><input {...reg('eduMajor')} className={inputCls} /></Field>
-          <div className="flex items-center gap-3">
-            <button type="submit" disabled={saving} className="px-4 py-2 bg-navy-700 text-white text-sm rounded-lg hover:bg-navy-900 transition disabled:opacity-60">
-              {saving ? t('candidate.profile.saving') : t('candidate.profile.save')}
-            </button>
-            {isDirty && <span className="text-xs text-amber-600">{t('candidate.profile.unsaved')}</span>}
-          </div>
-        </form>
-      </div>
-
-      <hr className="border-gray-100" />
-
       {/* Full education history */}
       <div>
         <p className="text-sm font-semibold text-gray-700 mb-4">{t('candidate.profile.education.historyTitle')}</p>
@@ -1059,7 +1018,7 @@ export default function CandidateProfile() {
       <div className="bg-white rounded-xl border border-gray-100 p-6">
         {activeTab === 'tab1' && <PersonalTab candidate={candidate} onSave={(d) => handleSave(d as Record<string, unknown>)} saving={saving} />}
         {activeTab === 'tab2' && <SswTab candidate={candidate} onSave={(d) => handleSave(d as Record<string, unknown>)} saving={saving} />}
-        {activeTab === 'tab3' && <EducationTab candidate={candidate} onSave={(d) => handleSave(d as Record<string, unknown>)} saving={saving} />}
+        {activeTab === 'tab3' && <EducationTab candidate={candidate} />}
         {activeTab === 'tab4' && <CareerTab candidate={candidate} saving={saving} />}
         {activeTab === 'tab5' && <JapaneseTab candidate={candidate} />}
         {activeTab === 'tab6' && <WorkplanTab candidate={candidate} onSave={(d) => handleSave(d as Record<string, unknown>)} saving={saving} />}
