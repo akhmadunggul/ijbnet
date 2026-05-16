@@ -614,6 +614,16 @@
       "pushConfirm": "Yakin ingin memaksa semua kandidat untuk menyetujui ulang?",
       "pushWarning": "Semua kandidat akan diminta menyetujui klausul ini kembali saat login berikutnya.",
       "pushSuccess": "Berhasil! {{count}} kandidat akan diminta menyetujui ulang."
+    },
+    "dataEntrySettings": {
+      "navLabel": "Pengaturan Data Entri",
+      "title": "Pengaturan Data Entri",
+      "description": "Kelola tab yang ditampilkan pada formulir profil kandidat.",
+      "tabActive": "Aktif",
+      "tabInactive": "Non-aktif",
+      "saveBtn": "Simpan Pengaturan",
+      "saved": "Pengaturan berhasil disimpan.",
+      "errorSave": "Gagal menyimpan pengaturan."
     }
   },
 

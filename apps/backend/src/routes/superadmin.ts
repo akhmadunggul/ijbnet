@@ -20,6 +20,7 @@ import {
   InterviewProposal,
   AuditLog,
   ConsentClause,
+  GlobalSettings,
 } from '../db/models/index';
 import { serializeCandidate, serializeUser } from '../serializers/candidate';
 import { calcCompleteness } from '../utils/completeness';
@@ -58,6 +59,14 @@ router.get('/consent-clause/active', wrap(async (_req, res) => {
       publishedAt: c['publishedAt'] ?? null,
     },
   });
+}));
+
+// ── GET /api/superadmin/candidate-tab-config — PUBLIC ────────────────────────
+// Candidate portal reads this to know which tabs to display.
+router.get('/candidate-tab-config', wrap(async (_req, res) => {
+  const row = await GlobalSettings.findOne({ where: { key: 'candidate_tab_config' } });
+  const defaultConfig = { tab1: true, tab2: true, tab3: true, tab4: true, tab5: true, tab6: true, tab7: true, tab8: true, tab9: true };
+  res.json({ config: row ? (row.toJSON() as unknown as Record<string, unknown>)['value'] : defaultConfig });
 }));
 
 router.use(authenticate, requireRole('super_admin'));
@@ -120,6 +129,26 @@ router.get('/system/stats', wrap(async (_req, res) => {
     dbStatus,
     recentAuditEntries: recentAuditRaw.map(e => e.toJSON()),
   });
+}));
+
+// ── PUT /api/superadmin/candidate-tab-config ──────────────────────────────────
+router.put('/candidate-tab-config', wrap(async (req, res) => {
+  const body = req.body as Record<string, unknown>;
+  const validKeys = ['tab1','tab2','tab3','tab4','tab5','tab6','tab7','tab8','tab9'];
+  const config: Record<string, boolean> = {};
+  for (const k of validKeys) {
+    config[k] = body[k] !== false;
+  }
+
+  const [row, created] = await GlobalSettings.findOrCreate({
+    where: { key: 'candidate_tab_config' },
+    defaults: { key: 'candidate_tab_config', value: config },
+  });
+  if (!created) {
+    await row.update({ value: config });
+  }
+
+  res.json({ config });
 }));
 
 // ── User Management ───────────────────────────────────────────────────────────

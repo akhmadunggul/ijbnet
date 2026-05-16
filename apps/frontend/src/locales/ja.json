@@ -613,6 +613,16 @@
       "pushConfirm": "全候補者に再同意を要求しますか？",
       "pushWarning": "全ての候補者は次回ログイン時にこの条項に再同意する必要があります。",
       "pushSuccess": "完了！{{count}}名の候補者が再同意を求められます。"
+    },
+    "dataEntrySettings": {
+      "navLabel": "データ入力設定",
+      "title": "データ入力設定",
+      "description": "候補者プロフィールフォームに表示するタブを管理します。",
+      "tabActive": "表示",
+      "tabInactive": "非表示",
+      "saveBtn": "設定を保存",
+      "saved": "設定を保存しました。",
+      "errorSave": "設定の保存に失敗しました。"
     }
   },
 

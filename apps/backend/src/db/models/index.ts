@@ -23,6 +23,7 @@ import { CandidateEducationHistory, initCandidateEducationHistory } from './Cand
 import { SswSectorField, initSswSectorField } from './SswSectorField';
 import { CandidateTimeline, initCandidateTimeline } from './CandidateTimeline';
 import { RecruitmentRequest, initRecruitmentRequest } from './RecruitmentRequest';
+import { GlobalSettings, initGlobalSettings } from './GlobalSettings';
 
 // Initialize all models
 initCompany(sequelize);
@@ -48,6 +49,7 @@ initCandidateEducationHistory(sequelize);
 initSswSectorField(sequelize);
 initCandidateTimeline(sequelize);
 initRecruitmentRequest(sequelize);
+initGlobalSettings(sequelize);
 
 // ── Associations ─────────────────────────────────────────────────────────────
 
@@ -214,4 +216,5 @@ export {
   SswSectorField,
   CandidateTimeline,
   RecruitmentRequest,
+  GlobalSettings,
 };

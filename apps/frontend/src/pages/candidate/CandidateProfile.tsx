@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback, useMemo } from 'react';
+import { useState, useRef, useCallback, useMemo, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useForm, useFieldArray } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -925,6 +925,10 @@ function PrMotivationTab({ candidate, onSave, saving }: { candidate: CandidateDa
 const TABS = ['tab1','tab2','tab3','tab4','tab5','tab6','tab7','tab8','tab9'] as const;
 type TabKey = typeof TABS[number];
 
+interface TabConfigResponse {
+  config: Record<TabKey, boolean>;
+}
+
 export default function CandidateProfile() {
   const { t } = useTranslation();
   const qc = useQueryClient();
@@ -935,6 +939,20 @@ export default function CandidateProfile() {
     queryKey: ['my-candidate'],
     queryFn: () => api.get('/candidates/me').then((r) => r.data),
   });
+
+  const { data: tabConfigData } = useQuery<TabConfigResponse>({
+    queryKey: ['candidate-tab-config'],
+    queryFn: () => api.get('/superadmin/candidate-tab-config').then((r) => r.data),
+    staleTime: 60_000,
+  });
+
+  const visibleTabs = TABS.filter((tab) => tabConfigData?.config?.[tab] !== false);
+
+  useEffect(() => {
+    if (visibleTabs.length > 0 && !visibleTabs.includes(activeTab)) {
+      setActiveTab(visibleTabs[0]);
+    }
+  }, [visibleTabs, activeTab]);
 
   const patchMutation = useMutation({
     mutationFn: (body: Record<string, unknown>) => api.patch('/candidates/me', body).then((r) => r.data),
@@ -999,7 +1017,7 @@ export default function CandidateProfile() {
 
       {/* Tab bar */}
       <div className="flex gap-1 overflow-x-auto pb-1 mb-6 border-b border-gray-100">
-        {TABS.map((tab) => (
+        {visibleTabs.map((tab) => (
           <button
             key={tab}
             onClick={() => setActiveTab(tab)}
