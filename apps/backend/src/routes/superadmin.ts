@@ -159,9 +159,10 @@ router.get('/users', wrap(async (req, res) => {
   if (role) where['role'] = role;
   if (isActive !== undefined && isActive !== '') where['isActive'] = isActive === 'true';
   if (search) {
+    const s = search.replace(/[%_\\]/g, '\\$&');
     where[Op.or as unknown as string] = [
-      { name: { [Op.like]: `%${search}%` } },
-      { email: { [Op.like]: `%${search}%` } },
+      { name: { [Op.like]: `%${s}%` } },
+      { email: { [Op.like]: `%${s}%` } },
     ];
   }
   const limit = Math.min(parseInt(pageSize, 10), 100);
@@ -670,6 +671,10 @@ router.post('/consent-clause/extract-pdf', pdfUpload.single('file'), wrap(async 
   }
   if (req.file.mimetype !== 'application/pdf') {
     res.status(422).json({ error: 'INVALID_FILE', message: 'File must be a PDF.' });
+    return;
+  }
+  if (!req.file.buffer.slice(0, 5).equals(Buffer.from('%PDF-'))) {
+    res.status(422).json({ error: 'INVALID_FILE', message: 'File must be a valid PDF.' });
     return;
   }
 

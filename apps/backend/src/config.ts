@@ -78,3 +78,5 @@ function requireInProd(key: keyof typeof config): void {
 }
 requireInProd('JWT_SECRET');
 requireInProd('JWT_REFRESH_SECRET');
+requireInProd('DB_PASS');
+requireInProd('SESSION_SECRET');

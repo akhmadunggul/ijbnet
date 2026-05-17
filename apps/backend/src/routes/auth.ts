@@ -1,11 +1,12 @@
 import { Router, Request, Response } from 'express';
+import rateLimit from 'express-rate-limit';
 import bcrypt from 'bcrypt';
 import { authenticator } from 'otplib';
 import QRCode from 'qrcode';
 import { v4 as uuidv4 } from 'uuid';
 import { User, UserMfaBackupCode } from '../db/models/index';
 import { signAccessToken, signRefreshToken, verifyRefreshToken, decodeToken, ttlSeconds } from '../utils/jwt';
-import { blacklistToken } from '../utils/redis';
+import { blacklistToken, isTokenBlacklisted } from '../utils/redis';
 import { serializeUser } from '../serializers/candidate';
 import { authenticate, requireRole } from '../middleware/auth';
 import passport from '../config/passport';
@@ -13,8 +14,16 @@ import { config } from '../config';
 
 const router = Router();
 
+const loginLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 10,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'TOO_MANY_REQUESTS', message: 'Too many login attempts. Please try again later.' },
+});
+
 // POST /api/auth/login
-router.post('/login', async (req: Request, res: Response): Promise<void> => {
+router.post('/login', loginLimiter, async (req: Request, res: Response): Promise<void> => {
   const { email, password, totpCode } = req.body as {
     email?: string;
     password?: string;
@@ -47,8 +56,20 @@ router.post('/login', async (req: Request, res: Response): Promise<void> => {
     }
     const valid = authenticator.verify({ token: totpCode, secret: user.mfaSecret });
     if (!valid) {
-      res.status(401).json({ error: 'INVALID_CREDENTIALS' });
-      return;
+      // Fall back to backup codes
+      const backupCodes = await UserMfaBackupCode.findAll({ where: { userId: user.id } });
+      let usedCode: typeof backupCodes[number] | null = null;
+      for (const bc of backupCodes) {
+        if (await bcrypt.compare(totpCode, bc.codeHash)) {
+          usedCode = bc;
+          break;
+        }
+      }
+      if (!usedCode) {
+        res.status(401).json({ error: 'INVALID_CREDENTIALS' });
+        return;
+      }
+      await usedCode.destroy();
     }
   }
 
@@ -82,12 +103,29 @@ router.post('/refresh', async (req: Request, res: Response): Promise<void> => {
   }
 
   try {
+    const blacklisted = await isTokenBlacklisted(token);
+    if (blacklisted) {
+      res.status(401).json({ error: 'UNAUTHORIZED', message: 'Refresh token has been revoked.' });
+      return;
+    }
+
     const payload = verifyRefreshToken(token);
     const user = await User.findByPk(payload.sub);
     if (!user || !user.isActive) {
       res.status(401).json({ error: 'UNAUTHORIZED' });
       return;
     }
+
+    // Rotate: blacklist the used refresh token and issue a new one
+    await blacklistToken(token, ttlSeconds(payload));
+    const newRefreshToken = signRefreshToken({ sub: user.id, role: user.role, email: user.email });
+    res.cookie('refreshToken', newRefreshToken, {
+      httpOnly: true,
+      secure: config.NODE_ENV === 'production',
+      sameSite: 'strict',
+      maxAge: 7 * 24 * 60 * 60 * 1000,
+    });
+
     const accessToken = signAccessToken({ sub: user.id, role: user.role, email: user.email });
     res.json({ accessToken });
   } catch {
@@ -103,12 +141,27 @@ router.post('/logout', authenticate, async (req: Request, res: Response): Promis
   if (token) {
     const decoded = decodeToken(token);
     if (decoded) {
-      const ttl = ttlSeconds(decoded);
-      await blacklistToken(token, ttl);
+      await blacklistToken(token, ttlSeconds(decoded));
     }
   }
 
-  res.clearCookie('refreshToken');
+  // Also blacklist the refresh token so it cannot be replayed
+  const refreshToken = (req.cookies as Record<string, string>)['refreshToken'];
+  if (refreshToken) {
+    try {
+      const refreshPayload = verifyRefreshToken(refreshToken);
+      await blacklistToken(refreshToken, ttlSeconds(refreshPayload));
+    } catch {
+      // Already expired or invalid — nothing to blacklist
+    }
+  }
+
+  res.clearCookie('refreshToken', {
+    httpOnly: true,
+    secure: config.NODE_ENV === 'production',
+    sameSite: 'strict',
+    path: '/',
+  });
   res.json({ message: 'Logged out.' });
 });
 
@@ -198,9 +251,10 @@ router.post('/mfa/verify', authenticate, requireRole('super_admin'), async (req:
   // Clear old backup codes
   await UserMfaBackupCode.destroy({ where: { userId: user.id } });
   // Save hashed backup codes
-  await Promise.all(rawCodes.map((code) =>
-    UserMfaBackupCode.create({ userId: user.id, codeHash: bcrypt.hashSync(code, 10) }),
-  ));
+  await Promise.all(rawCodes.map(async (code) => {
+    const codeHash = await bcrypt.hash(code, 10);
+    return UserMfaBackupCode.create({ userId: user.id, codeHash });
+  }));
 
   res.json({ backupCodes: rawCodes });
 });

@@ -143,9 +143,10 @@ router.get('/candidates', wrap(async (req: Request, res: Response): Promise<void
   if (sswKubun) where['sswKubun'] = sswKubun;
   if (lpkId && isUUID(lpkId)) where['lpkId'] = lpkId;
   if (search) {
+    const s = search.replace(/[%_\\]/g, '\\$&');
     where[Op.or as unknown as string] = [
-      { fullName: { [Op.like]: `%${search}%` } },
-      { candidateCode: { [Op.like]: `%${search}%` } },
+      { fullName: { [Op.like]: `%${s}%` } },
+      { candidateCode: { [Op.like]: `%${s}%` } },
     ];
   }
 
@@ -160,7 +161,10 @@ router.get('/candidates', wrap(async (req: Request, res: Response): Promise<void
     order: [['createdAt', 'DESC']],
   });
 
-  await audit(req, 'VIEW_CANDIDATE_LIST', 'candidate');
+  await audit(req, 'VIEW_CANDIDATE_LIST', 'candidate', undefined, undefined, {
+    candidateIds: rows.map((c) => c.id),
+    count: rows.length,
+  });
 
   const candidates = rows.map((c) => {
     const data = c.toJSON() as unknown as Record<string, unknown>;

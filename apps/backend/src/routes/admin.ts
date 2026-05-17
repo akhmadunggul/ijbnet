@@ -88,9 +88,10 @@ router.get('/candidates', async (req: Request, res: Response): Promise<void> => 
   if (profileStatus) where['profileStatus'] = profileStatus;
   if (sswKubun) where['sswKubun'] = sswKubun;
   if (search) {
+    const s = search.replace(/[%_\\]/g, '\\$&');
     where[Op.or as unknown as string] = [
-      { fullName: { [Op.like]: `%${search}%` } },
-      { candidateCode: { [Op.like]: `%${search}%` } },
+      { fullName: { [Op.like]: `%${s}%` } },
+      { candidateCode: { [Op.like]: `%${s}%` } },
     ];
   }
 

@@ -175,6 +175,7 @@ apps/frontend/src/
 - v0.2.13 — Full end-to-end recruitment flow: manager selects candidates (2×) from pool on confirm; candidate picks preferred interview date on dashboard; manager sees candidate preference when finalising; menu renamed to Permintaan Kandidat
 - v0.3.0 — Recruiter Permintaan Kandidat page redesign: always-visible form, correct 候補者依頼 Japanese translation, fix invisible submit button (navy-800 undefined in Tailwind palette)
 - v0.3.1 — Superadmin Pengaturan Data Entri: control which candidate profile tabs are active/hidden; global_settings DB table; public GET + superadmin PUT API; candidate portal respects config
+- v0.3.2 — Security hardening: HTML-escape PDF exports, blacklist refresh token on logout with rotation, MFA backup code login, per-endpoint login rate limit, LIKE wildcard escaping, consent clause validation, allowlist BLOCKED_FIELDS
 
-Current: v0.3.1
+Current: v0.3.2
 Live at: https://jinzai.jobagus.id

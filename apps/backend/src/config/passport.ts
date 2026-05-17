@@ -1,8 +1,19 @@
 import passport from 'passport';
 import { Strategy as GoogleStrategy } from 'passport-google-oauth20';
 import type { Profile, VerifyCallback } from 'passport-google-oauth20';
+import nodeCrypto from 'crypto';
 import { config } from '../config';
 import { User, Candidate } from '../db/models/index';
+
+async function generateCandidateCode(): Promise<string> {
+  let code: string;
+  let exists: Candidate | null;
+  do {
+    code = `CDT-${nodeCrypto.randomBytes(4).toString('hex').toUpperCase()}`;
+    exists = await Candidate.findOne({ where: { candidateCode: code } });
+  } while (exists);
+  return code;
+}
 
 if (config.GOOGLE_CLIENT_ID && config.GOOGLE_CLIENT_SECRET) {
   passport.use(
@@ -46,10 +57,9 @@ if (config.GOOGLE_CLIENT_ID && config.GOOGLE_CLIENT_SECRET) {
 
               const existingCandidate = await Candidate.findOne({ where: { userId: user.id } });
               if (!existingCandidate) {
-                const randCode2 = Math.random().toString(36).substring(2, 8).toUpperCase();
                 await Candidate.create({
                   userId: user.id,
-                  candidateCode: `CDT-${randCode2}`,
+                  candidateCode: await generateCandidateCode(),
                   fullName: user.name ?? normalizedEmail.split('@')[0],
                   profileStatus: 'incomplete',
                   isLocked: false,
@@ -67,10 +77,9 @@ if (config.GOOGLE_CLIENT_ID && config.GOOGLE_CLIENT_SECRET) {
                 lastLoginAt: new Date(),
               });
 
-              const randCode = Math.random().toString(36).substring(2, 8).toUpperCase();
               await Candidate.create({
                 userId: user.id,
-                candidateCode: `CDT-${randCode}`,
+                candidateCode: await generateCandidateCode(),
                 fullName: profile.displayName ?? normalizedEmail.split('@')[0],
                 profileStatus: 'incomplete',
                 isLocked: false,
@@ -85,10 +94,9 @@ if (config.GOOGLE_CLIENT_ID && config.GOOGLE_CLIENT_SECRET) {
 
             const existingCandidate = await Candidate.findOne({ where: { userId: user.id } });
             if (!existingCandidate) {
-              const randCode2 = Math.random().toString(36).substring(2, 8).toUpperCase();
               await Candidate.create({
                 userId: user.id,
-                candidateCode: `CDT-${randCode2}`,
+                candidateCode: await generateCandidateCode(),
                 fullName: user.name ?? normalizedEmail.split('@')[0],
                 profileStatus: 'incomplete',
                 isLocked: false,

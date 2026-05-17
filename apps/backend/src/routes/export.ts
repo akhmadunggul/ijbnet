@@ -225,7 +225,8 @@ router.get('/batch/:batchId.xlsx', wrap(async (req, res) => {
   });
 
   res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-  res.setHeader('Content-Disposition', `attachment; filename="batch-${batch.batchCode}.xlsx"`);
+  const safeBatchCode = (batch.batchCode ?? 'batch').replace(/[^a-zA-Z0-9\-_]/g, '_');
+  res.setHeader('Content-Disposition', `attachment; filename="batch-${safeBatchCode}.xlsx"`);
   await wb.xlsx.write(res);
   res.end();
 }));
@@ -257,6 +258,9 @@ router.get('/candidates/:id/profile.pdf', wrap(async (req, res) => {
 
   const nik = decryptNullable(candidate.nikEncrypted ?? null);
 
+  const he = (v: unknown): string =>
+    String(v ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#x27;');
+
   const html = `<!DOCTYPE html>
 <html lang="id">
 <head>
@@ -276,19 +280,19 @@ router.get('/candidates/:id/profile.pdf', wrap(async (req, res) => {
   </style>
 </head>
 <body>
-  <h1>${user?.['name'] ?? 'Candidate Profile'}</h1>
-  <div class="subtitle">${candidate.candidateCode} &nbsp;•&nbsp; ${new Date().toLocaleDateString('id-ID', { year: 'numeric', month: 'long', day: 'numeric' })}</div>
-  <span class="badge">${candidate.profileStatus}</span>
+  <h1>${he(user?.['name'] ?? 'Candidate Profile')}</h1>
+  <div class="subtitle">${he(candidate.candidateCode)} &nbsp;•&nbsp; ${new Date().toLocaleDateString('id-ID', { year: 'numeric', month: 'long', day: 'numeric' })}</div>
+  <span class="badge">${he(candidate.profileStatus)}</span>
 
   <div class="section">Informasi Pribadi</div>
   <table>
     <tr><th>Field</th><th>Value</th></tr>
-    <tr><td>Email</td><td>${user?.['email'] ?? '-'}</td></tr>
-    <tr><td>NIK</td><td>${nik ?? '-'}</td></tr>
+    <tr><td>Email</td><td>${he(user?.['email'])}</td></tr>
+    <tr><td>NIK</td><td>${he(nik)}</td></tr>
     <tr><td>Gender</td><td>${candidate.gender === 'M' ? 'Laki-laki' : 'Perempuan'}</td></tr>
-    <tr><td>Tanggal Lahir</td><td>${candidate.dateOfBirth ?? '-'}</td></tr>
-    <tr><td>LPK</td><td>${lpk?.['name'] ?? '-'}</td></tr>
-    <tr><td>SSW Field</td><td>${candidate.sswFieldId ?? candidate.sswFieldJa ?? '-'}</td></tr>
+    <tr><td>Tanggal Lahir</td><td>${he(candidate.dateOfBirth)}</td></tr>
+    <tr><td>LPK</td><td>${he(lpk?.['name'])}</td></tr>
+    <tr><td>SSW Field</td><td>${he(candidate.sswFieldId ?? candidate.sswFieldJa)}</td></tr>
     <tr><td>Completeness</td><td>${calcCompleteness(cj).pct}%</td></tr>
   </table>
 
@@ -296,10 +300,10 @@ router.get('/candidates/:id/profile.pdf', wrap(async (req, res) => {
   <div class="section">Body Check</div>
   <table>
     <tr><th>Field</th><th>Value</th></tr>
-    <tr><td>Tinggi Badan</td><td>${bodyCheck['height'] ?? '-'} cm</td></tr>
-    <tr><td>Berat Badan</td><td>${bodyCheck['weight'] ?? '-'} kg</td></tr>
-    <tr><td>Golongan Darah</td><td>${bodyCheck['bloodType'] ?? '-'}</td></tr>
-    <tr><td>Tekanan Darah</td><td>${bodyCheck['bloodPressure'] ?? '-'}</td></tr>
+    <tr><td>Tinggi Badan</td><td>${he(bodyCheck['height'])} cm</td></tr>
+    <tr><td>Berat Badan</td><td>${he(bodyCheck['weight'])} kg</td></tr>
+    <tr><td>Golongan Darah</td><td>${he(bodyCheck['bloodType'])}</td></tr>
+    <tr><td>Tekanan Darah</td><td>${he(bodyCheck['bloodPressure'])}</td></tr>
   </table>
   ` : ''}
 
@@ -320,6 +324,7 @@ router.get('/candidates/:id/profile.pdf', wrap(async (req, res) => {
 
   try {
     const page = await browser.newPage();
+    await page.setJavaScriptEnabled(false);
     await page.setContent(html, { waitUntil: 'networkidle0' });
     const pdf = await page.pdf({ format: 'A4', margin: { top: '10mm', bottom: '10mm', left: '12mm', right: '12mm' } });
 

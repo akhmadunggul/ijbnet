@@ -95,6 +95,7 @@ const BLOCKED_FIELDS = new Set([
   'candidateCode', 'userId', 'lpkId', 'profileStatus', 'isLocked',
   'nikEncrypted', 'nik', 'bankAccountEncrypted', 'internalNotes', 'id',
   'createdAt', 'updatedAt',
+  'consentGiven', 'consentGivenAt', 'consentClauseId',
 ]);
 
 // ── GET /api/candidates/me ────────────────────────────────────────────────────
@@ -166,10 +167,20 @@ router.patch('/me/consent', authenticate, requireRole('candidate'), async (req: 
 
     const { clauseId } = req.body as { clauseId?: string };
 
+    const activeClause = await ConsentClause.findOne({ where: { isActive: true } });
+    if (!activeClause) {
+      res.status(422).json({ error: 'NO_ACTIVE_CLAUSE', message: 'No active consent clause found.' });
+      return;
+    }
+    if (!clauseId || clauseId !== activeClause.id) {
+      res.status(422).json({ error: 'INVALID_CLAUSE', message: 'Clause ID must match the current active clause.' });
+      return;
+    }
+
     await candidate.update({
       consentGiven: true,
       consentGivenAt: new Date(),
-      ...(clauseId ? { consentClauseId: clauseId } : {}),
+      consentClauseId: clauseId,
     });
 
     await AuditLog.create({
@@ -531,42 +542,45 @@ router.get('/me/export', async (req: Request, res: Response): Promise<void> => {
   const nik        = decryptNullable(candidate.nikEncrypted ?? null);
   const today      = new Date().toLocaleDateString('id-ID', { year: 'numeric', month: 'long', day: 'numeric' });
 
+  const he = (v: unknown): string =>
+    String(v ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#x27;');
+
   const row = (label: string, value: unknown) =>
-    `<tr><td class="lbl">${label}</td><td>${value ?? '—'}</td></tr>`;
+    `<tr><td class="lbl">${label}</td><td>${he(value)}</td></tr>`;
 
   const careerRows = career.length
     ? career.map((c) => `<tr>
-        <td>${c['companyName'] ?? '—'}</td>
-        <td>${c['jobTitle'] ?? '—'}</td>
-        <td>${c['startDate'] ?? '—'} – ${c['endDate'] ?? 'sekarang'}</td>
-        <td>${c['description'] ?? ''}</td>
+        <td>${he(c['companyName'])}</td>
+        <td>${he(c['jobTitle'])}</td>
+        <td>${he(c['startDate'])} – ${he(c['endDate'] ?? 'sekarang')}</td>
+        <td>${he(c['description'])}</td>
       </tr>`).join('')
     : `<tr><td colspan="4" class="empty">—</td></tr>`;
 
   const testRows = tests.length
     ? tests.map((t) => `<tr>
-        <td>${t['testType'] ?? '—'}</td>
-        <td>${t['testDate'] ?? '—'}</td>
-        <td>${t['score'] ?? '—'}</td>
-        <td>${t['level'] ?? '—'}</td>
+        <td>${he(t['testType'])}</td>
+        <td>${he(t['testDate'])}</td>
+        <td>${he(t['score'])}</td>
+        <td>${he(t['level'])}</td>
       </tr>`).join('')
     : `<tr><td colspan="4" class="empty">—</td></tr>`;
 
   const certRows = certs.length
     ? certs.map((c) => `<tr>
-        <td>${c['name'] ?? '—'}</td>
-        <td>${c['issuingOrganization'] ?? '—'}</td>
-        <td>${c['issueDate'] ?? '—'}</td>
-        <td>${c['expiryDate'] ?? '—'}</td>
+        <td>${he(c['name'])}</td>
+        <td>${he(c['issuingOrganization'])}</td>
+        <td>${he(c['issueDate'])}</td>
+        <td>${he(c['expiryDate'])}</td>
       </tr>`).join('')
     : `<tr><td colspan="4" class="empty">—</td></tr>`;
 
   const eduHistRows = eduHist.length
     ? eduHist.map((e) => `<tr>
-        <td>${e['institutionName'] ?? '—'}</td>
-        <td>${e['degree'] ?? '—'}</td>
-        <td>${e['major'] ?? '—'}</td>
-        <td>${e['startDate'] ?? '—'} – ${e['endDate'] ?? '—'}</td>
+        <td>${he(e['institutionName'])}</td>
+        <td>${he(e['degree'])}</td>
+        <td>${he(e['major'])}</td>
+        <td>${he(e['startDate'])} – ${he(e['endDate'])}</td>
       </tr>`).join('')
     : `<tr><td colspan="4" class="empty">—</td></tr>`;
 
@@ -607,7 +621,7 @@ router.get('/me/export', async (req: Request, res: Response): Promise<void> => {
 <div class="header">
   <div class="header-left">
     <h1>IJBNet — Data Portofolio Kandidat</h1>
-    <p>${user?.['name'] ?? 'Kandidat'}</p>
+    <p>${he(user?.['name'] ?? 'Kandidat')}</p>
   </div>
   <div class="header-right">
     <div class="code">${candidate.candidateCode}</div>
@@ -719,6 +733,7 @@ ${bodyCheck ? `
 
   try {
     const page = await browser.newPage();
+    await page.setJavaScriptEnabled(false);
     await page.setContent(html, { waitUntil: 'networkidle0' });
     const pdf = await page.pdf({ format: 'A4', margin: { top: '12mm', bottom: '12mm', left: '10mm', right: '10mm' } });
 
