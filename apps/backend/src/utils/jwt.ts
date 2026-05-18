@@ -1,4 +1,5 @@
 import jwt from 'jsonwebtoken';
+import { randomBytes } from 'crypto';
 import { config } from '../config';
 
 export interface JwtPayload {
@@ -11,13 +12,15 @@ export interface JwtPayload {
 }
 
 export function signAccessToken(payload: Omit<JwtPayload, 'iat' | 'exp'>): string {
-  return jwt.sign(payload, config.JWT_SECRET, {
+  return jwt.sign({ ...payload, jti: randomBytes(16).toString('hex') }, config.JWT_SECRET, {
     expiresIn: config.JWT_EXPIRES_IN,
   } as jwt.SignOptions);
 }
 
 export function signRefreshToken(payload: Omit<JwtPayload, 'iat' | 'exp'>): string {
-  return jwt.sign(payload, config.JWT_REFRESH_SECRET, {
+  // jti ensures uniqueness even when two tokens are issued within the same second,
+  // preventing the blacklist key collision that would occur with identical iat values.
+  return jwt.sign({ ...payload, jti: randomBytes(16).toString('hex') }, config.JWT_REFRESH_SECRET, {
     expiresIn: config.JWT_REFRESH_EXPIRES_IN,
   } as jwt.SignOptions);
 }
