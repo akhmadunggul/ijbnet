@@ -36,6 +36,7 @@ services:
     image: libretranslate/libretranslate:latest
     container_name: ijbnet_libretranslate
     restart: unless-stopped
+    user: root
     environment:
       - LT_LOAD_ONLY=id,en,ja
       - LT_API_KEYS=false
