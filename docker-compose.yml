@@ -33,9 +33,33 @@ services:
     networks:
       - ijbnet
 
+  libretranslate:
+    image: libretranslate/libretranslate:latest
+    container_name: ijbnet_libretranslate
+    restart: unless-stopped
+    environment:
+      - LT_LOAD_ONLY=id,en,ja
+      - LT_API_KEYS=false
+      - LT_HOST=0.0.0.0
+      - LT_PORT=5000
+      - LT_UPDATE_MODELS=false
+    ports:
+      - "127.0.0.1:5000:5000"
+    volumes:
+      - lt_models:/home/libretranslate/.local/share
+    networks:
+      - ijbnet
+    healthcheck:
+      test: ['CMD', 'wget', '--quiet', '--tries=1', '--spider', 'http://localhost:5000/languages']
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 120s
+
 volumes:
   db_data:
   redis_data:
+  lt_models:
 
 networks:
   ijbnet:

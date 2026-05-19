@@ -8,6 +8,7 @@ import recruiterRouter from './recruiter';
 import managerRouter from './manager';
 import superadminRouter from './superadmin';
 import exportRouter from './export';
+import translateRouter from './translate';
 
 const router = Router();
 
@@ -20,6 +21,7 @@ router.use('/recruiter', recruiterRouter);
 router.use('/manager', managerRouter);
 router.use('/superadmin', superadminRouter);
 router.use('/export', exportRouter);
+router.use('/translate', translateRouter);
 
 // Health check
 router.get('/health', (_req, res) => {

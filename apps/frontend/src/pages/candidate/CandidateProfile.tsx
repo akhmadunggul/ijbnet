@@ -888,18 +888,6 @@ function PrMotivationTab({ candidate, onSave, saving }: { candidate: CandidateDa
       </div>
 
       <div className="space-y-2">
-        <p className="text-sm font-semibold text-gray-700">{t('candidate.profile.prMotivation.applyReason')}</p>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          <Field label="Indonesia">
-            <textarea {...register('applyReasonId')} rows={4} maxLength={300} className={textareaCls} />
-          </Field>
-          <Field label="日本語">
-            <textarea {...register('applyReasonJa')} rows={4} maxLength={150} className={textareaCls} />
-          </Field>
-        </div>
-      </div>
-
-      <div className="space-y-2">
         <p className="text-sm font-semibold text-gray-700">{t('candidate.profile.prMotivation.selfIntro')}</p>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <Field label="Indonesia">

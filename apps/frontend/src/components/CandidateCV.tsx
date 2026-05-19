@@ -1,4 +1,5 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
+import { api } from '../lib/api';
 import AuthImage from './AuthImage';
 
 export interface CandidateCVProps {
@@ -152,6 +153,33 @@ export default function CandidateCV({
   void lang;
 
   const c = candidate ?? {};
+
+  const [jaOverride, setJaOverride] = useState<Record<string, string>>({});
+
+  useEffect(() => {
+    const fields = [
+      { jaKey: 'selfIntroJa',  idKey: 'selfIntroId'  },
+      { jaKey: 'motivationJa', idKey: 'motivationId' },
+      { jaKey: 'selfPrJa',     idKey: 'selfPrId'     },
+    ].filter(f => !c[f.jaKey] && c[f.idKey]);
+
+    if (fields.length === 0) return;
+
+    Promise.all(
+      fields.map(f =>
+        api.post<{ translated: string }>('/translate', { text: c[f.idKey], source: 'id', target: 'ja' })
+          .then(r => ({ key: f.jaKey, value: r.data.translated }))
+          .catch(() => null)
+      )
+    ).then(results => {
+      const updates: Record<string, string> = {};
+      results.forEach(r => { if (r) updates[r.key] = r.value; });
+      if (Object.keys(updates).length > 0) setJaOverride(updates);
+    });
+  }, [c.selfIntroId, c.selfIntroJa, c.motivationId, c.motivationJa, c.selfPrId, c.selfPrJa]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const getJa = (jaKey: string, idKey: string): string =>
+    v(c[jaKey]) || v(jaOverride[jaKey]) || v(c[idKey]);
 
   const age = c.dateOfBirth ? calculateAge(c.dateOfBirth) : null;
 
@@ -420,7 +448,7 @@ export default function CandidateCV({
           </tr>
           <tr className="cv-row-md">
             <td style={{ ...TD, height: '40px', whiteSpace: 'pre-wrap' }}>
-              {trunc(v(c.selfIntroId), 200)}
+              {trunc(getJa('selfIntroJa', 'selfIntroId'), 200)}
             </td>
           </tr>
         </tbody>
@@ -434,21 +462,7 @@ export default function CandidateCV({
           </tr>
           <tr className="cv-row-lg">
             <td style={{ ...TD, height: '50px', whiteSpace: 'pre-wrap' }}>
-              {trunc(v(c.motivationId), 300)}
-            </td>
-          </tr>
-        </tbody>
-      </table>
-
-      {/* ── Alasan Melamar ── */}
-      <table className="cv-tbl" style={S.table}>
-        <tbody>
-          <tr>
-            <td style={ST}>Alasan Melamar Pekerjaan Ini ・ 応募の動機</td>
-          </tr>
-          <tr className="cv-row-lg">
-            <td style={{ ...TD, height: '50px', whiteSpace: 'pre-wrap' }}>
-              {trunc(v(c.applyReasonId), 300)}
+              {trunc(getJa('motivationJa', 'motivationId'), 300)}
             </td>
           </tr>
         </tbody>
@@ -462,7 +476,7 @@ export default function CandidateCV({
           </tr>
           <tr className="cv-row-lg">
             <td style={{ ...TD, height: '60px', whiteSpace: 'pre-wrap' }}>
-              {trunc(v(c.selfPrId), 300)}
+              {trunc(getJa('selfPrJa', 'selfPrId'), 300)}
             </td>
           </tr>
         </tbody>

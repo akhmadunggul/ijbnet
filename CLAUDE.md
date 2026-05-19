@@ -176,6 +176,7 @@ apps/frontend/src/
 - v0.3.0 — Recruiter Permintaan Kandidat page redesign: always-visible form, correct 候補者依頼 Japanese translation, fix invisible submit button (navy-800 undefined in Tailwind palette)
 - v0.3.1 — Superadmin Pengaturan Data Entri: control which candidate profile tabs are active/hidden; global_settings DB table; public GET + superadmin PUT API; candidate portal respects config
 - v0.3.2 — Security hardening: HTML-escape PDF exports, blacklist refresh token on logout with rotation, MFA backup code login, per-endpoint login rate limit, LIKE wildcard escaping, consent clause validation, allowlist BLOCKED_FIELDS
+- v0.3.3 — Remove Alasan Melamar field from candidate profile; auto-translate CV fields (Skill, Motivasi, Promosi Diri) to Japanese via self-hosted LibreTranslate when Japanese version is absent
 
-Current: v0.3.2
+Current: v0.3.3
 Live at: https://jinzai.jobagus.id
