@@ -42,7 +42,6 @@ services:
       - LT_API_KEYS=false
       - LT_HOST=0.0.0.0
       - LT_PORT=5000
-      - LT_UPDATE_MODELS=false
     ports:
       - "127.0.0.1:5000:5000"
     volumes:
@@ -50,10 +49,10 @@ services:
     networks:
       - ijbnet
     healthcheck:
-      test: ['CMD', 'wget', '--quiet', '--tries=1', '--spider', 'http://localhost:5000/languages']
+      test: ['CMD', 'curl', '-sf', 'http://localhost:5000/languages']
       interval: 30s
       timeout: 10s
-      retries: 5
+      retries: 10
       start_period: 120s
 
 volumes:

@@ -41,17 +41,16 @@ services:
       - LT_API_KEYS=false
       - LT_HOST=0.0.0.0
       - LT_PORT=5000
-      - LT_UPDATE_MODELS=false
     volumes:
       - lt_models:/home/libretranslate/.local/share
     networks:
       - ijbnet
     healthcheck:
-      test: ['CMD', 'wget', '--quiet', '--tries=1', '--spider', 'http://localhost:5000/languages']
+      test: ['CMD', 'curl', '-sf', 'http://localhost:5000/languages']
       interval: 30s
       timeout: 10s
-      retries: 5
-      start_period: 120s
+      retries: 10
+      start_period: 300s
 
   backend:
     build:
@@ -73,7 +72,7 @@ services:
       redis:
         condition: service_started
       libretranslate:
-        condition: service_healthy
+        condition: service_started
     networks:
       - ijbnet
     healthcheck:
