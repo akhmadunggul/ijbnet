@@ -16,8 +16,6 @@ const personalSchema = z.object({
   dateOfBirth:         z.string().nullable().optional(),
   birthPlace:          z.string().nullable().optional(),
   nik:                 z.string().refine((v) => v === '' || /^\d{16}$/.test(v), { message: 'NIK harus 16 digit angka' }).optional(),
-  heightCm:            z.coerce.number().nullable().optional(),
-  weightKg:            z.coerce.number().nullable().optional(),
   selfReportedHeight:  z.coerce.number().nullable().optional(),
   selfReportedWeight:  z.coerce.number().nullable().optional(),
   bloodType:           z.enum(['A','B','AB','O','A+','B+','AB+','O+','Unknown']).nullable().optional(),
@@ -254,8 +252,6 @@ function PersonalTab({ candidate, onSave, saving }: { candidate: CandidateData; 
       dateOfBirth:        candidate.dateOfBirth ? candidate.dateOfBirth.slice(0, 10) : '',
       birthPlace:         candidate.birthPlace ?? '',
       nik:                candidate.nik ?? '',
-      heightCm:           candidate.heightCm ?? undefined,
-      weightKg:           candidate.weightKg ?? undefined,
       selfReportedHeight: candidate.selfReportedHeight ?? undefined,
       selfReportedWeight: candidate.selfReportedWeight ?? undefined,
       bloodType:          candidate.bloodType ?? undefined,
@@ -322,8 +318,24 @@ function PersonalTab({ candidate, onSave, saving }: { candidate: CandidateData; 
         </Field>
       </div>
       <div className="grid grid-cols-2 gap-4">
-        <Field label={t('candidate.profile.personal.height') + ' (cm)'}><input type="number" step="0.1" {...register('heightCm')} className={inputCls} /></Field>
-        <Field label={t('candidate.profile.personal.weight') + ' (kg)'}><input type="number" step="0.1" {...register('weightKg')} className={inputCls} /></Field>
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            {t('candidate.profile.personal.height')}
+            <span className="ml-2 text-xs font-normal text-amber-600">{t('candidate.profile.personal.heightAdminNote')}</span>
+          </label>
+          <div className="w-full px-3 py-2 rounded-md border border-gray-200 bg-gray-50 text-gray-400 text-sm min-h-[38px]">
+            {candidate?.bodyCheck?.verifiedHeight != null ? `${candidate.bodyCheck.verifiedHeight} cm` : '—'}
+          </div>
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            {t('candidate.profile.personal.weight')}
+            <span className="ml-2 text-xs font-normal text-amber-600">{t('candidate.profile.personal.weightAdminNote')}</span>
+          </label>
+          <div className="w-full px-3 py-2 rounded-md border border-gray-200 bg-gray-50 text-gray-400 text-sm min-h-[38px]">
+            {candidate?.bodyCheck?.verifiedWeight != null ? `${candidate.bodyCheck.verifiedWeight} kg` : '—'}
+          </div>
+        </div>
       </div>
       <div className="grid grid-cols-2 gap-4">
         <Field label={t('candidate.profile.personal.selfReportedHeight')}><input type="number" step="0.1" {...register('selfReportedHeight')} className={inputCls} /></Field>

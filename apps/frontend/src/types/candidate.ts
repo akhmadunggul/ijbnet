@@ -111,6 +111,12 @@ export interface CandidateData {
   educationHistory: EducationHistoryEntry[];
   videos: unknown[];
   tools: unknown[];
+  bodyCheck: {
+    verifiedHeight: number | null;
+    verifiedWeight: number | null;
+    overallResult: string | null;
+    checkedDate: string | null;
+  } | null;
 }
 
 export interface CandidateMe {

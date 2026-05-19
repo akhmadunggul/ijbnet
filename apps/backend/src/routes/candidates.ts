@@ -149,6 +149,35 @@ router.patch('/me', async (req: Request, res: Response): Promise<void> => {
     if (lpk) updates['lpkId'] = lpk.id;
   }
 
+  // Auto-translate Indonesian → Japanese for self-intro, motivation, self-PR
+  const translatePairs: Array<{ idKey: string; jaKey: string }> = [
+    { idKey: 'selfIntroId',  jaKey: 'selfIntroJa'  },
+    { idKey: 'motivationId', jaKey: 'motivationJa' },
+    { idKey: 'selfPrId',     jaKey: 'selfPrJa'     },
+  ];
+  const libreUrl = process.env['LIBRETRANSLATE_URL'] ?? 'http://libretranslate:5000';
+  await Promise.all(
+    translatePairs.map(async ({ idKey, jaKey }) => {
+      const idText = (updates[idKey] ?? (candidate as unknown as Record<string, unknown>)[idKey]) as string | null | undefined;
+      const jaText = (updates[jaKey] ?? (candidate as unknown as Record<string, unknown>)[jaKey]) as string | null | undefined;
+      if (!idText || jaText) return;
+      try {
+        const resp = await fetch(`${libreUrl}/translate`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ q: idText.trim(), source: 'id', target: 'ja', format: 'text' }),
+          signal: AbortSignal.timeout(10_000),
+        });
+        if (resp.ok) {
+          const data = await resp.json() as { translatedText: string };
+          updates[jaKey] = data.translatedText;
+        }
+      } catch {
+        // translation unavailable — save without it
+      }
+    }),
+  );
+
   await candidate.update(updates);
 
   const fresh = await findMyCandidate(req.user!.sub);
