@@ -39,7 +39,3 @@ jinzai.aup.my.id {
         }
     }
 }
-
-http://jinzai.aup.my.id {
-    redir https://jinzai.aup.my.id{uri} permanent
-}

@@ -39,7 +39,3 @@ jinzai.jobagus.id {
         }
     }
 }
-
-http://jinzai.jobagus.id {
-    redir https://jinzai.jobagus.id{uri} permanent
-}
