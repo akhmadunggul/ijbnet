@@ -1,22 +1,31 @@
 /**
  * IJBNet Stress Test — K6
  *
- * Usage:
- *   k6 run --env BASE_URL=https://staging.example.com k6/stress-test.js
+ * The login endpoint is rate-limited to 10 req / 15 min per IP, so tokens must
+ * be obtained BEFORE running the test and passed as env vars.
+ *
+ * Step 1 — get tokens (run once, tokens are valid for 15 min):
+ *   bash k6/get-tokens.sh https://jinzai.jobagus.id
+ *   This prints export statements; copy-paste them into your shell.
+ *
+ * Step 2 — run the test:
+ *   k6 run \
+ *     --env BASE_URL=https://jinzai.jobagus.id \
+ *     --env TOKEN_CANDIDATE_1=$TOKEN_CANDIDATE_1 \
+ *     --env TOKEN_CANDIDATE_2=$TOKEN_CANDIDATE_2 \
+ *     --env TOKEN_CANDIDATE_3=$TOKEN_CANDIDATE_3 \
+ *     --env TOKEN_ADMIN=$TOKEN_ADMIN \
+ *     --env TOKEN_MANAGER=$TOKEN_MANAGER \
+ *     --env TOKEN_RECRUITER=$TOKEN_RECRUITER \
+ *     k6/stress-test.js
+ *
+ * If tokens are NOT supplied, setup() will attempt login (subject to rate limit).
  *
  * Scenarios (100 total VUs at steady state):
  *   candidates  70 VUs — browse profile, save fields, check timeline
  *   admins      15 VUs — list candidates, view detail, check dashboard
- *   managers    10 VUs — stats, batches list (the N+1 fix target), candidate pool
+ *   managers    10 VUs — stats, batches list (N+1 fix target), candidate pool
  *   recruiters   5 VUs — browse batch, view CV, check interviews
- *
- * The login rate limiter (10 req / 15 min) means VUs cannot log in independently.
- * setup() acquires all tokens once; VUs share them via round-robin on __VU index.
- *
- * Key things this test catches:
- *   - MySQL connection pool exhaustion (ER_CON_COUNT_ERROR in response body)
- *   - Slow queries under load (p95 > 2 s threshold)
- *   - Error rate spikes from any role
  */
 
 import http from 'k6/http';
@@ -140,18 +149,12 @@ function json(res) {
 
 // ── setup() — runs once before all VUs start ──────────────────────────────────
 export function setup() {
-  const credentials = {
-    candidates: [
-      { email: 'ahmad.fauzi@candidate.ijbnet.org',  password: 'Demo1234!' },
-      { email: 'hendra.kusuma@candidate.ijbnet.org', password: 'Demo1234!' },
-      { email: 'budi.santoso@candidate.ijbnet.org',  password: 'Demo1234!' },
-    ],
-    admin:     { email: 'admin@ijbnet.org',          password: 'Demo1234!' },
-    manager:   { email: 'manager@ijbnet.org',        password: 'Demo1234!' },
-    recruiter: { email: 'recruiter@yamada.co.jp',    password: 'Demo1234!' },
-  };
-
-  function login(email, password) {
+  // Prefer pre-supplied tokens from env vars to avoid the login rate limiter.
+  // Fall back to login only when env vars are absent.
+  function loginFallback(email, password, envToken) {
+    if (envToken) return envToken;
+    // Stagger to avoid burst-triggering the rate limiter if login is needed.
+    sleep(0.5 + Math.random());
     const res = http.post(
       `${API}/auth/login`,
       JSON.stringify({ email, password }),
@@ -159,31 +162,47 @@ export function setup() {
     );
     if (res.status !== 200) {
       loginErrors.add(1);
-      console.error(`Login failed for ${email}: ${res.status} ${res.body}`);
+      console.error(`Login failed for ${email}: ${res.status} — ${res.body}`);
       return null;
     }
+    console.log(`Logged in as ${email} (no pre-supplied token)`);
     return json(res)?.accessToken ?? null;
   }
 
-  const candidateTokens = credentials.candidates.map((c) => login(c.email, c.password));
-  const adminToken     = login(credentials.admin.email,     credentials.admin.password);
-  const managerToken   = login(credentials.manager.email,   credentials.manager.password);
-  const recruiterToken = login(credentials.recruiter.email, credentials.recruiter.password);
+  const candidateTokens = [
+    loginFallback('ahmad.fauzi@candidate.ijbnet.org',  'Demo1234!', __ENV.TOKEN_CANDIDATE_1 || null),
+    loginFallback('hendra.kusuma@candidate.ijbnet.org','Demo1234!', __ENV.TOKEN_CANDIDATE_2 || null),
+    loginFallback('budi.santoso@candidate.ijbnet.org', 'Demo1234!', __ENV.TOKEN_CANDIDATE_3 || null),
+  ];
+  const adminToken     = loginFallback('admin@ijbnet.org',       'Demo1234!', __ENV.TOKEN_ADMIN     || null);
+  const managerToken   = loginFallback('manager@ijbnet.org',     'Demo1234!', __ENV.TOKEN_MANAGER   || null);
+  const recruiterToken = loginFallback('recruiter@yamada.co.jp', 'Demo1234!', __ENV.TOKEN_RECRUITER || null);
 
-  // Pre-fetch candidate IDs so admin/manager/recruiter VUs can request specific profiles.
+  const tokenSources = {
+    candidates: candidateTokens.filter(Boolean).length,
+    admin: adminToken ? 1 : 0,
+    manager: managerToken ? 1 : 0,
+    recruiter: recruiterToken ? 1 : 0,
+  };
+  console.log(`Tokens ready — candidates: ${tokenSources.candidates}/3, admin: ${tokenSources.admin}, manager: ${tokenSources.manager}, recruiter: ${tokenSources.recruiter}`);
+
+  if (tokenSources.candidates === 0 && !adminToken && !managerToken && !recruiterToken) {
+    console.error('No tokens obtained. Run k6/get-tokens.sh first and pass TOKEN_* env vars.');
+  }
+
+  // Pre-fetch IDs for admin/manager/recruiter detail flows.
   let candidateIds = [];
   if (adminToken) {
     const listRes = http.get(`${API}/admin/candidates?pageSize=10`, headers(adminToken));
-    const data = json(listRes);
-    candidateIds = (data?.candidates ?? []).map((c) => c.id).filter(Boolean);
+    candidateIds = (json(listRes)?.candidates ?? []).map((c) => c.id).filter(Boolean);
+    console.log(`Pre-fetched ${candidateIds.length} candidate IDs`);
   }
 
-  // Pre-fetch a batch ID for manager and recruiter flows.
   let batchIds = [];
   if (managerToken) {
     const batchRes = http.get(`${API}/manager/batches?pageSize=5`, headers(managerToken));
-    const data = json(batchRes);
-    batchIds = (data?.batches ?? []).map((b) => b.id).filter(Boolean);
+    batchIds = (json(batchRes)?.batches ?? []).map((b) => b.id).filter(Boolean);
+    console.log(`Pre-fetched ${batchIds.length} batch IDs`);
   }
 
   return { candidateTokens, adminToken, managerToken, recruiterToken, candidateIds, batchIds };
