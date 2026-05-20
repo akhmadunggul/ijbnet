@@ -3,7 +3,13 @@ services:
     image: mysql:8.0
     container_name: ijbnet_db
     restart: unless-stopped
-    command: --max_connections=250
+    command: >
+      --max_connections=250
+      --innodb_buffer_pool_size=1G
+      --innodb_buffer_pool_instances=2
+      --max_allowed_packet=64M
+      --slow_query_log=1
+      --long_query_time=2
     environment:
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-root_changeme}
       MYSQL_DATABASE: ${DB_NAME:-ijbnet_db}
@@ -26,6 +32,12 @@ services:
     image: redis:7-alpine
     container_name: ijbnet_redis
     restart: unless-stopped
+    command: >
+      redis-server
+      --maxmemory 256mb
+      --maxmemory-policy allkeys-lru
+      --save 900 1
+      --save 300 10
     ports:
       - "127.0.0.1:6379:6379"
     volumes:
@@ -47,6 +59,12 @@ services:
       - lt_models:/home/libretranslate/.local/share
     networks:
       - ijbnet
+    deploy:
+      resources:
+        limits:
+          memory: 3G
+        reservations:
+          memory: 1G
     healthcheck:
       test: ['CMD', 'curl', '-sf', 'http://localhost:5000/languages']
       interval: 30s
@@ -58,7 +76,7 @@ services:
     build:
       context: .
       dockerfile: apps/backend/Dockerfile.prod
-    container_name: ijbnet_backend
+    #container_name: ijbnet_backend
     restart: unless-stopped
     env_file: .env
     environment:
@@ -67,6 +85,12 @@ services:
       REDIS_URL: redis://redis:6379
       LIBRETRANSLATE_URL: http://libretranslate:5000
       UV_THREADPOOL_SIZE: 64
+      # Cap Node.js heap to 2 GB — leaves room for MySQL buffer pool + OS
+      NODE_OPTIONS: --max-old-space-size=2048
+    ulimits:
+      nofile:
+        soft: 65536
+        hard: 65536
     volumes:
       - uploads_data:/app/uploads
     depends_on:
@@ -98,6 +122,10 @@ services:
       - "[::]:80:80"
       - "0.0.0.0:443:443"
       - "[::]:443:443"
+    ulimits:
+      nofile:
+        soft: 65536
+        hard: 65536
     volumes:
       - caddy_data:/data
       - caddy_config:/config
