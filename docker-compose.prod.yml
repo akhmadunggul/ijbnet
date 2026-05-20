@@ -58,7 +58,7 @@ services:
     build:
       context: .
       dockerfile: apps/backend/Dockerfile.prod
-    #container_name: ijbnet_backend
+    container_name: ijbnet_backend
     restart: unless-stopped
     env_file: .env
     environment:
