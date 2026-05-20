@@ -170,9 +170,9 @@ export function setup() {
   }
 
   const candidateTokens = [
-    loginFallback('ahmad.fauzi@candidate.ijbnet.org',  'Demo1234!', __ENV.TOKEN_CANDIDATE_1 || null),
-    loginFallback('hendra.kusuma@candidate.ijbnet.org','Demo1234!', __ENV.TOKEN_CANDIDATE_2 || null),
-    loginFallback('budi.santoso@candidate.ijbnet.org', 'Demo1234!', __ENV.TOKEN_CANDIDATE_3 || null),
+    loginFallback('k6.cand1@candidate.ijbnet.org', 'Demo1234!', __ENV.TOKEN_CANDIDATE_1 || null),
+    loginFallback('k6.cand2@candidate.ijbnet.org', 'Demo1234!', __ENV.TOKEN_CANDIDATE_2 || null),
+    loginFallback('k6.cand3@candidate.ijbnet.org', 'Demo1234!', __ENV.TOKEN_CANDIDATE_3 || null),
   ];
   const adminToken     = loginFallback('admin@ijbnet.org',       'Demo1234!', __ENV.TOKEN_ADMIN     || null);
   const managerToken   = loginFallback('manager@ijbnet.org',     'Demo1234!', __ENV.TOKEN_MANAGER   || null);

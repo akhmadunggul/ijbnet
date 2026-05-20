@@ -27,9 +27,9 @@ login() {
 
 echo "Fetching tokens from $BASE_URL ..." >&2
 
-T1=$(login 'ahmad.fauzi@candidate.ijbnet.org'  'Demo1234!'); sleep 2
-T2=$(login 'hendra.kusuma@candidate.ijbnet.org' 'Demo1234!'); sleep 2
-T3=$(login 'budi.santoso@candidate.ijbnet.org'  'Demo1234!'); sleep 2
+T1=$(login 'k6.cand1@candidate.ijbnet.org' 'Demo1234!'); sleep 2
+T2=$(login 'k6.cand2@candidate.ijbnet.org' 'Demo1234!'); sleep 2
+T3=$(login 'k6.cand3@candidate.ijbnet.org' 'Demo1234!'); sleep 2
 TA=$(login 'admin@ijbnet.org'                   'Demo1234!'); sleep 2
 TM=$(login 'manager@ijbnet.org'                 'Demo1234!'); sleep 2
 TR=$(login 'recruiter@yamada.co.jp'             'Demo1234!')

@@ -29,6 +29,11 @@ app.use(
     max: 300,                  // 300 req/min per IP (~5 req/s burst)
     standardHeaders: true,
     legacyHeaders: false,
+    // Skip rate limiting for loopback — allows server-side load testing via localhost:3001
+    skip: (req) => {
+      const ip = req.ip ?? '';
+      return ip === '127.0.0.1' || ip === '::1' || ip === '::ffff:127.0.0.1';
+    },
   }),
 );
 
