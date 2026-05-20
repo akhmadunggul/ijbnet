@@ -1,9 +1,9 @@
 import { Router, Request, Response } from 'express';
-import fs from 'fs';
 import multer from 'multer';
 import puppeteer from 'puppeteer-core';
 import { authenticate, requireRole } from '../middleware/auth';
 import { decryptNullable } from '../utils/crypto';
+import { resolveChromePath, buildCandidatePdfHtml } from '../utils/candidatePdf';
 import {
   Candidate,
   CandidateJapaneseTest,
@@ -537,229 +537,28 @@ router.get('/me/export', async (req: Request, res: Response): Promise<void> => {
   const candidate = await Candidate.findOne({
     where: { userId: req.user!.sub },
     include: [
-      { model: User,                    as: 'user',             attributes: ['name', 'email'], required: false },
-      { model: Lpk,                     as: 'lpk',              attributes: ['name', 'city'],  required: false },
-      { model: CandidateJapaneseTest,   as: 'tests',            required: false },
-      { model: CandidateCareer,         as: 'career',           required: false },
-      { model: CandidateBodyCheck,      as: 'bodyCheck',        required: false },
-      { model: CandidateCertification,  as: 'certifications',   required: false },
+      { model: User,                      as: 'user',             attributes: ['name', 'email'], required: false },
+      { model: Lpk,                       as: 'lpk',              attributes: ['name', 'city'],  required: false },
+      { model: CandidateJapaneseTest,     as: 'tests',            required: false },
+      { model: CandidateCareer,           as: 'career',           required: false },
+      { model: CandidateBodyCheck,        as: 'bodyCheck',        required: false },
+      { model: CandidateCertification,    as: 'certifications',   required: false },
       { model: CandidateEducationHistory, as: 'educationHistory', required: false, separate: true, order: [['startDate', 'ASC'] as [string, string]] },
     ],
   });
   if (!candidate) { res.status(404).json({ error: 'NOT_FOUND' }); return; }
 
-  const executablePath = (() => {
-    if (process.env['CHROME_PATH']) return process.env['CHROME_PATH'];
-    const paths = process.platform === 'win32'
-      ? ['C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe', 'C:\\Program Files (x86)\\Google\\Chrome\\Application\\chrome.exe']
-      : ['/usr/bin/google-chrome-stable', '/usr/bin/google-chrome', '/usr/bin/chromium-browser', '/usr/bin/chromium'];
-    return paths.find((p) => fs.existsSync(p)) ?? null;
-  })();
+  const executablePath = resolveChromePath();
   if (!executablePath) {
     res.status(503).json({ error: 'PDF_UNAVAILABLE', message: 'Chrome not found on server.' });
     return;
   }
 
-  const cj        = candidate.toJSON() as unknown as Record<string, unknown>;
-  const user       = cj['user']             as Record<string, string>   | null;
-  const lpk        = cj['lpk']              as Record<string, string>   | null;
-  const bodyCheck  = cj['bodyCheck']        as Record<string, unknown>  | null;
-  const career     = (cj['career']          as Record<string, unknown>[] | null) ?? [];
-  const tests      = (cj['tests']           as Record<string, unknown>[] | null) ?? [];
-  const certs      = (cj['certifications']  as Record<string, unknown>[] | null) ?? [];
-  const eduHist    = (cj['educationHistory'] as Record<string, unknown>[] | null) ?? [];
-  const nik        = decryptNullable(candidate.nikEncrypted ?? null);
-  const today      = new Date().toLocaleDateString('id-ID', { year: 'numeric', month: 'long', day: 'numeric' });
+  const cj  = candidate.toJSON() as unknown as Record<string, unknown>;
+  const nik = decryptNullable(candidate.nikEncrypted ?? null);
+  const html = buildCandidatePdfHtml(cj, nik);
 
-  const he = (v: unknown): string =>
-    String(v ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#x27;');
-
-  const row = (label: string, value: unknown) =>
-    `<tr><td class="lbl">${label}</td><td>${he(value)}</td></tr>`;
-
-  const careerRows = career.length
-    ? career.map((c) => `<tr>
-        <td>${he(c['companyName'])}</td>
-        <td>${he(c['jobTitle'])}</td>
-        <td>${he(c['startDate'])} – ${he(c['endDate'] ?? 'sekarang')}</td>
-        <td>${he(c['description'])}</td>
-      </tr>`).join('')
-    : `<tr><td colspan="4" class="empty">—</td></tr>`;
-
-  const testRows = tests.length
-    ? tests.map((t) => `<tr>
-        <td>${he(t['testType'])}</td>
-        <td>${he(t['testDate'])}</td>
-        <td>${he(t['score'])}</td>
-        <td>${he(t['level'])}</td>
-      </tr>`).join('')
-    : `<tr><td colspan="4" class="empty">—</td></tr>`;
-
-  const certRows = certs.length
-    ? certs.map((c) => `<tr>
-        <td>${he(c['name'])}</td>
-        <td>${he(c['issuingOrganization'])}</td>
-        <td>${he(c['issueDate'])}</td>
-        <td>${he(c['expiryDate'])}</td>
-      </tr>`).join('')
-    : `<tr><td colspan="4" class="empty">—</td></tr>`;
-
-  const eduHistRows = eduHist.length
-    ? eduHist.map((e) => `<tr>
-        <td>${he(e['institutionName'])}</td>
-        <td>${he(e['degree'])}</td>
-        <td>${he(e['major'])}</td>
-        <td>${he(e['startDate'])} – ${he(e['endDate'])}</td>
-      </tr>`).join('')
-    : `<tr><td colspan="4" class="empty">—</td></tr>`;
-
-  const html = `<!DOCTYPE html>
-<html lang="id">
-<head>
-<meta charset="UTF-8">
-<style>
-  * { font-family: 'Helvetica Neue', Arial, sans-serif; box-sizing: border-box; margin: 0; padding: 0; }
-  body { color: #1a1a1a; padding: 36px 40px; font-size: 12px; line-height: 1.5; }
-
-  .header { display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 3px solid #1E3A5F; padding-bottom: 16px; margin-bottom: 20px; }
-  .header-left h1 { font-size: 20px; color: #1E3A5F; font-weight: 700; }
-  .header-left p { font-size: 12px; color: #555; margin-top: 2px; }
-  .header-right { text-align: right; }
-  .header-right .code { font-size: 14px; font-weight: 700; color: #1E3A5F; }
-  .header-right .date { font-size: 11px; color: #888; margin-top: 2px; }
-  .status-badge { display: inline-block; margin-top: 6px; padding: 2px 10px; border-radius: 12px; font-size: 10px; font-weight: 700; background: #1E3A5F; color: #fff; text-transform: uppercase; letter-spacing: .5px; }
-
-  .section-title { font-size: 11px; font-weight: 700; color: #fff; background: #1E3A5F; padding: 5px 10px; margin: 18px 0 0; text-transform: uppercase; letter-spacing: .6px; }
-  table { width: 100%; border-collapse: collapse; }
-  td, th { padding: 6px 10px; border-bottom: 1px solid #eee; font-size: 12px; vertical-align: top; }
-  th { background: #f0f4fa; color: #1E3A5F; font-weight: 600; font-size: 11px; }
-  tr:last-child td { border-bottom: none; }
-  tr:nth-child(even) td { background: #f8f9fb; }
-  .lbl { width: 40%; color: #555; font-weight: 500; }
-  .empty { color: #bbb; font-style: italic; text-align: center; padding: 10px; }
-
-  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 0 24px; }
-  .two-col table { margin-bottom: 0; }
-
-  .footer { margin-top: 32px; padding-top: 10px; border-top: 1px solid #ddd; font-size: 10px; color: #aaa; text-align: center; }
-  .privacy { font-size: 10px; color: #999; text-align: center; margin-top: 4px; }
-</style>
-</head>
-<body>
-
-<div class="header">
-  <div class="header-left">
-    <h1>IJBNet — Data Portofolio Kandidat</h1>
-    <p>${he(user?.['name'] ?? 'Kandidat')}</p>
-  </div>
-  <div class="header-right">
-    <div class="code">${candidate.candidateCode}</div>
-    <div class="date">${today}</div>
-    <span class="status-badge">${candidate.profileStatus ?? 'incomplete'}</span>
-  </div>
-</div>
-
-<!-- Data Pribadi -->
-<div class="section-title">Data Pribadi</div>
-<div class="two-col">
-  <table>
-    ${row('Nama Lengkap', user?.['name'])}
-    ${row('Email', user?.['email'])}
-    ${row('Telepon', candidate.phone)}
-    ${row('NIK', nik ?? '(terenkripsi)')}
-    ${row('Jenis Kelamin', candidate.gender === 'M' ? 'Laki-laki' : candidate.gender === 'F' ? 'Perempuan' : null)}
-    ${row('Tanggal Lahir', candidate.dateOfBirth)}
-    ${row('Tempat Lahir', candidate.birthPlace)}
-    ${row('Status Perkawinan', candidate.maritalStatus)}
-  </table>
-  <table>
-    ${row('Agama', candidate.religion)}
-    ${row('Golongan Darah', candidate.bloodType)}
-    ${row('Tinggi Badan', candidate.heightCm ? candidate.heightCm + ' cm' : null)}
-    ${row('Berat Badan', candidate.weightKg ? candidate.weightKg + ' kg' : null)}
-    ${row('Alamat', candidate.address)}
-    ${row('LPK', lpk?.['name'])}
-    ${row('Punya Paspor', candidate.hasPassport ? 'Ya' : 'Tidak')}
-    ${row('Pernah ke Jepang', candidate.hasVisitedJapan ? 'Ya' : 'Tidak')}
-  </table>
-</div>
-
-<!-- Minat SSW -->
-<div class="section-title">Minat SSW</div>
-<table>
-  ${row('Tipe SSW', candidate.sswKubun)}
-  ${row('Bidang (ID)', candidate.sswSectorId)}
-  ${row('Bidang (JA)', candidate.sswSectorJa)}
-  ${row('Jenis Pekerjaan (ID)', candidate.sswFieldId)}
-  ${row('Jenis Pekerjaan (JA)', candidate.sswFieldJa)}
-  ${row('Lama Belajar Bahasa Jepang', candidate.jpStudyDuration)}
-</table>
-
-<!-- Pendidikan -->
-<div class="section-title">Pendidikan Terakhir</div>
-<table>
-  ${row('Jenjang', candidate.eduLevel)}
-  ${row('Nama Sekolah / Institusi', candidate.eduLabel)}
-  ${row('Jurusan', candidate.eduMajor)}
-</table>
-
-${eduHist.length ? `
-<div class="section-title">Riwayat Pendidikan</div>
-<table>
-  <tr><th>Institusi</th><th>Jenjang</th><th>Jurusan</th><th>Periode</th></tr>
-  ${eduHistRows}
-</table>` : ''}
-
-<!-- Riwayat Karier -->
-<div class="section-title">Riwayat Karier</div>
-<table>
-  <tr><th>Perusahaan</th><th>Posisi</th><th>Periode</th><th>Deskripsi</th></tr>
-  ${careerRows}
-</table>
-
-<!-- Bahasa Jepang -->
-<div class="section-title">Kemampuan Bahasa Jepang</div>
-<table>
-  <tr><th>Jenis Tes</th><th>Tanggal</th><th>Nilai</th><th>Level</th></tr>
-  ${testRows}
-</table>
-
-<!-- Sertifikasi -->
-<div class="section-title">Sertifikasi</div>
-<table>
-  <tr><th>Nama Sertifikat</th><th>Penerbit</th><th>Tanggal Terbit</th><th>Kadaluarsa</th></tr>
-  ${certRows}
-</table>
-
-${bodyCheck ? `
-<div class="section-title">Pemeriksaan Fisik</div>
-<div class="two-col">
-  <table>
-    ${row('Tinggi', bodyCheck['height'] ? bodyCheck['height'] + ' cm' : null)}
-    ${row('Berat', bodyCheck['weight'] ? bodyCheck['weight'] + ' kg' : null)}
-    ${row('Golongan Darah', bodyCheck['bloodType'])}
-    ${row('Tekanan Darah', bodyCheck['bloodPressure'])}
-  </table>
-  <table>
-    ${row('Penglihatan Kiri', bodyCheck['visionLeft'])}
-    ${row('Penglihatan Kanan', bodyCheck['visionRight'])}
-    ${row('Buta Warna', bodyCheck['colorBlind'] ? 'Ya' : 'Tidak')}
-    ${row('Catatan', bodyCheck['notes'])}
-  </table>
-</div>` : ''}
-
-<div class="footer">Dicetak oleh IJBNet &bull; ${new Date().toISOString()}</div>
-<div class="privacy">Dokumen ini bersifat rahasia. Hanya diperuntukkan bagi kandidat yang bersangkutan sesuai UU PDP.</div>
-
-</body>
-</html>`;
-
-  const browser = await puppeteer.launch({
-    executablePath,
-    args: ['--no-sandbox', '--disable-setuid-sandbox'],
-    headless: true,
-  });
-
+  const browser = await puppeteer.launch({ executablePath, args: ['--no-sandbox', '--disable-setuid-sandbox'], headless: true });
   try {
     const page = await browser.newPage();
     await page.setJavaScriptEnabled(false);
