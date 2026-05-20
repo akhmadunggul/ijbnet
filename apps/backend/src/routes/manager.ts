@@ -1,5 +1,5 @@
 import { Router, Request, Response, NextFunction } from 'express';
-import { Op } from 'sequelize';
+import { Op, literal, fn } from 'sequelize';
 import { authenticate, requireRole } from '../middleware/auth';
 import {
   Candidate,
@@ -242,13 +242,29 @@ router.get('/batches', wrap(async (req: Request, res: Response): Promise<void> =
     order: [['createdAt', 'DESC']],
   });
 
-  const batches = await Promise.all(rows.map(async (b) => {
-    const [selectedCount, confirmedCount] = await Promise.all([
-      BatchCandidate.count({ where: { batchId: b.id, isSelected: true } }),
-      BatchCandidate.count({ where: { batchId: b.id, isConfirmed: true } }),
-    ]);
-    return { ...(b.toJSON() as unknown as Record<string, unknown>), selectedCount, confirmedCount };
-  }));
+  const batchIds = rows.map((b) => b.id);
+  const countRows = batchIds.length
+    ? (await BatchCandidate.findAll({
+        where: { batchId: { [Op.in]: batchIds } },
+        attributes: [
+          'batchId',
+          [fn('SUM', literal('CASE WHEN isSelected = 1 THEN 1 ELSE 0 END')), 'selectedCount'],
+          [fn('SUM', literal('CASE WHEN isConfirmed = 1 THEN 1 ELSE 0 END')), 'confirmedCount'],
+        ],
+        group: ['batchId'],
+        raw: true,
+      }) as unknown as Array<{ batchId: string; selectedCount: string; confirmedCount: string }>)
+    : [];
+
+  const countMap = new Map(countRows.map((r) => [r.batchId, r]));
+  const batches = rows.map((b) => {
+    const c = countMap.get(b.id);
+    return {
+      ...(b.toJSON() as unknown as Record<string, unknown>),
+      selectedCount: parseInt(c?.selectedCount ?? '0', 10),
+      confirmedCount: parseInt(c?.confirmedCount ?? '0', 10),
+    };
+  });
 
   res.json({ batches, total: count, page: parseInt(page, 10) || 1, pageSize: limit });
 }));

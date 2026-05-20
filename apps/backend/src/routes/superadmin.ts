@@ -1,5 +1,5 @@
 import { Router, Request, Response } from 'express';
-import { Op } from 'sequelize';
+import { Op, fn, col } from 'sequelize';
 import { isUUID, isEmail } from 'validator';
 import bcrypt from 'bcrypt';
 import nodeCrypto from 'crypto';
@@ -315,10 +315,17 @@ router.patch('/users/:id/reset-password', validateUuidParam('id'), wrap(async (r
 // ── Company Management ────────────────────────────────────────────────────────
 router.get('/companies', wrap(async (_req, res) => {
   const companies = await Company.findAll({ order: [['name', 'ASC']] });
-  const result = await Promise.all(companies.map(async (c) => {
-    const recruiterCount = await User.count({ where: { companyId: c.id, role: 'recruiter' } });
-    return { ...c.toJSON(), recruiterCount };
-  }));
+  const companyIds = companies.map((c) => c.id);
+  const recruiterCounts = companyIds.length
+    ? (await User.findAll({
+        where: { companyId: { [Op.in]: companyIds }, role: 'recruiter' },
+        attributes: ['companyId', [fn('COUNT', col('id')), 'recruiterCount']],
+        group: ['companyId'],
+        raw: true,
+      }) as unknown as Array<{ companyId: string; recruiterCount: string }>)
+    : [];
+  const recruiterMap = new Map(recruiterCounts.map((r) => [r.companyId, parseInt(r.recruiterCount, 10)]));
+  const result = companies.map((c) => ({ ...c.toJSON(), recruiterCount: recruiterMap.get(c.id) ?? 0 }));
   res.json({ companies: result });
 }));
 
