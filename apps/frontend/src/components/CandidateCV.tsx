@@ -8,6 +8,27 @@ export interface CandidateCVProps {
   lang?: 'id' | 'ja';
 }
 
+// ── Career sort helpers ───────────────────────────────────────────────────────
+
+const ID_MONTHS: Record<string, string> = {
+  januari: '01', februari: '02', maret: '03', april: '04',
+  mei: '05', juni: '06', juli: '07', agustus: '08',
+  september: '09', oktober: '10', november: '11', desember: '12',
+};
+
+function parsePeriodStart(period: string | null | undefined): string {
+  if (!period) return '';
+  const start = period.split(/\s*[–—-]\s*/)[0].trim();
+  const m = start.match(/^([a-zA-Z]+)\s+(\d{4})$/);
+  if (!m) return '';
+  const month = ID_MONTHS[m[1].toLowerCase()];
+  return month ? `${m[2]}-${month}-01` : '';
+}
+
+function careerSortKey(entry: { startDate?: string | null; period?: string | null }): string {
+  return entry.startDate || parsePeriodStart(entry.period);
+}
+
 // ── Exported helpers ──────────────────────────────────────────────────────────
 
 export function calculateAge(dateOfBirth: string): number {
@@ -252,10 +273,12 @@ export default function CandidateCV({
   });
   const eduRows    = padRows(sortedEduHistory, 2);
   const sortedCareer = [...(c.career ?? [])].sort((a, b) => {
-    if (!a.startDate && !b.startDate) return 0;
-    if (!a.startDate) return 1;
-    if (!b.startDate) return -1;
-    return a.startDate < b.startDate ? -1 : a.startDate > b.startDate ? 1 : 0;
+    const aKey = careerSortKey(a);
+    const bKey = careerSortKey(b);
+    if (!aKey && !bKey) return 0;
+    if (!aKey) return 1;
+    if (!bKey) return -1;
+    return aKey < bKey ? -1 : aKey > bKey ? 1 : 0;
   });
   const careerRows = padRows(sortedCareer, 2);
   const certRows   = padRows(combinedCerts, 1);

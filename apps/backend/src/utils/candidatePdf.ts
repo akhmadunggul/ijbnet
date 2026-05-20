@@ -1,5 +1,24 @@
 import fs from 'fs';
 
+const ID_MONTHS: Record<string, string> = {
+  januari: '01', februari: '02', maret: '03', april: '04',
+  mei: '05', juni: '06', juli: '07', agustus: '08',
+  september: '09', oktober: '10', november: '11', desember: '12',
+};
+
+function parsePeriodStart(period: unknown): string {
+  if (!period || typeof period !== 'string') return '';
+  const start = period.split(/\s*[–—-]\s*/)[0].trim();
+  const m = start.match(/^([a-zA-Z]+)\s+(\d{4})$/);
+  if (!m) return '';
+  const month = ID_MONTHS[m[1].toLowerCase()];
+  return month ? `${m[2]}-${month}-01` : '';
+}
+
+function careerSortKey(entry: Record<string, unknown>): string {
+  return (entry['startDate'] as string | null) || parsePeriodStart(entry['period']);
+}
+
 export function resolveChromePath(): string | null {
   if (process.env['CHROME_PATH']) return process.env['CHROME_PATH'];
   const paths =
@@ -27,12 +46,12 @@ export function buildCandidatePdfHtml(
   const bodyCheck = cj['bodyCheck']        as Record<string, unknown>  | null;
   const rawCareer = (cj['career']          as Record<string, unknown>[] | null) ?? [];
   const career    = [...rawCareer].sort((a, b) => {
-    const aDate = (a['startDate'] as string | null) ?? '';
-    const bDate = (b['startDate'] as string | null) ?? '';
-    if (!aDate && !bDate) return 0;
-    if (!aDate) return 1;
-    if (!bDate) return -1;
-    return aDate < bDate ? -1 : aDate > bDate ? 1 : 0;
+    const aKey = careerSortKey(a);
+    const bKey = careerSortKey(b);
+    if (!aKey && !bKey) return 0;
+    if (!aKey) return 1;
+    if (!bKey) return -1;
+    return aKey < bKey ? -1 : aKey > bKey ? 1 : 0;
   });
   const tests     = (cj['tests']           as Record<string, unknown>[] | null) ?? [];
   const certs     = (cj['certifications']  as Record<string, unknown>[] | null) ?? [];
