@@ -7,8 +7,8 @@ export const sequelize = new Sequelize(config.DB_NAME, config.DB_USER, config.DB
   dialect: 'mysql',
   logging: config.NODE_ENV === 'development' ? false : false,
   pool: {
-    max: 10,
-    min: 0,
+    max: 25,
+    min: 2,
     acquire: 30000,
     idle: 10000,
   },
@@ -20,5 +20,5 @@ export const sequelize = new Sequelize(config.DB_NAME, config.DB_USER, config.DB
 
 export async function connectDB(): Promise<void> {
   await sequelize.authenticate();
-  console.log('MySQL connected.');
+  console.log('MySQL connected. Pool: max=25, min=2');
 }
