@@ -244,7 +244,13 @@ export default function CandidateCV({
     })),
   ];
 
-  const eduRows    = padRows(c.educationHistory, 2);
+  const sortedEduHistory = [...(c.educationHistory ?? [])].sort((a, b) => {
+    if (!a.startDate && !b.startDate) return 0;
+    if (!a.startDate) return 1;
+    if (!b.startDate) return -1;
+    return a.startDate < b.startDate ? -1 : a.startDate > b.startDate ? 1 : 0;
+  });
+  const eduRows    = padRows(sortedEduHistory, 2);
   const careerRows = padRows(c.career, 2);
   const certRows   = padRows(combinedCerts, 1);
 

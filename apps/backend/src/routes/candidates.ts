@@ -85,7 +85,7 @@ async function findMyCandidate(userId: string) {
       { model: CandidateIntroVideo, as: 'videos', required: false },
       { model: ToolsDictionary, as: 'tools', required: false },
       { model: CandidateCertification, as: 'certifications', required: false },
-      { model: CandidateEducationHistory, as: 'educationHistory', required: false },
+      { model: CandidateEducationHistory, as: 'educationHistory', required: false, separate: true, order: [['startDate', 'ASC'] as [string, string]] },
     ],
   });
 }
@@ -543,7 +543,7 @@ router.get('/me/export', async (req: Request, res: Response): Promise<void> => {
       { model: CandidateCareer,         as: 'career',           required: false },
       { model: CandidateBodyCheck,      as: 'bodyCheck',        required: false },
       { model: CandidateCertification,  as: 'certifications',   required: false },
-      { model: CandidateEducationHistory, as: 'educationHistory', required: false },
+      { model: CandidateEducationHistory, as: 'educationHistory', required: false, separate: true, order: [['startDate', 'ASC'] as [string, string]] },
     ],
   });
   if (!candidate) { res.status(404).json({ error: 'NOT_FOUND' }); return; }

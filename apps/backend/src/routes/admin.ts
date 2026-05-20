@@ -48,7 +48,7 @@ async function findScopedCandidate(candidateId: string, lpkId: string) {
       { model: CandidateIntroVideo, as: 'videos', required: false },
       { model: ToolsDictionary, as: 'tools', required: false },
       { model: CandidateCertification, as: 'certifications', required: false },
-      { model: CandidateEducationHistory, as: 'educationHistory', required: false },
+      { model: CandidateEducationHistory, as: 'educationHistory', required: false, separate: true, order: [['startDate', 'ASC'] as [string, string]] },
     ],
   });
 }
