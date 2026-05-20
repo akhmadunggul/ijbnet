@@ -69,6 +69,13 @@ router.get('/candidate-tab-config', wrap(async (_req, res) => {
   res.json({ config: row ? (row.toJSON() as unknown as Record<string, unknown>)['value'] : defaultConfig });
 }));
 
+// ── GET /api/superadmin/translation-config — PUBLIC ──────────────────────────
+router.get('/translation-config', wrap(async (_req, res) => {
+  const row = await GlobalSettings.findOne({ where: { key: 'auto_translate_enabled' } });
+  const enabled = row ? (row.toJSON() as unknown as Record<string, unknown>)['value'] !== false : true;
+  res.json({ enabled });
+}));
+
 router.use(authenticate, requireRole('super_admin'));
 
 // ── System Stats ──────────────────────────────────────────────────────────────
@@ -129,6 +136,22 @@ router.get('/system/stats', wrap(async (_req, res) => {
     dbStatus,
     recentAuditEntries: recentAuditRaw.map(e => e.toJSON()),
   });
+}));
+
+// ── PUT /api/superadmin/translation-config ───────────────────────────────────
+router.put('/translation-config', wrap(async (req, res) => {
+  const body = req.body as Record<string, unknown>;
+  const enabled = body['enabled'] !== false;
+
+  const [row, created] = await GlobalSettings.findOrCreate({
+    where: { key: 'auto_translate_enabled' },
+    defaults: { key: 'auto_translate_enabled', value: enabled },
+  });
+  if (!created) {
+    await row.update({ value: enabled });
+  }
+
+  res.json({ enabled });
 }));
 
 // ── PUT /api/superadmin/candidate-tab-config ──────────────────────────────────

@@ -231,21 +231,21 @@ ${cj['selfIntroId'] || cj['selfIntroJa'] ? `
 <div class="section-title">Keahlian</div>
 <div class="two-col">
   <table>${row('Indonesia', cj['selfIntroId'])}</table>
-  <table>${row('日本語', cj['selfIntroJa'])}</table>
+  <table>${row('日本語', (cj['selfIntroJa'] as string | null) || (cj['selfIntroId'] as string | null))}</table>
 </div>` : ''}
 
 ${cj['motivationId'] || cj['motivationJa'] ? `
 <div class="section-title">Motivasi</div>
 <div class="two-col">
   <table>${row('Indonesia', cj['motivationId'])}</table>
-  <table>${row('日本語', cj['motivationJa'])}</table>
+  <table>${row('日本語', (cj['motivationJa'] as string | null) || (cj['motivationId'] as string | null))}</table>
 </div>` : ''}
 
 ${cj['selfPrId'] || cj['selfPrJa'] ? `
 <div class="section-title">Promosi Diri</div>
 <div class="two-col">
   <table>${row('Indonesia', cj['selfPrId'])}</table>
-  <table>${row('日本語', cj['selfPrJa'])}</table>
+  <table>${row('日本語', (cj['selfPrJa'] as string | null) || (cj['selfPrId'] as string | null))}</table>
 </div>` : ''}
 
 ${bodyCheck ? `

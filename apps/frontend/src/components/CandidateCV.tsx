@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { api } from '../lib/api';
 import AuthImage from './AuthImage';
 
@@ -175,9 +176,18 @@ export default function CandidateCV({
 
   const c = candidate ?? {};
 
+  const { data: translateConfig } = useQuery<{ enabled: boolean }>({
+    queryKey: ['translation-config'],
+    queryFn: () => api.get('/superadmin/translation-config').then(r => r.data),
+    staleTime: 5 * 60 * 1000,
+  });
+  const autoTranslateEnabled = translateConfig?.enabled !== false;
+
   const [jaOverride, setJaOverride] = useState<Record<string, string>>({});
 
   useEffect(() => {
+    if (!autoTranslateEnabled) return;
+
     const fields = [
       { jaKey: 'selfIntroJa',  idKey: 'selfIntroId'  },
       { jaKey: 'motivationJa', idKey: 'motivationId' },
@@ -197,7 +207,7 @@ export default function CandidateCV({
       results.forEach(r => { if (r) updates[r.key] = r.value; });
       if (Object.keys(updates).length > 0) setJaOverride(updates);
     });
-  }, [c.selfIntroId, c.selfIntroJa, c.motivationId, c.motivationJa, c.selfPrId, c.selfPrJa]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [autoTranslateEnabled, c.selfIntroId, c.selfIntroJa, c.motivationId, c.motivationJa, c.selfPrId, c.selfPrJa]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const getJa = (jaKey: string, idKey: string): string =>
     v(c[jaKey]) || v(jaOverride[jaKey]) || v(c[idKey]);

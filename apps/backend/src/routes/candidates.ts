@@ -23,6 +23,7 @@ import {
   CandidateTimeline,
   BatchCandidate,
   InterviewProposal,
+  GlobalSettings,
 } from '../db/models/index';
 import { recordTimelineEvent, currentAgeHours } from '../utils/timeline';
 import { notifyUser } from '../utils/notify';
@@ -150,13 +151,18 @@ router.patch('/me', async (req: Request, res: Response): Promise<void> => {
   }
 
   // Auto-translate Indonesian → Japanese for self-intro, motivation, self-PR
+  const translateSetting = await GlobalSettings.findOne({ where: { key: 'auto_translate_enabled' } });
+  const autoTranslateEnabled = translateSetting
+    ? (translateSetting.toJSON() as unknown as Record<string, unknown>)['value'] !== false
+    : true;
+
   const translatePairs: Array<{ idKey: string; jaKey: string }> = [
     { idKey: 'selfIntroId',  jaKey: 'selfIntroJa'  },
     { idKey: 'motivationId', jaKey: 'motivationJa' },
     { idKey: 'selfPrId',     jaKey: 'selfPrJa'     },
   ];
   const libreUrl = process.env['LIBRETRANSLATE_URL'] ?? 'http://libretranslate:5000';
-  await Promise.all(
+  if (autoTranslateEnabled) await Promise.all(
     translatePairs.map(async ({ idKey, jaKey }) => {
       const idText = (updates[idKey] ?? (candidate as unknown as Record<string, unknown>)[idKey]) as string | null | undefined;
       const jaText = (updates[jaKey] ?? (candidate as unknown as Record<string, unknown>)[jaKey]) as string | null | undefined;
