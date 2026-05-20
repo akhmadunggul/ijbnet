@@ -16,18 +16,80 @@ sudo apt-get update && sudo apt-get install k6
 winget install k6
 ```
 
-## Running the stress test
+## One-time setup — seed K6 test accounts on the target server
+
+The stress test uses three dedicated candidate accounts (`k6.cand1`, `k6.cand2`, `k6.cand3`).
+Run this once per environment after deploying (idempotent — safe to re-run):
 
 ```bash
-# Against staging
-k6 run --env BASE_URL=https://staging.jinzai.jobagus.id k6/stress-test.js
+# Inside the running backend container
+docker exec -it ijbnet_backend-1 sh -c \
+  "cd /app/apps/backend && NODE_ENV=production npx sequelize-cli db:seed --seed 20250101000100-k6-test-candidates.ts"
+```
 
-# Against local backend
+The seeder attaches the test candidates to the first active LPK in the database.
+Demo admin/manager/recruiter accounts (`admin@ijbnet.org` etc.) must also exist (run the
+main seeder if they don't).
+
+## Running the stress test
+
+The login endpoint is rate-limited to **10 req / 15 min per IP**, so tokens must be obtained
+**before** starting K6 — not during the run.
+
+### Step 1 — get tokens (run once per test session)
+
+```bash
+# Tokens are valid for 15 minutes — do this immediately before launching K6
+eval "$(bash k6/get-tokens.sh https://jinzai.jobagus.id)"
+```
+
+`get-tokens.sh` exports six shell variables:
+`TOKEN_CANDIDATE_1`, `TOKEN_CANDIDATE_2`, `TOKEN_CANDIDATE_3`,
+`TOKEN_ADMIN`, `TOKEN_MANAGER`, `TOKEN_RECRUITER`
+
+### Step 2 — launch the test
+
+```bash
+k6 run \
+  --env BASE_URL=https://jinzai.jobagus.id \
+  --env TOKEN_CANDIDATE_1=$TOKEN_CANDIDATE_1 \
+  --env TOKEN_CANDIDATE_2=$TOKEN_CANDIDATE_2 \
+  --env TOKEN_CANDIDATE_3=$TOKEN_CANDIDATE_3 \
+  --env TOKEN_ADMIN=$TOKEN_ADMIN \
+  --env TOKEN_MANAGER=$TOKEN_MANAGER \
+  --env TOKEN_RECRUITER=$TOKEN_RECRUITER \
+  k6/stress-test.js
+```
+
+#### Against staging
+
+```bash
+eval "$(bash k6/get-tokens.sh https://staging.jinzai.jobagus.id)"
+k6 run \
+  --env BASE_URL=https://staging.jinzai.jobagus.id \
+  --env TOKEN_CANDIDATE_1=$TOKEN_CANDIDATE_1 \
+  --env TOKEN_CANDIDATE_2=$TOKEN_CANDIDATE_2 \
+  --env TOKEN_CANDIDATE_3=$TOKEN_CANDIDATE_3 \
+  --env TOKEN_ADMIN=$TOKEN_ADMIN \
+  --env TOKEN_MANAGER=$TOKEN_MANAGER \
+  --env TOKEN_RECRUITER=$TOKEN_RECRUITER \
+  k6/stress-test.js
+```
+
+#### Against local backend (loopback — rate limit bypassed automatically)
+
+```bash
 k6 run --env BASE_URL=http://localhost:3001 k6/stress-test.js
+```
 
-# Quick smoke test — 10 VUs for 15 s
+No token pre-supply is needed for localhost because the global rate limiter skips loopback
+requests (`127.0.0.1` / `::1`). `setup()` will fall back to inline login.
+
+#### Quick smoke test — 10 VUs for 30 s
+
+```bash
 k6 run --env BASE_URL=http://localhost:3001 \
-  --stage 5s:10,30s:10,5s:0 \
+  --env TOKEN_ADMIN=$TOKEN_ADMIN \
   k6/stress-test.js
 ```
 
@@ -71,3 +133,5 @@ and re-test.
 - `PATCH /candidates/me` with `selfIntroId` triggers the auto-translate path on
   the backend — useful for verifying the LibreTranslate timeout does not hold
   DB connections.
+- Test accounts use password `Demo1234!` and are attached to the first active LPK
+  found in the database.
