@@ -25,8 +25,8 @@ app.use(
 );
 app.use(
   rateLimit({
-    windowMs: 15 * 60 * 1000,
-    max: 200,
+    windowMs: 60 * 1000,      // 1-minute window
+    max: 300,                  // 300 req/min per IP (~5 req/s burst)
     standardHeaders: true,
     legacyHeaders: false,
   }),
