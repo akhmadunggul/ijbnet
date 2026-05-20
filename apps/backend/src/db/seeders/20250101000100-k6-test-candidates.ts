@@ -13,14 +13,14 @@ module.exports = {
     const now = new Date();
     const hash = await bcrypt.hash(PASSWORD, 12);
 
-    // Resolve an LPK to attach test candidates to (use demo LPK if present)
+    // Resolve any active LPK to attach test candidates to
     const [lpkRows] = await queryInterface.sequelize.query(
-      `SELECT id FROM lpks WHERE name = 'LPK Maju Bersama' LIMIT 1`,
+      `SELECT id FROM lpks WHERE isActive = 1 ORDER BY createdAt ASC LIMIT 1`,
     );
-    const lpkId: string =
-      (lpkRows as { id: string }[]).length > 0
-        ? (lpkRows as { id: string }[])[0]!.id
-        : (() => { throw new Error('No LPK found — run 20250101000000-demo-data first'); })();
+    if ((lpkRows as { id: string }[]).length === 0) {
+      throw new Error('No LPK found in the database — create one first');
+    }
+    const lpkId: string = (lpkRows as { id: string }[])[0]!.id;
 
     const accounts = [
       { email: 'k6.cand1@candidate.ijbnet.org', name: 'K6 Test Candidate 1', code: 'K6T-0001' },
