@@ -259,7 +259,8 @@
         "company": "Nama Perusahaan",
         "division": "Divisi",
         "skillGroup": "Kelompok Keahlian",
-        "period": "Periode"
+        "period": "Periode",
+        "startDate": "Tanggal Mulai (untuk urutan)"
       },
       "japanese": {
         "addTest": "Tambah Tes",

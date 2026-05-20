@@ -42,7 +42,7 @@ async function findScopedCandidate(candidateId: string, lpkId: string) {
     where: { id: candidateId, lpkId },
     include: [
       { model: CandidateJapaneseTest, as: 'tests', required: false },
-      { model: CandidateCareer, as: 'career', required: false },
+      { model: CandidateCareer, as: 'career', required: false, separate: true, order: [['startDate', 'ASC'] as [string, string]] },
       { model: CandidateBodyCheck, as: 'bodyCheck', required: false },
       { model: CandidateWeeklyTest, as: 'weeklyTests', required: false },
       { model: CandidateIntroVideo, as: 'videos', required: false },

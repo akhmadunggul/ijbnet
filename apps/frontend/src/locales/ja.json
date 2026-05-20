@@ -258,7 +258,8 @@
         "company": "会社名",
         "division": "部署",
         "skillGroup": "スキルグループ",
-        "period": "期間"
+        "period": "期間",
+        "startDate": "開始日（並び順用）"
       },
       "japanese": {
         "addTest": "テストを追加",

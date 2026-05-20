@@ -79,7 +79,7 @@ async function findMyCandidate(userId: string) {
     where: { userId },
     include: [
       { model: CandidateJapaneseTest, as: 'tests', required: false },
-      { model: CandidateCareer, as: 'career', required: false },
+      { model: CandidateCareer, as: 'career', required: false, separate: true, order: [['startDate', 'ASC'] as [string, string]] },
       { model: CandidateBodyCheck, as: 'bodyCheck', required: false },
       { model: CandidateWeeklyTest, as: 'weeklyTests', required: false },
       { model: CandidateIntroVideo, as: 'videos', required: false },
@@ -336,7 +336,7 @@ router.put('/me/career', async (req: Request, res: Response): Promise<void> => {
   }
 
   const { entries } = req.body as { entries: Array<{
-    companyName?: string; division?: string; skillGroup?: string; period?: string; sortOrder?: number;
+    companyName?: string; division?: string; skillGroup?: string; period?: string; startDate?: string; sortOrder?: number;
   }> };
 
   await CandidateCareer.destroy({ where: { candidateId: candidate.id } });
@@ -350,12 +350,13 @@ router.put('/me/career', async (req: Request, res: Response): Promise<void> => {
         division: e.division ?? null,
         skillGroup: e.skillGroup ?? null,
         period: e.period ?? null,
+        startDate: e.startDate ?? null,
         sortOrder: e.sortOrder ?? i,
       })),
     );
   }
 
-  const career = await CandidateCareer.findAll({ where: { candidateId: candidate.id }, order: [['sortOrder', 'ASC']] });
+  const career = await CandidateCareer.findAll({ where: { candidateId: candidate.id }, order: [['startDate', 'ASC'], ['sortOrder', 'ASC']] });
   res.json({ career: career.map((c) => c.toJSON()) });
 });
 
@@ -540,7 +541,7 @@ router.get('/me/export', async (req: Request, res: Response): Promise<void> => {
       { model: User,                      as: 'user',             attributes: ['name', 'email'], required: false },
       { model: Lpk,                       as: 'lpk',              attributes: ['name', 'city'],  required: false },
       { model: CandidateJapaneseTest,     as: 'tests',            required: false },
-      { model: CandidateCareer,           as: 'career',           required: false },
+      { model: CandidateCareer,           as: 'career',           required: false, separate: true, order: [['startDate', 'ASC'] as [string, string]] },
       { model: CandidateBodyCheck,        as: 'bodyCheck',        required: false },
       { model: CandidateCertification,    as: 'certifications',   required: false },
       { model: CandidateEducationHistory, as: 'educationHistory', required: false, separate: true, order: [['startDate', 'ASC'] as [string, string]] },

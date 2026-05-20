@@ -25,7 +25,15 @@ export function buildCandidatePdfHtml(
   const user      = cj['user']             as Record<string, string>   | null;
   const lpk       = cj['lpk']              as Record<string, string>   | null;
   const bodyCheck = cj['bodyCheck']        as Record<string, unknown>  | null;
-  const career    = (cj['career']          as Record<string, unknown>[] | null) ?? [];
+  const rawCareer = (cj['career']          as Record<string, unknown>[] | null) ?? [];
+  const career    = [...rawCareer].sort((a, b) => {
+    const aDate = (a['startDate'] as string | null) ?? '';
+    const bDate = (b['startDate'] as string | null) ?? '';
+    if (!aDate && !bDate) return 0;
+    if (!aDate) return 1;
+    if (!bDate) return -1;
+    return aDate < bDate ? -1 : aDate > bDate ? 1 : 0;
+  });
   const tests     = (cj['tests']           as Record<string, unknown>[] | null) ?? [];
   const certs     = (cj['certifications']  as Record<string, unknown>[] | null) ?? [];
 

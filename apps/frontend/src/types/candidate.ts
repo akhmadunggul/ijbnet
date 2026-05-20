@@ -26,6 +26,7 @@ export interface CareerEntry {
   division: string | null;
   skillGroup: string | null;
   period: string | null;
+  startDate: string | null;
   sortOrder: number;
 }
 

@@ -229,7 +229,7 @@ router.get('/candidates/:id/profile.pdf', wrap(async (req, res) => {
       { model: User,                      as: 'user',             attributes: ['name', 'email'] },
       { model: Lpk,                       as: 'lpk',              attributes: ['name', 'city']  },
       { model: CandidateJapaneseTest,     as: 'tests'             },
-      { model: CandidateCareer,           as: 'career'            },
+      { model: CandidateCareer,           as: 'career',           separate: true, order: [['startDate', 'ASC'] as [string, string]] },
       { model: CandidateBodyCheck,        as: 'bodyCheck'         },
       { model: CandidateCertification,    as: 'certifications'    },
       { model: CandidateEducationHistory, as: 'educationHistory', separate: true, order: [['startDate', 'ASC'] as [string, string]] },

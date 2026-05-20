@@ -57,6 +57,7 @@ const careerSchema = z.object({
     division:    z.string().nullable().optional(),
     skillGroup:  z.string().nullable().optional(),
     period:      z.string().nullable().optional(),
+    startDate:   z.string().nullable().optional(),
     sortOrder:   z.number().optional(),
   })),
 });
@@ -615,6 +616,7 @@ function CareerTab({ candidate, saving }: { candidate: CandidateData; saving: bo
             <Field label={t('candidate.profile.career.division')}><input {...register(`entries.${i}.division`)} className={inputCls} /></Field>
             <Field label={t('candidate.profile.career.skillGroup')}><input {...register(`entries.${i}.skillGroup`)} className={inputCls} /></Field>
             <Field label={t('candidate.profile.career.period')}><input {...register(`entries.${i}.period`)} className={inputCls} placeholder="Jan 2022 – Mar 2024" /></Field>
+            <Field label={t('candidate.profile.career.startDate')}><input type="date" {...register(`entries.${i}.startDate`)} className={inputCls} /></Field>
           </div>
         </div>
       ))}

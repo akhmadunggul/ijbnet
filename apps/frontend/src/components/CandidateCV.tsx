@@ -251,7 +251,13 @@ export default function CandidateCV({
     return a.startDate < b.startDate ? -1 : a.startDate > b.startDate ? 1 : 0;
   });
   const eduRows    = padRows(sortedEduHistory, 2);
-  const careerRows = padRows(c.career, 2);
+  const sortedCareer = [...(c.career ?? [])].sort((a, b) => {
+    if (!a.startDate && !b.startDate) return 0;
+    if (!a.startDate) return 1;
+    if (!b.startDate) return -1;
+    return a.startDate < b.startDate ? -1 : a.startDate > b.startDate ? 1 : 0;
+  });
+  const careerRows = padRows(sortedCareer, 2);
   const certRows   = padRows(combinedCerts, 1);
 
   const TD = S.td;

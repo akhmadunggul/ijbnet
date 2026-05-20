@@ -7,6 +7,7 @@ export interface CandidateCareerAttributes {
   division: string | null;
   skillGroup: string | null;
   period: string | null;
+  startDate: string | null;
   sortOrder: number;
   createdAt?: Date;
   updatedAt?: Date;
@@ -15,7 +16,7 @@ export interface CandidateCareerAttributes {
 export interface CandidateCareerCreationAttributes
   extends Optional<
     CandidateCareerAttributes,
-    'id' | 'companyName' | 'division' | 'skillGroup' | 'period' | 'sortOrder'
+    'id' | 'companyName' | 'division' | 'skillGroup' | 'period' | 'startDate' | 'sortOrder'
   > {}
 
 export class CandidateCareer
@@ -27,6 +28,7 @@ export class CandidateCareer
   declare division: string | null;
   declare skillGroup: string | null;
   declare period: string | null;
+  declare startDate: string | null;
   declare sortOrder: number;
   declare readonly createdAt: Date;
   declare readonly updatedAt: Date;
@@ -41,6 +43,7 @@ export function initCandidateCareer(sequelize: Sequelize): void {
       division: { type: DataTypes.STRING(100), allowNull: true },
       skillGroup: { type: DataTypes.STRING(100), allowNull: true },
       period: { type: DataTypes.STRING(50), allowNull: true },
+      startDate: { type: DataTypes.DATEONLY, allowNull: true },
       sortOrder: { type: DataTypes.INTEGER, defaultValue: 0, allowNull: false },
     },
     { sequelize, tableName: 'candidate_careers', timestamps: true },
