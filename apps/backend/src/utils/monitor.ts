@@ -221,17 +221,21 @@ async function deliver(key: string, subject: string, lines: string[]): Promise<v
     );
   }
 
-  // Telegram — best-effort, never throws
+  // Telegram — best-effort, logs errors instead of swallowing them silently
   if (config.TELEGRAM_BOT_TOKEN && config.TELEGRAM_CHAT_ID) {
-    const text = `🚨 *[IJBNet] ${subject}*\n\n${lines.join('\n')}\n\n_${ts}_`;
+    // HTML mode: safe against underscores/asterisks in error messages that
+    // break Telegram's legacy Markdown parser (e.g. sql_mode=only_full_group_by)
+    const esc = (s: string) =>
+      s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    const html = `🚨 <b>[IJBNet] ${esc(subject)}</b>\n\n${lines.map(esc).join('\n')}\n\n<i>${ts}</i>`;
     fetch(
       `https://api.telegram.org/bot${config.TELEGRAM_BOT_TOKEN}/sendMessage`,
       {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ chat_id: config.TELEGRAM_CHAT_ID, text, parse_mode: 'Markdown' }),
+        body: JSON.stringify({ chat_id: config.TELEGRAM_CHAT_ID, text: html, parse_mode: 'HTML' }),
       },
-    ).catch(() => { /* intentionally swallowed */ });
+    ).catch((e) => console.error('[Telegram alert]', e));
   }
 }
 
