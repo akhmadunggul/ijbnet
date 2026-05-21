@@ -193,8 +193,12 @@ router.get('/system/metrics-history', wrap(async (_req, res) => {
   res.json({
     history: getMetricsHistory(),
     limits: {
-      maxUsers:  config.MONITOR_MAX_USERS,
-      maxDbRpm:  config.MONITOR_MAX_DB_RPM,
+      maxUsers:      config.MONITOR_MAX_USERS,
+      maxDbRpm:      config.MONITOR_MAX_DB_RPM,
+      maxHttpRpm:    config.MONITOR_MAX_HTTP_RPM,
+      maxResponseMs: config.MONITOR_MAX_RESPONSE_MS,
+      maxCpuPct:     config.MONITOR_MAX_CPU_PCT,
+      maxErrorPct:   config.MONITOR_MAX_ERROR_PCT,
     },
   });
 }));

@@ -4,43 +4,99 @@ import { config } from '../config';
 // ── Time-series metrics history ───────────────────────────────────────────────
 
 export interface MetricsPoint {
-  ts: number;              // Unix ms
-  activeUsers: number;     // unique users who made a request in the previous minute
+  ts: number;
+  activeUsers: number;
   dbRequestsPerMin: number;
+  httpRequestsPerMin: number;
+  p95ResponseMs: number;
+  cpuPct: number;        // 0–100
+  errorRatePct: number;  // 0–100
 }
 
-const HISTORY_SIZE = 60; // keep 60 one-minute snapshots
+const HISTORY_SIZE = 60;
 const metricsHistory: MetricsPoint[] = [];
 
-// Active-user window: count users seen in the last 5 minutes
-const activeUserMap = new Map<string, number>(); // userId → lastSeen ms
+// ── Active users ──────────────────────────────────────────────────────────────
+const activeUserMap = new Map<string, number>();
 const ACTIVE_WINDOW_MS = 5 * 60 * 1000;
-
-// DB query counter — incremented by Sequelize logging hook; reset per snapshot
-let _dbRequestCount = 0;
 
 export function recordActiveUser(userId: string): void {
   activeUserMap.set(userId, Date.now());
 }
 
+// ── DB queries ────────────────────────────────────────────────────────────────
+let _dbRequestCount = 0;
+
 export function recordDbQuery(): void {
   _dbRequestCount++;
 }
 
-/** Called every minute by the timer in index.ts */
+// ── HTTP requests + response times ───────────────────────────────────────────
+let _httpTotal = 0;
+let _http5xx   = 0;
+// Reservoir sample — max 2000 duration values per minute
+const _durations: number[] = [];
+const RESERVOIR = 2000;
+
+export function recordHttpRequest(durationMs: number, statusCode: number): void {
+  _httpTotal++;
+  if (statusCode >= 500) _http5xx++;
+  if (_durations.length < RESERVOIR) {
+    _durations.push(durationMs);
+  } else {
+    _durations[Math.floor(Math.random() * RESERVOIR)] = durationMs;
+  }
+}
+
+function p95(arr: number[]): number {
+  if (arr.length === 0) return 0;
+  const s = arr.slice().sort((a, b) => a - b);
+  return s[Math.floor(s.length * 0.95)] ?? 0;
+}
+
+// ── CPU ───────────────────────────────────────────────────────────────────────
+let _lastCpu  = process.cpuUsage();
+let _lastWall = process.hrtime.bigint();
+
+function sampleCpu(): number {
+  const wall = process.hrtime.bigint();
+  const cpu  = process.cpuUsage(_lastCpu);
+  const wallNs = Number(wall - _lastWall);
+  _lastCpu  = process.cpuUsage();
+  _lastWall = wall;
+  if (wallNs === 0) return 0;
+  // cpuUsage is in µs; wall is in ns → multiply µs by 1000 to get ns
+  return Math.min(100, Math.round(((cpu.user + cpu.system) * 1000 / wallNs) * 1000) / 10);
+}
+
+// ── Snapshot (called every 60 s) ──────────────────────────────────────────────
 export function snapshotMetrics(): void {
   const now = Date.now();
-  // Evict stale users
+
   for (const [id, ts] of activeUserMap) {
     if (now - ts > ACTIVE_WINDOW_MS) activeUserMap.delete(id);
   }
+
+  const durations = _durations.splice(0);
+  const errorRate = _httpTotal > 0
+    ? Math.round((_http5xx / _httpTotal) * 1000) / 10
+    : 0;
+
   metricsHistory.push({
     ts: now,
-    activeUsers: activeUserMap.size,
-    dbRequestsPerMin: _dbRequestCount,
+    activeUsers:        activeUserMap.size,
+    dbRequestsPerMin:   _dbRequestCount,
+    httpRequestsPerMin: _httpTotal,
+    p95ResponseMs:      p95(durations),
+    cpuPct:             sampleCpu(),
+    errorRatePct:       errorRate,
   });
+
   if (metricsHistory.length > HISTORY_SIZE) metricsHistory.shift();
+
   _dbRequestCount = 0;
+  _httpTotal      = 0;
+  _http5xx        = 0;
 }
 
 export function getMetricsHistory(): MetricsPoint[] {

@@ -68,8 +68,12 @@ export const config = {
   TELEGRAM_CHAT_ID:     optional('TELEGRAM_CHAT_ID', ''),
 
   // Chart hard-limit lines — tune to match your expected capacity
-  MONITOR_MAX_USERS:    parseInt(optional('MONITOR_MAX_USERS', '100'), 10),
-  MONITOR_MAX_DB_RPM:   parseInt(optional('MONITOR_MAX_DB_RPM', '500'), 10),
+  MONITOR_MAX_USERS:       parseInt(optional('MONITOR_MAX_USERS',       '100'),  10),
+  MONITOR_MAX_DB_RPM:      parseInt(optional('MONITOR_MAX_DB_RPM',      '500'),  10),
+  MONITOR_MAX_HTTP_RPM:    parseInt(optional('MONITOR_MAX_HTTP_RPM',    '1000'), 10),
+  MONITOR_MAX_RESPONSE_MS: parseInt(optional('MONITOR_MAX_RESPONSE_MS', '2000'), 10),
+  MONITOR_MAX_CPU_PCT:     parseInt(optional('MONITOR_MAX_CPU_PCT',     '80'),   10),
+  MONITOR_MAX_ERROR_PCT:   parseInt(optional('MONITOR_MAX_ERROR_PCT',   '1'),    10),
 } as const;
 
 export type Config = typeof config;

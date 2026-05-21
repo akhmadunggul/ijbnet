@@ -622,7 +622,14 @@
       "noAlertsHint": "アラートを有効にするには .env に ALERT_EMAIL または TELEGRAM_BOT_TOKEN + TELEGRAM_CHAT_ID を追加してください。",
       "activeUsers": "アクティブユーザー",
       "usersNow": "現在",
-      "dbRpm": "DB リクエスト/分"
+      "dbRpm": "DB リクエスト/分",
+      "httpRpm": "HTTP リクエスト/分",
+      "p95Response": "応答時間 p95",
+      "cpu": "CPU 使用率",
+      "errorRate": "エラー率",
+      "sectionTraffic": "トラフィック",
+      "sectionPerformance": "パフォーマンス",
+      "sectionHealth": "システム健全性"
     }
   },
   "export": {

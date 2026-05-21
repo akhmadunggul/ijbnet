@@ -12,7 +12,7 @@ import passport from './config/passport';
 import apiRouter from './routes/index';
 import { errorHandler, notFound } from './middleware/errorHandler';
 import { config } from './config';
-import { record429, recordFatal, recordHighMemory, snapshotMetrics } from './utils/monitor';
+import { record429, recordFatal, recordHighMemory, snapshotMetrics, recordHttpRequest } from './utils/monitor';
 
 const app = express();
 
@@ -48,6 +48,12 @@ app.use(
 
 
 // ── Middleware ────────────────────────────────────────────────────────────────
+// Response-time recorder — fires on every request after rate limiter
+app.use((_req, res, next) => {
+  const start = Date.now();
+  res.on('finish', () => recordHttpRequest(Date.now() - start, res.statusCode));
+  next();
+});
 app.use(morgan(config.NODE_ENV === 'production' ? 'combined' : 'dev'));
 app.use(express.json({ limit: '1mb' }));
 app.use(express.urlencoded({ extended: true }));

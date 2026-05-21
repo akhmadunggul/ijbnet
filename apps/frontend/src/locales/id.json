@@ -623,7 +623,14 @@
       "noAlertsHint": "Tambahkan ALERT_EMAIL atau TELEGRAM_BOT_TOKEN + TELEGRAM_CHAT_ID ke .env untuk mengaktifkan notifikasi.",
       "activeUsers": "Pengguna Aktif",
       "usersNow": "sekarang",
-      "dbRpm": "DB Request / Menit"
+      "dbRpm": "DB Request / Menit",
+      "httpRpm": "HTTP Request / Menit",
+      "p95Response": "Waktu Respons p95",
+      "cpu": "Penggunaan CPU",
+      "errorRate": "Tingkat Error",
+      "sectionTraffic": "Traffic",
+      "sectionPerformance": "Performa",
+      "sectionHealth": "Kesehatan Sistem"
     }
   },
   "export": {

@@ -2,187 +2,164 @@ import { useTranslation } from 'react-i18next';
 import { useQuery } from '@tanstack/react-query';
 import { api } from '../../lib/api';
 
+// ── Types ─────────────────────────────────────────────────────────────────────
+
 interface HealthResponse {
   status: 'ok' | 'degraded';
   uptime: number;
   memory: { heapUsedMb: number; heapTotalMb: number; rssMb: number; limitMb: number };
-  db:    { status: 'ok' | 'error'; responseMs: number };
-  redis: { status: 'ok' | 'error'; responseMs: number };
+  db:     { status: 'ok' | 'error'; responseMs: number };
+  redis:  { status: 'ok' | 'error'; responseMs: number };
   metrics: { errors5xx_1h: number; rateLimitHits_1h: number; dbErrors_1h: number };
-  alerts: { email: boolean; telegram: boolean };
+  alerts:  { email: boolean; telegram: boolean };
 }
 
 interface MetricsPoint {
   ts: number;
   activeUsers: number;
   dbRequestsPerMin: number;
+  httpRequestsPerMin: number;
+  p95ResponseMs: number;
+  cpuPct: number;
+  errorRatePct: number;
+}
+
+interface Limits {
+  maxUsers: number;
+  maxDbRpm: number;
+  maxHttpRpm: number;
+  maxResponseMs: number;
+  maxCpuPct: number;
+  maxErrorPct: number;
 }
 
 interface HistoryResponse {
   history: MetricsPoint[];
-  limits: { maxUsers: number; maxDbRpm: number };
+  limits: Limits;
 }
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
-function formatUptime(seconds: number): string {
-  const d = Math.floor(seconds / 86400);
-  const h = Math.floor((seconds % 86400) / 3600);
-  const m = Math.floor((seconds % 3600) / 60);
-  const parts: string[] = [];
-  if (d > 0) parts.push(`${d}d`);
-  if (h > 0) parts.push(`${h}h`);
-  parts.push(`${m}m`);
-  return parts.join(' ');
+function formatUptime(s: number): string {
+  const d = Math.floor(s / 86400);
+  const h = Math.floor((s % 86400) / 3600);
+  const m = Math.floor((s % 3600) / 60);
+  return [d && `${d}d`, h && `${h}h`, `${m}m`].filter(Boolean).join(' ');
 }
 
 function fmtTime(ts: number): string {
   return new Date(ts).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 }
 
-// ── SVG Line/Area chart ───────────────────────────────────────────────────────
+// ── SVG time-series chart ─────────────────────────────────────────────────────
+
+type MetricKey = keyof Omit<MetricsPoint, 'ts'>;
 
 function TimeSeriesChart({
-  data,
-  valueKey,
-  limit,
-  color,
-  title,
-  currentLabel,
+  data, valueKey, limit, color, title, unit = '',
 }: {
   data: MetricsPoint[];
-  valueKey: 'activeUsers' | 'dbRequestsPerMin';
+  valueKey: MetricKey;
   limit: number;
   color: string;
   title: string;
-  currentLabel: string;
+  unit?: string;
 }) {
-  // SVG coordinate system
-  const VW = 400, VH = 90;
-  const P = { top: 6, right: 36, bottom: 18, left: 32 };
-  const cW = VW - P.left - P.right;
-  const cH = VH - P.top - P.bottom;
+  const VW = 420, VH = 96;
+  const P = { t: 8, r: 38, b: 18, l: 34 };
+  const cW = VW - P.l - P.r;
+  const cH = VH - P.t - P.b;
 
-  const values = data.map((d) => d[valueKey]);
+  const values = data.map((d) => d[valueKey] as number);
   const current = values[values.length - 1] ?? 0;
-  const displayMax = Math.max(limit * 1.1, ...values, 1);
+  const peak    = Math.max(...values, 0);
+  const ceiling = Math.max(limit * 1.15, peak, 1);
 
   const toX = (i: number) =>
-    data.length < 2 ? P.left + cW / 2 : P.left + (i / (data.length - 1)) * cW;
-  const toY = (v: number) => P.top + cH - (v / displayMax) * cH;
+    data.length < 2 ? P.l + cW / 2 : P.l + (i / (data.length - 1)) * cW;
+  const toY = (v: number) => P.t + cH - (v / ceiling) * cH;
 
-  const pts = data.map((d, i) => ({ x: toX(i), y: toY(d[valueKey]) }));
+  const pts = data.map((d, i) => ({ x: toX(i), y: toY(d[valueKey] as number) }));
   const limitY = toY(limit);
   const nearLimit = current >= limit * 0.85;
 
-  let linePath = '';
-  let areaPath = '';
-  if (pts.length > 1) {
-    linePath = pts.map((p, i) => `${i === 0 ? 'M' : 'L'}${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(' ');
-    areaPath =
-      `M${pts[0].x.toFixed(1)},${toY(0).toFixed(1)} ` +
-      pts.map((p) => `L${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(' ') +
-      ` L${pts[pts.length - 1].x.toFixed(1)},${toY(0).toFixed(1)} Z`;
+  const linePath = pts.length > 1
+    ? pts.map((p, i) => `${i === 0 ? 'M' : 'L'}${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(' ')
+    : '';
+  const areaPath = pts.length > 1
+    ? `M${pts[0].x.toFixed(1)},${toY(0).toFixed(1)} ${linePath.slice(1)} L${pts[pts.length - 1].x.toFixed(1)},${toY(0).toFixed(1)} Z`
+    : '';
+
+  // X-axis tick indices: first, every 15, last
+  const ticks: number[] = [];
+  if (data.length > 1) {
+    ticks.push(0);
+    for (let i = 15; i < data.length - 5; i += 15) ticks.push(i);
+    ticks.push(data.length - 1);
   }
 
-  // Tick labels every 15 points (15 min)
-  const tickIndices: number[] = [];
-  if (data.length > 1) {
-    tickIndices.push(0);
-    for (let i = 15; i < data.length - 5; i += 15) tickIndices.push(i);
-    tickIndices.push(data.length - 1);
-  }
+  // Y-axis labels: 0, mid, ceiling
+  const yLabels = [
+    { v: 0,           y: toY(0) },
+    { v: Math.round(ceiling / 2), y: toY(ceiling / 2) },
+    { v: Math.round(ceiling),     y: toY(ceiling) },
+  ];
 
   return (
-    <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-5">
-      {/* Header */}
-      <div className="flex items-center justify-between mb-3">
-        <span className="text-sm font-semibold text-gray-700">{title}</span>
-        <div className="flex items-center gap-3">
-          <span className="text-xs text-gray-400">limit: {limit}</span>
-          <span
-            className={`text-xl font-bold tabular-nums ${
-              nearLimit ? 'text-red-600' : 'text-gray-900'
-            }`}
-          >
-            {current}
+    <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-4">
+      <div className="flex items-start justify-between mb-2 gap-2">
+        <span className="text-xs font-semibold text-gray-600">{title}</span>
+        <div className="text-right shrink-0">
+          <span className={`text-lg font-bold tabular-nums leading-none ${nearLimit ? 'text-red-600' : 'text-gray-900'}`}>
+            {current}{unit}
           </span>
-          <span className="text-xs text-gray-400">{currentLabel}</span>
+          <div className="text-[10px] text-gray-400 mt-0.5">limit {limit}{unit}</div>
         </div>
       </div>
 
       {data.length === 0 ? (
-        <div className="flex items-center justify-center h-16 text-xs text-gray-400">
-          Collecting data — first snapshot in &lt;1 min…
+        <div className="flex items-center justify-center h-16 text-xs text-gray-400 italic">
+          First snapshot in &lt;1 min…
         </div>
       ) : (
-        <svg
-          viewBox={`0 0 ${VW} ${VH}`}
-          className="w-full"
-          style={{ height: 90 }}
-          aria-hidden="true"
-        >
-          {/* Grid lines */}
-          {[0.25, 0.5, 0.75, 1].map((frac) => {
-            const y = P.top + cH * (1 - frac);
-            return (
-              <line
-                key={frac}
-                x1={P.left} y1={y} x2={VW - P.right} y2={y}
-                stroke="#f3f4f6" strokeWidth="1"
-              />
-            );
-          })}
+        <svg viewBox={`0 0 ${VW} ${VH}`} className="w-full" style={{ height: 96 }} aria-hidden="true">
+          {/* Horizontal grid */}
+          {yLabels.map(({ y }, i) => (
+            <line key={i} x1={P.l} y1={y} x2={VW - P.r} y2={y} stroke="#f3f4f6" strokeWidth="1" />
+          ))}
 
-          {/* Area fill */}
-          {areaPath && (
-            <path d={areaPath} fill={color} fillOpacity={0.12} />
-          )}
+          {/* Area */}
+          {areaPath && <path d={areaPath} fill={color} fillOpacity={0.1} />}
 
           {/* Line */}
           {linePath && (
-            <path d={linePath} stroke={color} strokeWidth="1.5" fill="none" strokeLinejoin="round" />
+            <path d={linePath} stroke={color} strokeWidth="1.5" fill="none" strokeLinejoin="round" strokeLinecap="round" />
           )}
 
-          {/* Hard limit line */}
-          <line
-            x1={P.left} y1={limitY} x2={VW - P.right} y2={limitY}
-            stroke="#ef4444" strokeWidth="1" strokeDasharray="4,3" opacity={0.7}
-          />
-          <text x={VW - P.right + 2} y={limitY + 3.5} fontSize="7" fill="#ef4444" opacity={0.8}>
-            {limit}
+          {/* Hard-limit line */}
+          <line x1={P.l} y1={limitY} x2={VW - P.r} y2={limitY}
+            stroke="#ef4444" strokeWidth="1" strokeDasharray="4,3" opacity={0.65} />
+          <text x={VW - P.r + 2} y={limitY + 4} fontSize="7.5" fill="#ef4444" opacity={0.8}>
+            {limit}{unit}
           </text>
 
-          {/* Y axis labels */}
-          <text x={P.left - 3} y={P.top + 4} fontSize="7" fill="#9ca3af" textAnchor="end">
-            {Math.round(displayMax)}
-          </text>
-          <text x={P.left - 3} y={P.top + cH + 1} fontSize="7" fill="#9ca3af" textAnchor="end">
-            0
-          </text>
+          {/* Y labels */}
+          {yLabels.map(({ v, y }, i) => (
+            <text key={i} x={P.l - 3} y={y + 3} fontSize="7" fill="#9ca3af" textAnchor="end">
+              {v}{unit}
+            </text>
+          ))}
 
-          {/* Latest value dot */}
+          {/* Latest dot */}
           {pts.length > 0 && (
-            <circle
-              cx={pts[pts.length - 1].x}
-              cy={pts[pts.length - 1].y}
-              r="3"
-              fill={color}
-              stroke="white"
-              strokeWidth="1.5"
-            />
+            <circle cx={pts[pts.length - 1].x} cy={pts[pts.length - 1].y}
+              r="3" fill={color} stroke="white" strokeWidth="1.5" />
           )}
 
-          {/* X axis time ticks */}
-          {tickIndices.map((idx) => (
-            <text
-              key={idx}
-              x={toX(idx)}
-              y={VH - 2}
-              fontSize="7"
-              fill="#9ca3af"
-              textAnchor={idx === 0 ? 'start' : idx === data.length - 1 ? 'end' : 'middle'}
-            >
+          {/* X ticks */}
+          {ticks.map((idx) => (
+            <text key={idx} x={toX(idx)} y={VH - 2} fontSize="7" fill="#9ca3af"
+              textAnchor={idx === 0 ? 'start' : idx === data.length - 1 ? 'end' : 'middle'}>
               {fmtTime(data[idx].ts)}
             </text>
           ))}
@@ -212,13 +189,11 @@ function ServicePill({ label, status, responseMs }: { label: string; status: 'ok
 }
 
 function MetricCard({ label, value, warn, danger }: { label: string; value: number; warn: number; danger: number }) {
-  const color = value >= danger
-    ? 'text-red-600 bg-red-50 border-red-100'
-    : value >= warn
-    ? 'text-yellow-600 bg-yellow-50 border-yellow-100'
+  const cls = value >= danger ? 'text-red-600 bg-red-50 border-red-100'
+    : value >= warn ? 'text-yellow-600 bg-yellow-50 border-yellow-100'
     : 'text-gray-900 bg-white border-gray-100';
   return (
-    <div className={`rounded-xl border shadow-sm p-5 ${color}`}>
+    <div className={`rounded-xl border shadow-sm p-5 ${cls}`}>
       <div className="text-3xl font-bold">{value}</div>
       <div className="text-xs mt-1 font-medium opacity-75">{label}</div>
     </div>
@@ -254,7 +229,7 @@ function AlertBadge({ label, active }: { label: string; active: boolean }) {
 export default function SuperAdminMonitor() {
   const { t } = useTranslation();
 
-  const { data: health, isLoading: healthLoading, dataUpdatedAt } = useQuery<HealthResponse>({
+  const { data: health, isLoading, dataUpdatedAt } = useQuery<HealthResponse>({
     queryKey: ['superadmin-health'],
     queryFn: () => api.get('/superadmin/system/health').then((r) => r.data),
     refetchInterval: 30_000,
@@ -266,19 +241,23 @@ export default function SuperAdminMonitor() {
     refetchInterval: 60_000,
   });
 
-  if (healthLoading || !health) {
+  if (isLoading || !health) {
     return <div className="text-sm text-gray-500">{t('loading')}</div>;
   }
 
   const { status, uptime, memory, db, redis, metrics, alerts } = health;
-  const degraded = status === 'degraded';
+  const degraded    = status === 'degraded';
   const lastRefresh = dataUpdatedAt ? new Date(dataUpdatedAt).toLocaleTimeString() : '—';
-  const history = historyData?.history ?? [];
-  const limits  = historyData?.limits ?? { maxUsers: 100, maxDbRpm: 500 };
+  const history     = historyData?.history ?? [];
+  const limits      = historyData?.limits ?? {
+    maxUsers: 100, maxDbRpm: 500, maxHttpRpm: 1000,
+    maxResponseMs: 2000, maxCpuPct: 80, maxErrorPct: 1,
+  };
 
   return (
     <div className="space-y-6">
-      {/* Header */}
+
+      {/* ── Header ── */}
       <div className="flex items-center justify-between flex-wrap gap-3">
         <h1 className="text-xl font-bold text-gray-900">{t('superadmin.monitor.title')}</h1>
         <div className="flex items-center gap-3">
@@ -290,37 +269,50 @@ export default function SuperAdminMonitor() {
         </div>
       </div>
 
-      {/* Uptime + Services */}
+      {/* ── Uptime + Services ── */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-5 flex flex-col justify-center">
           <div className="text-xs text-gray-500 mb-1">{t('superadmin.monitor.uptime')}</div>
           <div className="text-2xl font-bold text-gray-900">{formatUptime(uptime)}</div>
         </div>
-        <ServicePill label={t('superadmin.monitor.db')} status={db.status} responseMs={db.responseMs} />
-        <ServicePill label="Redis" status={redis.status} responseMs={redis.responseMs} />
+        <ServicePill label={t('superadmin.monitor.db')}  status={db.status}    responseMs={db.responseMs} />
+        <ServicePill label="Redis"                        status={redis.status} responseMs={redis.responseMs} />
       </div>
 
-      {/* Time-series charts */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <TimeSeriesChart
-          data={history}
-          valueKey="activeUsers"
-          limit={limits.maxUsers}
-          color="#3b82f6"
-          title={t('superadmin.monitor.activeUsers')}
-          currentLabel={t('superadmin.monitor.usersNow')}
-        />
-        <TimeSeriesChart
-          data={history}
-          valueKey="dbRequestsPerMin"
-          limit={limits.maxDbRpm}
-          color="#8b5cf6"
-          title={t('superadmin.monitor.dbRpm')}
-          currentLabel="req/min"
-        />
+      {/* ── Traffic charts ── */}
+      <div>
+        <h2 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">
+          {t('superadmin.monitor.sectionTraffic')}
+        </h2>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          <TimeSeriesChart data={history} valueKey="activeUsers"        limit={limits.maxUsers}    color="#3b82f6" title={t('superadmin.monitor.activeUsers')}   unit="" />
+          <TimeSeriesChart data={history} valueKey="httpRequestsPerMin" limit={limits.maxHttpRpm}  color="#10b981" title={t('superadmin.monitor.httpRpm')}       unit="" />
+        </div>
       </div>
 
-      {/* Memory */}
+      {/* ── Performance charts ── */}
+      <div>
+        <h2 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">
+          {t('superadmin.monitor.sectionPerformance')}
+        </h2>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          <TimeSeriesChart data={history} valueKey="p95ResponseMs"    limit={limits.maxResponseMs} color="#f59e0b" title={t('superadmin.monitor.p95Response')} unit="ms" />
+          <TimeSeriesChart data={history} valueKey="dbRequestsPerMin" limit={limits.maxDbRpm}      color="#8b5cf6" title={t('superadmin.monitor.dbRpm')}        unit="" />
+        </div>
+      </div>
+
+      {/* ── Health charts ── */}
+      <div>
+        <h2 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">
+          {t('superadmin.monitor.sectionHealth')}
+        </h2>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          <TimeSeriesChart data={history} valueKey="cpuPct"        limit={limits.maxCpuPct}   color="#ef4444" title={t('superadmin.monitor.cpu')}       unit="%" />
+          <TimeSeriesChart data={history} valueKey="errorRatePct"  limit={limits.maxErrorPct} color="#f43f5e" title={t('superadmin.monitor.errorRate')}  unit="%" />
+        </div>
+      </div>
+
+      {/* ── Memory ── */}
       <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-5">
         <h2 className="text-sm font-semibold text-gray-700 mb-4">{t('superadmin.monitor.memory')}</h2>
         <MemoryBar used={memory.heapUsedMb} limit={memory.limitMb} />
@@ -330,17 +322,17 @@ export default function SuperAdminMonitor() {
         </div>
       </div>
 
-      {/* Hourly metrics */}
+      {/* ── Hourly counters ── */}
       <div>
         <h2 className="text-sm font-semibold text-gray-700 mb-3">{t('superadmin.monitor.metrics1h')}</h2>
         <div className="grid grid-cols-3 gap-4">
-          <MetricCard label={t('superadmin.monitor.errors5xx')}    value={metrics.errors5xx_1h}       warn={1}  danger={10} />
+          <MetricCard label={t('superadmin.monitor.errors5xx')}     value={metrics.errors5xx_1h}      warn={1}  danger={10}  />
           <MetricCard label={t('superadmin.monitor.rateLimitHits')} value={metrics.rateLimitHits_1h}  warn={20} danger={100} />
-          <MetricCard label={t('superadmin.monitor.dbErrors')}     value={metrics.dbErrors_1h}        warn={1}  danger={5} />
+          <MetricCard label={t('superadmin.monitor.dbErrors')}      value={metrics.dbErrors_1h}       warn={1}  danger={5}   />
         </div>
       </div>
 
-      {/* Alert config */}
+      {/* ── Alert config ── */}
       <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-5">
         <h2 className="text-sm font-semibold text-gray-700 mb-3">{t('superadmin.monitor.alerts')}</h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -351,6 +343,7 @@ export default function SuperAdminMonitor() {
           <p className="mt-3 text-xs text-gray-400">{t('superadmin.monitor.noAlertsHint')}</p>
         )}
       </div>
+
     </div>
   );
 }
