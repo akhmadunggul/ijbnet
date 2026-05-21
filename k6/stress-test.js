@@ -157,10 +157,12 @@ export function setup() {
     if (envToken) return envToken;
     // Stagger to avoid burst-triggering the rate limiter if login is needed.
     sleep(0.5 + Math.random());
+    const loginHeaders = { 'Content-Type': 'application/json' };
+    if (BYPASS_KEY) loginHeaders['X-Load-Test-Key'] = BYPASS_KEY;
     const res = http.post(
       `${API}/auth/login`,
       JSON.stringify({ email, password }),
-      { headers: { 'Content-Type': 'application/json' } },
+      { headers: loginHeaders },
     );
     if (res.status !== 200) {
       loginErrors.add(1);
