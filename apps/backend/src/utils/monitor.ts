@@ -163,9 +163,9 @@ export async function getMetricsRange(range: MetricsRange): Promise<MetricsPoint
        ROUND(AVG(error_rate_pct), 1)  AS errorRatePct
      FROM metrics_snapshots
      WHERE ts > ?
-     GROUP BY FLOOR(ts / ?)
+     GROUP BY FLOOR(ts / ?) * ?
      ORDER BY ts`,
-    { replacements: [bucketMs, bucketMs, sinceMs, bucketMs], type: QueryTypes.SELECT },
+    { replacements: [bucketMs, bucketMs, sinceMs, bucketMs, bucketMs], type: QueryTypes.SELECT },
   );
 
   return (rows as Row[]).map((r) => ({
