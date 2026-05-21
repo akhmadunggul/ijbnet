@@ -19,6 +19,12 @@ const loginLimiter = rateLimit({
   max: 10,
   standardHeaders: true,
   legacyHeaders: false,
+  // Key by email so multiple users behind the same NAT/LPK IP each get
+  // their own 10-attempt budget. Falls back to IP if no email in body.
+  keyGenerator: (req) => {
+    const email = (req.body?.email ?? '').toLowerCase().trim();
+    return email || req.ip || 'unknown';
+  },
   message: { error: 'TOO_MANY_REQUESTS', message: 'Too many login attempts. Please try again later.' },
 });
 

@@ -15,6 +15,10 @@ import { config } from './config';
 
 const app = express();
 
+// Trust one proxy hop (Caddy) so req.ip resolves to the real client IP
+// rather than the Caddy container IP. Required for per-IP rate limiting to work.
+app.set('trust proxy', 1);
+
 // ── Security ──────────────────────────────────────────────────────────────────
 app.use(helmet());
 app.use(
