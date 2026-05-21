@@ -180,6 +180,7 @@ apps/frontend/src/
 - v0.3.4 — Superadmin toggle to enable/disable auto-translation; CV Japanese fields fall back to Indonesian when disabled; PDF always falls back to Indonesian when Japanese is empty
 - v0.3.5 — Monitoring: trust-proxy fix, per-email login rate limit, alert module (email + Telegram), enhanced /health, system monitor dashboard with active-user and DB req/min time-series charts
 - v0.3.6 — Monitor charts: configurable timeline (1h/1d/1w/1m) with DB-persisted snapshots; fix MySQL ONLY_FULL_GROUP_BY error on metrics-history; DB pool 25→35
+- v0.3.7 — Grafana-style monitor dashboard: dark theme, smooth bezier curves, gradient fills, Min/Avg/Max/Now stats row, Grafana color palette, glowing status dots
 
-Current: v0.3.6
+Current: v0.3.7
 Live at: https://jinzai.jobagus.id

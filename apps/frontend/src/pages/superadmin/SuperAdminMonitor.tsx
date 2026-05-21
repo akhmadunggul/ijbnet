@@ -26,86 +26,94 @@ interface MetricsPoint {
 }
 
 interface Limits {
-  maxUsers: number;
-  maxDbRpm: number;
-  maxHttpRpm: number;
-  maxResponseMs: number;
-  maxCpuPct: number;
-  maxErrorPct: number;
+  maxUsers: number; maxDbRpm: number; maxHttpRpm: number;
+  maxResponseMs: number; maxCpuPct: number; maxErrorPct: number;
 }
 
-interface HistoryResponse {
-  history: MetricsPoint[];
-  limits: Limits;
-}
+interface HistoryResponse { history: MetricsPoint[]; limits: Limits; }
 
 type Range = '1h' | '1d' | '1w' | '1m';
+type MetricKey = keyof Omit<MetricsPoint, 'ts'>;
+
+// ── Grafana color palette ─────────────────────────────────────────────────────
+// Background layers
+const BG_PAGE   = '#111215';
+const BG_PANEL  = '#1a1d23';
+const BG_INSET  = '#0d0f13';
+const BD_PANEL  = '#2c3038';
+const TEXT_PRI  = '#ccccdc';
+const TEXT_SEC  = '#9ea7bd';
+const TEXT_MUT  = '#6c737a';
+const TEXT_DIM  = '#3c4048';
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
 function formatUptime(s: number): string {
-  const d = Math.floor(s / 86400);
-  const h = Math.floor((s % 86400) / 3600);
-  const m = Math.floor((s % 3600) / 60);
+  const d = Math.floor(s / 86400), h = Math.floor((s % 86400) / 3600), m = Math.floor((s % 3600) / 60);
   return [d && `${d}d`, h && `${h}h`, `${m}m`].filter(Boolean).join(' ');
 }
 
 function fmtTick(ts: number, range: Range): string {
   const d = new Date(ts);
-  if (range === '1h' || range === '1d') {
-    return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-  }
-  return d.toLocaleDateString([], { month: 'short', day: 'numeric' });
+  return (range === '1h' || range === '1d')
+    ? d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+    : d.toLocaleDateString([], { month: 'short', day: 'numeric' });
 }
 
-// ── SVG time-series chart ─────────────────────────────────────────────────────
+function fmtVal(v: number, unit: string): string {
+  return (unit === '%' || unit === 'ms') ? v.toFixed(1) : Math.round(v).toString();
+}
 
-type MetricKey = keyof Omit<MetricsPoint, 'ts'>;
+// Smooth monotone cubic bezier path — gives Grafana's characteristic curve
+function buildLinePath(pts: { x: number; y: number }[]): string {
+  if (pts.length < 2) return '';
+  let d = `M${pts[0].x.toFixed(1)},${pts[0].y.toFixed(1)}`;
+  for (let i = 1; i < pts.length; i++) {
+    const prev = pts[i - 1], curr = pts[i];
+    const cpx = ((prev.x + curr.x) / 2).toFixed(1);
+    d += ` C${cpx},${prev.y.toFixed(1)} ${cpx},${curr.y.toFixed(1)} ${curr.x.toFixed(1)},${curr.y.toFixed(1)}`;
+  }
+  return d;
+}
+
+function buildAreaPath(pts: { x: number; y: number }[], baseY: number): string {
+  if (pts.length < 2) return '';
+  const line = buildLinePath(pts);
+  return `${line} L${pts[pts.length - 1].x.toFixed(1)},${baseY.toFixed(1)} L${pts[0].x.toFixed(1)},${baseY.toFixed(1)} Z`;
+}
+
+// ── SVG time-series chart — Grafana style ─────────────────────────────────────
 
 function TimeSeriesChart({
   data, valueKey, limit, color, title, unit = '', range,
 }: {
-  data: MetricsPoint[];
-  valueKey: MetricKey;
-  limit: number;
-  color: string;
-  title: string;
-  unit?: string;
-  range: Range;
+  data: MetricsPoint[]; valueKey: MetricKey; limit: number;
+  color: string; title: string; unit?: string; range: Range;
 }) {
-  const VW = 420, VH = 160;
-  const P = { t: 14, r: 52, b: 30, l: 46 };
-  const cW = VW - P.l - P.r;
-  const cH = VH - P.t - P.b;
+  const VW = 420, VH = 100;
+  const P = { t: 6, r: 46, b: 20, l: 38 };
+  const cW = VW - P.l - P.r, cH = VH - P.t - P.b;
 
-  const values = data.map((d) => d[valueKey] as number);
+  const values  = data.map((d) => d[valueKey] as number);
   const current = values[values.length - 1] ?? 0;
-  const peak    = Math.max(...values, 0);
-  const ceiling = Math.max(limit * 1.15, peak, 1);
+  const minVal  = values.length ? Math.min(...values) : 0;
+  const maxVal  = values.length ? Math.max(...values) : 0;
+  const avgVal  = values.length ? values.reduce((a, b) => a + b, 0) / values.length : 0;
+  const ceiling = Math.max(limit * 1.15, maxVal, 1);
+
+  const nearLimit = current >= limit * 0.85;
+  const overLimit = current >= limit;
+  const valColor  = overLimit ? '#F2495C' : nearLimit ? '#FF9830' : TEXT_PRI;
 
   const toX = (i: number) =>
     data.length < 2 ? P.l + cW / 2 : P.l + (i / (data.length - 1)) * cW;
   const toY = (v: number) => P.t + cH - (v / ceiling) * cH;
 
-  const pts = data.map((d, i) => ({ x: toX(i), y: toY(d[valueKey] as number) }));
-  const limitY = toY(limit);
-  const nearLimit = current >= limit * 0.85;
-
-  const linePath = pts.length > 1
-    ? pts.map((p, i) => `${i === 0 ? 'M' : 'L'}${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(' ')
-    : '';
-  const areaPath = pts.length > 1
-    ? `M${pts[0].x.toFixed(1)},${toY(0).toFixed(1)} ${linePath.slice(1)} L${pts[pts.length - 1].x.toFixed(1)},${toY(0).toFixed(1)} Z`
-    : '';
-
-  // X-axis: ~5 evenly spaced ticks
-  const ticks: number[] = [];
-  if (data.length > 1) {
-    const stride = Math.max(1, Math.round(data.length / 5));
-    ticks.push(0);
-    for (let i = stride; i < data.length - Math.floor(stride / 2); i += stride) ticks.push(i);
-    if (ticks[ticks.length - 1] !== data.length - 1) ticks.push(data.length - 1);
-  }
+  const pts     = data.map((d, i) => ({ x: toX(i), y: toY(d[valueKey] as number) }));
+  const limitY  = toY(limit);
+  const baseY   = toY(0);
+  const linePath = buildLinePath(pts);
+  const areaPath = buildAreaPath(pts, baseY);
 
   const yLabels = [
     { v: 0,                       y: toY(0) },
@@ -113,85 +121,138 @@ function TimeSeriesChart({
     { v: Math.round(ceiling),     y: toY(ceiling) },
   ];
 
+  const stride = Math.max(1, Math.round(data.length / 5));
+  const ticks: number[] = data.length > 1
+    ? (() => {
+        const t = [0];
+        for (let i = stride; i < data.length - Math.floor(stride / 2); i += stride) t.push(i);
+        if (t[t.length - 1] !== data.length - 1) t.push(data.length - 1);
+        return t;
+      })()
+    : [];
+
+  const gradId = `gf-${valueKey}`;
+
   return (
-    <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-4">
-      <div className="flex items-start justify-between mb-3 gap-2">
-        <span className="text-sm font-semibold text-gray-700">{title}</span>
-        <div className="text-right shrink-0">
-          <span className={`text-2xl font-bold tabular-nums leading-none ${nearLimit ? 'text-red-600' : 'text-gray-900'}`}>
-            {current}{unit}
+    <div style={{ background: BG_PANEL, borderColor: BD_PANEL }}
+      className="rounded-lg border overflow-hidden">
+
+      {/* Panel header */}
+      <div className="flex items-center justify-between px-4 pt-3 pb-2"
+        style={{ borderBottom: `1px solid ${BD_PANEL}` }}>
+        <div className="flex items-center gap-2">
+          <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: color }} />
+          <span className="text-xs font-semibold uppercase tracking-widest" style={{ color: TEXT_SEC }}>
+            {title}
           </span>
-          <div className="text-xs text-gray-400 mt-0.5">limit {limit}{unit}</div>
         </div>
+        <span className="text-xl font-bold tabular-nums leading-none" style={{ color: valColor }}>
+          {fmtVal(current, unit)}{unit}
+        </span>
       </div>
 
-      {data.length === 0 ? (
-        <div className="flex items-center justify-center h-24 text-sm text-gray-400 italic">
-          First snapshot in &lt;1 min…
-        </div>
-      ) : (
-        <svg viewBox={`0 0 ${VW} ${VH}`} className="w-full h-auto" aria-hidden="true">
-          {yLabels.map(({ y }, i) => (
-            <line key={i} x1={P.l} y1={y} x2={VW - P.r} y2={y} stroke="#f3f4f6" strokeWidth="1.5" />
-          ))}
+      {/* Chart */}
+      <div className="px-1 pt-1">
+        {data.length === 0 ? (
+          <div className="flex items-center justify-center h-20 text-xs italic" style={{ color: TEXT_DIM }}>
+            Waiting for first snapshot…
+          </div>
+        ) : (
+          <svg viewBox={`0 0 ${VW} ${VH}`} className="w-full h-auto" aria-hidden="true">
+            <defs>
+              <linearGradient id={gradId} x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%"   stopColor={color} stopOpacity="0.28" />
+                <stop offset="70%"  stopColor={color} stopOpacity="0.06" />
+                <stop offset="100%" stopColor={color} stopOpacity="0" />
+              </linearGradient>
+            </defs>
 
-          {areaPath && <path d={areaPath} fill={color} fillOpacity={0.1} />}
+            {/* Horizontal grid lines */}
+            {yLabels.map(({ y }, i) => (
+              <line key={i} x1={P.l} y1={y} x2={VW - P.r} y2={y}
+                stroke="rgba(255,255,255,0.07)" strokeWidth="1" />
+            ))}
 
-          {linePath && (
-            <path d={linePath} stroke={color} strokeWidth="2" fill="none" strokeLinejoin="round" strokeLinecap="round" />
-          )}
+            {/* Area fill */}
+            {areaPath && <path d={areaPath} fill={`url(#${gradId})`} />}
 
-          <line x1={P.l} y1={limitY} x2={VW - P.r} y2={limitY}
-            stroke="#ef4444" strokeWidth="1.5" strokeDasharray="5,4" opacity={0.7} />
-          <text x={VW - P.r + 3} y={limitY + 5} fontSize="13" fill="#ef4444" opacity={0.85} fontWeight="500">
-            {limit}{unit}
-          </text>
+            {/* Main line */}
+            {linePath && (
+              <path d={linePath} stroke={color} strokeWidth="1.75"
+                fill="none" strokeLinejoin="round" strokeLinecap="round" />
+            )}
 
-          {yLabels.map(({ v, y }, i) => (
-            <text key={i} x={P.l - 5} y={y + 4} fontSize="13" fill="#6b7280" textAnchor="end">
-              {v}{unit}
+            {/* Threshold dashed line */}
+            <line x1={P.l} y1={limitY} x2={VW - P.r} y2={limitY}
+              stroke="#F2495C" strokeWidth="1" strokeDasharray="4,3" opacity="0.65" />
+            <text x={VW - P.r + 3} y={limitY + 4} fontSize="11" fill="#F2495C" opacity="0.8" fontWeight="600">
+              {fmtVal(limit, unit)}{unit}
             </text>
-          ))}
 
-          {pts.length > 0 && (
-            <circle cx={pts[pts.length - 1].x} cy={pts[pts.length - 1].y}
-              r="4" fill={color} stroke="white" strokeWidth="2" />
-          )}
+            {/* Y-axis labels */}
+            {yLabels.map(({ v, y }, i) => (
+              <text key={i} x={P.l - 4} y={y + 4} fontSize="11" fill={TEXT_MUT} textAnchor="end">
+                {v}{unit}
+              </text>
+            ))}
 
-          {ticks.map((idx) => (
-            <text key={idx} x={toX(idx)} y={VH - 4} fontSize="13" fill="#6b7280"
-              textAnchor={idx === 0 ? 'start' : idx === data.length - 1 ? 'end' : 'middle'}>
-              {fmtTick(data[idx].ts, range)}
-            </text>
-          ))}
-        </svg>
-      )}
+            {/* Latest point indicator */}
+            {pts.length > 0 && (
+              <>
+                <circle cx={pts[pts.length - 1].x} cy={pts[pts.length - 1].y}
+                  r="4.5" fill={BG_PANEL} stroke={color} strokeWidth="2" />
+                <circle cx={pts[pts.length - 1].x} cy={pts[pts.length - 1].y}
+                  r="2" fill={color} />
+              </>
+            )}
+
+            {/* X-axis time labels */}
+            {ticks.map((idx) => (
+              <text key={idx} x={toX(idx)} y={VH - 3} fontSize="11" fill={TEXT_MUT}
+                textAnchor={idx === 0 ? 'start' : idx === data.length - 1 ? 'end' : 'middle'}>
+                {fmtTick(data[idx].ts, range)}
+              </text>
+            ))}
+          </svg>
+        )}
+      </div>
+
+      {/* Stats row — Min / Avg / Max / Now */}
+      <div className="grid grid-cols-4" style={{ borderTop: `1px solid ${BD_PANEL}` }}>
+        {(['Min', 'Avg', 'Max', 'Now'] as const).map((label, i) => {
+          const v = [minVal, avgVal, maxVal, current][i];
+          const isNow = label === 'Now';
+          const nowColor = isNow ? valColor : TEXT_PRI;
+          return (
+            <div key={label} className="py-2 text-center"
+              style={{ borderRight: i < 3 ? `1px solid ${BD_PANEL}` : undefined }}>
+              <div className="text-[10px] font-semibold uppercase tracking-widest mb-0.5"
+                style={{ color: TEXT_MUT }}>{label}</div>
+              <div className="text-sm font-bold tabular-nums"
+                style={{ color: nowColor }}>
+                {fmtVal(v, unit)}{unit}
+              </div>
+            </div>
+          );
+        })}
+      </div>
     </div>
   );
 }
 
 // ── Range selector ────────────────────────────────────────────────────────────
 
-function RangeSelector({
-  value, onChange, labels,
-}: {
-  value: Range;
-  onChange: (r: Range) => void;
-  labels: Record<Range, string>;
+function RangeSelector({ value, onChange, labels }: {
+  value: Range; onChange: (r: Range) => void; labels: Record<Range, string>;
 }) {
-  const options: Range[] = ['1h', '1d', '1w', '1m'];
   return (
-    <div className="flex gap-1 bg-gray-100 rounded-lg p-1">
-      {options.map((r) => (
-        <button
-          key={r}
-          onClick={() => onChange(r)}
-          className={`flex-1 text-xs font-semibold px-3 py-1.5 rounded-md transition-colors ${
-            value === r
-              ? 'bg-white text-gray-900 shadow-sm'
-              : 'text-gray-500 hover:text-gray-700'
-          }`}
-        >
+    <div className="flex gap-1 rounded-lg p-1" style={{ background: BG_INSET, border: `1px solid ${BD_PANEL}` }}>
+      {(['1h', '1d', '1w', '1m'] as Range[]).map((r) => (
+        <button key={r} onClick={() => onChange(r)}
+          className="flex-1 text-xs font-semibold px-3 py-1.5 rounded-md transition-all"
+          style={value === r
+            ? { background: '#3d4658', color: TEXT_PRI }
+            : { color: TEXT_MUT }}>
           {labels[r]}
         </button>
       ))}
@@ -199,57 +260,78 @@ function RangeSelector({
   );
 }
 
-// ── Small reused components ───────────────────────────────────────────────────
+// ── Sub-components ────────────────────────────────────────────────────────────
 
 function StatusDot({ ok }: { ok: boolean }) {
-  return <span className={`inline-block w-2 h-2 rounded-full ${ok ? 'bg-green-500' : 'bg-red-500'}`} />;
+  return (
+    <span className="inline-block w-2 h-2 rounded-full flex-shrink-0"
+      style={{
+        backgroundColor: ok ? '#73BF69' : '#F2495C',
+        boxShadow: ok ? '0 0 6px rgba(115,191,105,0.7)' : '0 0 6px rgba(242,73,92,0.7)',
+      }} />
+  );
 }
 
 function ServicePill({ label, status, responseMs }: { label: string; status: 'ok' | 'error'; responseMs: number }) {
   const ok = status === 'ok';
   return (
-    <div className={`flex items-center gap-3 px-4 py-3 rounded-xl border ${ok ? 'bg-green-50 border-green-100' : 'bg-red-50 border-red-100'}`}>
+    <div className="flex items-center gap-3 px-4 py-3 rounded-lg border"
+      style={{
+        background: ok ? 'rgba(115,191,105,0.07)' : 'rgba(242,73,92,0.07)',
+        borderColor: ok ? 'rgba(115,191,105,0.2)' : 'rgba(242,73,92,0.2)',
+      }}>
       <StatusDot ok={ok} />
       <div>
-        <div className={`text-sm font-semibold ${ok ? 'text-green-800' : 'text-red-800'}`}>{label}</div>
-        <div className={`text-xs ${ok ? 'text-green-600' : 'text-red-500'}`}>{ok ? `${responseMs} ms` : 'Unreachable'}</div>
+        <div className="text-sm font-semibold" style={{ color: ok ? '#73BF69' : '#F2495C' }}>{label}</div>
+        <div className="text-xs mt-0.5" style={{ color: ok ? '#4d8c47' : '#a83443' }}>
+          {ok ? `${responseMs} ms` : 'Unreachable'}
+        </div>
       </div>
     </div>
   );
 }
 
 function MetricCard({ label, value, warn, danger }: { label: string; value: number; warn: number; danger: number }) {
-  const cls = value >= danger ? 'text-red-600 bg-red-50 border-red-100'
-    : value >= warn ? 'text-yellow-600 bg-yellow-50 border-yellow-100'
-    : 'text-gray-900 bg-white border-gray-100';
+  const color = value >= danger ? '#F2495C' : value >= warn ? '#FF9830' : TEXT_PRI;
+  const bg    = value >= danger ? 'rgba(242,73,92,0.08)' : value >= warn ? 'rgba(255,152,48,0.08)' : BG_PANEL;
+  const bd    = value >= danger ? 'rgba(242,73,92,0.25)' : value >= warn ? 'rgba(255,152,48,0.25)' : BD_PANEL;
   return (
-    <div className={`rounded-xl border shadow-sm p-5 ${cls}`}>
-      <div className="text-3xl font-bold">{value}</div>
-      <div className="text-xs mt-1 font-medium opacity-75">{label}</div>
+    <div className="rounded-lg border p-5" style={{ background: bg, borderColor: bd }}>
+      <div className="text-3xl font-bold tabular-nums" style={{ color }}>{value}</div>
+      <div className="text-xs mt-1 font-medium" style={{ color: TEXT_MUT }}>{label}</div>
     </div>
   );
 }
 
 function MemoryBar({ used, limit }: { used: number; limit: number }) {
   const pct = Math.min(100, Math.round((used / limit) * 100));
-  const bar = pct >= 85 ? 'bg-red-500' : pct >= 65 ? 'bg-yellow-400' : 'bg-green-500';
+  const barColor = pct >= 85 ? '#F2495C' : pct >= 65 ? '#FF9830' : '#73BF69';
   return (
-    <div className="space-y-1.5">
-      <div className="flex justify-between text-xs text-gray-500"><span>{used} MB used</span><span>{limit} MB limit</span></div>
-      <div className="h-2.5 bg-gray-100 rounded-full overflow-hidden">
-        <div className={`h-full rounded-full transition-all ${bar}`} style={{ width: `${pct}%` }} />
+    <div className="space-y-2">
+      <div className="flex justify-between text-xs" style={{ color: TEXT_MUT }}>
+        <span>{used} MB used</span><span>{limit} MB limit</span>
       </div>
-      <div className="text-xs text-gray-400 text-right">{pct}%</div>
+      <div className="h-2 rounded-full overflow-hidden" style={{ background: '#2c3038' }}>
+        <div className="h-full rounded-full transition-all" style={{ width: `${pct}%`, backgroundColor: barColor }} />
+      </div>
+      <div className="text-xs text-right" style={{ color: TEXT_MUT }}>{pct}% heap</div>
     </div>
   );
 }
 
 function AlertBadge({ label, active }: { label: string; active: boolean }) {
   return (
-    <div className={`flex items-center gap-2 px-3 py-2 rounded-lg border text-xs font-medium ${active ? 'bg-green-50 border-green-100 text-green-700' : 'bg-gray-50 border-gray-100 text-gray-400'}`}>
+    <div className="flex items-center gap-2 px-3 py-2.5 rounded-lg border text-xs font-medium"
+      style={{
+        background: active ? 'rgba(115,191,105,0.07)' : BG_PANEL,
+        borderColor: active ? 'rgba(115,191,105,0.2)' : BD_PANEL,
+        color: active ? '#73BF69' : TEXT_MUT,
+      }}>
       <StatusDot ok={active} />
-      {label}
-      <span className={`ml-auto ${active ? 'text-green-500' : 'text-gray-300'}`}>{active ? '●' : '○'}</span>
+      <span>{label}</span>
+      <span className="ml-auto text-xs font-bold" style={{ color: active ? '#73BF69' : TEXT_DIM }}>
+        {active ? 'ON' : 'OFF'}
+      </span>
     </div>
   );
 }
@@ -280,7 +362,11 @@ export default function SuperAdminMonitor() {
   });
 
   if (isLoading || !health) {
-    return <div className="text-sm text-gray-500">{t('loading')}</div>;
+    return (
+      <div className="flex items-center justify-center h-32 text-sm" style={{ color: TEXT_MUT }}>
+        {t('loading')}
+      </div>
+    );
   }
 
   const { status, uptime, memory, db, redis, metrics, alerts } = health;
@@ -292,87 +378,106 @@ export default function SuperAdminMonitor() {
     maxResponseMs: 2000, maxCpuPct: 80, maxErrorPct: 1,
   };
 
-  const chartProps = { range, limits };
-
   return (
-    <div className="space-y-6">
+    // Break out of the parent's p-4/p-6 padding to fill the page with dark background
+    <div className="-mx-4 -my-4 md:-mx-6 md:-my-6 min-h-screen space-y-6 px-4 py-6 md:px-6"
+      style={{ background: BG_PAGE }}>
 
       {/* ── Header ── */}
       <div className="flex items-center justify-between flex-wrap gap-3">
-        <h1 className="text-xl font-bold text-gray-900">{t('superadmin.monitor.title')}</h1>
-        <div className="flex items-center gap-3">
-          <span className={`inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-full ${degraded ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'}`}>
+        <h1 className="text-lg font-bold tracking-wide" style={{ color: TEXT_PRI }}>
+          {t('superadmin.monitor.title')}
+        </h1>
+        <div className="flex items-center gap-3 flex-wrap">
+          <span className="inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-full"
+            style={{
+              background: degraded ? 'rgba(242,73,92,0.12)' : 'rgba(115,191,105,0.12)',
+              color: degraded ? '#F2495C' : '#73BF69',
+            }}>
             <StatusDot ok={!degraded} />
             {degraded ? t('superadmin.monitor.degraded') : t('superadmin.monitor.allGood')}
           </span>
-          <span className="text-xs text-gray-400">{t('superadmin.monitor.refreshed')}: {lastRefresh}</span>
+          <span className="text-xs" style={{ color: TEXT_MUT }}>
+            {t('superadmin.monitor.refreshed')}: {lastRefresh}
+          </span>
         </div>
       </div>
 
       {/* ── Uptime + Services ── */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-5 flex flex-col justify-center">
-          <div className="text-xs text-gray-500 mb-1">{t('superadmin.monitor.uptime')}</div>
-          <div className="text-2xl font-bold text-gray-900">{formatUptime(uptime)}</div>
+        <div className="rounded-lg border flex flex-col justify-center px-5 py-4"
+          style={{ background: BG_PANEL, borderColor: BD_PANEL }}>
+          <div className="text-xs uppercase tracking-widest font-semibold mb-1" style={{ color: TEXT_MUT }}>
+            {t('superadmin.monitor.uptime')}
+          </div>
+          <div className="text-2xl font-bold tabular-nums" style={{ color: TEXT_PRI }}>
+            {formatUptime(uptime)}
+          </div>
         </div>
-        <ServicePill label={t('superadmin.monitor.db')}  status={db.status}    responseMs={db.responseMs} />
-        <ServicePill label="Redis"                        status={redis.status} responseMs={redis.responseMs} />
+        <ServicePill label={t('superadmin.monitor.db')} status={db.status} responseMs={db.responseMs} />
+        <ServicePill label="Redis" status={redis.status} responseMs={redis.responseMs} />
       </div>
 
       {/* ── Time range selector ── */}
-      <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-4">
+      <div className="rounded-lg border px-4 py-3" style={{ background: BG_PANEL, borderColor: BD_PANEL }}>
         <div className="flex items-center justify-between gap-4 flex-wrap">
-          <span className="text-sm font-semibold text-gray-700">{t('superadmin.monitor.timeRange')}</span>
-          <div className="flex items-center gap-3 flex-wrap">
+          <span className="text-xs font-semibold uppercase tracking-widest" style={{ color: TEXT_SEC }}>
+            {t('superadmin.monitor.timeRange')}
+          </span>
+          <div className="flex items-center gap-3">
             {historyFetching && (
-              <span className="text-xs text-gray-400 animate-pulse">Loading…</span>
+              <span className="text-xs animate-pulse" style={{ color: TEXT_MUT }}>Loading…</span>
             )}
             <RangeSelector value={range} onChange={setRange} labels={rangeLabels} />
           </div>
         </div>
         {history.length === 0 && range !== '1h' && (
-          <p className="mt-3 text-xs text-gray-400 italic">{t('superadmin.monitor.noDataYet')}</p>
+          <p className="mt-2 text-xs italic" style={{ color: TEXT_MUT }}>
+            {t('superadmin.monitor.noDataYet')}
+          </p>
         )}
       </div>
 
       {/* ── Traffic charts ── */}
       <div>
-        <h2 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">
+        <h2 className="text-xs font-semibold uppercase tracking-widest mb-3" style={{ color: TEXT_MUT }}>
           {t('superadmin.monitor.sectionTraffic')}
         </h2>
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-          <TimeSeriesChart data={history} valueKey="activeUsers"        limit={chartProps.limits.maxUsers}    color="#3b82f6" title={t('superadmin.monitor.activeUsers')}   unit=""    range={range} />
-          <TimeSeriesChart data={history} valueKey="httpRequestsPerMin" limit={chartProps.limits.maxHttpRpm}  color="#10b981" title={t('superadmin.monitor.httpRpm')}       unit=""    range={range} />
+          <TimeSeriesChart data={history} valueKey="activeUsers"        limit={limits.maxUsers}    color="#5794F2" title={t('superadmin.monitor.activeUsers')}   unit=""    range={range} />
+          <TimeSeriesChart data={history} valueKey="httpRequestsPerMin" limit={limits.maxHttpRpm}  color="#73BF69" title={t('superadmin.monitor.httpRpm')}       unit=""    range={range} />
         </div>
       </div>
 
       {/* ── Performance charts ── */}
       <div>
-        <h2 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">
+        <h2 className="text-xs font-semibold uppercase tracking-widest mb-3" style={{ color: TEXT_MUT }}>
           {t('superadmin.monitor.sectionPerformance')}
         </h2>
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-          <TimeSeriesChart data={history} valueKey="p95ResponseMs"    limit={chartProps.limits.maxResponseMs} color="#f59e0b" title={t('superadmin.monitor.p95Response')} unit="ms"  range={range} />
-          <TimeSeriesChart data={history} valueKey="dbRequestsPerMin" limit={chartProps.limits.maxDbRpm}      color="#8b5cf6" title={t('superadmin.monitor.dbRpm')}        unit=""    range={range} />
+          <TimeSeriesChart data={history} valueKey="p95ResponseMs"    limit={limits.maxResponseMs} color="#FF9830" title={t('superadmin.monitor.p95Response')} unit="ms"  range={range} />
+          <TimeSeriesChart data={history} valueKey="dbRequestsPerMin" limit={limits.maxDbRpm}      color="#B877D9" title={t('superadmin.monitor.dbRpm')}        unit=""    range={range} />
         </div>
       </div>
 
       {/* ── Health charts ── */}
       <div>
-        <h2 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">
+        <h2 className="text-xs font-semibold uppercase tracking-widest mb-3" style={{ color: TEXT_MUT }}>
           {t('superadmin.monitor.sectionHealth')}
         </h2>
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-          <TimeSeriesChart data={history} valueKey="cpuPct"        limit={chartProps.limits.maxCpuPct}   color="#ef4444" title={t('superadmin.monitor.cpu')}       unit="%"   range={range} />
-          <TimeSeriesChart data={history} valueKey="errorRatePct"  limit={chartProps.limits.maxErrorPct} color="#f43f5e" title={t('superadmin.monitor.errorRate')}  unit="%"   range={range} />
+          <TimeSeriesChart data={history} valueKey="cpuPct"       limit={limits.maxCpuPct}   color="#F2495C" title={t('superadmin.monitor.cpu')}       unit="%" range={range} />
+          <TimeSeriesChart data={history} valueKey="errorRatePct" limit={limits.maxErrorPct} color="#FF7383" title={t('superadmin.monitor.errorRate')}  unit="%" range={range} />
         </div>
       </div>
 
       {/* ── Memory ── */}
-      <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-5">
-        <h2 className="text-sm font-semibold text-gray-700 mb-4">{t('superadmin.monitor.memory')}</h2>
+      <div className="rounded-lg border p-5" style={{ background: BG_PANEL, borderColor: BD_PANEL }}>
+        <h2 className="text-xs font-semibold uppercase tracking-widest mb-4" style={{ color: TEXT_SEC }}>
+          {t('superadmin.monitor.memory')}
+        </h2>
         <MemoryBar used={memory.heapUsedMb} limit={memory.limitMb} />
-        <div className="mt-3 flex gap-4 text-xs text-gray-400">
+        <div className="mt-3 flex gap-4 text-xs" style={{ color: TEXT_MUT }}>
           <span>Heap total: {memory.heapTotalMb} MB</span>
           <span>RSS: {memory.rssMb} MB</span>
         </div>
@@ -380,23 +485,27 @@ export default function SuperAdminMonitor() {
 
       {/* ── Hourly counters ── */}
       <div>
-        <h2 className="text-sm font-semibold text-gray-700 mb-3">{t('superadmin.monitor.metrics1h')}</h2>
+        <h2 className="text-xs font-semibold uppercase tracking-widest mb-3" style={{ color: TEXT_MUT }}>
+          {t('superadmin.monitor.metrics1h')}
+        </h2>
         <div className="grid grid-cols-3 gap-4">
-          <MetricCard label={t('superadmin.monitor.errors5xx')}     value={metrics.errors5xx_1h}      warn={1}  danger={10}  />
-          <MetricCard label={t('superadmin.monitor.rateLimitHits')} value={metrics.rateLimitHits_1h}  warn={20} danger={100} />
-          <MetricCard label={t('superadmin.monitor.dbErrors')}      value={metrics.dbErrors_1h}       warn={1}  danger={5}   />
+          <MetricCard label={t('superadmin.monitor.errors5xx')}     value={metrics.errors5xx_1h}     warn={1}  danger={10}  />
+          <MetricCard label={t('superadmin.monitor.rateLimitHits')} value={metrics.rateLimitHits_1h} warn={20} danger={100} />
+          <MetricCard label={t('superadmin.monitor.dbErrors')}      value={metrics.dbErrors_1h}      warn={1}  danger={5}   />
         </div>
       </div>
 
       {/* ── Alert config ── */}
-      <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-5">
-        <h2 className="text-sm font-semibold text-gray-700 mb-3">{t('superadmin.monitor.alerts')}</h2>
+      <div className="rounded-lg border p-5" style={{ background: BG_PANEL, borderColor: BD_PANEL }}>
+        <h2 className="text-xs font-semibold uppercase tracking-widest mb-3" style={{ color: TEXT_SEC }}>
+          {t('superadmin.monitor.alerts')}
+        </h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <AlertBadge label={t('superadmin.monitor.emailAlert')}    active={alerts.email} />
           <AlertBadge label={t('superadmin.monitor.telegramAlert')} active={alerts.telegram} />
         </div>
         {!alerts.email && !alerts.telegram && (
-          <p className="mt-3 text-xs text-gray-400">{t('superadmin.monitor.noAlertsHint')}</p>
+          <p className="mt-3 text-xs" style={{ color: TEXT_MUT }}>{t('superadmin.monitor.noAlertsHint')}</p>
         )}
       </div>
 
