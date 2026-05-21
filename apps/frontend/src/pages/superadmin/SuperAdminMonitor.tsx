@@ -65,8 +65,9 @@ function TimeSeriesChart({
   title: string;
   unit?: string;
 }) {
-  const VW = 420, VH = 96;
-  const P = { t: 8, r: 38, b: 18, l: 34 };
+  // Coordinate system — h-auto SVG scales width to container, height follows
+  const VW = 420, VH = 160;
+  const P = { t: 14, r: 52, b: 30, l: 46 };
   const cW = VW - P.l - P.r;
   const cH = VH - P.t - P.b;
 
@@ -90,7 +91,7 @@ function TimeSeriesChart({
     ? `M${pts[0].x.toFixed(1)},${toY(0).toFixed(1)} ${linePath.slice(1)} L${pts[pts.length - 1].x.toFixed(1)},${toY(0).toFixed(1)} Z`
     : '';
 
-  // X-axis tick indices: first, every 15, last
+  // X-axis tick indices: first, every 15 points, last
   const ticks: number[] = [];
   if (data.length > 1) {
     ticks.push(0);
@@ -100,65 +101,67 @@ function TimeSeriesChart({
 
   // Y-axis labels: 0, mid, ceiling
   const yLabels = [
-    { v: 0,           y: toY(0) },
+    { v: 0,                       y: toY(0) },
     { v: Math.round(ceiling / 2), y: toY(ceiling / 2) },
     { v: Math.round(ceiling),     y: toY(ceiling) },
   ];
 
   return (
     <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-4">
-      <div className="flex items-start justify-between mb-2 gap-2">
-        <span className="text-xs font-semibold text-gray-600">{title}</span>
+      {/* Card header */}
+      <div className="flex items-start justify-between mb-3 gap-2">
+        <span className="text-sm font-semibold text-gray-700">{title}</span>
         <div className="text-right shrink-0">
-          <span className={`text-lg font-bold tabular-nums leading-none ${nearLimit ? 'text-red-600' : 'text-gray-900'}`}>
+          <span className={`text-2xl font-bold tabular-nums leading-none ${nearLimit ? 'text-red-600' : 'text-gray-900'}`}>
             {current}{unit}
           </span>
-          <div className="text-[10px] text-gray-400 mt-0.5">limit {limit}{unit}</div>
+          <div className="text-xs text-gray-400 mt-0.5">limit {limit}{unit}</div>
         </div>
       </div>
 
       {data.length === 0 ? (
-        <div className="flex items-center justify-center h-16 text-xs text-gray-400 italic">
+        <div className="flex items-center justify-center h-24 text-sm text-gray-400 italic">
           First snapshot in &lt;1 min…
         </div>
       ) : (
-        <svg viewBox={`0 0 ${VW} ${VH}`} className="w-full" style={{ height: 96 }} aria-hidden="true">
-          {/* Horizontal grid */}
+        /* h-auto: SVG fills container width and scales height by aspect ratio */
+        <svg viewBox={`0 0 ${VW} ${VH}`} className="w-full h-auto" aria-hidden="true">
+          {/* Horizontal grid lines */}
           {yLabels.map(({ y }, i) => (
-            <line key={i} x1={P.l} y1={y} x2={VW - P.r} y2={y} stroke="#f3f4f6" strokeWidth="1" />
+            <line key={i} x1={P.l} y1={y} x2={VW - P.r} y2={y} stroke="#f3f4f6" strokeWidth="1.5" />
           ))}
 
-          {/* Area */}
+          {/* Area fill */}
           {areaPath && <path d={areaPath} fill={color} fillOpacity={0.1} />}
 
           {/* Line */}
           {linePath && (
-            <path d={linePath} stroke={color} strokeWidth="1.5" fill="none" strokeLinejoin="round" strokeLinecap="round" />
+            <path d={linePath} stroke={color} strokeWidth="2" fill="none" strokeLinejoin="round" strokeLinecap="round" />
           )}
 
-          {/* Hard-limit line */}
+          {/* Hard-limit dashed line */}
           <line x1={P.l} y1={limitY} x2={VW - P.r} y2={limitY}
-            stroke="#ef4444" strokeWidth="1" strokeDasharray="4,3" opacity={0.65} />
-          <text x={VW - P.r + 2} y={limitY + 4} fontSize="7.5" fill="#ef4444" opacity={0.8}>
+            stroke="#ef4444" strokeWidth="1.5" strokeDasharray="5,4" opacity={0.7} />
+          <text x={VW - P.r + 3} y={limitY + 5} fontSize="13" fill="#ef4444" opacity={0.85} fontWeight="500">
             {limit}{unit}
           </text>
 
-          {/* Y labels */}
+          {/* Y-axis labels */}
           {yLabels.map(({ v, y }, i) => (
-            <text key={i} x={P.l - 3} y={y + 3} fontSize="7" fill="#9ca3af" textAnchor="end">
+            <text key={i} x={P.l - 5} y={y + 4} fontSize="13" fill="#6b7280" textAnchor="end">
               {v}{unit}
             </text>
           ))}
 
-          {/* Latest dot */}
+          {/* Latest value dot */}
           {pts.length > 0 && (
             <circle cx={pts[pts.length - 1].x} cy={pts[pts.length - 1].y}
-              r="3" fill={color} stroke="white" strokeWidth="1.5" />
+              r="4" fill={color} stroke="white" strokeWidth="2" />
           )}
 
-          {/* X ticks */}
+          {/* X-axis time labels */}
           {ticks.map((idx) => (
-            <text key={idx} x={toX(idx)} y={VH - 2} fontSize="7" fill="#9ca3af"
+            <text key={idx} x={toX(idx)} y={VH - 4} fontSize="13" fill="#6b7280"
               textAnchor={idx === 0 ? 'start' : idx === data.length - 1 ? 'end' : 'middle'}>
               {fmtTime(data[idx].ts)}
             </text>
