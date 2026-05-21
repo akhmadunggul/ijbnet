@@ -27,6 +27,7 @@ import { sendEmail } from '../utils/email';
 import {
   batchActivatedHtml, batchActivatedSubject,
 } from '../emails/batchActivated';
+import { managerBroadcastHtml } from '../emails/managerBroadcast';
 import {
   interviewScheduledRecruiterHtml, interviewScheduledRecruiterSubject,
   interviewScheduledCandidateHtml, interviewScheduledCandidateSubject,
@@ -1179,6 +1180,201 @@ router.post('/requests/:id/reject', wrap(async (req: Request, res: Response): Pr
   await audit(req, 'REQUEST_REJECTED', 'recruitment_request', id);
 
   res.json({ request: request.toJSON() });
+}));
+
+// ── GET /api/manager/notify/programs ─────────────────────────────────────────
+router.get('/notify/programs', wrap(async (_req: Request, res: Response): Promise<void> => {
+  const rows = await Candidate.findAll({
+    attributes: ['sswFieldId', 'sswFieldJa', 'sswKubun'],
+    where: { sswFieldId: { [Op.ne]: null } },
+    group: ['sswFieldId', 'sswFieldJa', 'sswKubun'],
+    raw: true,
+  }) as unknown as { sswFieldId: string; sswFieldJa: string | null; sswKubun: string | null }[];
+
+  const programs = rows
+    .filter((r) => r.sswFieldId)
+    .map((r) => ({
+      id: r.sswFieldId,
+      label: r.sswFieldJa ?? r.sswFieldId,
+      kubun: r.sswKubun,
+    }))
+    .sort((a, b) => a.label.localeCompare(b.label));
+
+  res.json({ programs });
+}));
+
+// ── GET /api/manager/notify/recipients ────────────────────────────────────────
+router.get('/notify/recipients', wrap(async (req: Request, res: Response): Promise<void> => {
+  const { targetType, targetId } = req.query as {
+    targetType?: string;
+    targetId?: string;
+  };
+
+  if (!targetType || !['all', 'lpk', 'program', 'batch'].includes(targetType)) {
+    res.status(400).json({ error: 'BAD_REQUEST', message: 'Invalid targetType' });
+    return;
+  }
+
+  if ((targetType === 'lpk' || targetType === 'batch') && (!targetId || !isUUID(targetId))) {
+    res.status(400).json({ error: 'BAD_REQUEST', message: 'targetId must be a valid UUID' });
+    return;
+  }
+  if (targetType === 'program' && !targetId) {
+    res.status(400).json({ error: 'BAD_REQUEST', message: 'targetId required for program' });
+    return;
+  }
+
+  let candidateIds: string[] | null = null;
+
+  if (targetType === 'batch') {
+    const links = await BatchCandidate.findAll({
+      where: { batchId: targetId },
+      attributes: ['candidateId'],
+      raw: true,
+    }) as unknown as { candidateId: string }[];
+    candidateIds = links.map((l) => l.candidateId);
+    if (candidateIds.length === 0) {
+      res.json({ count: 0, samples: [] });
+      return;
+    }
+  }
+
+  const where: Record<string, unknown> = {};
+  if (targetType === 'lpk') where['lpkId'] = targetId;
+  if (targetType === 'program') where['sswFieldId'] = targetId;
+  if (candidateIds) where['id'] = { [Op.in]: candidateIds };
+
+  const candidates = await Candidate.findAll({
+    where,
+    include: [{ model: User, as: 'user', attributes: ['email'] }],
+    attributes: ['id', 'candidateCode', 'fullName', 'email'],
+    order: [['fullName', 'ASC']],
+  });
+
+  const results = candidates
+    .map((c) => {
+      const raw = c.toJSON() as {
+        id: string; candidateCode: string; fullName: string;
+        email: string | null; user?: { email: string } | null;
+      };
+      const email = raw.email ?? raw.user?.email ?? null;
+      return { id: raw.id, candidateCode: raw.candidateCode, fullName: raw.fullName, email };
+    })
+    .filter((c) => c.email);
+
+  res.json({ count: results.length, samples: results.slice(0, 5) });
+}));
+
+// ── POST /api/manager/notify ──────────────────────────────────────────────────
+router.post('/notify', wrap(async (req: Request, res: Response): Promise<void> => {
+  const { targetType, targetId, subject, body } = req.body as {
+    targetType?: string;
+    targetId?: string;
+    subject?: string;
+    body?: string;
+  };
+
+  if (!targetType || !['all', 'lpk', 'program', 'batch'].includes(targetType)) {
+    res.status(400).json({ error: 'BAD_REQUEST', message: 'Invalid targetType' });
+    return;
+  }
+  if ((targetType === 'lpk' || targetType === 'batch') && (!targetId || !isUUID(targetId))) {
+    res.status(400).json({ error: 'BAD_REQUEST', message: 'targetId must be a valid UUID' });
+    return;
+  }
+  if (targetType === 'program' && !targetId) {
+    res.status(400).json({ error: 'BAD_REQUEST', message: 'targetId required for program' });
+    return;
+  }
+  if (!subject || subject.trim().length === 0) {
+    res.status(400).json({ error: 'BAD_REQUEST', message: 'subject is required' });
+    return;
+  }
+  if (!body || body.trim().length === 0) {
+    res.status(400).json({ error: 'BAD_REQUEST', message: 'body is required' });
+    return;
+  }
+  if (subject.length > 200) {
+    res.status(400).json({ error: 'BAD_REQUEST', message: 'subject too long (max 200)' });
+    return;
+  }
+  if (body.length > 5000) {
+    res.status(400).json({ error: 'BAD_REQUEST', message: 'body too long (max 5000)' });
+    return;
+  }
+
+  // Resolve candidate IDs for batch target
+  let candidateIds: string[] | null = null;
+  if (targetType === 'batch') {
+    const links = await BatchCandidate.findAll({
+      where: { batchId: targetId },
+      attributes: ['candidateId'],
+      raw: true,
+    }) as unknown as { candidateId: string }[];
+    candidateIds = links.map((l) => l.candidateId);
+    if (candidateIds.length === 0) {
+      res.json({ sent: 0 });
+      return;
+    }
+  }
+
+  // Build candidate where clause
+  const where: Record<string, unknown> = {};
+  if (targetType === 'lpk') where['lpkId'] = targetId;
+  if (targetType === 'program') where['sswFieldId'] = targetId;
+  if (candidateIds) where['id'] = { [Op.in]: candidateIds };
+
+  const candidates = await Candidate.findAll({
+    where,
+    include: [{ model: User, as: 'user', attributes: ['id', 'email'] }],
+    attributes: ['id', 'fullName', 'email', 'userId'],
+  });
+
+  const safeSubject = subject.trim();
+  const safeBody = body.trim();
+  let sent = 0;
+
+  await Promise.all(
+    candidates.map(async (c) => {
+      const raw = c.toJSON() as {
+        id: string; fullName: string; email: string | null; userId: string | null;
+        user?: { id: string; email: string } | null;
+      };
+      const recipientEmail = raw.email ?? raw.user?.email ?? null;
+      const recipientUserId = raw.userId ?? raw.user?.id ?? null;
+
+      if (!recipientEmail && !recipientUserId) return;
+
+      // In-app notification
+      if (recipientUserId) {
+        await notifyUser(
+          recipientUserId,
+          'MANAGER_BROADCAST',
+          safeSubject,
+          safeBody,
+          'broadcast',
+          undefined,
+        );
+      }
+
+      // Email
+      if (recipientEmail) {
+        await sendEmail(
+          recipientEmail,
+          `[IJBNet] ${safeSubject}`,
+          managerBroadcastHtml(raw.fullName, safeBody, config.FRONTEND_URL),
+        );
+      }
+
+      sent++;
+    }),
+  );
+
+  await audit(req, 'MANAGER_BROADCAST', 'notification', undefined, undefined, {
+    targetType, targetId, subject: safeSubject, sent,
+  });
+
+  res.json({ sent });
 }));
 
 export default router;

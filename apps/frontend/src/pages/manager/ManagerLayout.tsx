@@ -16,6 +16,7 @@ const navItems = [
   { to: '/manager/requests',       icon: '📋', key: 'navRequests' },
   { to: '/manager/interviews',     icon: '📅', key: 'navInterviews' },
   { to: '/manager/notifications',  icon: '🔔', key: 'navNotifications' },
+  { to: '/manager/notify',         icon: '📢', key: 'navNotify' },
 ];
 
 export default function ManagerLayout() {

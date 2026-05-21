@@ -32,6 +32,7 @@ import ManagerBatchDetail from './pages/manager/ManagerBatchDetail';
 import ManagerInterviews from './pages/manager/ManagerInterviews';
 import ManagerNotifications from './pages/manager/ManagerNotifications';
 import ManagerRequests from './pages/manager/ManagerRequests';
+import ManagerNotifyPage from './pages/manager/ManagerNotifyPage';
 import SuperAdminLayout from './pages/superadmin/SuperAdminLayout';
 import SuperAdminDashboard from './pages/superadmin/SuperAdminDashboard';
 import SuperAdminUsers from './pages/superadmin/SuperAdminUsers';
@@ -148,6 +149,7 @@ export default function App() {
           <Route path="requests" element={<ManagerRequests />} />
           <Route path="interviews" element={<ManagerInterviews />} />
           <Route path="notifications" element={<ManagerNotifications />} />
+          <Route path="notify" element={<ManagerNotifyPage />} />
         </Route>
 
         {/* Recruiter portal */}

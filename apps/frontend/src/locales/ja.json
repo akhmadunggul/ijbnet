@@ -698,6 +698,7 @@
     }
   },
   "navRequests": "候補者依頼",
+  "navNotify": "通知送信",
   "requests": {
     "title": "候補者依頼",
     "subtitle": "IJBNetマネージャーに候補者の依頼を送信します。適切な候補者を選定いたします。",
@@ -783,5 +784,32 @@
   "loginTermsSuffix": "に同意したことになります。",
   "loginPrivacyPrefix": "IJBNetのプライバシーについては、",
   "loginPrivacySuffix": "をご覧ください。",
-  "loginEmailNotice": "アカウントに関するメールをお送りすることがあります。"
+  "loginEmailNotice": "アカウントに関するメールをお送りすることがあります。",
+  "notify": {
+    "title": "候補者への通知送信",
+    "subtitle": "LPK・プログラム・バッチ単位で候補者に一括メッセージを送信します。",
+    "targetLabel": "送信対象",
+    "target": {
+      "all": "全候補者",
+      "lpk": "LPK別",
+      "program": "プログラム別",
+      "batch": "バッチ別"
+    },
+    "selectPlaceholder": "— 選択してください —",
+    "selectLpk": "LPKを選択",
+    "selectProgram": "プログラムを選択",
+    "selectBatch": "バッチを選択",
+    "loadingRecipients": "受信者リストを読み込み中…",
+    "recipientsFound": "受信者 {{count}} 名",
+    "andMore": "…他 {{n}} 名",
+    "noRecipients": "この条件に該当する受信者がいません。",
+    "subjectLabel": "件名",
+    "subjectPlaceholder": "メッセージのタイトル",
+    "bodyLabel": "メッセージ",
+    "bodyPlaceholder": "候補者へのメッセージを入力してください…",
+    "send": "通知を送信",
+    "sending": "送信中…",
+    "sentSuccess": "{{count}} 名に送信しました。",
+    "errorGeneric": "送信中にエラーが発生しました。再試行してください。"
+  }
 }

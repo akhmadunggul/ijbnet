@@ -699,6 +699,7 @@
     }
   },
   "navRequests": "Permintaan",
+  "navNotify": "Kirim Notifikasi",
   "requests": {
     "title": "Permintaan Kandidat",
     "subtitle": "Ajukan permintaan kandidat kepada Manager IJBNet. Kami akan mencarikan kandidat yang sesuai.",
@@ -784,5 +785,32 @@
   "loginTermsSuffix": ".",
   "loginPrivacyPrefix": "Untuk informasi lebih lanjut tentang praktik privasi IJBNet, lihat ",
   "loginPrivacySuffix": ".",
-  "loginEmailNotice": "Kami sesekali akan mengirimkan email terkait akun Anda."
+  "loginEmailNotice": "Kami sesekali akan mengirimkan email terkait akun Anda.",
+  "notify": {
+    "title": "Kirim Notifikasi ke Kandidat",
+    "subtitle": "Kirim pesan sekaligus ke kandidat berdasarkan LPK, Program, atau Batch.",
+    "targetLabel": "Penerima",
+    "target": {
+      "all": "Semua Kandidat",
+      "lpk": "Per LPK",
+      "program": "Per Program",
+      "batch": "Per Batch"
+    },
+    "selectPlaceholder": "— Pilih —",
+    "selectLpk": "Pilih LPK",
+    "selectProgram": "Pilih Program",
+    "selectBatch": "Pilih Batch",
+    "loadingRecipients": "Memuat daftar penerima…",
+    "recipientsFound": "{{count}} penerima ditemukan",
+    "andMore": "…dan {{n}} lainnya",
+    "noRecipients": "Tidak ada penerima yang ditemukan untuk target ini.",
+    "subjectLabel": "Subjek",
+    "subjectPlaceholder": "Judul pesan",
+    "bodyLabel": "Pesan",
+    "bodyPlaceholder": "Tulis pesan untuk kandidat di sini…",
+    "send": "Kirim Notifikasi",
+    "sending": "Mengirim…",
+    "sentSuccess": "Berhasil dikirim ke {{count}} penerima.",
+    "errorGeneric": "Terjadi kesalahan saat mengirim. Silakan coba lagi."
+  }
 }
