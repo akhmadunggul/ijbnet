@@ -8,7 +8,6 @@
   "loginError": "Email atau kata sandi tidak valid.",
   "loginSubmit": "Masuk",
   "loggingIn": "Sedang masuk…",
-
   "navDashboard": "Dashboard",
   "navCandidates": "Kandidat",
   "navInterviews": "Wawancara",
@@ -21,22 +20,18 @@
   "navLogout": "Keluar",
   "navAuditLog": "Log Audit",
   "navNotifications": "Notifikasi",
-
   "pageTitle": "Manajemen Kandidat",
   "pageSub": "Kelola data kandidat SSW",
-
   "quotaLabel": "Kuota",
   "quotaTotal": "Total Kuota",
   "quotaFilled": "Terisi",
   "quotaRemaining": "Sisa",
-
   "filterAll": "Semua",
   "filterTrainee": "Trainee",
   "filterStatus": "Status",
   "filterLpk": "LPK",
   "filterBatch": "Batch",
   "filterSearch": "Cari kandidat…",
-
   "colCode": "Kode",
   "colName": "Nama",
   "colStatus": "Status",
@@ -51,7 +46,6 @@
   "colConfirmed": "Konfirmasi",
   "colSelectedDate": "Tgl Dipilih",
   "colInterviewStatus": "Status Wawancara",
-
   "chipIncomplete": "Belum Lengkap",
   "chipSubmitted": "Diajukan",
   "chipUnderReview": "Ditinjau",
@@ -62,13 +56,10 @@
   "chipActive": "Aktif",
   "chipSelection": "Seleksi",
   "chipClosed": "Ditutup",
-
   "genderM": "Laki-laki",
   "genderF": "Perempuan",
-
   "roleManager": "Manager",
   "paginationRange": "{{from}}–{{to}} dari {{total}}",
-
   "dpTitle": "Data Pribadi",
   "dpFullName": "Nama Lengkap",
   "dpGender": "Jenis Kelamin",
@@ -79,7 +70,6 @@
   "dpAddress": "Alamat",
   "dpPhone": "Nomor Telepon",
   "dpEmail": "Email",
-
   "hcTitle": "Pemeriksaan Kesehatan",
   "hcHeight": "Tinggi Terverifikasi",
   "hcWeight": "Berat Terverifikasi",
@@ -89,17 +79,14 @@
   "hcResult": "Hasil",
   "hcCheckedBy": "Diperiksa oleh",
   "hcDate": "Tanggal Periksa",
-
   "vmTitle": "Video Perkenalan",
   "vmLabel": "Label",
   "vmDate": "Tanggal",
   "vmAdd": "Tambah Video",
-
   "confirmTitle": "Konfirmasi",
   "confirmDelete": "Apakah Anda yakin ingin menghapus data ini?",
   "confirmApprove": "Setujui kandidat ini?",
   "confirmReject": "Tolak kandidat ini?",
-
   "btnSave": "Simpan",
   "btnCancel": "Batal",
   "btnBack": "Kembali",
@@ -112,7 +99,6 @@
   "btnDownload": "Unduh",
   "btnExport": "Ekspor Data",
   "btnAddCandidate": "Tambah Kandidat",
-
   "trayTitle": "Detail Kandidat",
   "trayProfile": "Profil",
   "trayTests": "Tes Bahasa",
@@ -121,63 +107,52 @@
   "trayBodyCheck": "Pemeriksaan Fisik",
   "trayVideos": "Video",
   "trayBatches": "Batch",
-
   "toastSaved": "Berhasil disimpan.",
   "toastDeleted": "Berhasil dihapus.",
   "toastError": "Terjadi kesalahan. Silakan coba lagi.",
   "toastApproved": "Kandidat disetujui.",
   "toastRejected": "Kandidat ditolak.",
   "toastUploaded": "Foto berhasil diunggah.",
-
   "consentTitle": "Persetujuan Data",
   "consentBody": "Saya menyetujui pengumpulan dan penggunaan data pribadi saya untuk keperluan penempatan SSW sesuai ketentuan yang berlaku.",
   "consentGiven": "Setuju",
   "consentRequired": "Persetujuan diperlukan untuk melanjutkan.",
-
   "candidate.consent.title": "Persetujuan Penggunaan Data Pribadi",
   "candidate.consent.agree": "Setuju",
   "candidate.consent.decline": "Tidak Setuju",
   "candidate.consent.loading": "Memuat klausul...",
   "candidate.consent.error": "Gagal memuat klausul. Silakan coba lagi.",
-
   "sswTitle": "Informasi SSW",
   "sswKubun": "Tipe SSW",
   "sswSector": "Bidang",
   "sswField": "Jenis Pekerjaan",
   "sswStudy": "Durasi Belajar Bahasa Jepang",
-
   "workplanTitle": "Rencana Kerja",
   "workplanDuration": "Durasi Rencana",
   "workplanGoal": "Tujuan",
   "workplanAfter": "Rencana Setelah Kembali",
   "workplanExpectation": "Harapan",
-
   "batchTitle": "Manajemen Batch",
   "batchCode": "Kode Batch",
   "batchCompany": "Perusahaan",
   "batchQuota": "Kuota",
   "batchStatus": "Status",
   "batchExpiry": "Kadaluarsa",
-
   "recruiterTitle": "Seleksi Kandidat",
   "recruiterAllocated": "Kandidat Dialokasikan",
   "recruiterSelected": "Dipilih",
-
   "auditWho": "Siapa",
   "auditWhom": "Siapa yang Dilihat",
   "auditWhen": "Kapan",
   "auditAction": "Aksi",
-
   "errorRequired": "Wajib diisi.",
   "errorEmail": "Format email tidak valid.",
   "errorMinLength": "Terlalu pendek.",
   "errorMaxLength": "Terlalu panjang.",
-
   "loading": "Memuat…",
   "noData": "Tidak ada data.",
   "optional": "opsional",
   "comingSoon": "Segera hadir.",
-
   "candidate": {
     "dashboard": {
       "title": "Dashboard Kandidat",
@@ -329,7 +304,6 @@
       "errorType": "Tipe file tidak valid. Hanya JPG, PNG, dan WebP yang diperbolehkan."
     }
   },
-
   "admin": {
     "dashboard": {
       "title": "Dashboard Admin",
@@ -388,7 +362,6 @@
       "save": "Simpan Catatan"
     }
   },
-
   "selection": {
     "pageTitle": "Seleksi Kandidat",
     "quota": "Kuota",
@@ -446,7 +419,6 @@
     "interviewTitle": "Jadwal Wawancara",
     "tabAll": "Semua"
   },
-
   "notifications": {
     "title": "Notifikasi",
     "unread": "{{count}} belum dibaca",
@@ -458,7 +430,6 @@
     "yesterday": "Kemarin",
     "earlier": "Sebelumnya"
   },
-
   "superadmin": {
     "dashboard": {
       "title": "System Dashboard",
@@ -631,9 +602,27 @@
       "translateDesc": "Kontrol apakah kolom Keahlian, Motivasi, dan Promosi Diri diterjemahkan otomatis ke Bahasa Jepang saat kandidat menyimpan profil. Jika dinonaktifkan, kolom Jepang pada CV akan menampilkan teks Bahasa Indonesia.",
       "translateLabel": "Auto-terjemah ke Bahasa Jepang",
       "translateHint": "Menggunakan LibreTranslate (self-hosted). Nonaktifkan jika kualitas terjemahan belum memadai."
+    },
+    "monitor": {
+      "title": "Monitor Sistem",
+      "navLabel": "Monitor",
+      "refreshed": "Diperbarui",
+      "uptime": "Uptime",
+      "services": "Layanan",
+      "db": "Database",
+      "memory": "Memori",
+      "metrics1h": "Metrik (1 jam terakhir)",
+      "errors5xx": "Error Server (5xx)",
+      "rateLimitHits": "Rate Limit Terlampaui",
+      "dbErrors": "Error Database",
+      "alerts": "Konfigurasi Alert",
+      "emailAlert": "Alert Email",
+      "telegramAlert": "Alert Telegram",
+      "allGood": "Semua sistem berjalan normal",
+      "degraded": "Sistem mengalami gangguan",
+      "noAlertsHint": "Tambahkan ALERT_EMAIL atau TELEGRAM_BOT_TOKEN + TELEGRAM_CHAT_ID ke .env untuk mengaktifkan notifikasi."
     }
   },
-
   "export": {
     "title": "Ekspor",
     "excel": "Excel (Semua Kandidat)",
@@ -641,7 +630,6 @@
     "pdf": "PDF Profil",
     "generating": "Membuat..."
   },
-
   "manager": {
     "dashboard": {
       "title": "Dashboard Manager",
@@ -695,7 +683,6 @@
     }
   },
   "navRequests": "Permintaan",
-
   "requests": {
     "title": "Permintaan Kandidat",
     "subtitle": "Ajukan permintaan kandidat kepada Manager IJBNet. Kami akan mencarikan kandidat yang sesuai.",
@@ -707,43 +694,41 @@
     "field": "Jenis Pekerjaan",
     "requestedCount": "Jumlah Vacancy",
     "allocatedCount": "Kuota Dialokasikan",
-    "status": "Status",
+    "status": {
+      "pending": "Menunggu",
+      "confirmed": "Dikonfirmasi",
+      "rejected": "Ditolak",
+      "closed": "Ditutup"
+    },
     "notes": "Catatan",
     "managerNotes": "Catatan Manager",
     "batch": "Batch",
     "noRequests": "Belum ada permintaan.",
     "noRequestsYet": "Permintaan yang Anda ajukan akan muncul di sini.",
-    "status": {
-      "pending":   "Menunggu",
-      "confirmed": "Dikonfirmasi",
-      "rejected":  "Ditolak",
-      "closed":    "Ditutup"
-    },
     "form": {
-      "title":         "Ajukan Permintaan Baru",
-      "description":   "Isi form berikut untuk mengajukan permintaan kandidat kepada Manager IJBNet.",
-      "newBtn":        "+ Permintaan Baru",
-      "submitBtn":     "Ajukan Permintaan",
+      "title": "Ajukan Permintaan Baru",
+      "description": "Isi form berikut untuk mengajukan permintaan kandidat kepada Manager IJBNet.",
+      "newBtn": "+ Permintaan Baru",
+      "submitBtn": "Ajukan Permintaan",
       "submitSuccess": "Permintaan berhasil diajukan. Manager IJBNet akan segera menindaklanjuti.",
-      "selectSector":  "Pilih Bidang",
-      "selectField":   "Pilih Jenis Pekerjaan",
-      "countHint":     "Jumlah kandidat yang dibutuhkan",
-      "notesHint":     "Kualifikasi tambahan, persyaratan khusus, dsb."
+      "selectSector": "Pilih Bidang",
+      "selectField": "Pilih Jenis Pekerjaan",
+      "countHint": "Jumlah kandidat yang dibutuhkan",
+      "notesHint": "Kualifikasi tambahan, persyaratan khusus, dsb."
     },
     "confirm": {
-      "title":   "Konfirmasi Permintaan",
-      "btn":     "Konfirmasi",
-      "hint":    "Default 2× jumlah yang diminta",
+      "title": "Konfirmasi Permintaan",
+      "btn": "Konfirmasi",
+      "hint": "Default 2× jumlah yang diminta",
       "success": "Permintaan dikonfirmasi. Batch dibuat otomatis."
     },
     "reject": {
-      "title":   "Tolak Permintaan",
-      "btn":     "Tolak",
-      "notes":   "Alasan penolakan",
+      "title": "Tolak Permintaan",
+      "btn": "Tolak",
+      "notes": "Alasan penolakan",
       "success": "Permintaan ditolak."
     }
   },
-
   "timeline": {
     "title": "Riwayat Status",
     "empty": "Belum ada riwayat.",

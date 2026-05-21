@@ -19,6 +19,7 @@ const navItems = [
   { to: '/superadmin/consent',             icon: '📄', key: 'superadmin.consent.navLabel' },
   { to: '/superadmin/data-entry-settings', icon: '🗂️', key: 'superadmin.dataEntrySettings.navLabel' },
   { to: '/superadmin/settings',            icon: '⚙️', key: 'navSettings' },
+  { to: '/superadmin/monitor',             icon: '🖥️', key: 'superadmin.monitor.navLabel' },
 ];
 
 export default function SuperAdminLayout() {

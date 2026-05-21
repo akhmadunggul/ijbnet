@@ -7,6 +7,9 @@ import multer from 'multer';
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 const pdfParse = require('pdf-parse') as (buf: Buffer) => Promise<{ text: string; numpages: number }>;
 import { authenticate, requireRole } from '../middleware/auth';
+import { redisClient } from '../utils/redis';
+import { getMetrics, recordDbError } from '../utils/monitor';
+import { config } from '../config';
 import { validateUuidParam } from '../middleware/rbac';
 import {
   sequelize,
@@ -135,6 +138,53 @@ router.get('/system/stats', wrap(async (_req, res) => {
     interviews: { proposed: proposedCount, scheduled: scheduledCount, completed: completedCount },
     dbStatus,
     recentAuditEntries: recentAuditRaw.map(e => e.toJSON()),
+  });
+}));
+
+// ── GET /api/superadmin/system/health ────────────────────────────────────────
+router.get('/system/health', wrap(async (_req, res) => {
+  let dbStatus: 'ok' | 'error' = 'ok', dbMs = 0;
+  try {
+    const t0 = Date.now();
+    await sequelize.authenticate();
+    dbMs = Date.now() - t0;
+  } catch (err) {
+    dbStatus = 'error';
+    recordDbError(err as Error);
+  }
+
+  let redisStatus: 'ok' | 'error' = 'ok', redisMs = 0;
+  try {
+    const t0 = Date.now();
+    await redisClient.ping();
+    redisMs = Date.now() - t0;
+  } catch {
+    redisStatus = 'error';
+  }
+
+  const mem = process.memoryUsage();
+  const nodeOptions = process.env['NODE_OPTIONS'] ?? '';
+  const match = nodeOptions.match(/--max-old-space-size=(\d+)/);
+  const limitMb = match ? parseInt(match[1]!, 10) : 1536;
+  const metrics = getMetrics();
+  const degraded = dbStatus !== 'ok' || redisStatus !== 'ok' || metrics.errors5xx_1h >= 10;
+
+  res.json({
+    status: degraded ? 'degraded' : 'ok',
+    uptime: Math.floor(process.uptime()),
+    memory: {
+      heapUsedMb:  Math.round(mem.heapUsed  / 1_048_576),
+      heapTotalMb: Math.round(mem.heapTotal / 1_048_576),
+      rssMb:       Math.round(mem.rss       / 1_048_576),
+      limitMb,
+    },
+    db:    { status: dbStatus,    responseMs: dbMs },
+    redis: { status: redisStatus, responseMs: redisMs },
+    metrics,
+    alerts: {
+      email:    Boolean(config.ALERT_EMAIL),
+      telegram: Boolean(config.TELEGRAM_BOT_TOKEN && config.TELEGRAM_CHAT_ID),
+    },
   });
 }));
 

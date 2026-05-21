@@ -8,7 +8,6 @@
   "loginError": "メールアドレスまたはパスワードが正しくありません。",
   "loginSubmit": "ログイン",
   "loggingIn": "ログイン中…",
-
   "navDashboard": "ダッシュボード",
   "navCandidates": "候補者",
   "navInterviews": "面接",
@@ -21,22 +20,18 @@
   "navLogout": "ログアウト",
   "navAuditLog": "監査ログ",
   "navNotifications": "通知",
-
   "pageTitle": "候補者管理",
   "pageSub": "SSW候補者データの管理",
-
   "quotaLabel": "定員",
   "quotaTotal": "総定員",
   "quotaFilled": "充足",
   "quotaRemaining": "残り",
-
   "filterAll": "すべて",
   "filterTrainee": "研修生",
   "filterStatus": "ステータス",
   "filterLpk": "LPK",
   "filterBatch": "バッチ",
   "filterSearch": "候補者を検索…",
-
   "colCode": "コード",
   "colName": "氏名",
   "colStatus": "ステータス",
@@ -51,7 +46,6 @@
   "colConfirmed": "確定",
   "colSelectedDate": "選択日",
   "colInterviewStatus": "面接ステータス",
-
   "chipIncomplete": "未完成",
   "chipSubmitted": "提出済み",
   "chipUnderReview": "審査中",
@@ -62,13 +56,10 @@
   "chipActive": "アクティブ",
   "chipSelection": "選考中",
   "chipClosed": "終了",
-
   "genderM": "男性",
   "genderF": "女性",
-
   "roleManager": "マネージャー",
   "paginationRange": "{{total}}件中 {{from}}〜{{to}}件",
-
   "dpTitle": "個人情報",
   "dpFullName": "氏名",
   "dpGender": "性別",
@@ -79,7 +70,6 @@
   "dpAddress": "住所",
   "dpPhone": "電話番号",
   "dpEmail": "メールアドレス",
-
   "hcTitle": "健康診断",
   "hcHeight": "確認済み身長",
   "hcWeight": "確認済み体重",
@@ -89,17 +79,14 @@
   "hcResult": "結果",
   "hcCheckedBy": "担当者",
   "hcDate": "診断日",
-
   "vmTitle": "自己紹介動画",
   "vmLabel": "ラベル",
   "vmDate": "日付",
   "vmAdd": "動画を追加",
-
   "confirmTitle": "確認",
   "confirmDelete": "このデータを削除してもよろしいですか？",
   "confirmApprove": "この候補者を承認しますか？",
   "confirmReject": "この候補者を却下しますか？",
-
   "btnSave": "保存",
   "btnCancel": "キャンセル",
   "btnEdit": "編集",
@@ -111,7 +98,6 @@
   "btnDownload": "ダウンロード",
   "btnExport": "データエクスポート",
   "btnAddCandidate": "候補者を追加",
-
   "trayTitle": "候補者詳細",
   "trayProfile": "プロフィール",
   "trayTests": "語学テスト",
@@ -120,63 +106,52 @@
   "trayBodyCheck": "身体検査",
   "trayVideos": "動画",
   "trayBatches": "バッチ",
-
   "toastSaved": "保存しました。",
   "toastDeleted": "削除しました。",
   "toastError": "エラーが発生しました。もう一度お試しください。",
   "toastApproved": "候補者を承認しました。",
   "toastRejected": "候補者を却下しました。",
   "toastUploaded": "写真をアップロードしました。",
-
   "consentTitle": "データ同意",
   "consentBody": "SSW就職斡旋のために個人情報の収集・利用に同意します。",
   "consentGiven": "同意する",
   "consentRequired": "続行するには同意が必要です。",
-
   "candidate.consent.title": "個人情報利用同意書",
   "candidate.consent.agree": "同意する",
   "candidate.consent.decline": "同意しない",
   "candidate.consent.loading": "条項を読み込み中...",
   "candidate.consent.error": "条項の読み込みに失敗しました。再試行してください。",
-
   "sswTitle": "SSW情報",
   "sswKubun": "SSW区分",
   "sswSector": "分野",
   "sswField": "職種",
   "sswStudy": "日本語学習期間",
-
   "workplanTitle": "就労計画",
   "workplanDuration": "計画期間",
   "workplanGoal": "目標",
   "workplanAfter": "帰国後の計画",
   "workplanExpectation": "期待すること",
-
   "batchTitle": "バッチ管理",
   "batchCode": "バッチコード",
   "batchCompany": "企業",
   "batchQuota": "定員",
   "batchStatus": "ステータス",
   "batchExpiry": "有効期限",
-
   "recruiterTitle": "候補者選考",
   "recruiterAllocated": "割り当て済み候補者",
   "recruiterSelected": "選択済み",
-
   "auditWho": "誰が",
   "auditWhom": "誰を閲覧",
   "auditWhen": "いつ",
   "auditAction": "操作",
-
   "errorRequired": "必須項目です。",
   "errorEmail": "有効なメールアドレスを入力してください。",
   "errorMinLength": "入力が短すぎます。",
   "errorMaxLength": "入力が長すぎます。",
-
   "loading": "読み込み中…",
   "noData": "データがありません。",
   "optional": "任意",
   "comingSoon": "近日公開予定。",
-
   "candidate": {
     "dashboard": {
       "title": "候補者ダッシュボード",
@@ -328,7 +303,6 @@
       "errorType": "無効なファイル形式です。JPG・PNG・WebPのみ対応しています。"
     }
   },
-
   "admin": {
     "dashboard": {
       "title": "管理者ダッシュボード",
@@ -387,7 +361,6 @@
       "save": "メモを保存"
     }
   },
-
   "selection": {
     "pageTitle": "候補者選考",
     "quota": "定員",
@@ -445,7 +418,6 @@
     "interviewTitle": "面接スケジュール",
     "tabAll": "全て"
   },
-
   "notifications": {
     "title": "通知",
     "unread": "未読 {{count}} 件",
@@ -457,7 +429,6 @@
     "yesterday": "昨日",
     "earlier": "以前"
   },
-
   "superadmin": {
     "dashboard": {
       "title": "システムダッシュボード",
@@ -630,9 +601,27 @@
       "translateDesc": "候補者がプロフィールを保存する際に、スキル・モチベーション・自己PRを自動的に日本語に翻訳するかどうかを制御します。無効にすると、CVの日本語欄にはインドネシア語のテキストが表示されます。",
       "translateLabel": "日本語への自動翻訳",
       "translateHint": "LibreTranslate（自己ホスト）を使用します。翻訳品質が不十分な場合は無効にしてください。"
+    },
+    "monitor": {
+      "title": "システムモニター",
+      "navLabel": "モニター",
+      "refreshed": "更新",
+      "uptime": "稼働時間",
+      "services": "サービス",
+      "db": "データベース",
+      "memory": "メモリ",
+      "metrics1h": "メトリクス（過去1時間）",
+      "errors5xx": "サーバーエラー（5xx）",
+      "rateLimitHits": "レート制限超過",
+      "dbErrors": "DBエラー",
+      "alerts": "アラート設定",
+      "emailAlert": "メールアラート",
+      "telegramAlert": "Telegramアラート",
+      "allGood": "すべてのシステムは正常に動作中",
+      "degraded": "システムに問題が発生しています",
+      "noAlertsHint": "アラートを有効にするには .env に ALERT_EMAIL または TELEGRAM_BOT_TOKEN + TELEGRAM_CHAT_ID を追加してください。"
     }
   },
-
   "export": {
     "title": "エクスポート",
     "excel": "Excel（全候補者）",
@@ -640,7 +629,6 @@
     "pdf": "PDFプロフィール",
     "generating": "生成中..."
   },
-
   "manager": {
     "dashboard": {
       "title": "マネージャーダッシュボード",
@@ -694,7 +682,6 @@
     }
   },
   "navRequests": "候補者依頼",
-
   "requests": {
     "title": "候補者依頼",
     "subtitle": "IJBNetマネージャーに候補者の依頼を送信します。適切な候補者を選定いたします。",
@@ -706,43 +693,41 @@
     "field": "職種",
     "requestedCount": "募集人数",
     "allocatedCount": "割当人数",
-    "status": "ステータス",
+    "status": {
+      "pending": "審査待ち",
+      "confirmed": "確認済み",
+      "rejected": "却下",
+      "closed": "終了"
+    },
     "notes": "備考",
     "managerNotes": "マネージャーメモ",
     "batch": "バッチ",
     "noRequests": "依頼はありません。",
     "noRequestsYet": "送信した依頼がここに表示されます。",
-    "status": {
-      "pending":   "審査待ち",
-      "confirmed": "確認済み",
-      "rejected":  "却下",
-      "closed":    "終了"
-    },
     "form": {
-      "title":         "新規依頼を送信",
-      "description":   "以下のフォームに入力して、IJBNetマネージャーに候補者の依頼を送信してください。",
-      "newBtn":        "+ 新規依頼",
-      "submitBtn":     "依頼を送信",
+      "title": "新規依頼を送信",
+      "description": "以下のフォームに入力して、IJBNetマネージャーに候補者の依頼を送信してください。",
+      "newBtn": "+ 新規依頼",
+      "submitBtn": "依頼を送信",
       "submitSuccess": "依頼を送信しました。IJBNetマネージャーが対応いたします。",
-      "selectSector":  "分野を選択",
-      "selectField":   "職種を選択",
-      "countHint":     "必要な候補者数",
-      "notesHint":     "追加要件、特別な資格など"
+      "selectSector": "分野を選択",
+      "selectField": "職種を選択",
+      "countHint": "必要な候補者数",
+      "notesHint": "追加要件、特別な資格など"
     },
     "confirm": {
-      "title":   "依頼を確認",
-      "btn":     "確認",
-      "hint":    "デフォルトは希望人数の2倍",
+      "title": "依頼を確認",
+      "btn": "確認",
+      "hint": "デフォルトは希望人数の2倍",
       "success": "依頼を確認しました。バッチが自動作成されました。"
     },
     "reject": {
-      "title":   "依頼を却下",
-      "btn":     "却下",
-      "notes":   "却下理由",
+      "title": "依頼を却下",
+      "btn": "却下",
+      "notes": "却下理由",
       "success": "依頼を却下しました。"
     }
   },
-
   "timeline": {
     "title": "ステータス履歴",
     "empty": "履歴はまだありません。",

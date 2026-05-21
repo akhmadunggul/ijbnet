@@ -42,6 +42,7 @@ import SuperAdminAuditLog from './pages/superadmin/SuperAdminAuditLog';
 import SuperAdminSettings from './pages/superadmin/SuperAdminSettings';
 import SuperAdminConsent from './pages/superadmin/SuperAdminConsent';
 import SuperAdminDataEntrySettings from './pages/superadmin/SuperAdminDataEntrySettings';
+import SuperAdminMonitor from './pages/superadmin/SuperAdminMonitor';
 import type { UserRole } from '@ijbnet/shared';
 
 const queryClient = new QueryClient();
@@ -186,6 +187,7 @@ export default function App() {
           <Route path="consent" element={<SuperAdminConsent />} />
           <Route path="data-entry-settings" element={<SuperAdminDataEntrySettings />} />
           <Route path="settings" element={<SuperAdminSettings />} />
+          <Route path="monitor" element={<SuperAdminMonitor />} />
         </Route>
 
         {/* Fallback */}
