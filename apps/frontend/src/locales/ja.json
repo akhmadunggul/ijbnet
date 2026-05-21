@@ -682,7 +682,10 @@
       "approvalTab": "承認",
       "name": "名前",
       "sswFieldFilter": "SSWフィールドフィルター",
-      "approved": "承認済み"
+      "approved": "承認済み",
+      "selectAll": "全て選択",
+      "deselectAll": "選択解除",
+      "addSelected": "選択済みを追加 ({{n}})"
     },
     "interviews": {
       "title": "面接管理",

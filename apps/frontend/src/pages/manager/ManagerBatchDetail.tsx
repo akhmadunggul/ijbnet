@@ -10,6 +10,11 @@ interface CandidatePoolResponse {
   total: number;
 }
 
+interface LpkOption {
+  id: string;
+  name: string;
+}
+
 export default function ManagerBatchDetail() {
   const { t, i18n } = useTranslation();
   const lang = i18n.language;
@@ -20,6 +25,7 @@ export default function ManagerBatchDetail() {
   const [activeTab, setActiveTab] = useState<'allocation' | 'approval'>('allocation');
   const [poolLpkId, setPoolLpkId] = useState('');
   const [poolKubun, setPoolKubun] = useState('');
+  const [selectedPool, setSelectedPool] = useState<Set<string>>(new Set());
 
   const { data: batch, isLoading } = useQuery<ManagerBatch>({
     queryKey: ['manager-batch', id],
@@ -27,7 +33,13 @@ export default function ManagerBatchDetail() {
     enabled: !!id,
   });
 
-  const poolQuery = `profileStatus=approved&pageSize=50${poolLpkId ? `&lpkId=${poolLpkId}` : ''}${poolKubun ? `&sswKubun=${poolKubun}` : ''}`;
+  const { data: lpksData } = useQuery<{ lpks: LpkOption[] }>({
+    queryKey: ['manager-lpks'],
+    queryFn: () => api.get('/manager/lpks').then((r) => r.data),
+    staleTime: 60_000,
+  });
+
+  const poolQuery = `profileStatus=approved&pageSize=100${poolLpkId ? `&lpkId=${poolLpkId}` : ''}${poolKubun ? `&sswKubun=${poolKubun}` : ''}`;
 
   const { data: poolData } = useQuery<CandidatePoolResponse>({
     queryKey: ['manager-candidate-pool', poolLpkId, poolKubun],
@@ -38,7 +50,10 @@ export default function ManagerBatchDetail() {
   const allocateMutation = useMutation({
     mutationFn: (candidateIds: string[]) =>
       api.post(`/manager/batches/${id}/allocate`, { candidateIds }),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['manager-batch', id] }),
+    onSuccess: () => {
+      setSelectedPool(new Set());
+      queryClient.invalidateQueries({ queryKey: ['manager-batch', id] });
+    },
   });
 
   const removeMutation = useMutation({
@@ -65,6 +80,35 @@ export default function ManagerBatchDetail() {
   const allocatedIds = new Set(allocations.map((a) => a.candidateId));
   const poolCandidates = (poolData?.candidates ?? []).filter((c) => !allocatedIds.has(c.id));
   const selectedAllocations = allocations.filter((a) => a.isSelected);
+
+  const allPoolSelected =
+    poolCandidates.length > 0 && poolCandidates.every((c) => selectedPool.has(c.id));
+
+  function toggleSelectAll() {
+    if (allPoolSelected) {
+      setSelectedPool(new Set());
+    } else {
+      setSelectedPool(new Set(poolCandidates.map((c) => c.id)));
+    }
+  }
+
+  function toggleCandidate(candidateId: string) {
+    setSelectedPool((prev) => {
+      const next = new Set(prev);
+      if (next.has(candidateId)) {
+        next.delete(candidateId);
+      } else {
+        next.add(candidateId);
+      }
+      return next;
+    });
+  }
+
+  function handleFilterChange(lpk: string, kubun: string) {
+    setPoolLpkId(lpk);
+    setPoolKubun(kubun);
+    setSelectedPool(new Set());
+  }
 
   const companyName = batch.company
     ? (lang === 'ja' && batch.company.nameJa ? batch.company.nameJa : batch.company.name)
@@ -114,18 +158,42 @@ export default function ManagerBatchDetail() {
         <div className="grid lg:grid-cols-2 gap-4">
           {/* Left: Pool */}
           <div className="bg-white border border-gray-100 rounded-xl p-4 shadow-sm space-y-3">
-            <h2 className="text-sm font-semibold text-navy-900">{t('manager.batches.candidatePool')}</h2>
+            {/* Pool header */}
+            <div className="flex items-center justify-between gap-2 flex-wrap">
+              <h2 className="text-sm font-semibold text-navy-900">
+                {t('manager.batches.candidatePool')}
+                {poolCandidates.length > 0 && (
+                  <span className="ml-1.5 text-gray-400 font-normal">({poolCandidates.length})</span>
+                )}
+              </h2>
+              {selectedPool.size > 0 && (
+                <button
+                  onClick={() => allocateMutation.mutate([...selectedPool])}
+                  disabled={allocateMutation.isPending}
+                  className="text-xs bg-navy-700 text-white px-3 py-1.5 rounded-lg hover:bg-navy-900 disabled:opacity-50 transition font-medium"
+                >
+                  {allocateMutation.isPending
+                    ? t('loading')
+                    : t('manager.batches.addSelected', { n: selectedPool.size })}
+                </button>
+              )}
+            </div>
+
+            {/* Filters */}
             <div className="flex flex-wrap gap-2">
               <select
                 value={poolLpkId}
-                onChange={(e) => setPoolLpkId(e.target.value)}
+                onChange={(e) => handleFilterChange(e.target.value, poolKubun)}
                 className="border border-gray-200 rounded-lg px-3 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-navy-300"
               >
                 <option value="">{t('manager.candidates.lpkFilter')}</option>
+                {lpksData?.lpks.map((l) => (
+                  <option key={l.id} value={l.id}>{l.name}</option>
+                ))}
               </select>
               <select
                 value={poolKubun}
-                onChange={(e) => setPoolKubun(e.target.value)}
+                onChange={(e) => handleFilterChange(poolLpkId, e.target.value)}
                 className="border border-gray-200 rounded-lg px-3 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-navy-300"
               >
                 <option value="">{t('filterAll')} SSW</option>
@@ -134,28 +202,62 @@ export default function ManagerBatchDetail() {
                 <option value="Trainee">Trainee</option>
               </select>
             </div>
+
+            {/* Select-all row */}
+            {poolCandidates.length > 0 && (
+              <label className="flex items-center gap-2 px-2 py-1.5 rounded-lg bg-gray-50 cursor-pointer select-none">
+                <input
+                  type="checkbox"
+                  checked={allPoolSelected}
+                  onChange={toggleSelectAll}
+                  className="w-4 h-4 accent-navy-700 cursor-pointer"
+                />
+                <span className="text-xs font-medium text-gray-600">
+                  {allPoolSelected
+                    ? t('manager.batches.deselectAll')
+                    : t('manager.batches.selectAll')}
+                </span>
+              </label>
+            )}
+
+            {/* Candidate rows */}
             <div className="space-y-1 max-h-96 overflow-y-auto">
               {poolCandidates.length === 0 ? (
                 <p className="text-xs text-gray-400 text-center py-4">{t('noData')}</p>
               ) : (
-                poolCandidates.map((c) => (
-                  <div
-                    key={c.id}
-                    className="flex items-center justify-between py-2 px-2 rounded-lg hover:bg-gray-50 transition"
-                  >
-                    <div>
-                      <p className="text-sm font-medium text-navy-900">{c.fullName}</p>
-                      <p className="text-xs text-gray-400">{c.candidateCode} · {c.sswKubun ?? '—'}</p>
-                    </div>
-                    <button
-                      onClick={() => allocateMutation.mutate([c.id])}
-                      disabled={allocateMutation.isPending}
-                      className="w-7 h-7 flex items-center justify-center bg-navy-700 text-white rounded-full hover:bg-navy-800 transition disabled:opacity-50 text-lg leading-none"
+                poolCandidates.map((c) => {
+                  const checked = selectedPool.has(c.id);
+                  return (
+                    <label
+                      key={c.id}
+                      className={`flex items-center gap-3 py-2 px-2 rounded-lg cursor-pointer transition ${
+                        checked ? 'bg-navy-50 border border-navy-100' : 'hover:bg-gray-50'
+                      }`}
                     >
-                      +
-                    </button>
-                  </div>
-                ))
+                      <input
+                        type="checkbox"
+                        checked={checked}
+                        onChange={() => toggleCandidate(c.id)}
+                        className="w-4 h-4 accent-navy-700 cursor-pointer flex-shrink-0"
+                      />
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-navy-900 truncate">{c.fullName}</p>
+                        <p className="text-xs text-gray-400">{c.candidateCode} · {c.sswKubun ?? '—'}</p>
+                      </div>
+                      <button
+                        onClick={(e) => {
+                          e.preventDefault();
+                          allocateMutation.mutate([c.id]);
+                        }}
+                        disabled={allocateMutation.isPending}
+                        className="w-7 h-7 flex items-center justify-center bg-navy-700 text-white rounded-full hover:bg-navy-900 transition disabled:opacity-50 text-lg leading-none flex-shrink-0"
+                        title={t('manager.batches.allocate')}
+                      >
+                        +
+                      </button>
+                    </label>
+                  );
+                })
               )}
             </div>
           </div>
@@ -165,7 +267,7 @@ export default function ManagerBatchDetail() {
             <h2 className="text-sm font-semibold text-navy-900">
               {t('manager.batches.allocated')} ({allocations.length})
             </h2>
-            <div className="space-y-1 max-h-96 overflow-y-auto">
+            <div className="space-y-1 max-h-[28rem] overflow-y-auto">
               {allocations.length === 0 ? (
                 <p className="text-xs text-gray-400 text-center py-4">{t('noData')}</p>
               ) : (

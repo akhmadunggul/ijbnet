@@ -683,7 +683,10 @@
       "approvalTab": "Persetujuan",
       "name": "Nama",
       "sswFieldFilter": "SSW Field Filter",
-      "approved": "Disetujui"
+      "approved": "Disetujui",
+      "selectAll": "Pilih Semua",
+      "deselectAll": "Batal Pilih Semua",
+      "addSelected": "Tambah Terpilih ({{n}})"
     },
     "interviews": {
       "title": "Manajemen Wawancara",
