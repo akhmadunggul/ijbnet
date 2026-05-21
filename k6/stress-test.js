@@ -38,8 +38,10 @@ const dbPoolErrors = new Rate('db_pool_errors');   // ER_CON_COUNT_ERROR / acqui
 const loginErrors  = new Counter('login_failures');
 
 // ── Configuration ──────────────────────────────────────────────────────────────
-const BASE_URL = __ENV.BASE_URL || 'http://localhost:3001';
-const API      = `${BASE_URL}/api`;
+const BASE_URL   = __ENV.BASE_URL   || 'http://localhost:3001';
+const API        = `${BASE_URL}/api`;
+// Set to the value of LOAD_TEST_BYPASS_KEY from the server's .env.
+const BYPASS_KEY = __ENV.BYPASS_KEY || '';
 
 export const options = {
   scenarios: {
@@ -52,7 +54,7 @@ export const options = {
         { duration: '10s', target: 0  },   // ramp down
       ],
       exec: 'candidateFlow',
-      gracefulRampDown: '5s',
+      gracefulRampDown: '30s',
     },
     admins: {
       executor: 'ramping-vus',
@@ -63,7 +65,7 @@ export const options = {
         { duration: '10s', target: 0  },
       ],
       exec: 'adminFlow',
-      gracefulRampDown: '5s',
+      gracefulRampDown: '30s',
     },
     managers: {
       executor: 'ramping-vus',
@@ -74,7 +76,7 @@ export const options = {
         { duration: '10s', target: 0  },
       ],
       exec: 'managerFlow',
-      gracefulRampDown: '5s',
+      gracefulRampDown: '30s',
     },
     recruiters: {
       executor: 'ramping-vus',
@@ -85,7 +87,7 @@ export const options = {
         { duration: '10s', target: 0 },
       ],
       exec: 'recruiterFlow',
-      gracefulRampDown: '5s',
+      gracefulRampDown: '30s',
     },
   },
 
@@ -100,12 +102,12 @@ export const options = {
 // ── Helpers ────────────────────────────────────────────────────────────────────
 
 function headers(token) {
-  return {
-    headers: {
-      Authorization: `Bearer ${token}`,
-      'Content-Type': 'application/json',
-    },
+  const h = {
+    Authorization: `Bearer ${token}`,
+    'Content-Type': 'application/json',
   };
+  if (BYPASS_KEY) h['X-Load-Test-Key'] = BYPASS_KEY;
+  return { headers: h };
 }
 
 /** Record whether the response indicates a DB pool problem. */
@@ -170,9 +172,9 @@ export function setup() {
   }
 
   const candidateTokens = [
-    loginFallback('k6.cand1@candidate.ijbnet.org', 'Demo1234!', __ENV.TOKEN_CANDIDATE_1 || null),
-    loginFallback('k6.cand2@candidate.ijbnet.org', 'Demo1234!', __ENV.TOKEN_CANDIDATE_2 || null),
-    loginFallback('k6.cand3@candidate.ijbnet.org', 'Demo1234!', __ENV.TOKEN_CANDIDATE_3 || null),
+    loginFallback('ahmad.fauzi@candidate.ijbnet.org',   'Demo1234!', __ENV.TOKEN_CANDIDATE_1 || null),
+    loginFallback('hendra.kusuma@candidate.ijbnet.org', 'Demo1234!', __ENV.TOKEN_CANDIDATE_2 || null),
+    loginFallback('budi.santoso@candidate.ijbnet.org',  'Demo1234!', __ENV.TOKEN_CANDIDATE_3 || null),
   ];
   const adminToken     = loginFallback('admin@ijbnet.org',       'Demo1234!', __ENV.TOKEN_ADMIN     || null);
   const managerToken   = loginFallback('manager@ijbnet.org',     'Demo1234!', __ENV.TOKEN_MANAGER   || null);

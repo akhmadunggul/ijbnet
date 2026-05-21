@@ -34,10 +34,14 @@ app.use(
     max: 300,                  // 300 req/min per IP (~5 req/s burst)
     standardHeaders: true,
     legacyHeaders: false,
-    // Skip rate limiting for loopback — allows server-side load testing via localhost:3001
+    // Skip for loopback and for authorised load-test runners carrying the
+    // bypass key — prevents per-IP rate limiting from blocking K6 VUs that
+    // all originate from a single external IP.
     skip: (req) => {
       const ip = req.ip ?? '';
-      return ip === '127.0.0.1' || ip === '::1' || ip === '::ffff:127.0.0.1';
+      if (ip === '127.0.0.1' || ip === '::1' || ip === '::ffff:127.0.0.1') return true;
+      const bypassKey = config.LOAD_TEST_BYPASS_KEY;
+      return Boolean(bypassKey && req.headers['x-load-test-key'] === bypassKey);
     },
     handler: (_req, res) => {
       record429('429:global');

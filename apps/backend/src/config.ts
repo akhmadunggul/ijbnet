@@ -67,6 +67,11 @@ export const config = {
   TELEGRAM_BOT_TOKEN:   optional('TELEGRAM_BOT_TOKEN', ''),
   TELEGRAM_CHAT_ID:     optional('TELEGRAM_CHAT_ID', ''),
 
+  // Load-test bypass — requests carrying X-Load-Test-Key: <this value> skip
+  // the global per-IP rate limiter. Set a long random secret; leave empty to
+  // disable. Never commit the actual value.
+  LOAD_TEST_BYPASS_KEY: optional('LOAD_TEST_BYPASS_KEY', ''),
+
   // Chart hard-limit lines — tune to match your expected capacity
   MONITOR_MAX_USERS:       parseInt(optional('MONITOR_MAX_USERS',       '100'),  10),
   MONITOR_MAX_DB_RPM:      parseInt(optional('MONITOR_MAX_DB_RPM',      '500'),  10),
