@@ -12,7 +12,7 @@ import passport from './config/passport';
 import apiRouter from './routes/index';
 import { errorHandler, notFound } from './middleware/errorHandler';
 import { config } from './config';
-import { record429, recordFatal, recordHighMemory } from './utils/monitor';
+import { record429, recordFatal, recordHighMemory, snapshotMetrics } from './utils/monitor';
 
 const app = express();
 
@@ -94,6 +94,9 @@ async function start(): Promise<void> {
     app.listen(config.PORT, () => {
       console.log(`Backend running on http://localhost:${config.PORT}`);
     });
+
+    // Metrics snapshot every minute — populates charts in the monitor dashboard
+    setInterval(() => snapshotMetrics(), 60_000).unref();
   } catch (err) {
     console.error('Failed to start server:', err);
     process.exit(1);

@@ -1,11 +1,12 @@
 import { Sequelize } from 'sequelize';
 import { config } from '../config';
+import { recordDbQuery } from '../utils/monitor';
 
 export const sequelize = new Sequelize(config.DB_NAME, config.DB_USER, config.DB_PASS, {
   host: config.DB_HOST,
   port: config.DB_PORT,
   dialect: 'mysql',
-  logging: config.NODE_ENV === 'development' ? false : false,
+  logging: () => recordDbQuery(),
   pool: {
     max: 25,
     min: 2,

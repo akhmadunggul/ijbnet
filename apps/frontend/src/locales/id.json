@@ -620,7 +620,10 @@
       "telegramAlert": "Alert Telegram",
       "allGood": "Semua sistem berjalan normal",
       "degraded": "Sistem mengalami gangguan",
-      "noAlertsHint": "Tambahkan ALERT_EMAIL atau TELEGRAM_BOT_TOKEN + TELEGRAM_CHAT_ID ke .env untuk mengaktifkan notifikasi."
+      "noAlertsHint": "Tambahkan ALERT_EMAIL atau TELEGRAM_BOT_TOKEN + TELEGRAM_CHAT_ID ke .env untuk mengaktifkan notifikasi.",
+      "activeUsers": "Pengguna Aktif",
+      "usersNow": "sekarang",
+      "dbRpm": "DB Request / Menit"
     }
   },
   "export": {

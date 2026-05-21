@@ -1,6 +1,52 @@
 import { sendEmail } from './email';
 import { config } from '../config';
 
+// ── Time-series metrics history ───────────────────────────────────────────────
+
+export interface MetricsPoint {
+  ts: number;              // Unix ms
+  activeUsers: number;     // unique users who made a request in the previous minute
+  dbRequestsPerMin: number;
+}
+
+const HISTORY_SIZE = 60; // keep 60 one-minute snapshots
+const metricsHistory: MetricsPoint[] = [];
+
+// Active-user window: count users seen in the last 5 minutes
+const activeUserMap = new Map<string, number>(); // userId → lastSeen ms
+const ACTIVE_WINDOW_MS = 5 * 60 * 1000;
+
+// DB query counter — incremented by Sequelize logging hook; reset per snapshot
+let _dbRequestCount = 0;
+
+export function recordActiveUser(userId: string): void {
+  activeUserMap.set(userId, Date.now());
+}
+
+export function recordDbQuery(): void {
+  _dbRequestCount++;
+}
+
+/** Called every minute by the timer in index.ts */
+export function snapshotMetrics(): void {
+  const now = Date.now();
+  // Evict stale users
+  for (const [id, ts] of activeUserMap) {
+    if (now - ts > ACTIVE_WINDOW_MS) activeUserMap.delete(id);
+  }
+  metricsHistory.push({
+    ts: now,
+    activeUsers: activeUserMap.size,
+    dbRequestsPerMin: _dbRequestCount,
+  });
+  if (metricsHistory.length > HISTORY_SIZE) metricsHistory.shift();
+  _dbRequestCount = 0;
+}
+
+export function getMetricsHistory(): MetricsPoint[] {
+  return [...metricsHistory];
+}
+
 // ── Hourly sliding counter ────────────────────────────────────────────────────
 class HourlyCounter {
   private count = 0;

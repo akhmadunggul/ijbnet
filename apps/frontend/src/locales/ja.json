@@ -619,7 +619,10 @@
       "telegramAlert": "Telegramアラート",
       "allGood": "すべてのシステムは正常に動作中",
       "degraded": "システムに問題が発生しています",
-      "noAlertsHint": "アラートを有効にするには .env に ALERT_EMAIL または TELEGRAM_BOT_TOKEN + TELEGRAM_CHAT_ID を追加してください。"
+      "noAlertsHint": "アラートを有効にするには .env に ALERT_EMAIL または TELEGRAM_BOT_TOKEN + TELEGRAM_CHAT_ID を追加してください。",
+      "activeUsers": "アクティブユーザー",
+      "usersNow": "現在",
+      "dbRpm": "DB リクエスト/分"
     }
   },
   "export": {

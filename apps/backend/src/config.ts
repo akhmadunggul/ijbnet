@@ -66,6 +66,10 @@ export const config = {
   ALERT_EMAIL:          optional('ALERT_EMAIL', ''),
   TELEGRAM_BOT_TOKEN:   optional('TELEGRAM_BOT_TOKEN', ''),
   TELEGRAM_CHAT_ID:     optional('TELEGRAM_CHAT_ID', ''),
+
+  // Chart hard-limit lines — tune to match your expected capacity
+  MONITOR_MAX_USERS:    parseInt(optional('MONITOR_MAX_USERS', '100'), 10),
+  MONITOR_MAX_DB_RPM:   parseInt(optional('MONITOR_MAX_DB_RPM', '500'), 10),
 } as const;
 
 export type Config = typeof config;

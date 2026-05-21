@@ -3,6 +3,7 @@ import { verifyAccessToken } from '../utils/jwt';
 import { isTokenBlacklisted } from '../utils/redis';
 import { User } from '../db/models/index';
 import type { UserRole } from '@ijbnet/shared';
+import { recordActiveUser } from '../utils/monitor';
 
 // AuthRequest is kept for backwards compat but Express.Request is now augmented
 export type AuthRequest = Request;
@@ -48,6 +49,7 @@ export async function authenticate(
     }
 
     req.user = payload;
+    recordActiveUser(payload.sub);
     next();
   } catch {
     res.status(401).json({ error: 'UNAUTHORIZED', message: 'Invalid or expired token.' });

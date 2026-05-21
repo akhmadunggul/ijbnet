@@ -8,7 +8,7 @@ import multer from 'multer';
 const pdfParse = require('pdf-parse') as (buf: Buffer) => Promise<{ text: string; numpages: number }>;
 import { authenticate, requireRole } from '../middleware/auth';
 import { redisClient } from '../utils/redis';
-import { getMetrics, recordDbError } from '../utils/monitor';
+import { getMetrics, recordDbError, getMetricsHistory } from '../utils/monitor';
 import { config } from '../config';
 import { validateUuidParam } from '../middleware/rbac';
 import {
@@ -184,6 +184,17 @@ router.get('/system/health', wrap(async (_req, res) => {
     alerts: {
       email:    Boolean(config.ALERT_EMAIL),
       telegram: Boolean(config.TELEGRAM_BOT_TOKEN && config.TELEGRAM_CHAT_ID),
+    },
+  });
+}));
+
+// ── GET /api/superadmin/system/metrics-history ───────────────────────────────
+router.get('/system/metrics-history', wrap(async (_req, res) => {
+  res.json({
+    history: getMetricsHistory(),
+    limits: {
+      maxUsers:  config.MONITOR_MAX_USERS,
+      maxDbRpm:  config.MONITOR_MAX_DB_RPM,
     },
   });
 }));
