@@ -29,7 +29,7 @@ export default function ManagerBatchDetail() {
 
   const { data: batch, isLoading } = useQuery<ManagerBatch>({
     queryKey: ['manager-batch', id],
-    queryFn: () => api.get(`/manager/batches/${id}`).then((r) => r.data),
+    queryFn: () => api.get(`/manager/batches/${id}`).then((r) => r.data.batch),
     enabled: !!id,
   });
 
