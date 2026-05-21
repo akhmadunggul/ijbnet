@@ -12,6 +12,7 @@ import passport from './config/passport';
 import apiRouter from './routes/index';
 import { errorHandler, notFound } from './middleware/errorHandler';
 import { config } from './config';
+import { record429, recordFatal, recordHighMemory } from './utils/monitor';
 
 const app = express();
 
@@ -38,6 +39,10 @@ app.use(
       const ip = req.ip ?? '';
       return ip === '127.0.0.1' || ip === '::1' || ip === '::ffff:127.0.0.1';
     },
+    handler: (_req, res) => {
+      record429('429:global');
+      res.status(429).json({ error: 'TOO_MANY_REQUESTS', message: 'Too many requests. Please slow down.' });
+    },
   }),
 );
 
@@ -57,6 +62,30 @@ app.use(notFound);
 app.use(errorHandler);
 
 // ── Startup ───────────────────────────────────────────────────────────────────
+// ── Process-level safety net ──────────────────────────────────────────────────
+process.on('uncaughtException', (err) => {
+  console.error('[FATAL] uncaughtException:', err);
+  recordFatal('uncaughtException', err);
+  // Give the alert a moment to dispatch before the process exits
+  setTimeout(() => process.exit(1), 3000);
+});
+
+process.on('unhandledRejection', (reason) => {
+  console.error('[FATAL] unhandledRejection:', reason);
+  recordFatal('unhandledRejection', reason);
+});
+
+// Memory watchdog — alert when heap exceeds 85 % of Node's --max-old-space-size
+const MEM_LIMIT_MB = Math.round((process.env['NODE_OPTIONS'] ?? '')
+  .match(/--max-old-space-size=(\d+)/)?.[1]
+  ? parseInt((process.env['NODE_OPTIONS'] ?? '').match(/--max-old-space-size=(\d+)/)![1]!, 10)
+  : 1536);
+
+setInterval(() => {
+  const heapMb = Math.round(process.memoryUsage().heapUsed / 1_048_576);
+  if (heapMb > MEM_LIMIT_MB * 0.85) recordHighMemory(heapMb, MEM_LIMIT_MB);
+}, 60_000).unref();
+
 async function start(): Promise<void> {
   try {
     await connectDB();

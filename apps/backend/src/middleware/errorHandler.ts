@@ -1,4 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
+import { record5xx } from '../utils/monitor';
 
 export interface AppError extends Error {
   statusCode?: number;
@@ -7,7 +8,7 @@ export interface AppError extends Error {
 
 export function errorHandler(
   err: AppError,
-  _req: Request,
+  req: Request,
   res: Response,
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   _next: NextFunction,
@@ -19,6 +20,10 @@ export function errorHandler(
       : err.message;
 
   console.error(`[${new Date().toISOString()}] ${status} — ${err.message}`);
+
+  if (status >= 500) {
+    record5xx(req.path, err);
+  }
 
   res.status(status).json({
     error: err.code ?? 'INTERNAL_ERROR',

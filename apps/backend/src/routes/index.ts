@@ -9,6 +9,9 @@ import managerRouter from './manager';
 import superadminRouter from './superadmin';
 import exportRouter from './export';
 import translateRouter from './translate';
+import { sequelize } from '../db/connection';
+import { redisClient } from '../utils/redis';
+import { getMetrics, recordDbError } from '../utils/monitor';
 
 const router = Router();
 
@@ -23,9 +26,44 @@ router.use('/superadmin', superadminRouter);
 router.use('/export', exportRouter);
 router.use('/translate', translateRouter);
 
-// Health check
-router.get('/health', (_req, res) => {
-  res.json({ status: 'ok', ts: new Date().toISOString() });
+// Health check — returns rich status for ops dashboards and uptime monitors
+router.get('/health', async (_req, res) => {
+  let dbStatus = 'ok', dbMs = 0;
+  try {
+    const t0 = Date.now();
+    await sequelize.authenticate();
+    dbMs = Date.now() - t0;
+  } catch (err) {
+    dbStatus = 'error';
+    recordDbError(err as Error);
+  }
+
+  let redisStatus = 'ok', redisMs = 0;
+  try {
+    const t0 = Date.now();
+    await redisClient.ping();
+    redisMs = Date.now() - t0;
+  } catch {
+    redisStatus = 'error';
+  }
+
+  const mem = process.memoryUsage();
+  const metrics = getMetrics();
+  const degraded = dbStatus !== 'ok' || redisStatus !== 'ok' || metrics.errors5xx_1h >= 10;
+
+  res.status(degraded ? 503 : 200).json({
+    status: degraded ? 'degraded' : 'ok',
+    uptime:  Math.floor(process.uptime()),
+    memory: {
+      heapUsedMb:  Math.round(mem.heapUsed  / 1_048_576),
+      heapTotalMb: Math.round(mem.heapTotal / 1_048_576),
+      rssMb:       Math.round(mem.rss       / 1_048_576),
+    },
+    db:    { status: dbStatus,    responseMs: dbMs },
+    redis: { status: redisStatus, responseMs: redisMs },
+    metrics,
+    ts: new Date().toISOString(),
+  });
 });
 
 export default router;

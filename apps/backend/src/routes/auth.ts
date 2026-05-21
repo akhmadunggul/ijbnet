@@ -1,5 +1,6 @@
 import { Router, Request, Response } from 'express';
 import rateLimit from 'express-rate-limit';
+import { record429 } from '../utils/monitor';
 import bcrypt from 'bcrypt';
 import { authenticator } from 'otplib';
 import QRCode from 'qrcode';
@@ -25,7 +26,10 @@ const loginLimiter = rateLimit({
     const email = (req.body?.email ?? '').toLowerCase().trim();
     return email || req.ip || 'unknown';
   },
-  message: { error: 'TOO_MANY_REQUESTS', message: 'Too many login attempts. Please try again later.' },
+  handler: (_req, res) => {
+    record429('429:login');
+    res.status(429).json({ error: 'TOO_MANY_REQUESTS', message: 'Too many login attempts. Please try again later.' });
+  },
 });
 
 // POST /api/auth/login

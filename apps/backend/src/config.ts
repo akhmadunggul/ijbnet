@@ -61,6 +61,11 @@ export const config = {
   SMTP_USER: optional('SMTP_USER', ''),
   SMTP_PASS: optional('SMTP_PASS', ''),
   EMAIL_FROM: optional('EMAIL_FROM', 'noreply@ijbnet.org'),
+
+  // Monitoring / alerting — all optional
+  ALERT_EMAIL:          optional('ALERT_EMAIL', ''),
+  TELEGRAM_BOT_TOKEN:   optional('TELEGRAM_BOT_TOKEN', ''),
+  TELEGRAM_CHAT_ID:     optional('TELEGRAM_CHAT_ID', ''),
 } as const;
 
 export type Config = typeof config;
