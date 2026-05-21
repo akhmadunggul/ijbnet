@@ -1,5 +1,13 @@
+import type { Sequelize } from 'sequelize';
+import { QueryTypes } from 'sequelize';
 import { sendEmail } from './email';
 import { config } from '../config';
+
+// ── Sequelize ref (injected after DB connects to avoid circular import) ────────
+let _seq: Sequelize | null = null;
+export function initMonitorDb(seq: Sequelize): void {
+  _seq = seq;
+}
 
 // ── Time-series metrics history ───────────────────────────────────────────────
 
@@ -82,7 +90,7 @@ export function snapshotMetrics(): void {
     ? Math.round((_http5xx / _httpTotal) * 1000) / 10
     : 0;
 
-  metricsHistory.push({
+  const point: MetricsPoint = {
     ts: now,
     activeUsers:        activeUserMap.size,
     dbRequestsPerMin:   _dbRequestCount,
@@ -90,17 +98,85 @@ export function snapshotMetrics(): void {
     p95ResponseMs:      p95(durations),
     cpuPct:             sampleCpu(),
     errorRatePct:       errorRate,
-  });
+  };
 
+  metricsHistory.push(point);
   if (metricsHistory.length > HISTORY_SIZE) metricsHistory.shift();
 
   _dbRequestCount = 0;
   _httpTotal      = 0;
   _http5xx        = 0;
+
+  // Persist to DB for long-term history (fire-and-forget)
+  if (_seq) {
+    _seq.query(
+      `INSERT INTO metrics_snapshots
+         (ts, active_users, db_requests_per_min, http_requests_per_min, p95_response_ms, cpu_pct, error_rate_pct)
+       VALUES (?, ?, ?, ?, ?, ?, ?)`,
+      {
+        replacements: [
+          point.ts, point.activeUsers, point.dbRequestsPerMin,
+          point.httpRequestsPerMin, point.p95ResponseMs, point.cpuPct, point.errorRatePct,
+        ],
+      },
+    ).catch(console.error);
+  }
 }
 
 export function getMetricsHistory(): MetricsPoint[] {
   return [...metricsHistory];
+}
+
+export type MetricsRange = '1h' | '1d' | '1w' | '1m';
+
+export async function getMetricsRange(range: MetricsRange): Promise<MetricsPoint[]> {
+  if (range === '1h' || !_seq) return [...metricsHistory];
+
+  const now = Date.now();
+  let sinceMs: number;
+  let bucketMs: number;
+
+  switch (range) {
+    case '1d': sinceMs = now - 86_400_000;    bucketMs = 300_000;   break; // 5-min → ~288 pts
+    case '1w': sinceMs = now - 604_800_000;   bucketMs = 1_800_000; break; // 30-min → ~336 pts
+    case '1m': sinceMs = now - 2_592_000_000; bucketMs = 7_200_000; break; // 2-hour → ~360 pts
+  }
+
+  type Row = {
+    ts: string | number;
+    activeUsers: string | number;
+    dbRequestsPerMin: string | number;
+    httpRequestsPerMin: string | number;
+    p95ResponseMs: string | number;
+    cpuPct: string | number;
+    errorRatePct: string | number;
+  };
+
+  const rows = await _seq.query<Row>(
+    `SELECT
+       FLOOR(ts / ?) * ?              AS ts,
+       ROUND(AVG(active_users))       AS activeUsers,
+       ROUND(AVG(db_requests_per_min))   AS dbRequestsPerMin,
+       ROUND(AVG(http_requests_per_min)) AS httpRequestsPerMin,
+       ROUND(AVG(p95_response_ms))    AS p95ResponseMs,
+       ROUND(AVG(cpu_pct), 1)         AS cpuPct,
+       ROUND(AVG(error_rate_pct), 1)  AS errorRatePct
+     FROM metrics_snapshots
+     WHERE ts > ?
+     GROUP BY FLOOR(ts / ?)
+     ORDER BY ts`,
+    { replacements: [bucketMs, bucketMs, sinceMs, bucketMs], type: QueryTypes.SELECT },
+  );
+
+  return (rows as Row[]).map((r) => ({
+    ts:                  Number(r.ts),
+    activeUsers:         Number(r.activeUsers),
+    dbRequestsPerMin:    Number(r.dbRequestsPerMin),
+    httpRequestsPerMin:  Number(r.httpRequestsPerMin),
+    p95ResponseMs:       Number(r.p95ResponseMs),
+    cpuPct:              Number(r.cpuPct),
+    errorRatePct:        Number(r.errorRatePct),
+  }));
 }
 
 // ── Hourly sliding counter ────────────────────────────────────────────────────

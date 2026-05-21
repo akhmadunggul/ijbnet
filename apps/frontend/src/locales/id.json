@@ -630,7 +630,13 @@
       "errorRate": "Tingkat Error",
       "sectionTraffic": "Traffic",
       "sectionPerformance": "Performa",
-      "sectionHealth": "Kesehatan Sistem"
+      "sectionHealth": "Kesehatan Sistem",
+      "timeRange": "Rentang Waktu",
+      "range1h": "1 Jam",
+      "range1d": "1 Hari",
+      "range1w": "1 Minggu",
+      "range1m": "1 Bulan",
+      "noDataYet": "Belum ada data untuk rentang ini"
     }
   },
   "export": {

@@ -5,14 +5,14 @@ import helmet from 'helmet';
 import morgan from 'morgan';
 import cookieParser from 'cookie-parser';
 import rateLimit from 'express-rate-limit';
-import { connectDB } from './db/connection';
+import { connectDB, sequelize } from './db/connection';
 import { connectRedis } from './utils/redis';
 import './db/models/index'; // Initialize all models and associations
 import passport from './config/passport';
 import apiRouter from './routes/index';
 import { errorHandler, notFound } from './middleware/errorHandler';
 import { config } from './config';
-import { record429, recordFatal, recordHighMemory, snapshotMetrics, recordHttpRequest } from './utils/monitor';
+import { record429, recordFatal, recordHighMemory, snapshotMetrics, recordHttpRequest, initMonitorDb } from './utils/monitor';
 
 const app = express();
 
@@ -95,6 +95,7 @@ setInterval(() => {
 async function start(): Promise<void> {
   try {
     await connectDB();
+    initMonitorDb(sequelize);
     await connectRedis();
 
     app.listen(config.PORT, () => {

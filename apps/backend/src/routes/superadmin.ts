@@ -8,7 +8,7 @@ import multer from 'multer';
 const pdfParse = require('pdf-parse') as (buf: Buffer) => Promise<{ text: string; numpages: number }>;
 import { authenticate, requireRole } from '../middleware/auth';
 import { redisClient } from '../utils/redis';
-import { getMetrics, recordDbError, getMetricsHistory } from '../utils/monitor';
+import { getMetrics, recordDbError, getMetricsRange, type MetricsRange } from '../utils/monitor';
 import { config } from '../config';
 import { validateUuidParam } from '../middleware/rbac';
 import {
@@ -189,9 +189,13 @@ router.get('/system/health', wrap(async (_req, res) => {
 }));
 
 // ── GET /api/superadmin/system/metrics-history ───────────────────────────────
-router.get('/system/metrics-history', wrap(async (_req, res) => {
+router.get('/system/metrics-history', wrap(async (req, res) => {
+  const allowed: MetricsRange[] = ['1h', '1d', '1w', '1m'];
+  const raw = req.query['range'] as string | undefined;
+  const range: MetricsRange = allowed.includes(raw as MetricsRange) ? (raw as MetricsRange) : '1h';
+
   res.json({
-    history: getMetricsHistory(),
+    history: await getMetricsRange(range),
     limits: {
       maxUsers:      config.MONITOR_MAX_USERS,
       maxDbRpm:      config.MONITOR_MAX_DB_RPM,

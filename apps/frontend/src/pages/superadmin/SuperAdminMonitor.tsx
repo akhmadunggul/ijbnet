@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQuery } from '@tanstack/react-query';
 import { api } from '../../lib/api';
@@ -38,6 +39,8 @@ interface HistoryResponse {
   limits: Limits;
 }
 
+type Range = '1h' | '1d' | '1w' | '1m';
+
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
 function formatUptime(s: number): string {
@@ -47,8 +50,12 @@ function formatUptime(s: number): string {
   return [d && `${d}d`, h && `${h}h`, `${m}m`].filter(Boolean).join(' ');
 }
 
-function fmtTime(ts: number): string {
-  return new Date(ts).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+function fmtTick(ts: number, range: Range): string {
+  const d = new Date(ts);
+  if (range === '1h' || range === '1d') {
+    return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  }
+  return d.toLocaleDateString([], { month: 'short', day: 'numeric' });
 }
 
 // ── SVG time-series chart ─────────────────────────────────────────────────────
@@ -56,7 +63,7 @@ function fmtTime(ts: number): string {
 type MetricKey = keyof Omit<MetricsPoint, 'ts'>;
 
 function TimeSeriesChart({
-  data, valueKey, limit, color, title, unit = '',
+  data, valueKey, limit, color, title, unit = '', range,
 }: {
   data: MetricsPoint[];
   valueKey: MetricKey;
@@ -64,8 +71,8 @@ function TimeSeriesChart({
   color: string;
   title: string;
   unit?: string;
+  range: Range;
 }) {
-  // Coordinate system — h-auto SVG scales width to container, height follows
   const VW = 420, VH = 160;
   const P = { t: 14, r: 52, b: 30, l: 46 };
   const cW = VW - P.l - P.r;
@@ -91,15 +98,15 @@ function TimeSeriesChart({
     ? `M${pts[0].x.toFixed(1)},${toY(0).toFixed(1)} ${linePath.slice(1)} L${pts[pts.length - 1].x.toFixed(1)},${toY(0).toFixed(1)} Z`
     : '';
 
-  // X-axis tick indices: first, every 15 points, last
+  // X-axis: ~5 evenly spaced ticks
   const ticks: number[] = [];
   if (data.length > 1) {
+    const stride = Math.max(1, Math.round(data.length / 5));
     ticks.push(0);
-    for (let i = 15; i < data.length - 5; i += 15) ticks.push(i);
-    ticks.push(data.length - 1);
+    for (let i = stride; i < data.length - Math.floor(stride / 2); i += stride) ticks.push(i);
+    if (ticks[ticks.length - 1] !== data.length - 1) ticks.push(data.length - 1);
   }
 
-  // Y-axis labels: 0, mid, ceiling
   const yLabels = [
     { v: 0,                       y: toY(0) },
     { v: Math.round(ceiling / 2), y: toY(ceiling / 2) },
@@ -108,7 +115,6 @@ function TimeSeriesChart({
 
   return (
     <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-4">
-      {/* Card header */}
       <div className="flex items-start justify-between mb-3 gap-2">
         <span className="text-sm font-semibold text-gray-700">{title}</span>
         <div className="text-right shrink-0">
@@ -124,50 +130,71 @@ function TimeSeriesChart({
           First snapshot in &lt;1 min…
         </div>
       ) : (
-        /* h-auto: SVG fills container width and scales height by aspect ratio */
         <svg viewBox={`0 0 ${VW} ${VH}`} className="w-full h-auto" aria-hidden="true">
-          {/* Horizontal grid lines */}
           {yLabels.map(({ y }, i) => (
             <line key={i} x1={P.l} y1={y} x2={VW - P.r} y2={y} stroke="#f3f4f6" strokeWidth="1.5" />
           ))}
 
-          {/* Area fill */}
           {areaPath && <path d={areaPath} fill={color} fillOpacity={0.1} />}
 
-          {/* Line */}
           {linePath && (
             <path d={linePath} stroke={color} strokeWidth="2" fill="none" strokeLinejoin="round" strokeLinecap="round" />
           )}
 
-          {/* Hard-limit dashed line */}
           <line x1={P.l} y1={limitY} x2={VW - P.r} y2={limitY}
             stroke="#ef4444" strokeWidth="1.5" strokeDasharray="5,4" opacity={0.7} />
           <text x={VW - P.r + 3} y={limitY + 5} fontSize="13" fill="#ef4444" opacity={0.85} fontWeight="500">
             {limit}{unit}
           </text>
 
-          {/* Y-axis labels */}
           {yLabels.map(({ v, y }, i) => (
             <text key={i} x={P.l - 5} y={y + 4} fontSize="13" fill="#6b7280" textAnchor="end">
               {v}{unit}
             </text>
           ))}
 
-          {/* Latest value dot */}
           {pts.length > 0 && (
             <circle cx={pts[pts.length - 1].x} cy={pts[pts.length - 1].y}
               r="4" fill={color} stroke="white" strokeWidth="2" />
           )}
 
-          {/* X-axis time labels */}
           {ticks.map((idx) => (
             <text key={idx} x={toX(idx)} y={VH - 4} fontSize="13" fill="#6b7280"
               textAnchor={idx === 0 ? 'start' : idx === data.length - 1 ? 'end' : 'middle'}>
-              {fmtTime(data[idx].ts)}
+              {fmtTick(data[idx].ts, range)}
             </text>
           ))}
         </svg>
       )}
+    </div>
+  );
+}
+
+// ── Range selector ────────────────────────────────────────────────────────────
+
+function RangeSelector({
+  value, onChange, labels,
+}: {
+  value: Range;
+  onChange: (r: Range) => void;
+  labels: Record<Range, string>;
+}) {
+  const options: Range[] = ['1h', '1d', '1w', '1m'];
+  return (
+    <div className="flex gap-1 bg-gray-100 rounded-lg p-1">
+      {options.map((r) => (
+        <button
+          key={r}
+          onClick={() => onChange(r)}
+          className={`flex-1 text-xs font-semibold px-3 py-1.5 rounded-md transition-colors ${
+            value === r
+              ? 'bg-white text-gray-900 shadow-sm'
+              : 'text-gray-500 hover:text-gray-700'
+          }`}
+        >
+          {labels[r]}
+        </button>
+      ))}
     </div>
   );
 }
@@ -231,6 +258,14 @@ function AlertBadge({ label, active }: { label: string; active: boolean }) {
 
 export default function SuperAdminMonitor() {
   const { t } = useTranslation();
+  const [range, setRange] = useState<Range>('1h');
+
+  const rangeLabels: Record<Range, string> = {
+    '1h': t('superadmin.monitor.range1h'),
+    '1d': t('superadmin.monitor.range1d'),
+    '1w': t('superadmin.monitor.range1w'),
+    '1m': t('superadmin.monitor.range1m'),
+  };
 
   const { data: health, isLoading, dataUpdatedAt } = useQuery<HealthResponse>({
     queryKey: ['superadmin-health'],
@@ -238,10 +273,10 @@ export default function SuperAdminMonitor() {
     refetchInterval: 30_000,
   });
 
-  const { data: historyData } = useQuery<HistoryResponse>({
-    queryKey: ['superadmin-metrics-history'],
-    queryFn: () => api.get('/superadmin/system/metrics-history').then((r) => r.data),
-    refetchInterval: 60_000,
+  const { data: historyData, isFetching: historyFetching } = useQuery<HistoryResponse>({
+    queryKey: ['superadmin-metrics-history', range],
+    queryFn: () => api.get(`/superadmin/system/metrics-history?range=${range}`).then((r) => r.data),
+    refetchInterval: range === '1h' ? 60_000 : 300_000,
   });
 
   if (isLoading || !health) {
@@ -256,6 +291,8 @@ export default function SuperAdminMonitor() {
     maxUsers: 100, maxDbRpm: 500, maxHttpRpm: 1000,
     maxResponseMs: 2000, maxCpuPct: 80, maxErrorPct: 1,
   };
+
+  const chartProps = { range, limits };
 
   return (
     <div className="space-y-6">
@@ -282,14 +319,30 @@ export default function SuperAdminMonitor() {
         <ServicePill label="Redis"                        status={redis.status} responseMs={redis.responseMs} />
       </div>
 
+      {/* ── Time range selector ── */}
+      <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-4">
+        <div className="flex items-center justify-between gap-4 flex-wrap">
+          <span className="text-sm font-semibold text-gray-700">{t('superadmin.monitor.timeRange')}</span>
+          <div className="flex items-center gap-3 flex-wrap">
+            {historyFetching && (
+              <span className="text-xs text-gray-400 animate-pulse">Loading…</span>
+            )}
+            <RangeSelector value={range} onChange={setRange} labels={rangeLabels} />
+          </div>
+        </div>
+        {history.length === 0 && range !== '1h' && (
+          <p className="mt-3 text-xs text-gray-400 italic">{t('superadmin.monitor.noDataYet')}</p>
+        )}
+      </div>
+
       {/* ── Traffic charts ── */}
       <div>
         <h2 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">
           {t('superadmin.monitor.sectionTraffic')}
         </h2>
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-          <TimeSeriesChart data={history} valueKey="activeUsers"        limit={limits.maxUsers}    color="#3b82f6" title={t('superadmin.monitor.activeUsers')}   unit="" />
-          <TimeSeriesChart data={history} valueKey="httpRequestsPerMin" limit={limits.maxHttpRpm}  color="#10b981" title={t('superadmin.monitor.httpRpm')}       unit="" />
+          <TimeSeriesChart data={history} valueKey="activeUsers"        limit={chartProps.limits.maxUsers}    color="#3b82f6" title={t('superadmin.monitor.activeUsers')}   unit=""    range={range} />
+          <TimeSeriesChart data={history} valueKey="httpRequestsPerMin" limit={chartProps.limits.maxHttpRpm}  color="#10b981" title={t('superadmin.monitor.httpRpm')}       unit=""    range={range} />
         </div>
       </div>
 
@@ -299,8 +352,8 @@ export default function SuperAdminMonitor() {
           {t('superadmin.monitor.sectionPerformance')}
         </h2>
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-          <TimeSeriesChart data={history} valueKey="p95ResponseMs"    limit={limits.maxResponseMs} color="#f59e0b" title={t('superadmin.monitor.p95Response')} unit="ms" />
-          <TimeSeriesChart data={history} valueKey="dbRequestsPerMin" limit={limits.maxDbRpm}      color="#8b5cf6" title={t('superadmin.monitor.dbRpm')}        unit="" />
+          <TimeSeriesChart data={history} valueKey="p95ResponseMs"    limit={chartProps.limits.maxResponseMs} color="#f59e0b" title={t('superadmin.monitor.p95Response')} unit="ms"  range={range} />
+          <TimeSeriesChart data={history} valueKey="dbRequestsPerMin" limit={chartProps.limits.maxDbRpm}      color="#8b5cf6" title={t('superadmin.monitor.dbRpm')}        unit=""    range={range} />
         </div>
       </div>
 
@@ -310,8 +363,8 @@ export default function SuperAdminMonitor() {
           {t('superadmin.monitor.sectionHealth')}
         </h2>
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-          <TimeSeriesChart data={history} valueKey="cpuPct"        limit={limits.maxCpuPct}   color="#ef4444" title={t('superadmin.monitor.cpu')}       unit="%" />
-          <TimeSeriesChart data={history} valueKey="errorRatePct"  limit={limits.maxErrorPct} color="#f43f5e" title={t('superadmin.monitor.errorRate')}  unit="%" />
+          <TimeSeriesChart data={history} valueKey="cpuPct"        limit={chartProps.limits.maxCpuPct}   color="#ef4444" title={t('superadmin.monitor.cpu')}       unit="%"   range={range} />
+          <TimeSeriesChart data={history} valueKey="errorRatePct"  limit={chartProps.limits.maxErrorPct} color="#f43f5e" title={t('superadmin.monitor.errorRate')}  unit="%"   range={range} />
         </div>
       </div>
 

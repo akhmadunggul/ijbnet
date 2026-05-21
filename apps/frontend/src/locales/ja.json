@@ -629,7 +629,13 @@
       "errorRate": "エラー率",
       "sectionTraffic": "トラフィック",
       "sectionPerformance": "パフォーマンス",
-      "sectionHealth": "システム健全性"
+      "sectionHealth": "システム健全性",
+      "timeRange": "時間範囲",
+      "range1h": "1時間",
+      "range1d": "1日",
+      "range1w": "1週間",
+      "range1m": "1ヶ月",
+      "noDataYet": "この期間のデータはまだありません"
     }
   },
   "export": {
