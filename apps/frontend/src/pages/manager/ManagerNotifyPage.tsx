@@ -105,7 +105,7 @@ export default function ManagerNotifyPage() {
               onClick={() => handleTargetTypeChange(type)}
               className={`px-4 py-2 rounded-lg text-sm font-medium transition ${
                 targetType === type
-                  ? 'bg-navy-800 text-white'
+                  ? 'bg-navy-700 text-white'
                   : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
               }`}
             >
@@ -248,7 +248,7 @@ export default function ManagerNotifyPage() {
               mutation.mutate();
             }}
             disabled={!canSend}
-            className="px-6 py-2 bg-navy-800 text-white rounded-lg text-sm font-medium hover:bg-navy-700 disabled:opacity-40 disabled:cursor-not-allowed transition"
+            className="px-6 py-2 bg-navy-700 text-white rounded-lg text-sm font-medium hover:bg-navy-900 disabled:opacity-40 disabled:cursor-not-allowed transition"
           >
             {mutation.isPending ? t('notify.sending') : t('notify.send')}
           </button>
