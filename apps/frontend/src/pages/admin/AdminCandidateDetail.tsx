@@ -184,8 +184,8 @@ export default function AdminCandidateDetail() {
               <AuthImage
                 src={c.fullbodyUrl}
                 alt="Fullbody"
-                className="w-24 h-40 rounded-lg object-cover border border-gray-100"
-                fallback={<div className="w-24 h-40 bg-gray-100 rounded-lg" />}
+                className="w-28 h-56 rounded-lg object-contain border border-gray-100 bg-gray-50"
+                fallback={<div className="w-28 h-56 bg-gray-100 rounded-lg" />}
               />
             )}
           </div>

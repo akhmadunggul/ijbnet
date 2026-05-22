@@ -186,20 +186,21 @@ function PhotoZone({
   }
 
   const aspectClass = slot === 'closeup' ? 'aspect-square' : 'aspect-[9/16]';
+  const objectFitClass = slot === 'closeup' ? 'object-cover' : 'object-contain';
 
   return (
     <div className="flex flex-col gap-3">
       <p className="text-sm font-medium text-gray-700">{label}</p>
       <div
-        className={`relative border-2 border-dashed border-gray-200 rounded-xl overflow-hidden transition ${aspectClass} max-h-72 flex items-center justify-center bg-gray-50 ${!isLocked ? 'cursor-pointer hover:border-navy-400' : 'cursor-default'}`}
+        className={`relative border-2 border-dashed border-gray-200 rounded-xl overflow-hidden transition ${aspectClass} max-h-96 flex items-center justify-center bg-gray-50 ${!isLocked ? 'cursor-pointer hover:border-navy-400' : 'cursor-default'}`}
         onDragOver={!isLocked ? (e) => e.preventDefault() : undefined}
         onDrop={!isLocked ? onDrop : undefined}
         onClick={!isLocked ? () => inputRef.current?.click() : undefined}
       >
         {(localPreview ?? currentUrl) ? (
           localPreview
-            ? <img src={localPreview} alt="preview" className="w-full h-full object-cover" />
-            : <AuthImage src={currentUrl} alt="current" className="w-full h-full object-cover" fallback={<span className="text-xs text-gray-400">{t('loading')}</span>} />
+            ? <img src={localPreview} alt="preview" className={`w-full h-full ${objectFitClass}`} />
+            : <AuthImage src={currentUrl} alt="current" className={`w-full h-full ${objectFitClass}`} fallback={<span className="text-xs text-gray-400">{t('loading')}</span>} />
         ) : (
           <div className="text-center p-4">
             <p className="text-2xl mb-2">📷</p>
