@@ -181,12 +181,18 @@ export default function CandidateCV({
     queryFn: () => api.get('/superadmin/translation-config').then(r => r.data),
     staleTime: 5 * 60 * 1000,
   });
-  const autoTranslateEnabled = translateConfig?.enabled !== false;
+  // Default to false while the config is loading so we never fire a live
+  // translation call before we know the setting value.
+  const autoTranslateEnabled = translateConfig?.enabled === true;
 
   const [jaOverride, setJaOverride] = useState<Record<string, string>>({});
 
   useEffect(() => {
-    if (!autoTranslateEnabled) return;
+    if (!autoTranslateEnabled) {
+      // Clear any stale live-translated overrides so Indonesian fallback shows.
+      setJaOverride({});
+      return;
+    }
 
     const fields = [
       { jaKey: 'selfIntroJa',  idKey: 'selfIntroId'  },
@@ -209,8 +215,10 @@ export default function CandidateCV({
     });
   }, [autoTranslateEnabled, c.selfIntroId, c.selfIntroJa, c.motivationId, c.motivationJa, c.selfPrId, c.selfPrJa]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  // Returns the Japanese value when available, or Indonesian as fallback.
+  // jaOverride (live translation) is only consulted when auto-translate is on.
   const getJa = (jaKey: string, idKey: string): string =>
-    v(c[jaKey]) || v(jaOverride[jaKey]) || v(c[idKey]);
+    v(c[jaKey]) || (autoTranslateEnabled ? v(jaOverride[jaKey]) : '') || v(c[idKey]);
 
   const age = c.dateOfBirth ? calculateAge(c.dateOfBirth) : null;
 
