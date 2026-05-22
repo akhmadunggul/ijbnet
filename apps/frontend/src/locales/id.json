@@ -603,6 +603,27 @@
       "translateLabel": "Auto-terjemah ke Bahasa Jepang",
       "translateHint": "Menggunakan LibreTranslate (self-hosted). Nonaktifkan jika kualitas terjemahan belum memadai."
     },
+    "recruiterSettings": {
+      "navLabel": "Tampilan Rekruiter",
+      "title": "Tampilan Kolom Rekruiter",
+      "description": "Kelola kolom yang ditampilkan pada tabel 'Dalam Seleksi' di portal Rekruiter.",
+      "col_foto": "Foto (Closeup)",
+      "col_nama": "Nama",
+      "col_ju": "Jenis Kelamin / Usia",
+      "col_pendidikan": "Pendidikan",
+      "col_program": "Program",
+      "col_bahasaJp": "Bahasa JP",
+      "col_cekFisik": "Cek Fisik",
+      "col_fotoBadan": "Foto Badan (Foto Penuh)",
+      "col_video": "Video",
+      "col_profil": "Profil (CV)",
+      "col_pilih": "Pilih",
+      "tabActive": "Tampil",
+      "tabInactive": "Sembunyikan",
+      "saveBtn": "Simpan Pengaturan",
+      "saved": "Pengaturan berhasil disimpan.",
+      "errorSave": "Gagal menyimpan pengaturan."
+    },
     "monitor": {
       "title": "Monitor Sistem",
       "navLabel": "Monitor",

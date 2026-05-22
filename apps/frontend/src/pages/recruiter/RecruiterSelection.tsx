@@ -311,6 +311,33 @@ function VideoModal({ bc, lang, onClose }: { bc: RecruiterBatchCandidate | null;
   );
 }
 
+function FullbodyModal({ bc, lang, onClose }: { bc: RecruiterBatchCandidate | null; lang: string; onClose: () => void }) {
+  if (!bc || !bc.candidate.fullbodyUrl) return null;
+  const c = bc.candidate;
+
+  return (
+    <div className="fixed inset-0 z-50 bg-black/70 flex items-center justify-center p-4" onClick={onClose}>
+      <div
+        className="bg-white rounded-2xl max-w-sm w-full overflow-hidden"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="flex items-center justify-between px-5 py-3 border-b border-gray-100">
+          <p className="font-semibold text-navy-900 text-sm">{c.fullName}</p>
+          <button onClick={onClose} className="text-gray-400 hover:text-gray-600 text-xl">×</button>
+        </div>
+        <div className="flex items-center justify-center bg-gray-50 p-4">
+          <AuthImage
+            src={c.fullbodyUrl}
+            alt={c.fullName}
+            className="max-h-[70vh] max-w-full object-contain rounded-lg"
+            fallback={<div className="text-xs text-gray-400 py-12">{lang === 'ja' ? '読込中...' : 'Memuat...'}</div>}
+          />
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function ProfileModal({ bc, lang, onClose }: { bc: RecruiterBatchCandidate | null; lang: string; onClose: () => void }) {
   if (!bc) return null;
   const c = bc.candidate;
@@ -553,6 +580,17 @@ function ConfirmDialog({
   );
 }
 
+// ── Column config ─────────────────────────────────────────────────────────────
+
+type ColKey = 'foto' | 'nama' | 'ju' | 'pendidikan' | 'program' | 'bahasaJp' | 'cekFisik' | 'fotoBadan' | 'video' | 'profil' | 'pilih';
+
+const DEFAULT_COLS: Record<ColKey, boolean> = {
+  foto: true, nama: true, ju: true, pendidikan: true, program: true,
+  bahasaJp: true, cekFisik: true, fotoBadan: true, video: true, profil: true, pilih: true,
+};
+
+interface ColConfigResponse { config: Record<ColKey, boolean>; }
+
 // ── Main component ────────────────────────────────────────────────────────────
 
 export default function RecruiterSelection() {
@@ -568,6 +606,7 @@ export default function RecruiterSelection() {
   const [drawerBc, setDrawerBc] = useState<RecruiterBatchCandidate | null>(null);
   const [videoBc, setVideoBc] = useState<RecruiterBatchCandidate | null>(null);
   const [profileBc, setProfileBc] = useState<RecruiterBatchCandidate | null>(null);
+  const [fullbodyBc, setFullbodyBc] = useState<RecruiterBatchCandidate | null>(null);
   const [showConfirm, setShowConfirm] = useState(false);
   const initRef = useRef(false);
 
@@ -577,6 +616,14 @@ export default function RecruiterSelection() {
     queryKey: ['recruiter-batch'],
     queryFn: () => api.get('/recruiter/batch').then((r) => r.data),
   });
+
+  const { data: colConfigData } = useQuery<ColConfigResponse>({
+    queryKey: ['recruiter-selection-columns'],
+    queryFn: () => api.get('/superadmin/recruiter-selection-columns').then((r) => r.data),
+    staleTime: 5 * 60 * 1000,
+  });
+  const cols: Record<ColKey, boolean> = { ...DEFAULT_COLS, ...(colConfigData?.config ?? {}) };
+  const visibleColCount = 1 + (Object.values(cols) as boolean[]).filter(Boolean).length;
 
   // Initialize selection store from batch data
   useEffect(() => {
@@ -760,22 +807,23 @@ export default function RecruiterSelection() {
             <thead className="bg-gray-50 border-b border-gray-100">
               <tr>
                 <th className="px-3 py-3 text-center text-xs font-medium text-gray-400">#</th>
-                <th className="px-3 py-3 text-left text-xs font-medium text-gray-400">{lang === 'ja' ? '写真' : 'Foto'}</th>
-                <th className="px-3 py-3 text-left text-xs font-medium text-gray-400">{lang === 'ja' ? '氏名' : 'Nama'}</th>
-                <th className="px-3 py-3 text-left text-xs font-medium text-gray-400">{lang === 'ja' ? '性別/年齢' : 'J/U'}</th>
-                <th className="px-3 py-3 text-left text-xs font-medium text-gray-400">{lang === 'ja' ? '学歴' : 'Pendidikan'}</th>
-                <th className="px-3 py-3 text-left text-xs font-medium text-gray-400">{lang === 'ja' ? 'プログラム' : 'Program'}</th>
-                <th className="px-3 py-3 text-left text-xs font-medium text-gray-400">{lang === 'ja' ? '日本語' : 'Bahasa JP'}</th>
-                <th className="px-3 py-3 text-left text-xs font-medium text-gray-400">{lang === 'ja' ? '体力検査' : 'Cek Fisik'}</th>
-                <th className="px-3 py-3 text-center text-xs font-medium text-gray-400">{lang === 'ja' ? '動画' : 'Video'}</th>
-                <th className="px-3 py-3 text-center text-xs font-medium text-gray-400">{lang === 'ja' ? 'プロフィール' : 'Profil'}</th>
-                <th className="px-3 py-3 text-center text-xs font-medium text-gray-400">{lang === 'ja' ? '選択' : 'Pilih'}</th>
+                {cols.foto && <th className="px-3 py-3 text-left text-xs font-medium text-gray-400">{lang === 'ja' ? '写真' : 'Foto'}</th>}
+                {cols.nama && <th className="px-3 py-3 text-left text-xs font-medium text-gray-400">{lang === 'ja' ? '氏名' : 'Nama'}</th>}
+                {cols.ju && <th className="px-3 py-3 text-left text-xs font-medium text-gray-400">{lang === 'ja' ? '性別/年齢' : 'J/U'}</th>}
+                {cols.pendidikan && <th className="px-3 py-3 text-left text-xs font-medium text-gray-400">{lang === 'ja' ? '学歴' : 'Pendidikan'}</th>}
+                {cols.program && <th className="px-3 py-3 text-left text-xs font-medium text-gray-400">{lang === 'ja' ? 'プログラム' : 'Program'}</th>}
+                {cols.bahasaJp && <th className="px-3 py-3 text-left text-xs font-medium text-gray-400">{lang === 'ja' ? '日本語' : 'Bahasa JP'}</th>}
+                {cols.cekFisik && <th className="px-3 py-3 text-left text-xs font-medium text-gray-400">{lang === 'ja' ? '体力検査' : 'Cek Fisik'}</th>}
+                {cols.fotoBadan && <th className="px-3 py-3 text-center text-xs font-medium text-gray-400">{lang === 'ja' ? '全身写真' : 'Foto Badan'}</th>}
+                {cols.video && <th className="px-3 py-3 text-center text-xs font-medium text-gray-400">{lang === 'ja' ? '動画' : 'Video'}</th>}
+                {cols.profil && <th className="px-3 py-3 text-center text-xs font-medium text-gray-400">{lang === 'ja' ? 'プロフィール' : 'Profil'}</th>}
+                {cols.pilih && <th className="px-3 py-3 text-center text-xs font-medium text-gray-400">{lang === 'ja' ? '選択' : 'Pilih'}</th>}
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-50">
               {filtered.length === 0 && (
                 <tr>
-                  <td colSpan={11} className="px-4 py-8 text-center text-xs text-gray-400">{t('noData')}</td>
+                  <td colSpan={visibleColCount} className="px-4 py-8 text-center text-xs text-gray-400">{t('noData')}</td>
                 </tr>
               )}
               {filtered.map((bc, idx) => {
@@ -792,78 +840,113 @@ export default function RecruiterSelection() {
                 return (
                   <tr key={bc.id} className={`transition ${rowBg}`}>
                     <td className="px-3 py-3 text-center text-xs text-gray-400">{idx + 1}</td>
-                    <td className="px-3 py-3">
-                      <AuthImage
-                        src={c.closeupUrl}
-                        alt={c.fullName}
-                        className="w-10 h-10 rounded-lg object-cover border border-gray-100"
-                        fallback={<div className="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center text-gray-300">👤</div>}
-                      />
-                    </td>
-                    <td className="px-3 py-3">
-                      <p className="font-medium text-gray-900 text-xs leading-none">{c.fullName}</p>
-                      <p className="text-gray-400 font-mono text-[10px] mt-0.5">{c.candidateCode}</p>
-                    </td>
-                    <td className="px-3 py-3 text-xs text-gray-600 whitespace-nowrap">
-                      {c.gender ?? '—'} {age != null ? `· ${age}${lang === 'ja' ? '歳' : 'thn'}` : ''}
-                    </td>
-                    <td className="px-3 py-3 text-xs text-gray-600">{c.eduLabel ?? c.eduLevel ?? '—'}</td>
-                    <td className="px-3 py-3">
-                      {c.sswKubun && (
-                        <span className="text-xs bg-navy-100 text-navy-700 px-1.5 py-0.5 rounded font-medium">
-                          {c.sswKubun}
-                        </span>
-                      )}
-                      {(lang === 'ja' ? c.sswFieldJa : c.sswFieldId) && (
-                        <p className="text-[10px] text-gray-400 mt-0.5 max-w-24 truncate">
-                          {lang === 'ja' ? c.sswFieldJa : c.sswFieldId}
-                        </p>
-                      )}
-                    </td>
-                    <td className="px-3 py-3">
-                      <button
-                        onClick={() => setDrawerBc(bc)}
-                        className="text-left hover:underline"
-                      >
-                        {highest ? (
-                          <span className="text-xs font-semibold text-navy-700">{highest.level}</span>
-                        ) : (
-                          <span className="text-xs text-gray-300">—</span>
+                    {cols.foto && (
+                      <td className="px-3 py-3">
+                        <AuthImage
+                          src={c.closeupUrl}
+                          alt={c.fullName}
+                          className="w-10 h-10 rounded-lg object-cover border border-gray-100"
+                          fallback={<div className="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center text-gray-300">👤</div>}
+                        />
+                      </td>
+                    )}
+                    {cols.nama && (
+                      <td className="px-3 py-3">
+                        <p className="font-medium text-gray-900 text-xs leading-none">{c.fullName}</p>
+                        <p className="text-gray-400 font-mono text-[10px] mt-0.5">{c.candidateCode}</p>
+                      </td>
+                    )}
+                    {cols.ju && (
+                      <td className="px-3 py-3 text-xs text-gray-600 whitespace-nowrap">
+                        {c.gender ?? '—'} {age != null ? `· ${age}${lang === 'ja' ? '歳' : 'thn'}` : ''}
+                      </td>
+                    )}
+                    {cols.pendidikan && (
+                      <td className="px-3 py-3 text-xs text-gray-600">{c.eduLabel ?? c.eduLevel ?? '—'}</td>
+                    )}
+                    {cols.program && (
+                      <td className="px-3 py-3">
+                        {c.sswKubun && (
+                          <span className="text-xs bg-navy-100 text-navy-700 px-1.5 py-0.5 rounded font-medium">
+                            {c.sswKubun}
+                          </span>
                         )}
-                      </button>
-                    </td>
-                    <td className="px-3 py-3">
-                      <BodyCheckCard c={c} lang={lang} />
-                    </td>
-                    <td className="px-3 py-3 text-center">
-                      {(c.videos ?? []).length > 0 ? (
+                        {(lang === 'ja' ? c.sswFieldJa : c.sswFieldId) && (
+                          <p className="text-[10px] text-gray-400 mt-0.5 max-w-24 truncate">
+                            {lang === 'ja' ? c.sswFieldJa : c.sswFieldId}
+                          </p>
+                        )}
+                      </td>
+                    )}
+                    {cols.bahasaJp && (
+                      <td className="px-3 py-3">
                         <button
-                          onClick={() => setVideoBc(bc)}
-                          className="text-xs text-blue-600 hover:underline"
+                          onClick={() => setDrawerBc(bc)}
+                          className="text-left hover:underline"
                         >
-                          ▶ {c.videos.length}
+                          {highest ? (
+                            <span className="text-xs font-semibold text-navy-700">{highest.level}</span>
+                          ) : (
+                            <span className="text-xs text-gray-300">—</span>
+                          )}
                         </button>
-                      ) : (
-                        <span className="text-gray-300 text-xs">—</span>
-                      )}
-                    </td>
-                    <td className="px-3 py-3 text-center">
-                      <button
-                        onClick={() => navigate(`/recruiter/candidates/${bc.candidateId}/cv`)}
-                        className="text-xs text-navy-600 hover:underline"
-                      >
-                        {lang === 'ja' ? 'CV' : 'CV'}
-                      </button>
-                    </td>
-                    <td className="px-3 py-3 text-center">
-                      <input
-                        type="checkbox"
-                        checked={isSelected}
-                        disabled={bc.isConfirmed || (atLimit && !isSelected)}
-                        onChange={() => toggleSelect(bc.candidateId, bc.isConfirmed)}
-                        className="w-4 h-4 accent-navy-700 disabled:opacity-40 cursor-pointer"
-                      />
-                    </td>
+                      </td>
+                    )}
+                    {cols.cekFisik && (
+                      <td className="px-3 py-3">
+                        <BodyCheckCard c={c} lang={lang} />
+                      </td>
+                    )}
+                    {cols.fotoBadan && (
+                      <td className="px-3 py-3 text-center">
+                        {c.fullbodyUrl ? (
+                          <button
+                            onClick={() => setFullbodyBc(bc)}
+                            className="text-xs text-navy-600 hover:underline"
+                            title={lang === 'ja' ? '全身写真を見る' : 'Lihat foto badan'}
+                          >
+                            {lang === 'ja' ? '写真' : 'Foto'}
+                          </button>
+                        ) : (
+                          <span className="text-gray-300 text-xs">—</span>
+                        )}
+                      </td>
+                    )}
+                    {cols.video && (
+                      <td className="px-3 py-3 text-center">
+                        {(c.videos ?? []).length > 0 ? (
+                          <button
+                            onClick={() => setVideoBc(bc)}
+                            className="text-xs text-blue-600 hover:underline"
+                          >
+                            ▶ {c.videos.length}
+                          </button>
+                        ) : (
+                          <span className="text-gray-300 text-xs">—</span>
+                        )}
+                      </td>
+                    )}
+                    {cols.profil && (
+                      <td className="px-3 py-3 text-center">
+                        <button
+                          onClick={() => navigate(`/recruiter/candidates/${bc.candidateId}/cv`)}
+                          className="text-xs text-navy-600 hover:underline"
+                        >
+                          CV
+                        </button>
+                      </td>
+                    )}
+                    {cols.pilih && (
+                      <td className="px-3 py-3 text-center">
+                        <input
+                          type="checkbox"
+                          checked={isSelected}
+                          disabled={bc.isConfirmed || (atLimit && !isSelected)}
+                          onChange={() => toggleSelect(bc.candidateId, bc.isConfirmed)}
+                          className="w-4 h-4 accent-navy-700 disabled:opacity-40 cursor-pointer"
+                        />
+                      </td>
+                    )}
                   </tr>
                 );
               })}
@@ -876,6 +959,7 @@ export default function RecruiterSelection() {
       <JapaneseDrawer bc={drawerBc} lang={lang} onClose={() => setDrawerBc(null)} />
       <VideoModal bc={videoBc} lang={lang} onClose={() => setVideoBc(null)} />
       <ProfileModal bc={profileBc} lang={lang} onClose={() => setProfileBc(null)} />
+      <FullbodyModal bc={fullbodyBc} lang={lang} onClose={() => setFullbodyBc(null)} />
 
       {/* Confirmation dialog */}
       {showConfirm && (

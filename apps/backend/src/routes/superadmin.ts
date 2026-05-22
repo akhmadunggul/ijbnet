@@ -79,6 +79,16 @@ router.get('/translation-config', wrap(async (_req, res) => {
   res.json({ enabled });
 }));
 
+// ── GET /api/superadmin/recruiter-selection-columns — PUBLIC ─────────────────
+router.get('/recruiter-selection-columns', wrap(async (_req, res) => {
+  const row = await GlobalSettings.findOne({ where: { key: 'recruiter_selection_columns' } });
+  const defaultConfig = {
+    foto: true, nama: true, ju: true, pendidikan: true, program: true,
+    bahasaJp: true, cekFisik: true, fotoBadan: true, video: true, profil: true, pilih: true,
+  };
+  res.json({ config: row ? (row.toJSON() as unknown as Record<string, unknown>)['value'] : defaultConfig });
+}));
+
 router.use(authenticate, requireRole('super_admin'));
 
 // ── System Stats ──────────────────────────────────────────────────────────────
@@ -221,6 +231,26 @@ router.put('/translation-config', wrap(async (req, res) => {
   }
 
   res.json({ enabled });
+}));
+
+// ── PUT /api/superadmin/recruiter-selection-columns ──────────────────────────
+router.put('/recruiter-selection-columns', wrap(async (req, res) => {
+  const body = req.body as Record<string, unknown>;
+  const validKeys = ['foto', 'nama', 'ju', 'pendidikan', 'program', 'bahasaJp', 'cekFisik', 'fotoBadan', 'video', 'profil', 'pilih'];
+  const config: Record<string, boolean> = {};
+  for (const k of validKeys) {
+    config[k] = body[k] !== false;
+  }
+
+  const [row, created] = await GlobalSettings.findOrCreate({
+    where: { key: 'recruiter_selection_columns' },
+    defaults: { key: 'recruiter_selection_columns', value: config },
+  });
+  if (!created) {
+    await row.update({ value: config });
+  }
+
+  res.json({ config });
 }));
 
 // ── PUT /api/superadmin/candidate-tab-config ──────────────────────────────────

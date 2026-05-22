@@ -602,6 +602,27 @@
       "translateLabel": "日本語への自動翻訳",
       "translateHint": "LibreTranslate（自己ホスト）を使用します。翻訳品質が不十分な場合は無効にしてください。"
     },
+    "recruiterSettings": {
+      "navLabel": "採用担当表示設定",
+      "title": "採用担当カラム表示設定",
+      "description": "採用担当ポータルの「選考中」テーブルに表示するカラムを管理します。",
+      "col_foto": "写真（クローズアップ）",
+      "col_nama": "氏名",
+      "col_ju": "性別／年齢",
+      "col_pendidikan": "学歴",
+      "col_program": "プログラム",
+      "col_bahasaJp": "日本語",
+      "col_cekFisik": "体力検査",
+      "col_fotoBadan": "全身写真",
+      "col_video": "動画",
+      "col_profil": "プロフィール（CV）",
+      "col_pilih": "選択",
+      "tabActive": "表示",
+      "tabInactive": "非表示",
+      "saveBtn": "設定を保存",
+      "saved": "設定を保存しました。",
+      "errorSave": "設定の保存に失敗しました。"
+    },
     "monitor": {
       "title": "システムモニター",
       "navLabel": "モニター",

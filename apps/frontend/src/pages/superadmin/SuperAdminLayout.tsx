@@ -17,8 +17,9 @@ const navItems = [
   { to: '/superadmin/candidates', icon: '👥', key: 'navCandidates' },
   { to: '/superadmin/audit-log',  icon: '📋', key: 'superadmin.auditLog.title' },
   { to: '/superadmin/consent',             icon: '📄', key: 'superadmin.consent.navLabel' },
-  { to: '/superadmin/data-entry-settings', icon: '🗂️', key: 'superadmin.dataEntrySettings.navLabel' },
-  { to: '/superadmin/settings',            icon: '⚙️', key: 'navSettings' },
+  { to: '/superadmin/data-entry-settings',  icon: '🗂️', key: 'superadmin.dataEntrySettings.navLabel' },
+  { to: '/superadmin/recruiter-settings',   icon: '📋', key: 'superadmin.recruiterSettings.navLabel' },
+  { to: '/superadmin/settings',             icon: '⚙️', key: 'navSettings' },
   { to: '/superadmin/monitor',             icon: '🖥️', key: 'superadmin.monitor.navLabel' },
 ];
 
