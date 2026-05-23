@@ -14,6 +14,16 @@ interface TranslationConfigResponse {
   enabled: boolean;
 }
 
+type FontKey = 'ms-mincho' | 'yu-mincho' | 'yu-gothic' | 'noto-serif-jp' | 'noto-sans-jp';
+
+const FONT_OPTIONS: { key: FontKey; label: string; sublabel: string; value: string; googleFont?: string }[] = [
+  { key: 'ms-mincho',    label: 'MS Mincho',      sublabel: 'Windows (既定)',          value: '"MS Mincho", serif' },
+  { key: 'yu-mincho',    label: 'Yu Mincho',       sublabel: 'Windows / macOS (推奨)',  value: '"Hiragino Mincho ProN", "Yu Mincho", "YuMincho", "MS PMincho", serif' },
+  { key: 'yu-gothic',    label: 'Yu Gothic',       sublabel: 'ゴシック体 (sans-serif)', value: '"Hiragino Sans", "Yu Gothic", "Meiryo", "MS PGothic", sans-serif' },
+  { key: 'noto-serif-jp',label: 'Noto Serif JP',   sublabel: 'Google Fonts (明朝体)',   value: '"Noto Serif JP", serif',      googleFont: 'Noto+Serif+JP:wght@400;700' },
+  { key: 'noto-sans-jp', label: 'Noto Sans JP',    sublabel: 'Google Fonts (ゴシック)', value: '"Noto Sans JP", sans-serif',  googleFont: 'Noto+Sans+JP:wght@400;700' },
+];
+
 export default function SuperAdminDataEntrySettings() {
   const { t } = useTranslation();
   const qc = useQueryClient();
@@ -26,6 +36,9 @@ export default function SuperAdminDataEntrySettings() {
   const [translateEnabled, setTranslateEnabled] = useState(true);
   const [translateSaveSuccess, setTranslateSaveSuccess] = useState(false);
   const [translateSaveError, setTranslateSaveError] = useState(false);
+  const [fontKey, setFontKey] = useState<FontKey>('ms-mincho');
+  const [fontSaveSuccess, setFontSaveSuccess] = useState(false);
+  const [fontSaveError, setFontSaveError] = useState(false);
 
   const { data, isLoading } = useQuery<TabConfigResponse>({
     queryKey: ['candidate-tab-config'],
@@ -35,6 +48,11 @@ export default function SuperAdminDataEntrySettings() {
   const { data: translateData } = useQuery<TranslationConfigResponse>({
     queryKey: ['translation-config'],
     queryFn: () => api.get('/superadmin/translation-config').then((r) => r.data),
+  });
+
+  const { data: fontData } = useQuery<{ fontKey: FontKey }>({
+    queryKey: ['cv-font'],
+    queryFn: () => api.get('/superadmin/cv-font').then((r) => r.data),
   });
 
   useEffect(() => {
@@ -49,6 +67,10 @@ export default function SuperAdminDataEntrySettings() {
     }
   }, [translateData]);
 
+  useEffect(() => {
+    if (fontData?.fontKey) setFontKey(fontData.fontKey);
+  }, [fontData]);
+
   const saveMutation = useMutation({
     mutationFn: (cfg: Record<TabKey, boolean>) =>
       api.put('/superadmin/candidate-tab-config', cfg).then((r) => r.data),
@@ -61,6 +83,21 @@ export default function SuperAdminDataEntrySettings() {
     onError: () => {
       setSaveError(true);
       setSaveSuccess(false);
+    },
+  });
+
+  const fontMutation = useMutation({
+    mutationFn: (key: FontKey) =>
+      api.put('/superadmin/cv-font', { fontKey: key }).then((r) => r.data),
+    onSuccess: () => {
+      setFontSaveSuccess(true);
+      setFontSaveError(false);
+      void qc.invalidateQueries({ queryKey: ['cv-font'] });
+      setTimeout(() => setFontSaveSuccess(false), 3000);
+    },
+    onError: () => {
+      setFontSaveError(true);
+      setFontSaveSuccess(false);
     },
   });
 
@@ -191,6 +228,55 @@ export default function SuperAdminDataEntrySettings() {
           <span className="text-sm text-green-600">✓ {t('superadmin.dataEntrySettings.saved')}</span>
         )}
         {translateSaveError && (
+          <span className="text-sm text-red-600">{t('superadmin.dataEntrySettings.errorSave')}</span>
+        )}
+      </div>
+
+      {/* CV Font Settings */}
+      <div>
+        <h2 className="text-base font-semibold text-gray-900 mb-1">{t('superadmin.dataEntrySettings.cvFontTitle')}</h2>
+        <p className="text-sm text-gray-500 mb-4">{t('superadmin.dataEntrySettings.cvFontDesc')}</p>
+      </div>
+
+      <div className="bg-white rounded-xl border border-gray-100 shadow-sm divide-y divide-gray-50">
+        {FONT_OPTIONS.map((opt) => (
+          <label key={opt.key} className="flex items-center justify-between px-5 py-4 cursor-pointer hover:bg-gray-50 transition">
+            <div className="flex items-center gap-4">
+              <input
+                type="radio"
+                name="cv_font"
+                value={opt.key}
+                checked={fontKey === opt.key}
+                onChange={() => setFontKey(opt.key)}
+                className="accent-navy-700"
+              />
+              <div>
+                <p className="text-sm font-medium text-gray-800">{opt.label}</p>
+                <p className="text-xs text-gray-400">{opt.sublabel}</p>
+                {opt.googleFont && (
+                  <p className="text-[10px] text-amber-500 mt-0.5">※ インターネット接続が必要</p>
+                )}
+              </div>
+            </div>
+            <span style={{ fontFamily: opt.value }} className="text-base text-gray-700 select-none">
+              日本語のサンプル
+            </span>
+          </label>
+        ))}
+      </div>
+
+      <div className="flex items-center gap-4">
+        <button
+          onClick={() => fontMutation.mutate(fontKey)}
+          disabled={fontMutation.isPending}
+          className="px-5 py-2 bg-gray-900 text-white text-sm rounded-lg hover:bg-gray-700 transition disabled:opacity-50"
+        >
+          {fontMutation.isPending ? '…' : t('superadmin.dataEntrySettings.saveBtn')}
+        </button>
+        {fontSaveSuccess && (
+          <span className="text-sm text-green-600">✓ {t('superadmin.dataEntrySettings.saved')}</span>
+        )}
+        {fontSaveError && (
           <span className="text-sm text-red-600">{t('superadmin.dataEntrySettings.errorSave')}</span>
         )}
       </div>

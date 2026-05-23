@@ -598,6 +598,8 @@
       "saveBtn": "Simpan Pengaturan",
       "saved": "Pengaturan berhasil disimpan.",
       "errorSave": "Gagal menyimpan pengaturan.",
+      "cvFontTitle": "Font CV",
+      "cvFontDesc": "Font yang digunakan pada tampilan dan cetak CV kandidat.",
       "translateTitle": "Pengaturan Terjemahan Otomatis",
       "translateDesc": "Kontrol apakah kolom Keahlian, Motivasi, dan Promosi Diri diterjemahkan otomatis ke Bahasa Jepang saat kandidat menyimpan profil. Jika dinonaktifkan, kolom Jepang pada CV akan menampilkan teks Bahasa Indonesia.",
       "translateLabel": "Auto-terjemah ke Bahasa Jepang",

@@ -79,6 +79,13 @@ router.get('/translation-config', wrap(async (_req, res) => {
   res.json({ enabled });
 }));
 
+// ── GET /api/superadmin/cv-font — PUBLIC ─────────────────────────────────────
+router.get('/cv-font', wrap(async (_req, res) => {
+  const row = await GlobalSettings.findOne({ where: { key: 'cv_font' } });
+  const fontKey = row ? (row.toJSON() as unknown as Record<string, unknown>)['value'] : 'ms-mincho';
+  res.json({ fontKey });
+}));
+
 // ── GET /api/superadmin/recruiter-selection-columns — PUBLIC ─────────────────
 router.get('/recruiter-selection-columns', wrap(async (_req, res) => {
   const row = await GlobalSettings.findOne({ where: { key: 'recruiter_selection_columns' } });
@@ -251,6 +258,23 @@ router.put('/recruiter-selection-columns', wrap(async (req, res) => {
   }
 
   res.json({ config });
+}));
+
+// ── PUT /api/superadmin/cv-font ───────────────────────────────────────────────
+router.put('/cv-font', wrap(async (req, res) => {
+  const body = req.body as Record<string, unknown>;
+  const validKeys = ['ms-mincho', 'yu-mincho', 'yu-gothic', 'noto-serif-jp', 'noto-sans-jp'];
+  const fontKey = validKeys.includes(String(body['fontKey'])) ? String(body['fontKey']) : 'ms-mincho';
+
+  const [row, created] = await GlobalSettings.findOrCreate({
+    where: { key: 'cv_font' },
+    defaults: { key: 'cv_font', value: fontKey },
+  });
+  if (!created) {
+    await row.update({ value: fontKey });
+  }
+
+  res.json({ fontKey });
 }));
 
 // ── PUT /api/superadmin/candidate-tab-config ──────────────────────────────────

@@ -71,7 +71,18 @@ function padRows<T>(arr: T[] | null | undefined, min: number): (T | null)[] {
 
 // ── Styles ────────────────────────────────────────────────────────────────────
 
-const FONT = '"MS Mincho", serif';
+const FONT_MAP: Record<string, string> = {
+  'ms-mincho':     '"MS Mincho", serif',
+  'yu-mincho':     '"Hiragino Mincho ProN", "Yu Mincho", "YuMincho", "MS PMincho", serif',
+  'yu-gothic':     '"Hiragino Sans", "Yu Gothic", "Meiryo", "MS PGothic", sans-serif',
+  'noto-serif-jp': '"Noto Serif JP", serif',
+  'noto-sans-jp':  '"Noto Sans JP", sans-serif',
+};
+
+const GOOGLE_FONT_MAP: Record<string, string> = {
+  'noto-serif-jp': 'Noto+Serif+JP:wght@400;700',
+  'noto-sans-jp':  'Noto+Sans+JP:wght@400;700',
+};
 
 const PRINT_CSS = `
   @media print {
@@ -117,7 +128,6 @@ const S = {
     margin: '0 auto',
     border: '2px solid #000',
     padding: '20px',
-    fontFamily: FONT,
     fontSize: '12px',
     color: '#000',
     boxSizing: 'border-box' as const,
@@ -184,6 +194,27 @@ export default function CandidateCV({
   // Default to false while the config is loading so we never fire a live
   // translation call before we know the setting value.
   const autoTranslateEnabled = translateConfig?.enabled === true;
+
+  const { data: fontConfig } = useQuery<{ fontKey: string }>({
+    queryKey: ['cv-font'],
+    queryFn: () => api.get('/superadmin/cv-font').then(r => r.data),
+    staleTime: 5 * 60 * 1000,
+  });
+  const fontKey = fontConfig?.fontKey ?? 'ms-mincho';
+  const FONT = FONT_MAP[fontKey] ?? FONT_MAP['ms-mincho'];
+
+  // Inject Google Fonts link if needed
+  useEffect(() => {
+    const gf = GOOGLE_FONT_MAP[fontKey];
+    if (!gf) return;
+    const id = `gfont-${fontKey}`;
+    if (document.getElementById(id)) return;
+    const link = document.createElement('link');
+    link.id = id;
+    link.rel = 'stylesheet';
+    link.href = `https://fonts.googleapis.com/css2?family=${gf}&display=swap`;
+    document.head.appendChild(link);
+  }, [fontKey]);
 
   const [jaOverride, setJaOverride] = useState<Record<string, string>>({});
 
@@ -305,7 +336,7 @@ export default function CandidateCV({
   const ST = S.sectionTitle;
 
   return (
-    <div className="cv-con" style={S.container}>
+    <div className="cv-con" style={{ ...S.container, fontFamily: FONT }}>
       <style dangerouslySetInnerHTML={{ __html: PRINT_CSS }} />
 
       {/* ── Title ── */}
