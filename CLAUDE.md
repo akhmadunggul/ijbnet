@@ -182,6 +182,7 @@ apps/frontend/src/
 - v0.3.6 — Monitor charts: configurable timeline (1h/1d/1w/1m) with DB-persisted snapshots; fix MySQL ONLY_FULL_GROUP_BY error on metrics-history; DB pool 25→35
 - v0.3.7 — Grafana-style monitor dashboard: dark theme, smooth bezier curves, gradient fills, Min/Avg/Max/Now stats row, Grafana color palette, glowing status dots
 - v0.3.8 — Manager broadcast notifications: send email + in-app notification to All / By LPK / By Program / By Batch with recipient preview
+- v0.3.9 — CV enhancements: configurable Japanese font (5 options) from superadmin; auto-translate fallback to Indonesian when disabled and Japanese field is empty; IJBNet logo inserted below candidate photo; superadmin column visibility control for recruiter Dalam Seleksi table (incl. new Foto Badan column); fullbody photo display fix (object-contain)
 
-Current: v0.3.8
+Current: v0.3.9
 Live at: https://jinzai.jobagus.id
