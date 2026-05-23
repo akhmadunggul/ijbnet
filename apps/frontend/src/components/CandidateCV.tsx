@@ -557,7 +557,7 @@ export default function CandidateCV({
           </tr>
           <tr className="cv-row-md">
             <td style={{ ...TD, height: '40px', whiteSpace: 'pre-wrap' }}>
-              {trunc(getJa('selfIntroJa', 'selfIntroId'), 200)}
+              {trunc(getJa('selfPrJa', 'selfPrId'), 200)}
             </td>
           </tr>
         </tbody>
@@ -590,7 +590,7 @@ export default function CandidateCV({
           </tr>
           <tr className="cv-row-lg">
             <td style={{ ...TD, height: '60px', whiteSpace: 'pre-wrap' }}>
-              {trunc(getJa('selfPrJa', 'selfPrId'), 300)}
+              {trunc(getJa('selfIntroJa', 'selfIntroId'), 300)}
             </td>
           </tr>
         </tbody>
