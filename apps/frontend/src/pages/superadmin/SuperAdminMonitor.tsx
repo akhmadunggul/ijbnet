@@ -64,6 +64,13 @@ function fmtVal(v: number, unit: string): string {
   return (unit === '%' || unit === 'ms') ? v.toFixed(1) : Math.round(v).toString();
 }
 
+function fmtTooltipTs(ts: number, range: Range): string {
+  const d = new Date(ts);
+  const time = d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  if (range === '1h' || range === '1d') return time;
+  return d.toLocaleDateString([], { month: 'short', day: 'numeric' }) + ' ' + time;
+}
+
 // Smooth monotone cubic bezier path — gives Grafana's characteristic curve
 function buildLinePath(pts: { x: number; y: number }[]): string {
   if (pts.length < 2) return '';
@@ -93,6 +100,8 @@ function TimeSeriesChart({
   const VW = 420, VH = 100;
   const P = { t: 6, r: 46, b: 20, l: 38 };
   const cW = VW - P.l - P.r, cH = VH - P.t - P.b;
+
+  const [hoverIdx, setHoverIdx] = useState<number | null>(null);
 
   const values  = data.map((d) => d[valueKey] as number);
   const current = values[values.length - 1] ?? 0;
@@ -158,7 +167,21 @@ function TimeSeriesChart({
             Waiting for first snapshot…
           </div>
         ) : (
-          <svg viewBox={`0 0 ${VW} ${VH}`} className="w-full h-auto" aria-hidden="true">
+          <svg
+            viewBox={`0 0 ${VW} ${VH}`}
+            className="w-full h-auto cursor-crosshair"
+            aria-hidden="true"
+            onMouseMove={(e) => {
+              if (pts.length === 0) return;
+              const rect = e.currentTarget.getBoundingClientRect();
+              const mouseX = (e.clientX - rect.left) / rect.width * VW;
+              if (mouseX < P.l || mouseX > VW - P.r) { setHoverIdx(null); return; }
+              let nearestIdx = 0, minDist = Infinity;
+              pts.forEach(({ x }, i) => { const dist = Math.abs(x - mouseX); if (dist < minDist) { minDist = dist; nearestIdx = i; } });
+              setHoverIdx(nearestIdx);
+            }}
+            onMouseLeave={() => setHoverIdx(null)}
+          >
             <defs>
               <linearGradient id={gradId} x1="0" y1="0" x2="0" y2="1">
                 <stop offset="0%"   stopColor={color} stopOpacity="0.28" />
@@ -213,6 +236,34 @@ function TimeSeriesChart({
                 {fmtTick(data[idx].ts, range)}
               </text>
             ))}
+
+            {/* Hover crosshair + tooltip */}
+            {hoverIdx !== null && (() => {
+              const idx = hoverIdx;
+              const pt = pts[idx];
+              const dp = data[idx];
+              if (!pt || !dp) return null;
+              const val = dp[valueKey] as number;
+              const TW = 115, TH = 36;
+              const tx = pt.x > VW / 2 ? pt.x - TW - 8 : pt.x + 8;
+              const ty = Math.max(P.t, Math.min(VH - P.b - TH, pt.y - TH / 2));
+              return (
+                <>
+                  <line x1={pt.x} y1={P.t} x2={pt.x} y2={VH - P.b}
+                    stroke="rgba(255,255,255,0.2)" strokeWidth="1" strokeDasharray="3,2" />
+                  <circle cx={pt.x} cy={pt.y} r="5" fill={color} stroke={BG_PANEL} strokeWidth="2" />
+                  <rect x={tx} y={ty} width={TW} height={TH} rx="3"
+                    fill="#1e2028" stroke="#3d4658" strokeWidth="1" />
+                  <rect x={tx} y={ty} width="3" height={TH} rx="1.5" fill={color} />
+                  <text x={tx + 8} y={ty + 13} fontSize="10" fill={TEXT_MUT}>
+                    {fmtTooltipTs(dp.ts, range)}
+                  </text>
+                  <text x={tx + 8} y={ty + 27} fontSize="12" fontWeight="bold" fill={TEXT_PRI}>
+                    {fmtVal(val, unit)}{unit}
+                  </text>
+                </>
+              );
+            })()}
           </svg>
         )}
       </div>
