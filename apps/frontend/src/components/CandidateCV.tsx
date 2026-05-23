@@ -353,7 +353,7 @@ export default function CandidateCV({
           ) : (
             <div style={{ height: '150px', lineHeight: '150px', color: '#999' }}>Foto</div>
           )}
-          <div style={{ borderTop: '1px solid #000', padding: '3px 4px' }}>
+          <div style={{ borderTop: '1px solid #000', padding: '5px 14px' }}>
             <img src={ijbnetLogo} alt="IJBNet" style={{ width: '100%', height: 'auto', display: 'block' }} />
           </div>
         </div>
