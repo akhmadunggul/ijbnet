@@ -185,7 +185,8 @@ apps/frontend/src/
 - v0.3.9 — CV enhancements: configurable Japanese font (5 options) from superadmin; auto-translate fallback to Indonesian when disabled and Japanese field is empty; IJBNet logo inserted below candidate photo; superadmin column visibility control for recruiter Dalam Seleksi table (incl. new Foto Badan column); fullbody photo display fix (object-contain)
 - v0.3.10 — CV layout: move Tinggi/Berat/Level JP into info table to efficiently fill vertical space beside IJBNet logo; remove standalone one-row table
 - v0.3.11 — CV fix: reduce IJBNet logo size for better proportion with candidate photo
-- v0.3.12 — (patch)
+- v0.3.12 — Deploy fix: remove ulimits from docker-compose.prod.yml; host kernel rejecting RLIMIT_NOFILE=65536 after system update
+- v0.3.13 — (patch)
 
-Current: v0.3.12
+Current: v0.3.13
 Live at: https://jinzai.jobagus.id
