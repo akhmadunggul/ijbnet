@@ -132,6 +132,7 @@ const S = {
     fontSize: '12px',
     color: '#000',
     boxSizing: 'border-box' as const,
+    textTransform: 'uppercase',
   } satisfies React.CSSProperties,
 
   headerTitle: {
