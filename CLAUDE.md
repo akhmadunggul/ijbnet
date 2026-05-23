@@ -193,6 +193,7 @@ apps/frontend/src/
 - v0.3.17 — CV layout selector in superadmin: Layout 1 (logo below photo) vs Layout 2 (logo at lower-right beside Promosi Diri); persisted in global_settings
 - v0.3.18 — Fix monitor page 1d/1w/1m charts: resolve ORDER BY ts ambiguity in MySQL 8.0 (positional ORDER BY 1)
 - v0.4.0 — Fix monitor charts 1d/1w/1m permanently empty: metrics_snapshots INSERT was silently failing due to missing created_at default; supply NOW() explicitly
+- v0.4.1 — Monitor: replace AVG bucketing with raw 1-min stride sampling (no data loss on spikes); rolling 30-day table retention
 
-Current: v0.4.0
+Current: v0.4.1
 Live at: https://jinzai.jobagus.id
