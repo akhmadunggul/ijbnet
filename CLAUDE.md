@@ -195,6 +195,7 @@ apps/frontend/src/
 - v0.4.0 — Fix monitor charts 1d/1w/1m permanently empty: metrics_snapshots INSERT was silently failing due to missing created_at default; supply NOW() explicitly
 - v0.4.1 — Monitor: replace AVG bucketing with raw 1-min stride sampling (no data loss on spikes); rolling 30-day table retention
 - v0.4.2 — Fix CV: Skill and Promosi Diri fields were swapped (selfPr=Keahlian, selfIntro=Promosi Diri)
+- v0.4.3 — Monitor charts: hover tooltip with crosshair, timestamp, and exact value; flips side near right edge
 
-Current: v0.4.2
+Current: v0.4.3
 Live at: https://jinzai.jobagus.id
