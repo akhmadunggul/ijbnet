@@ -26,7 +26,7 @@ import {
   GlobalSettings,
 } from '../db/models/index';
 import { serializeCandidate, serializeUser } from '../serializers/candidate';
-import { calcCompleteness } from '../utils/completeness';
+import { calcCompleteness, setCompletenessMode, type CompletenessMode } from '../utils/completeness';
 import { deleteCandidatePhotos } from '../utils/storage';
 import { decryptNullable } from '../utils/crypto';
 
@@ -91,6 +91,13 @@ router.get('/cv-layout', wrap(async (_req, res) => {
   const row = await GlobalSettings.findOne({ where: { key: 'cv_layout' } });
   const layout = row ? (row.toJSON() as unknown as Record<string, unknown>)['value'] : 'layout1';
   res.json({ layout });
+}));
+
+// ── GET /api/superadmin/completeness-mode — PUBLIC ───────────────────────────
+router.get('/completeness-mode', wrap(async (_req, res) => {
+  const row = await GlobalSettings.findOne({ where: { key: 'completeness_mode' } });
+  const mode = row ? (row.toJSON() as unknown as Record<string, unknown>)['value'] : 'legacy';
+  res.json({ mode });
 }));
 
 // ── GET /api/superadmin/recruiter-selection-columns — PUBLIC ─────────────────
@@ -299,6 +306,24 @@ router.put('/cv-layout', wrap(async (req, res) => {
   }
 
   res.json({ layout });
+}));
+
+// ── PUT /api/superadmin/completeness-mode ────────────────────────────────────
+router.put('/completeness-mode', wrap(async (req, res) => {
+  const body = req.body as Record<string, unknown>;
+  const valid: CompletenessMode[] = ['legacy', 'cv'];
+  const mode: CompletenessMode = valid.includes(body['mode'] as CompletenessMode)
+    ? (body['mode'] as CompletenessMode)
+    : 'legacy';
+
+  const [row, created] = await GlobalSettings.findOrCreate({
+    where: { key: 'completeness_mode' },
+    defaults: { key: 'completeness_mode', value: mode },
+  });
+  if (!created) await row.update({ value: mode });
+
+  setCompletenessMode(mode);
+  res.json({ mode });
 }));
 
 // ── PUT /api/superadmin/candidate-tab-config ──────────────────────────────────

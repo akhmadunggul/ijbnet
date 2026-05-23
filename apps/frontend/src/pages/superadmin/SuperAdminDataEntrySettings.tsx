@@ -16,6 +16,7 @@ interface TranslationConfigResponse {
 
 type FontKey = 'ms-mincho' | 'yu-mincho' | 'yu-gothic' | 'noto-serif-jp' | 'noto-sans-jp';
 type LayoutKey = 'layout1' | 'layout2';
+type CompletenessMode = 'legacy' | 'cv';
 
 const FONT_OPTIONS: { key: FontKey; label: string; sublabel: string; value: string; googleFont?: string }[] = [
   { key: 'ms-mincho',    label: 'MS Mincho',      sublabel: 'Windows (既定)',          value: '"MS Mincho", serif' },
@@ -43,6 +44,9 @@ export default function SuperAdminDataEntrySettings() {
   const [layoutKey, setLayoutKey] = useState<LayoutKey>('layout1');
   const [layoutSaveSuccess, setLayoutSaveSuccess] = useState(false);
   const [layoutSaveError, setLayoutSaveError] = useState(false);
+  const [completenessMode, setCompletenessMode] = useState<CompletenessMode>('legacy');
+  const [completenessSaveSuccess, setCompletenessSaveSuccess] = useState(false);
+  const [completenessSaveError, setCompletenessSaveError] = useState(false);
 
   const { data, isLoading } = useQuery<TabConfigResponse>({
     queryKey: ['candidate-tab-config'],
@@ -64,6 +68,11 @@ export default function SuperAdminDataEntrySettings() {
     queryFn: () => api.get('/superadmin/cv-layout').then((r) => r.data),
   });
 
+  const { data: completenessModeData } = useQuery<{ mode: CompletenessMode }>({
+    queryKey: ['completeness-mode'],
+    queryFn: () => api.get('/superadmin/completeness-mode').then((r) => r.data),
+  });
+
   useEffect(() => {
     if (data?.config) {
       setConfig({ ...data.config } as Record<TabKey, boolean>);
@@ -83,6 +92,10 @@ export default function SuperAdminDataEntrySettings() {
   useEffect(() => {
     if (layoutData?.layout) setLayoutKey(layoutData.layout as LayoutKey);
   }, [layoutData]);
+
+  useEffect(() => {
+    if (completenessModeData?.mode) setCompletenessMode(completenessModeData.mode);
+  }, [completenessModeData]);
 
   const saveMutation = useMutation({
     mutationFn: (cfg: Record<TabKey, boolean>) =>
@@ -126,6 +139,21 @@ export default function SuperAdminDataEntrySettings() {
     onError: () => {
       setLayoutSaveError(true);
       setLayoutSaveSuccess(false);
+    },
+  });
+
+  const completenessMutation = useMutation({
+    mutationFn: (mode: CompletenessMode) =>
+      api.put('/superadmin/completeness-mode', { mode }).then((r) => r.data),
+    onSuccess: () => {
+      setCompletenessSaveSuccess(true);
+      setCompletenessSaveError(false);
+      void qc.invalidateQueries({ queryKey: ['completeness-mode'] });
+      setTimeout(() => setCompletenessSaveSuccess(false), 3000);
+    },
+    onError: () => {
+      setCompletenessSaveError(true);
+      setCompletenessSaveSuccess(false);
     },
   });
 
@@ -346,6 +374,47 @@ export default function SuperAdminDataEntrySettings() {
           <span className="text-sm text-green-600">✓ {t('superadmin.dataEntrySettings.saved')}</span>
         )}
         {layoutSaveError && (
+          <span className="text-sm text-red-600">{t('superadmin.dataEntrySettings.errorSave')}</span>
+        )}
+      </div>
+
+      {/* Completeness Mode */}
+      <div>
+        <h2 className="text-base font-semibold text-gray-900 mb-1">{t('superadmin.dataEntrySettings.completenessTitle')}</h2>
+        <p className="text-sm text-gray-500 mb-4">{t('superadmin.dataEntrySettings.completenessDesc')}</p>
+      </div>
+
+      <div className="bg-white rounded-xl border border-gray-100 shadow-sm divide-y divide-gray-50">
+        {(['legacy', 'cv'] as CompletenessMode[]).map((mode) => (
+          <label key={mode} className="flex items-center gap-4 px-5 py-4 cursor-pointer hover:bg-gray-50 transition">
+            <input
+              type="radio"
+              name="completeness_mode"
+              value={mode}
+              checked={completenessMode === mode}
+              onChange={() => setCompletenessMode(mode)}
+              className="accent-navy-700"
+            />
+            <div>
+              <p className="text-sm font-medium text-gray-800">{t(`superadmin.dataEntrySettings.completeness_${mode}Label`)}</p>
+              <p className="text-xs text-gray-400">{t(`superadmin.dataEntrySettings.completeness_${mode}Desc`)}</p>
+            </div>
+          </label>
+        ))}
+      </div>
+
+      <div className="flex items-center gap-4">
+        <button
+          onClick={() => completenessMutation.mutate(completenessMode)}
+          disabled={completenessMutation.isPending}
+          className="px-5 py-2 bg-gray-900 text-white text-sm rounded-lg hover:bg-gray-700 transition disabled:opacity-50"
+        >
+          {completenessMutation.isPending ? '…' : t('superadmin.dataEntrySettings.saveBtn')}
+        </button>
+        {completenessSaveSuccess && (
+          <span className="text-sm text-green-600">✓ {t('superadmin.dataEntrySettings.saved')}</span>
+        )}
+        {completenessSaveError && (
           <span className="text-sm text-red-600">{t('superadmin.dataEntrySettings.errorSave')}</span>
         )}
       </div>

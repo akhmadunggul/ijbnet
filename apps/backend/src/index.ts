@@ -13,6 +13,8 @@ import apiRouter from './routes/index';
 import { errorHandler, notFound } from './middleware/errorHandler';
 import { config } from './config';
 import { record429, recordFatal, recordHighMemory, snapshotMetrics, recordHttpRequest, initMonitorDb } from './utils/monitor';
+import { setCompletenessMode, type CompletenessMode } from './utils/completeness';
+import { GlobalSettings } from './db/models/index';
 
 const app = express();
 
@@ -100,6 +102,16 @@ async function start(): Promise<void> {
   try {
     await connectDB();
     initMonitorDb(sequelize);
+
+    // Restore persisted global settings into in-process caches
+    try {
+      const cRow = await GlobalSettings.findOne({ where: { key: 'completeness_mode' } });
+      if (cRow) {
+        const val = (cRow.toJSON() as unknown as Record<string, unknown>)['value'] as string;
+        if (val === 'cv' || val === 'legacy') setCompletenessMode(val as CompletenessMode);
+      }
+    } catch { /* use default 'legacy' */ }
+
     await connectRedis();
 
     app.listen(config.PORT, () => {
