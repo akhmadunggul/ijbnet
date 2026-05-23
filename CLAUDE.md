@@ -188,6 +188,7 @@ apps/frontend/src/
 - v0.3.12 — Deploy fix: remove ulimits from docker-compose.prod.yml; host kernel rejecting RLIMIT_NOFILE=65536 after system update
 - v0.3.13 — Deploy fix: remove ulimits; add Google Drive backup script (rclone); add ijbnet systemd service for auto-start on reboot
 - v0.3.14 — Enforce uppercase on all candidate portal form fields and CV (CSS text-transform; CJK characters unaffected)
+- v0.3.15 — (patch)
 
-Current: v0.3.14
+Current: v0.3.15
 Live at: https://jinzai.jobagus.id
