@@ -184,6 +184,7 @@ apps/frontend/src/
 - v0.3.8 — Manager broadcast notifications: send email + in-app notification to All / By LPK / By Program / By Batch with recipient preview
 - v0.3.9 — CV enhancements: configurable Japanese font (5 options) from superadmin; auto-translate fallback to Indonesian when disabled and Japanese field is empty; IJBNet logo inserted below candidate photo; superadmin column visibility control for recruiter Dalam Seleksi table (incl. new Foto Badan column); fullbody photo display fix (object-contain)
 - v0.3.10 — CV layout: move Tinggi/Berat/Level JP into info table to efficiently fill vertical space beside IJBNet logo; remove standalone one-row table
+- v0.3.11 — CV fix: reduce IJBNet logo size for better proportion with candidate photo
 
-Current: v0.3.10
+Current: v0.3.11
 Live at: https://jinzai.jobagus.id
