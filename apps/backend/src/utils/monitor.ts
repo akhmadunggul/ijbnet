@@ -135,13 +135,16 @@ export function getMetricsHistory(): MetricsPoint[] {
 export type MetricsRange = '1h' | '1d' | '1w' | '1m';
 
 export async function getMetricsRange(range: MetricsRange): Promise<MetricsPoint[]> {
-  if (range === '1h' || !_seq) return [...metricsHistory];
+  // Fall back to in-memory only when DB is not yet connected (startup race).
+  // All ranges read from the DB so data survives container restarts.
+  if (!_seq) return [...metricsHistory];
 
   const now = Date.now();
   let sinceMs: number;
   let stride: number; // pick every Nth 1-min row — no averaging, real values, ~1440 pts max
 
   switch (range) {
+    case '1h': sinceMs = now - 3_600_000;     stride = 1;  break; // 1-min → 60 pts
     case '1d': sinceMs = now - 86_400_000;    stride = 1;  break; // 1-min → 1440 pts
     case '1w': sinceMs = now - 604_800_000;   stride = 7;  break; // 7-min → ~1440 pts
     case '1m': sinceMs = now - 2_592_000_000; stride = 30; break; // 30-min → ~1440 pts
