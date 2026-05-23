@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { api } from '../lib/api';
 import AuthImage from './AuthImage';
+import ijbnetLogo from '../assets/IJBNet_LOGO.png';
 
 export interface CandidateCVProps {
   candidate: any;
@@ -143,12 +144,9 @@ const S = {
 
   photoBox: {
     width: '120px',
-    height: '150px',
     border: '1px solid #000',
     textAlign: 'center' as const,
-    lineHeight: '150px',
     float: 'right' as const,
-    overflow: 'hidden',
     flexShrink: 0,
   } satisfies React.CSSProperties,
 
@@ -349,12 +347,15 @@ export default function CandidateCV({
             <AuthImage
               src={c.closeupUrl}
               alt="foto"
-              style={{ width: '120px', height: '150px', objectFit: 'cover', display: 'block', lineHeight: 'normal' }}
-              fallback={<span style={{ lineHeight: '150px', color: '#999' }}>…</span>}
+              style={{ width: '120px', height: '150px', objectFit: 'cover', display: 'block' }}
+              fallback={<div style={{ height: '150px', lineHeight: '150px', color: '#999' }}>…</div>}
             />
           ) : (
-            'Foto'
+            <div style={{ height: '150px', lineHeight: '150px', color: '#999' }}>Foto</div>
           )}
+          <div style={{ borderTop: '1px solid #000', padding: '3px 4px' }}>
+            <img src={ijbnetLogo} alt="IJBNet" style={{ width: '100%', height: 'auto', display: 'block' }} />
+          </div>
         </div>
 
         <table className="cv-tbl" style={{ ...S.table, width: 'calc(100% - 140px)', float: 'left', marginBottom: 0 }}>
