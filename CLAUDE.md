@@ -186,7 +186,8 @@ apps/frontend/src/
 - v0.3.10 — CV layout: move Tinggi/Berat/Level JP into info table to efficiently fill vertical space beside IJBNet logo; remove standalone one-row table
 - v0.3.11 — CV fix: reduce IJBNet logo size for better proportion with candidate photo
 - v0.3.12 — Deploy fix: remove ulimits from docker-compose.prod.yml; host kernel rejecting RLIMIT_NOFILE=65536 after system update
-- v0.3.13 — (patch)
+- v0.3.13 — Deploy fix: remove ulimits; add Google Drive backup script (rclone); add ijbnet systemd service for auto-start on reboot
+- v0.3.14 — Enforce uppercase on all candidate portal form fields and CV (CSS text-transform; CJK characters unaffected)
 
-Current: v0.3.13
+Current: v0.3.14
 Live at: https://jinzai.jobagus.id
