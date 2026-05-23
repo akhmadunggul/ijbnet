@@ -391,23 +391,19 @@ export default function CandidateCV({
                 {c.maritalStatus ? (maritalLabel[c.maritalStatus] ?? v(c.maritalStatus)) : ''}
               </td>
             </tr>
+            <tr>
+              <td style={TD}>Tinggi ・ 身長</td>
+              <td style={TD}>{heightDisplay}</td>
+              <td style={TD}>Berat ・ 体重</td>
+              <td style={TD}>{weightDisplay}</td>
+            </tr>
+            <tr>
+              <td style={TD}>Level JP ・ 日本語レベル</td>
+              <td style={TD} colSpan={3}>{jpLevelDisplay}</td>
+            </tr>
           </tbody>
         </table>
       </div>
-
-      {/* ── Height / Weight / JP Level ── */}
-      <table className="cv-tbl" style={S.table}>
-        <tbody>
-          <tr>
-            <td style={{ ...TD, width: '16%' }}>Tinggi ・ 身長</td>
-            <td style={{ ...TD, width: '17%' }}>{heightDisplay}</td>
-            <td style={{ ...TD, width: '16%' }}>Berat ・ 体重</td>
-            <td style={{ ...TD, width: '17%' }}>{weightDisplay}</td>
-            <td style={{ ...TD, width: '16%' }}>Level JP ・ 日本語レベル</td>
-            <td style={{ ...TD, width: '18%' }}>{jpLevelDisplay}</td>
-          </tr>
-        </tbody>
-      </table>
 
       {/* ── Japan / Passport / Address / Hobi ── */}
       <table className="cv-tbl" style={S.table}>
