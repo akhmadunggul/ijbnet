@@ -1,6 +1,6 @@
 {
   "name": "ijbnet",
-  "version": "0.3.15",
+  "version": "0.3.16",
   "private": true,
   "packageManager": "pnpm@10.33.0",
   "scripts": {
