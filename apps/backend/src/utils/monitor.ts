@@ -107,7 +107,7 @@ export function snapshotMetrics(): void {
   _httpTotal      = 0;
   _http5xx        = 0;
 
-  // Persist to DB for long-term history (fire-and-forget)
+  // Persist to DB — rolling 30-day retention, fire-and-forget
   if (_seq) {
     _seq.query(
       `INSERT INTO metrics_snapshots
@@ -119,6 +119,11 @@ export function snapshotMetrics(): void {
           point.httpRequestsPerMin, point.p95ResponseMs, point.cpuPct, point.errorRatePct,
         ],
       },
+    ).catch(console.error);
+
+    _seq.query(
+      'DELETE FROM metrics_snapshots WHERE ts < ?',
+      { replacements: [now - 30 * 24 * 60 * 60 * 1000] },
     ).catch(console.error);
   }
 }
@@ -134,12 +139,12 @@ export async function getMetricsRange(range: MetricsRange): Promise<MetricsPoint
 
   const now = Date.now();
   let sinceMs: number;
-  let bucketMs: number;
+  let stride: number; // pick every Nth 1-min row — no averaging, real values, ~1440 pts max
 
   switch (range) {
-    case '1d': sinceMs = now - 86_400_000;    bucketMs = 300_000;   break; // 5-min → ~288 pts
-    case '1w': sinceMs = now - 604_800_000;   bucketMs = 1_800_000; break; // 30-min → ~336 pts
-    case '1m': sinceMs = now - 2_592_000_000; bucketMs = 7_200_000; break; // 2-hour → ~360 pts
+    case '1d': sinceMs = now - 86_400_000;    stride = 1;  break; // 1-min → 1440 pts
+    case '1w': sinceMs = now - 604_800_000;   stride = 7;  break; // 7-min → ~1440 pts
+    case '1m': sinceMs = now - 2_592_000_000; stride = 30; break; // 30-min → ~1440 pts
   }
 
   type Row = {
@@ -153,19 +158,18 @@ export async function getMetricsRange(range: MetricsRange): Promise<MetricsPoint
   };
 
   const rows = await _seq.query<Row>(
-    `SELECT
-       FLOOR(ts / ?) * ?              AS ts,
-       ROUND(AVG(active_users))       AS activeUsers,
-       ROUND(AVG(db_requests_per_min))   AS dbRequestsPerMin,
-       ROUND(AVG(http_requests_per_min)) AS httpRequestsPerMin,
-       ROUND(AVG(p95_response_ms))    AS p95ResponseMs,
-       ROUND(AVG(cpu_pct), 1)         AS cpuPct,
-       ROUND(AVG(error_rate_pct), 1)  AS errorRatePct
-     FROM metrics_snapshots
-     WHERE ts > ?
-     GROUP BY FLOOR(ts / ?) * ?
-     ORDER BY 1`,
-    { replacements: [bucketMs, bucketMs, sinceMs, bucketMs, bucketMs], type: QueryTypes.SELECT },
+    `SELECT ts,
+            active_users          AS activeUsers,
+            db_requests_per_min   AS dbRequestsPerMin,
+            http_requests_per_min AS httpRequestsPerMin,
+            p95_response_ms       AS p95ResponseMs,
+            cpu_pct               AS cpuPct,
+            error_rate_pct        AS errorRatePct
+       FROM metrics_snapshots
+      WHERE ts > ?
+        AND MOD(FLOOR(ts / 60000), ?) = 0
+      ORDER BY ts`,
+    { replacements: [sinceMs, stride], type: QueryTypes.SELECT },
   );
 
   return (rows as Row[]).map((r) => ({
