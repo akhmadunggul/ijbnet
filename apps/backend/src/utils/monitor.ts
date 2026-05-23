@@ -164,7 +164,7 @@ export async function getMetricsRange(range: MetricsRange): Promise<MetricsPoint
      FROM metrics_snapshots
      WHERE ts > ?
      GROUP BY FLOOR(ts / ?) * ?
-     ORDER BY ts`,
+     ORDER BY 1`,
     { replacements: [bucketMs, bucketMs, sinceMs, bucketMs, bucketMs], type: QueryTypes.SELECT },
   );
 
