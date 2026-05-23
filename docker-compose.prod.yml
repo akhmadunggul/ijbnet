@@ -89,10 +89,6 @@ services:
       NODE_OPTIONS: --max-old-space-size=2048
     ports:
       - "127.0.0.1:3001:3001"   # loopback-only — used by server-side k6 tests; not public
-    ulimits:
-      nofile:
-        soft: 65536
-        hard: 65536
     volumes:
       - uploads_data:/app/uploads
     depends_on:
@@ -124,10 +120,6 @@ services:
       - "[::]:80:80"
       - "0.0.0.0:443:443"
       - "[::]:443:443"
-    ulimits:
-      nofile:
-        soft: 65536
-        hard: 65536
     volumes:
       - caddy_data:/data
       - caddy_config:/config
