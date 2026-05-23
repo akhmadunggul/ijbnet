@@ -111,8 +111,8 @@ export function snapshotMetrics(): void {
   if (_seq) {
     _seq.query(
       `INSERT INTO metrics_snapshots
-         (ts, active_users, db_requests_per_min, http_requests_per_min, p95_response_ms, cpu_pct, error_rate_pct)
-       VALUES (?, ?, ?, ?, ?, ?, ?)`,
+         (ts, active_users, db_requests_per_min, http_requests_per_min, p95_response_ms, cpu_pct, error_rate_pct, created_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, NOW())`,
       {
         replacements: [
           point.ts, point.activeUsers, point.dbRequestsPerMin,
