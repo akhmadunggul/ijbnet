@@ -197,6 +197,13 @@ export default function CandidateCV({
   // translation call before we know the setting value.
   const autoTranslateEnabled = translateConfig?.enabled === true;
 
+  const { data: layoutConfig } = useQuery<{ layout: string }>({
+    queryKey: ['cv-layout'],
+    queryFn: () => api.get('/superadmin/cv-layout').then(r => r.data),
+    staleTime: 5 * 60 * 1000,
+  });
+  const layout = layoutConfig?.layout ?? 'layout1';
+
   const { data: fontConfig } = useQuery<{ fontKey: string }>({
     queryKey: ['cv-font'],
     queryFn: () => api.get('/superadmin/cv-font').then(r => r.data),
@@ -361,7 +368,7 @@ export default function CandidateCV({
 
       {/* ── Photo (float right) + basic info table (float left) ── */}
       <div className="cv-info-wrap" style={{ overflow: 'hidden', marginBottom: '15px' }}>
-        <div style={S.photoBox}>
+        <div style={layout === 'layout2' ? { ...S.photoBox, height: '150px', overflow: 'hidden' } : S.photoBox}>
           {c.closeupUrl ? (
             <AuthImage
               src={c.closeupUrl}
@@ -372,9 +379,11 @@ export default function CandidateCV({
           ) : (
             <div style={{ height: '150px', lineHeight: '150px', color: '#999' }}>Foto</div>
           )}
-          <div style={{ borderTop: '1px solid #000', padding: '5px 14px' }}>
-            <img src={ijbnetLogo} alt="IJBNet" style={{ width: '100%', height: 'auto', display: 'block' }} />
-          </div>
+          {layout === 'layout1' && (
+            <div style={{ borderTop: '1px solid #000', padding: '5px 14px' }}>
+              <img src={ijbnetLogo} alt="IJBNet" style={{ width: '100%', height: 'auto', display: 'block' }} />
+            </div>
+          )}
         </div>
 
         <table className="cv-tbl" style={{ ...S.table, width: 'calc(100% - 140px)', float: 'left', marginBottom: 0 }}>
@@ -573,6 +582,11 @@ export default function CandidateCV({
         <tbody>
           <tr>
             <td style={ST}>Promosi Diri ・ 自己PR</td>
+            {layout === 'layout2' && (
+              <td style={{ ...TD, width: '100px', border: '1px solid #000', textAlign: 'center', verticalAlign: 'middle', padding: '6px 10px' }} rowSpan={2}>
+                <img src={ijbnetLogo} alt="IJBNet" style={{ width: '100%', height: 'auto', display: 'block' }} />
+              </td>
+            )}
           </tr>
           <tr className="cv-row-lg">
             <td style={{ ...TD, height: '60px', whiteSpace: 'pre-wrap' }}>

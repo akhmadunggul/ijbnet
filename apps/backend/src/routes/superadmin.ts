@@ -86,6 +86,13 @@ router.get('/cv-font', wrap(async (_req, res) => {
   res.json({ fontKey });
 }));
 
+// ── GET /api/superadmin/cv-layout — PUBLIC ───────────────────────────────────
+router.get('/cv-layout', wrap(async (_req, res) => {
+  const row = await GlobalSettings.findOne({ where: { key: 'cv_layout' } });
+  const layout = row ? (row.toJSON() as unknown as Record<string, unknown>)['value'] : 'layout1';
+  res.json({ layout });
+}));
+
 // ── GET /api/superadmin/recruiter-selection-columns — PUBLIC ─────────────────
 router.get('/recruiter-selection-columns', wrap(async (_req, res) => {
   const row = await GlobalSettings.findOne({ where: { key: 'recruiter_selection_columns' } });
@@ -275,6 +282,23 @@ router.put('/cv-font', wrap(async (req, res) => {
   }
 
   res.json({ fontKey });
+}));
+
+// ── PUT /api/superadmin/cv-layout ────────────────────────────────────────────
+router.put('/cv-layout', wrap(async (req, res) => {
+  const body = req.body as Record<string, unknown>;
+  const validLayouts = ['layout1', 'layout2'];
+  const layout = validLayouts.includes(String(body['layout'])) ? String(body['layout']) : 'layout1';
+
+  const [row, created] = await GlobalSettings.findOrCreate({
+    where: { key: 'cv_layout' },
+    defaults: { key: 'cv_layout', value: layout },
+  });
+  if (!created) {
+    await row.update({ value: layout });
+  }
+
+  res.json({ layout });
 }));
 
 // ── PUT /api/superadmin/candidate-tab-config ──────────────────────────────────

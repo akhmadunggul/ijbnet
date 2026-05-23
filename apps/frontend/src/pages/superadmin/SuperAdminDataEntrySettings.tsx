@@ -15,6 +15,7 @@ interface TranslationConfigResponse {
 }
 
 type FontKey = 'ms-mincho' | 'yu-mincho' | 'yu-gothic' | 'noto-serif-jp' | 'noto-sans-jp';
+type LayoutKey = 'layout1' | 'layout2';
 
 const FONT_OPTIONS: { key: FontKey; label: string; sublabel: string; value: string; googleFont?: string }[] = [
   { key: 'ms-mincho',    label: 'MS Mincho',      sublabel: 'Windows (既定)',          value: '"MS Mincho", serif' },
@@ -39,6 +40,9 @@ export default function SuperAdminDataEntrySettings() {
   const [fontKey, setFontKey] = useState<FontKey>('ms-mincho');
   const [fontSaveSuccess, setFontSaveSuccess] = useState(false);
   const [fontSaveError, setFontSaveError] = useState(false);
+  const [layoutKey, setLayoutKey] = useState<LayoutKey>('layout1');
+  const [layoutSaveSuccess, setLayoutSaveSuccess] = useState(false);
+  const [layoutSaveError, setLayoutSaveError] = useState(false);
 
   const { data, isLoading } = useQuery<TabConfigResponse>({
     queryKey: ['candidate-tab-config'],
@@ -53,6 +57,11 @@ export default function SuperAdminDataEntrySettings() {
   const { data: fontData } = useQuery<{ fontKey: FontKey }>({
     queryKey: ['cv-font'],
     queryFn: () => api.get('/superadmin/cv-font').then((r) => r.data),
+  });
+
+  const { data: layoutData } = useQuery<{ layout: LayoutKey }>({
+    queryKey: ['cv-layout'],
+    queryFn: () => api.get('/superadmin/cv-layout').then((r) => r.data),
   });
 
   useEffect(() => {
@@ -70,6 +79,10 @@ export default function SuperAdminDataEntrySettings() {
   useEffect(() => {
     if (fontData?.fontKey) setFontKey(fontData.fontKey);
   }, [fontData]);
+
+  useEffect(() => {
+    if (layoutData?.layout) setLayoutKey(layoutData.layout as LayoutKey);
+  }, [layoutData]);
 
   const saveMutation = useMutation({
     mutationFn: (cfg: Record<TabKey, boolean>) =>
@@ -98,6 +111,21 @@ export default function SuperAdminDataEntrySettings() {
     onError: () => {
       setFontSaveError(true);
       setFontSaveSuccess(false);
+    },
+  });
+
+  const layoutMutation = useMutation({
+    mutationFn: (key: LayoutKey) =>
+      api.put('/superadmin/cv-layout', { layout: key }).then((r) => r.data),
+    onSuccess: () => {
+      setLayoutSaveSuccess(true);
+      setLayoutSaveError(false);
+      void qc.invalidateQueries({ queryKey: ['cv-layout'] });
+      setTimeout(() => setLayoutSaveSuccess(false), 3000);
+    },
+    onError: () => {
+      setLayoutSaveError(true);
+      setLayoutSaveSuccess(false);
     },
   });
 
@@ -277,6 +305,47 @@ export default function SuperAdminDataEntrySettings() {
           <span className="text-sm text-green-600">✓ {t('superadmin.dataEntrySettings.saved')}</span>
         )}
         {fontSaveError && (
+          <span className="text-sm text-red-600">{t('superadmin.dataEntrySettings.errorSave')}</span>
+        )}
+      </div>
+
+      {/* CV Layout Settings */}
+      <div>
+        <h2 className="text-base font-semibold text-gray-900 mb-1">{t('superadmin.dataEntrySettings.cvLayoutTitle')}</h2>
+        <p className="text-sm text-gray-500 mb-4">{t('superadmin.dataEntrySettings.cvLayoutDesc')}</p>
+      </div>
+
+      <div className="bg-white rounded-xl border border-gray-100 shadow-sm divide-y divide-gray-50">
+        {(['layout1', 'layout2'] as LayoutKey[]).map((key) => (
+          <label key={key} className="flex items-center gap-4 px-5 py-4 cursor-pointer hover:bg-gray-50 transition">
+            <input
+              type="radio"
+              name="cv_layout"
+              value={key}
+              checked={layoutKey === key}
+              onChange={() => setLayoutKey(key)}
+              className="accent-navy-700"
+            />
+            <div>
+              <p className="text-sm font-medium text-gray-800">{t(`superadmin.dataEntrySettings.${key}Label`)}</p>
+              <p className="text-xs text-gray-400">{t(`superadmin.dataEntrySettings.${key}Desc`)}</p>
+            </div>
+          </label>
+        ))}
+      </div>
+
+      <div className="flex items-center gap-4">
+        <button
+          onClick={() => layoutMutation.mutate(layoutKey)}
+          disabled={layoutMutation.isPending}
+          className="px-5 py-2 bg-gray-900 text-white text-sm rounded-lg hover:bg-gray-700 transition disabled:opacity-50"
+        >
+          {layoutMutation.isPending ? '…' : t('superadmin.dataEntrySettings.saveBtn')}
+        </button>
+        {layoutSaveSuccess && (
+          <span className="text-sm text-green-600">✓ {t('superadmin.dataEntrySettings.saved')}</span>
+        )}
+        {layoutSaveError && (
           <span className="text-sm text-red-600">{t('superadmin.dataEntrySettings.errorSave')}</span>
         )}
       </div>
