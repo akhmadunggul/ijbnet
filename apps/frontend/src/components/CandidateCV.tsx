@@ -119,6 +119,7 @@ const PRINT_CSS = `
     .cv-row-lg { height: 32px !important; min-height: 0 !important; }
 
     .cv-info-wrap { margin-bottom: 4px !important; }
+    .cv-zoom-wrapper { zoom: 1 !important; }
   }
   @page { size: A4 portrait; margin: 5mm; }
 `;
@@ -182,6 +183,8 @@ export default function CandidateCV({
 }: CandidateCVProps) {
   void showSensitiveData;
   void lang;
+
+  const [zoom, setZoom] = useState(1.0);
 
   const c = candidate ?? {};
 
@@ -335,6 +338,21 @@ export default function CandidateCV({
   const ST = S.sectionTitle;
 
   return (
+    <>
+      <div className="print:hidden flex items-center gap-2 justify-end mb-3">
+        <button
+          onClick={() => setZoom(z => Math.max(0.5, parseFloat((z - 0.1).toFixed(1))))}
+          disabled={zoom <= 0.5}
+          className="w-8 h-8 flex items-center justify-center border border-gray-200 rounded-lg text-gray-600 hover:bg-gray-100 disabled:opacity-30 text-base font-bold transition"
+        >−</button>
+        <span className="text-xs text-gray-500 w-12 text-center select-none">{Math.round(zoom * 100)}%</span>
+        <button
+          onClick={() => setZoom(z => Math.min(2.0, parseFloat((z + 0.1).toFixed(1))))}
+          disabled={zoom >= 2.0}
+          className="w-8 h-8 flex items-center justify-center border border-gray-200 rounded-lg text-gray-600 hover:bg-gray-100 disabled:opacity-30 text-base font-bold transition"
+        >+</button>
+      </div>
+      <div className="cv-zoom-wrapper" style={{ zoom: zoom as unknown as number }}>
     <div className="cv-con" style={{ ...S.container, fontFamily: FONT }}>
       <style dangerouslySetInnerHTML={{ __html: PRINT_CSS }} />
 
@@ -564,5 +582,7 @@ export default function CandidateCV({
         </tbody>
       </table>
     </div>
+      </div>
+    </>
   );
 }
