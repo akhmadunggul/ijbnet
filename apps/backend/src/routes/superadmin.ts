@@ -675,6 +675,40 @@ router.get('/candidates', wrap(async (req, res) => {
   res.json({ candidates, total: count, page: parseInt(page, 10), pageSize: limit });
 }));
 
+// ── PATCH /api/superadmin/candidates/:id/lpk ─────────────────────────────────
+router.patch('/candidates/:id/lpk', validateUuidParam('id'), wrap(async (req, res) => {
+  const { id } = req.params as { id: string };
+  const { lpkId } = req.body as { lpkId: string };
+
+  if (!lpkId || !isUUID(lpkId)) {
+    res.status(400).json({ error: 'INVALID_LPK_ID' });
+    return;
+  }
+
+  const [candidate, lpk] = await Promise.all([
+    Candidate.findByPk(id),
+    Lpk.findOne({ where: { id: lpkId, isActive: true } }),
+  ]);
+
+  if (!candidate) { res.status(404).json({ error: 'NOT_FOUND' }); return; }
+  if (!lpk) { res.status(404).json({ error: 'LPK_NOT_FOUND' }); return; }
+
+  await candidate.update({ lpkId });
+
+  await AuditLog.create({
+    userId: req.user!.sub,
+    action: 'ASSIGN_LPK',
+    entityType: 'candidate',
+    entityId: id,
+    targetCandidateId: id,
+    ipAddress: req.ip ?? null,
+    userAgent: req.headers['user-agent'] ?? null,
+    payload: { lpkId, lpkName: (lpk.toJSON() as unknown as Record<string, unknown>)['name'] },
+  });
+
+  res.json({ message: 'LPK assigned.', lpkId, lpkName: (lpk.toJSON() as unknown as Record<string, unknown>)['name'] });
+}));
+
 router.get('/candidates/:id/sensitive', validateUuidParam('id'), wrap(async (req, res) => {
   const { id } = req.params as { id: string };
   const candidate = await Candidate.findByPk(id, {

@@ -1,4 +1,5 @@
 import { Router, Request, Response } from 'express';
+import { Op } from 'sequelize';
 import multer from 'multer';
 import puppeteer from 'puppeteer-core';
 import { authenticate, requireRole } from '../middleware/auth';
@@ -280,6 +281,10 @@ router.post('/me/submit', async (req: Request, res: Response): Promise<void> => 
     return;
   }
 
+  if (!candidate.lpkId) {
+    res.status(422).json({ error: 'LPK_REQUIRED', message: 'You must select your LPK before submitting.' });
+    return;
+  }
   if (!candidate.consentGiven) {
     res.status(422).json({ error: 'CONSENT_REQUIRED', message: 'Consent must be given before submitting.' });
     return;
@@ -298,8 +303,16 @@ router.post('/me/submit', async (req: Request, res: Response): Promise<void> => 
 
   await candidate.update({ profileStatus: 'submitted' });
 
-  // Notify all admin + manager users
-  const admins = await User.findAll({ where: { role: ['admin', 'manager'], isActive: true } });
+  // Notify managers (global) + admins scoped to this candidate's LPK
+  const admins = await User.findAll({
+    where: {
+      isActive: true,
+      [Op.or]: [
+        { role: 'manager' },
+        { role: 'admin', lpkId: candidate.lpkId },
+      ],
+    },
+  });
   await Notification.bulkCreate(
     admins.map((a) => ({
       id: uuidv4(),

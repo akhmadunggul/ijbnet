@@ -52,10 +52,12 @@ function calcLegacy(candidate: Record<string, unknown>): CompletenessResult {
     !!candidate['fullbodyUrl'],
     // Consent (1)
     !!candidate['consentGiven'],
+    // LPK assignment (1)
+    !!candidate['lpkId'],
   ];
 
   const score = checks.filter(Boolean).length;
-  const total = checks.length; // 23
+  const total = checks.length; // 24
   return { score, total, pct: Math.round((score / total) * 100) };
 }
 
@@ -95,10 +97,12 @@ function calcCV(candidate: Record<string, unknown>): CompletenessResult {
     !!candidate['fullbodyUrl'],
     // Consent (1)
     !!candidate['consentGiven'],
+    // LPK assignment (1)
+    !!candidate['lpkId'],
   ];
 
   const score = checks.filter(Boolean).length;
-  const total = checks.length; // 23
+  const total = checks.length; // 24
   return { score, total, pct: Math.round((score / total) * 100) };
 }
 

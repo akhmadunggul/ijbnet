@@ -15,6 +15,12 @@ interface CandidateRow {
   completeness: { pct: number };
 }
 
+interface LpkRow {
+  id: string;
+  name: string;
+  isActive: boolean;
+}
+
 interface SensitiveData {
   nik: string | null;
   bankAccount: string | null;
@@ -156,6 +162,76 @@ function DeleteModal({
   );
 }
 
+function AssignLpkModal({
+  candidate,
+  onClose,
+}: {
+  candidate: CandidateRow;
+  onClose: () => void;
+}) {
+  const { t } = useTranslation();
+  const qc = useQueryClient();
+  const [selectedLpkId, setSelectedLpkId] = useState('');
+  const [error, setError] = useState('');
+
+  const { data: lpkData } = useQuery<{ lpks: LpkRow[] }>({
+    queryKey: ['superadmin-lpks-list'],
+    queryFn: () => api.get('/superadmin/lpks').then((r) => r.data),
+  });
+
+  const activeLpks = (lpkData?.lpks ?? []).filter((l) => l.isActive);
+
+  const assignMutation = useMutation({
+    mutationFn: () =>
+      api.patch(`/superadmin/candidates/${candidate.id}/lpk`, { lpkId: selectedLpkId }).then((r) => r.data),
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: ['superadmin-candidates'] });
+      onClose();
+    },
+    onError: (e: unknown) => {
+      const msg = (e as { response?: { data?: { message?: string } } })?.response?.data?.message;
+      setError(msg ?? t('toastError'));
+    },
+  });
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+      <div className="bg-white rounded-xl shadow-xl p-6 w-full max-w-sm mx-4">
+        <div className="flex items-center justify-between mb-3">
+          <h3 className="text-base font-semibold text-gray-900">
+            {t('superadmin.candidates.assignLpkTitle')} — {candidate.candidateCode}
+          </h3>
+          <button onClick={onClose} className="text-gray-400 hover:text-gray-600 text-xl">×</button>
+        </div>
+        <p className="text-xs text-gray-500 mb-4">{t('superadmin.candidates.assignLpkDesc')}</p>
+        <select
+          value={selectedLpkId}
+          onChange={(e) => setSelectedLpkId(e.target.value)}
+          className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 mb-4"
+        >
+          <option value="">— {t('superadmin.candidates.selectLpk')} —</option>
+          {activeLpks.map((l) => (
+            <option key={l.id} value={l.id}>{l.name}</option>
+          ))}
+        </select>
+        {error && <p className="text-xs text-red-600 mb-2">{error}</p>}
+        <div className="flex gap-3">
+          <button onClick={onClose} className="flex-1 border border-gray-200 rounded-lg py-2 text-sm text-gray-600 hover:bg-gray-50">
+            {t('btnCancel')}
+          </button>
+          <button
+            onClick={() => assignMutation.mutate()}
+            disabled={!selectedLpkId || assignMutation.isPending}
+            className="flex-1 bg-blue-600 text-white rounded-lg py-2 text-sm font-medium hover:bg-blue-700 disabled:opacity-40"
+          >
+            {assignMutation.isPending ? '…' : t('superadmin.candidates.assignLpkBtn')}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function SuperAdminCandidates() {
   const { t } = useTranslation();
   const { accessToken } = useAuthStore();
@@ -165,6 +241,7 @@ export default function SuperAdminCandidates() {
   const [sensitiveTarget, setSensitiveTarget] = useState<{ id: string; code: string } | null>(null);
   const [sensitiveData, setSensitiveData] = useState<SensitiveData | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<CandidateRow | null>(null);
+  const [assignLpkTarget, setAssignLpkTarget] = useState<CandidateRow | null>(null);
 
   const { data, isLoading } = useQuery<{ candidates: CandidateRow[]; total: number; page: number; pageSize: number }>({
     queryKey: ['superadmin-candidates', page, search, statusFilter],
@@ -289,6 +366,14 @@ export default function SuperAdminCandidates() {
                   </td>
                   <td className="px-4 py-3">
                     <div className="flex gap-2 flex-wrap">
+                      {!c.lpk && (
+                        <button
+                          onClick={() => setAssignLpkTarget(c)}
+                          className="text-xs text-orange-600 hover:text-orange-800 font-medium"
+                        >
+                          {t('superadmin.candidates.assignLpkBtn')}
+                        </button>
+                      )}
                       <button
                         onClick={() => handleSensitive(c.id, c.candidateCode)}
                         className="text-xs text-purple-600 hover:text-purple-800 font-medium"
@@ -346,6 +431,10 @@ export default function SuperAdminCandidates() {
 
       {deleteTarget && (
         <DeleteModal candidate={deleteTarget} onClose={() => setDeleteTarget(null)} />
+      )}
+
+      {assignLpkTarget && (
+        <AssignLpkModal candidate={assignLpkTarget} onClose={() => setAssignLpkTarget(null)} />
       )}
     </div>
   );
