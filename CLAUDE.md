@@ -196,6 +196,7 @@ apps/frontend/src/
 - v0.4.1 — Monitor: replace AVG bucketing with raw 1-min stride sampling (no data loss on spikes); rolling 30-day table retention
 - v0.4.2 — Fix CV: Skill and Promosi Diri fields were swapped (selfPr=Keahlian, selfIntro=Promosi Diri)
 - v0.4.3 — Monitor charts: hover tooltip with crosshair, timestamp, and exact value; flips side near right edge
+- v0.4.4 — Audit log: record login events (password and Google OAuth) with IP, user agent, and method
 
-Current: v0.4.3
+Current: v0.4.4
 Live at: https://jinzai.jobagus.id

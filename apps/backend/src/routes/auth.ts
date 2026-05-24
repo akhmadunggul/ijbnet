@@ -5,7 +5,7 @@ import bcrypt from 'bcrypt';
 import { authenticator } from 'otplib';
 import QRCode from 'qrcode';
 import { v4 as uuidv4 } from 'uuid';
-import { User, UserMfaBackupCode } from '../db/models/index';
+import { User, UserMfaBackupCode, AuditLog } from '../db/models/index';
 import { signAccessToken, signRefreshToken, verifyRefreshToken, decodeToken, ttlSeconds } from '../utils/jwt';
 import { blacklistToken, isTokenBlacklisted } from '../utils/redis';
 import { serializeUser } from '../serializers/candidate';
@@ -93,6 +93,17 @@ router.post('/login', loginLimiter, async (req: Request, res: Response): Promise
   const refreshToken = signRefreshToken(tokenPayload);
 
   await user.update({ lastLoginAt: new Date() });
+
+  try {
+    await AuditLog.create({
+      userId: user.id,
+      action: 'login',
+      entityType: 'user',
+      ipAddress: req.ip ?? null,
+      userAgent: req.headers['user-agent'] ?? null,
+      payload: { method: 'password' },
+    });
+  } catch { /* audit failure must not block login */ }
 
   res.cookie('refreshToken', refreshToken, {
     httpOnly: true,
@@ -195,7 +206,7 @@ router.get(
     passport.authenticate('google', {
       session: false,
       failureRedirect: `${config.FRONTEND_URL}/auth/login?error=oauth_failed`,
-    }, (err: Error | null, user: Express.User | false, info: unknown) => {
+    }, async (err: Error | null, user: Express.User | false, info: unknown) => {
       if (err) {
         console.error('[Google Callback Error]', err);
         return res.redirect(`${config.FRONTEND_URL}/auth/login?error=oauth_failed`);
@@ -214,6 +225,16 @@ router.get(
         sameSite: 'strict',
         maxAge: 7 * 24 * 60 * 60 * 1000,
       });
+      try {
+        await AuditLog.create({
+          userId: oauthUser.id,
+          action: 'login',
+          entityType: 'user',
+          ipAddress: req.ip ?? null,
+          userAgent: req.headers['user-agent'] ?? null,
+          payload: { method: 'oauth_google' },
+        });
+      } catch { /* audit failure must not block login */ }
       res.redirect(`${config.FRONTEND_URL}/auth/callback?token=${accessToken}`);
     })(req, res, next);
   }
