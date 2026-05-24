@@ -621,7 +621,13 @@
       "translateTitle": "自動翻訳設定",
       "translateDesc": "候補者がプロフィールを保存する際に、スキル・モチベーション・自己PRを自動的に日本語に翻訳するかどうかを制御します。無効にすると、CVの日本語欄にはインドネシア語のテキストが表示されます。",
       "translateLabel": "日本語への自動翻訳",
-      "translateHint": "LibreTranslate（自己ホスト）を使用します。翻訳品質が不十分な場合は無効にしてください。"
+      "translateHint": "LibreTranslate（自己ホスト）を使用します。翻訳品質が不十分な場合は無効にしてください。",
+      "journeyVizTitle": "候補者の歩み表示形式",
+      "journeyVizDesc": "候補者ダッシュボードに表示するタイムラインの形式を選択します。",
+      "journeyViz_textLabel": "テキスト表示",
+      "journeyViz_textDesc": "各ステップの状態・期間をテキストリストで表示します。",
+      "journeyViz_graphicalLabel": "グラフィカル表示",
+      "journeyViz_graphicalDesc": "各ステップに固有のアイコンを持つカード形式で表示。最終ステップでは 日本へようこそ！ のお祝いバナーを表示します。"
     },
     "recruiterSettings": {
       "navLabel": "採用担当表示設定",

@@ -17,6 +17,7 @@ interface TranslationConfigResponse {
 type FontKey = 'ms-mincho' | 'yu-mincho' | 'yu-gothic' | 'noto-serif-jp' | 'noto-sans-jp';
 type LayoutKey = 'layout1' | 'layout2';
 type CompletenessMode = 'legacy' | 'cv';
+type JourneyVizMode = 'text' | 'graphical';
 
 const FONT_OPTIONS: { key: FontKey; label: string; sublabel: string; value: string; googleFont?: string }[] = [
   { key: 'ms-mincho',    label: 'MS Mincho',      sublabel: 'Windows (既定)',          value: '"MS Mincho", serif' },
@@ -51,6 +52,9 @@ export default function SuperAdminDataEntrySettings() {
   const [photoBgColor, setPhotoBgColor] = useState('#ffffff');
   const [photoBgSaveSuccess, setPhotoBgSaveSuccess] = useState(false);
   const [photoBgSaveError, setPhotoBgSaveError] = useState(false);
+  const [journeyVizMode, setJourneyVizMode] = useState<JourneyVizMode>('graphical');
+  const [journeyVizSaveSuccess, setJourneyVizSaveSuccess] = useState(false);
+  const [journeyVizSaveError, setJourneyVizSaveError] = useState(false);
 
   const { data, isLoading } = useQuery<TabConfigResponse>({
     queryKey: ['candidate-tab-config'],
@@ -80,6 +84,11 @@ export default function SuperAdminDataEntrySettings() {
   const { data: photoBgData } = useQuery<{ color: string; enabled: boolean }>({
     queryKey: ['photo-bg-color'],
     queryFn: () => api.get('/superadmin/photo-bg-color').then((r) => r.data),
+  });
+
+  const { data: journeyVizData } = useQuery<{ mode: JourneyVizMode }>({
+    queryKey: ['journey-visualization'],
+    queryFn: () => api.get('/superadmin/journey-visualization').then((r) => r.data),
   });
 
   useEffect(() => {
@@ -112,6 +121,10 @@ export default function SuperAdminDataEntrySettings() {
       if (photoBgData.color) setPhotoBgColor(photoBgData.color);
     }
   }, [photoBgData]);
+
+  useEffect(() => {
+    if (journeyVizData?.mode) setJourneyVizMode(journeyVizData.mode);
+  }, [journeyVizData]);
 
   const saveMutation = useMutation({
     mutationFn: (cfg: Record<TabKey, boolean>) =>
@@ -185,6 +198,21 @@ export default function SuperAdminDataEntrySettings() {
     onError: () => {
       setCompletenessSaveError(true);
       setCompletenessSaveSuccess(false);
+    },
+  });
+
+  const journeyVizMutation = useMutation({
+    mutationFn: (mode: JourneyVizMode) =>
+      api.put('/superadmin/journey-visualization', { mode }).then((r) => r.data),
+    onSuccess: () => {
+      setJourneyVizSaveSuccess(true);
+      setJourneyVizSaveError(false);
+      void qc.invalidateQueries({ queryKey: ['journey-visualization'] });
+      setTimeout(() => setJourneyVizSaveSuccess(false), 3000);
+    },
+    onError: () => {
+      setJourneyVizSaveError(true);
+      setJourneyVizSaveSuccess(false);
     },
   });
 
@@ -492,6 +520,47 @@ export default function SuperAdminDataEntrySettings() {
           <span className="text-sm text-green-600">✓ {t('superadmin.dataEntrySettings.saved')}</span>
         )}
         {photoBgSaveError && (
+          <span className="text-sm text-red-600">{t('superadmin.dataEntrySettings.errorSave')}</span>
+        )}
+      </div>
+
+      {/* Journey Visualization Mode */}
+      <div>
+        <h2 className="text-base font-semibold text-gray-900 mb-1">{t('superadmin.dataEntrySettings.journeyVizTitle')}</h2>
+        <p className="text-sm text-gray-500 mb-4">{t('superadmin.dataEntrySettings.journeyVizDesc')}</p>
+      </div>
+
+      <div className="bg-white rounded-xl border border-gray-100 shadow-sm divide-y divide-gray-50">
+        {(['text', 'graphical'] as JourneyVizMode[]).map((mode) => (
+          <label key={mode} className="flex items-center gap-4 px-5 py-4 cursor-pointer hover:bg-gray-50 transition">
+            <input
+              type="radio"
+              name="journey_visualization"
+              value={mode}
+              checked={journeyVizMode === mode}
+              onChange={() => setJourneyVizMode(mode)}
+              className="accent-navy-700"
+            />
+            <div>
+              <p className="text-sm font-medium text-gray-800">{t(`superadmin.dataEntrySettings.journeyViz_${mode}Label`)}</p>
+              <p className="text-xs text-gray-400">{t(`superadmin.dataEntrySettings.journeyViz_${mode}Desc`)}</p>
+            </div>
+          </label>
+        ))}
+      </div>
+
+      <div className="flex items-center gap-4">
+        <button
+          onClick={() => journeyVizMutation.mutate(journeyVizMode)}
+          disabled={journeyVizMutation.isPending}
+          className="px-5 py-2 bg-gray-900 text-white text-sm rounded-lg hover:bg-gray-700 transition disabled:opacity-50"
+        >
+          {journeyVizMutation.isPending ? '…' : t('superadmin.dataEntrySettings.saveBtn')}
+        </button>
+        {journeyVizSaveSuccess && (
+          <span className="text-sm text-green-600">✓ {t('superadmin.dataEntrySettings.saved')}</span>
+        )}
+        {journeyVizSaveError && (
           <span className="text-sm text-red-600">{t('superadmin.dataEntrySettings.errorSave')}</span>
         )}
       </div>

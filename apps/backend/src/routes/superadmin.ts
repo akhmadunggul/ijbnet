@@ -349,6 +349,28 @@ router.put('/completeness-mode', wrap(async (req, res) => {
   res.json({ mode });
 }));
 
+// ── GET /api/superadmin/journey-visualization — PUBLIC ───────────────────────
+router.get('/journey-visualization', wrap(async (_req, res) => {
+  const row = await GlobalSettings.findOne({ where: { key: 'journey_visualization' } });
+  const mode = row ? (row.toJSON() as unknown as Record<string, unknown>)['value'] : 'graphical';
+  res.json({ mode });
+}));
+
+// ── PUT /api/superadmin/journey-visualization ─────────────────────────────────
+router.put('/journey-visualization', wrap(async (req, res) => {
+  const body = req.body as Record<string, unknown>;
+  const valid = ['text', 'graphical'];
+  const mode = valid.includes(String(body['mode'])) ? String(body['mode']) : 'graphical';
+
+  const [row, created] = await GlobalSettings.findOrCreate({
+    where: { key: 'journey_visualization' },
+    defaults: { key: 'journey_visualization', value: mode },
+  });
+  if (!created) await row.update({ value: mode });
+
+  res.json({ mode });
+}));
+
 // ── PUT /api/superadmin/candidate-tab-config ──────────────────────────────────
 router.put('/candidate-tab-config', wrap(async (req, res) => {
   const body = req.body as Record<string, unknown>;

@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '../../lib/api';
 import CandidateJourney from '../../components/CandidateJourney';
+import CandidateTimeline from '../../components/CandidateTimeline';
 import type { CandidateMe, NotificationData } from '../../types/candidate';
 
 interface PendingProposal {
@@ -45,6 +46,11 @@ export default function CandidateDashboard() {
     queryKey: ['my-pending-proposal'],
     queryFn: () => api.get('/candidates/me/interview/pending').then((r) => r.data),
     refetchInterval: 60_000,
+  });
+
+  const { data: journeyVizData } = useQuery<{ mode: string }>({
+    queryKey: ['journey-visualization'],
+    queryFn: () => api.get('/superadmin/journey-visualization').then((r) => r.data),
   });
 
   const confirmDateMutation = useMutation({
@@ -234,7 +240,16 @@ export default function CandidateDashboard() {
       )}
 
       {/* Journey visualization */}
-      <CandidateJourney />
+      {journeyVizData?.mode === 'text' ? (
+        <div className="bg-white border border-gray-100 rounded-xl p-5">
+          <CandidateTimeline
+            endpoint="/candidates/me/timeline"
+            queryKey={['my-timeline']}
+          />
+        </div>
+      ) : (
+        <CandidateJourney />
+      )}
 
       {/* Notification preview */}
       {(notifData?.notifications ?? []).length > 0 && (
