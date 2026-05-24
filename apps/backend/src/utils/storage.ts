@@ -1,5 +1,6 @@
 import fs from 'fs';
 import path from 'path';
+import { spawn } from 'child_process';
 import sharp from 'sharp';
 import { config } from '../config';
 
@@ -29,10 +30,34 @@ export function validateImageBuffer(buffer: Buffer): void {
   }
 }
 
+function hexToRgb(hex: string): { r: number; g: number; b: number } {
+  const m = /^#([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+  return m
+    ? { r: parseInt(m[1]!, 16), g: parseInt(m[2]!, 16), b: parseInt(m[3]!, 16) }
+    : { r: 255, g: 255, b: 255 };
+}
+
+async function removeBackground(inputBuffer: Buffer): Promise<Buffer> {
+  return new Promise((resolve, reject) => {
+    const proc = spawn('/opt/rembg-venv/bin/rembg', ['i', '-m', 'u2netp', '-', '-']);
+    const chunks: Buffer[] = [];
+    proc.stdout.on('data', (chunk: Buffer) => chunks.push(chunk));
+    proc.stderr.on('data', (d: Buffer) => console.error('[rembg]', d.toString().trim()));
+    proc.on('close', (code) => {
+      if (code !== 0) reject(new Error(`rembg exited with code ${code}`));
+      else resolve(Buffer.concat(chunks));
+    });
+    proc.on('error', reject);
+    proc.stdin.write(inputBuffer);
+    proc.stdin.end();
+  });
+}
+
 export async function savePhoto(
   candidateId: string,
   slot: PhotoSlot,
   inputBuffer: Buffer,
+  bgColor?: string,
 ): Promise<{ filePath: string; urlPath: string }> {
   const safe = candidateId.replace(/[^a-zA-Z0-9-]/g, '');
   const dir = path.join(config.UPLOADS_DIR, 'candidates', safe);
@@ -41,9 +66,19 @@ export async function savePhoto(
   const filename = `${slot}.webp`;
   const filePath = path.join(dir, filename);
 
-  // .rotate() strips EXIF and applies orientation correction
-  let pipeline = sharp(inputBuffer).rotate();
+  // EXIF strip + orientation correction; work as PNG for alpha support
+  let workBuffer = await sharp(inputBuffer).rotate().png().toBuffer();
 
+  // Background removal + solid colour fill
+  if (bgColor) {
+    const noBg = await removeBackground(workBuffer);
+    workBuffer = await sharp(noBg)
+      .flatten({ background: hexToRgb(bgColor) })
+      .png()
+      .toBuffer();
+  }
+
+  let pipeline = sharp(workBuffer);
   if (slot === 'closeup') {
     pipeline = pipeline.resize(800, 800, { fit: 'cover', position: 'centre' });
   } else {

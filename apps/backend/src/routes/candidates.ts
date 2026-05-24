@@ -512,9 +512,14 @@ router.post(
       return;
     }
 
+    const bgRow = await GlobalSettings.findOne({ where: { key: 'photo_bg_color' } });
+    const bgColor = bgRow
+      ? ((bgRow.toJSON() as unknown as Record<string, unknown>)['value'] as string) || undefined
+      : undefined;
+
     let urlPath: string;
     try {
-      ({ urlPath } = await savePhoto(candidate.id, slot as PhotoSlot, req.file.buffer));
+      ({ urlPath } = await savePhoto(candidate.id, slot as PhotoSlot, req.file.buffer, bgColor));
     } catch (err) {
       console.error('[photo-upload] savePhoto failed:', err);
       res.status(500).json({ error: 'UPLOAD_FAILED', message: 'Failed to process image.' });

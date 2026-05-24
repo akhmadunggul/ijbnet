@@ -47,6 +47,10 @@ export default function SuperAdminDataEntrySettings() {
   const [completenessMode, setCompletenessMode] = useState<CompletenessMode>('legacy');
   const [completenessSaveSuccess, setCompletenessSaveSuccess] = useState(false);
   const [completenessSaveError, setCompletenessSaveError] = useState(false);
+  const [photoBgEnabled, setPhotoBgEnabled] = useState(false);
+  const [photoBgColor, setPhotoBgColor] = useState('#ffffff');
+  const [photoBgSaveSuccess, setPhotoBgSaveSuccess] = useState(false);
+  const [photoBgSaveError, setPhotoBgSaveError] = useState(false);
 
   const { data, isLoading } = useQuery<TabConfigResponse>({
     queryKey: ['candidate-tab-config'],
@@ -73,6 +77,11 @@ export default function SuperAdminDataEntrySettings() {
     queryFn: () => api.get('/superadmin/completeness-mode').then((r) => r.data),
   });
 
+  const { data: photoBgData } = useQuery<{ color: string; enabled: boolean }>({
+    queryKey: ['photo-bg-color'],
+    queryFn: () => api.get('/superadmin/photo-bg-color').then((r) => r.data),
+  });
+
   useEffect(() => {
     if (data?.config) {
       setConfig({ ...data.config } as Record<TabKey, boolean>);
@@ -96,6 +105,13 @@ export default function SuperAdminDataEntrySettings() {
   useEffect(() => {
     if (completenessModeData?.mode) setCompletenessMode(completenessModeData.mode);
   }, [completenessModeData]);
+
+  useEffect(() => {
+    if (photoBgData !== undefined) {
+      setPhotoBgEnabled(photoBgData.enabled);
+      if (photoBgData.color) setPhotoBgColor(photoBgData.color);
+    }
+  }, [photoBgData]);
 
   const saveMutation = useMutation({
     mutationFn: (cfg: Record<TabKey, boolean>) =>
@@ -139,6 +155,21 @@ export default function SuperAdminDataEntrySettings() {
     onError: () => {
       setLayoutSaveError(true);
       setLayoutSaveSuccess(false);
+    },
+  });
+
+  const photoBgMutation = useMutation({
+    mutationFn: ({ enabled, color }: { enabled: boolean; color: string }) =>
+      api.put('/superadmin/photo-bg-color', { enabled, color }).then((r) => r.data),
+    onSuccess: () => {
+      setPhotoBgSaveSuccess(true);
+      setPhotoBgSaveError(false);
+      void qc.invalidateQueries({ queryKey: ['photo-bg-color'] });
+      setTimeout(() => setPhotoBgSaveSuccess(false), 3000);
+    },
+    onError: () => {
+      setPhotoBgSaveError(true);
+      setPhotoBgSaveSuccess(false);
     },
   });
 
@@ -415,6 +446,52 @@ export default function SuperAdminDataEntrySettings() {
           <span className="text-sm text-green-600">✓ {t('superadmin.dataEntrySettings.saved')}</span>
         )}
         {completenessSaveError && (
+          <span className="text-sm text-red-600">{t('superadmin.dataEntrySettings.errorSave')}</span>
+        )}
+      </div>
+
+      {/* Photo Background Colour */}
+      <div>
+        <h2 className="text-base font-semibold text-gray-900 mb-1">{t('superadmin.dataEntrySettings.photoBgTitle')}</h2>
+        <p className="text-sm text-gray-500 mb-4">{t('superadmin.dataEntrySettings.photoBgDesc')}</p>
+      </div>
+
+      <div className="bg-white rounded-xl border border-gray-100 shadow-sm px-5 py-4 space-y-4">
+        <label className="flex items-center gap-3 cursor-pointer">
+          <input
+            type="checkbox"
+            checked={photoBgEnabled}
+            onChange={(e) => setPhotoBgEnabled(e.target.checked)}
+            className="accent-navy-700 w-4 h-4"
+          />
+          <span className="text-sm font-medium text-gray-800">{t('superadmin.dataEntrySettings.photoBgEnable')}</span>
+        </label>
+        {photoBgEnabled && (
+          <div className="flex items-center gap-4 pl-7">
+            <label className="text-sm text-gray-700">{t('superadmin.dataEntrySettings.photoBgColorLabel')}</label>
+            <input
+              type="color"
+              value={photoBgColor}
+              onChange={(e) => setPhotoBgColor(e.target.value)}
+              className="w-10 h-10 rounded cursor-pointer border border-gray-200"
+            />
+            <span className="text-sm text-gray-400 font-mono">{photoBgColor.toUpperCase()}</span>
+          </div>
+        )}
+      </div>
+
+      <div className="flex items-center gap-4">
+        <button
+          onClick={() => photoBgMutation.mutate({ enabled: photoBgEnabled, color: photoBgColor })}
+          disabled={photoBgMutation.isPending}
+          className="px-5 py-2 bg-gray-900 text-white text-sm rounded-lg hover:bg-gray-700 transition disabled:opacity-50"
+        >
+          {photoBgMutation.isPending ? '…' : t('superadmin.dataEntrySettings.saveBtn')}
+        </button>
+        {photoBgSaveSuccess && (
+          <span className="text-sm text-green-600">✓ {t('superadmin.dataEntrySettings.saved')}</span>
+        )}
+        {photoBgSaveError && (
           <span className="text-sm text-red-600">{t('superadmin.dataEntrySettings.errorSave')}</span>
         )}
       </div>

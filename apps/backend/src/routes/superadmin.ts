@@ -100,6 +100,13 @@ router.get('/completeness-mode', wrap(async (_req, res) => {
   res.json({ mode });
 }));
 
+// ── GET /api/superadmin/photo-bg-color — PUBLIC ───────────────────────────────
+router.get('/photo-bg-color', wrap(async (_req, res) => {
+  const row = await GlobalSettings.findOne({ where: { key: 'photo_bg_color' } });
+  const color = row ? (row.toJSON() as unknown as Record<string, unknown>)['value'] as string : '';
+  res.json({ color, enabled: Boolean(color) });
+}));
+
 // ── GET /api/superadmin/recruiter-selection-columns — PUBLIC ─────────────────
 router.get('/recruiter-selection-columns', wrap(async (_req, res) => {
   const row = await GlobalSettings.findOne({ where: { key: 'recruiter_selection_columns' } });
@@ -306,6 +313,22 @@ router.put('/cv-layout', wrap(async (req, res) => {
   }
 
   res.json({ layout });
+}));
+
+// ── PUT /api/superadmin/photo-bg-color ───────────────────────────────────────
+router.put('/photo-bg-color', wrap(async (req, res) => {
+  const body = req.body as Record<string, unknown>;
+  const enabled = Boolean(body['enabled']);
+  const rawColor = ((body['color'] as string) ?? '').trim();
+  const color = enabled && /^#[0-9a-f]{6}$/i.test(rawColor) ? rawColor : '';
+
+  const [row, created] = await GlobalSettings.findOrCreate({
+    where: { key: 'photo_bg_color' },
+    defaults: { key: 'photo_bg_color', value: color },
+  });
+  if (!created) await row.update({ value: color });
+
+  res.json({ color, enabled: Boolean(color) });
 }));
 
 // ── PUT /api/superadmin/completeness-mode ────────────────────────────────────

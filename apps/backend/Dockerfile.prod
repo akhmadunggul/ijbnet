@@ -28,10 +28,14 @@ RUN pnpm --filter @ijbnet/backend build
 
 # ── Stage 2: Production ──────────────────────────────────────────
 FROM node:20-alpine AS production
-RUN apk add --no-cache python3 make g++ chromium && \
-    npm install -g pnpm@10.33.0
-
 ENV CHROME_PATH=/usr/bin/chromium-browser
+ENV U2NET_HOME=/opt/u2net-models
+
+RUN apk add --no-cache python3 py3-pip make g++ chromium && \
+    npm install -g pnpm@10.33.0 && \
+    python3 -m venv /opt/rembg-venv && \
+    /opt/rembg-venv/bin/pip install --no-cache-dir rembg && \
+    /opt/rembg-venv/bin/python3 -c "from rembg import new_session; new_session('u2netp')"
 
 WORKDIR /app
 
