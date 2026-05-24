@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '../../lib/api';
-import CandidateTimeline from '../../components/CandidateTimeline';
+import CandidateJourney from '../../components/CandidateJourney';
 import type { CandidateMe, NotificationData } from '../../types/candidate';
 
 interface PendingProposal {
@@ -233,13 +233,8 @@ export default function CandidateDashboard() {
         </div>
       )}
 
-      {/* Status timeline */}
-      <div className="bg-white border border-gray-100 rounded-xl p-5">
-        <CandidateTimeline
-          endpoint="/candidates/me/timeline"
-          queryKey={['my-timeline']}
-        />
-      </div>
+      {/* Journey visualization */}
+      <CandidateJourney />
 
       {/* Notification preview */}
       {(notifData?.notifications ?? []).length > 0 && (
