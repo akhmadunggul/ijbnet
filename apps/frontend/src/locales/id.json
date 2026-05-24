@@ -301,7 +301,10 @@
       "dropzone": "Klik atau seret foto ke sini",
       "uploading": "Mengunggah…",
       "errorSize": "Ukuran file melebihi batas 5MB.",
-      "errorType": "Tipe file tidak valid. Hanya JPG, PNG, dan WebP yang diperbolehkan."
+      "errorType": "Tipe file tidak valid. Hanya JPG, PNG, dan WebP yang diperbolehkan.",
+      "save": "Simpan Foto",
+      "pendingHint": "Foto dipilih. Klik Simpan Foto untuk mengunggah.",
+      "bgRemovalBadge": "Ganti Background Otomatis"
     }
   },
   "admin": {

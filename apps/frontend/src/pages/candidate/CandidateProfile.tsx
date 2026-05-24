@@ -135,6 +135,7 @@ function PhotoZone({
   currentUrl,
   onUploaded,
   isLocked,
+  bgEnabled,
 }: {
   slot: 'closeup' | 'fullbody';
   label: string;
@@ -142,30 +143,37 @@ function PhotoZone({
   currentUrl: string | null;
   onUploaded: (url: string) => void;
   isLocked: boolean;
+  bgEnabled: boolean;
 }) {
   const { t } = useTranslation();
+  const [pendingFile, setPendingFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
   const [progress, setProgress] = useState(0);
   const [error, setError] = useState('');
   const [localPreview, setLocalPreview] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  async function handleFile(file: File) {
+  function selectFile(file: File) {
     if (file.size > 5 * 1024 * 1024) { setError(t('candidate.photo.errorSize')); return; }
     const allowed = ['image/jpeg', 'image/png', 'image/webp'];
     if (!allowed.includes(file.type)) { setError(t('candidate.photo.errorType')); return; }
-
     setError('');
+    setPendingFile(file);
     setLocalPreview(URL.createObjectURL(file));
+  }
+
+  async function handleUpload() {
+    if (!pendingFile) return;
     setUploading(true);
     setProgress(0);
-
     const fd = new FormData();
-    fd.append('photo', file);
+    fd.append('photo', pendingFile);
     try {
       const res = await api.post<{ url: string }>(`/candidates/me/photos/${slot}`, fd, {
         onUploadProgress: (e) => { if (e.total) setProgress(Math.round((e.loaded / e.total) * 100)); },
       });
+      setPendingFile(null);
+      setLocalPreview(null);
       onUploaded(res.data.url);
     } catch (err: unknown) {
       const errorCode = (err as { response?: { data?: { error?: string } } })?.response?.data?.error;
@@ -182,7 +190,7 @@ function PhotoZone({
   function onDrop(e: React.DragEvent) {
     e.preventDefault();
     const file = e.dataTransfer.files[0];
-    if (file) handleFile(file);
+    if (file) selectFile(file);
   }
 
   const aspectClass = slot === 'closeup' ? 'aspect-square' : 'aspect-[9/16]';
@@ -190,12 +198,19 @@ function PhotoZone({
 
   return (
     <div className="flex flex-col gap-3">
-      <p className="text-sm font-medium text-gray-700">{label}</p>
+      <div className="flex items-center gap-2 flex-wrap">
+        <p className="text-sm font-medium text-gray-700">{label}</p>
+        {bgEnabled && (
+          <span className="text-[10px] px-2 py-0.5 bg-amber-100 text-amber-700 rounded-full font-medium whitespace-nowrap">
+            {t('candidate.photo.bgRemovalBadge')}
+          </span>
+        )}
+      </div>
       <div
-        className={`relative border-2 border-dashed border-gray-200 rounded-xl overflow-hidden transition ${aspectClass} max-h-96 flex items-center justify-center bg-gray-50 ${!isLocked ? 'cursor-pointer hover:border-navy-400' : 'cursor-default'}`}
-        onDragOver={!isLocked ? (e) => e.preventDefault() : undefined}
-        onDrop={!isLocked ? onDrop : undefined}
-        onClick={!isLocked ? () => inputRef.current?.click() : undefined}
+        className={`relative border-2 border-dashed rounded-xl overflow-hidden transition ${aspectClass} max-h-96 flex items-center justify-center bg-gray-50 ${pendingFile ? 'border-navy-400' : 'border-gray-200'} ${!isLocked && !uploading ? 'cursor-pointer hover:border-navy-400' : 'cursor-default'}`}
+        onDragOver={!isLocked && !uploading ? (e) => e.preventDefault() : undefined}
+        onDrop={!isLocked && !uploading ? onDrop : undefined}
+        onClick={!isLocked && !uploading ? () => inputRef.current?.click() : undefined}
       >
         {(localPreview ?? currentUrl) ? (
           localPreview
@@ -218,10 +233,31 @@ function PhotoZone({
         )}
       </div>
       {error && <p className="text-xs text-red-500">{error}</p>}
-      {isLocked
-        ? <p className="text-sm text-amber-600 mt-2">{t('candidate.profile.locked')}</p>
-        : <input ref={inputRef} type="file" accept="image/jpeg,image/png,image/webp" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) handleFile(f); }} />
-      }
+      {pendingFile && !uploading && (
+        <p className="text-[11px] text-navy-600">{t('candidate.photo.pendingHint')}</p>
+      )}
+      {isLocked ? (
+        <p className="text-sm text-amber-600 mt-2">{t('candidate.profile.locked')}</p>
+      ) : (
+        <>
+          <input
+            ref={inputRef}
+            type="file"
+            accept="image/jpeg,image/png,image/webp"
+            className="hidden"
+            onChange={(e) => { const f = e.target.files?.[0]; if (f) selectFile(f); e.target.value = ''; }}
+          />
+          {pendingFile && (
+            <button
+              onClick={handleUpload}
+              disabled={uploading}
+              className="w-full py-2 bg-navy-700 text-white text-sm font-medium rounded-lg hover:bg-navy-800 disabled:opacity-50 transition"
+            >
+              {uploading ? t('candidate.photo.uploading') : t('candidate.photo.save')}
+            </button>
+          )}
+        </>
+      )}
     </div>
   );
 }
@@ -780,6 +816,13 @@ function PhotosTab({ candidate }: { candidate: CandidateData }) {
   const qc = useQueryClient();
   const [urls, setUrls] = useState({ closeup: candidate.closeupUrl, fullbody: candidate.fullbodyUrl });
 
+  const { data: bgData } = useQuery({
+    queryKey: ['photo-bg-color'],
+    queryFn: () => api.get<{ enabled: boolean; color: string }>('/superadmin/photo-bg-color').then(r => r.data),
+    staleTime: 5 * 60 * 1000,
+  });
+  const bgEnabled = bgData?.enabled ?? false;
+
   function onUploaded(slot: 'closeup' | 'fullbody', url: string) {
     setUrls((prev) => ({ ...prev, [slot]: url }));
     qc.invalidateQueries({ queryKey: ['my-candidate'] });
@@ -787,8 +830,8 @@ function PhotosTab({ candidate }: { candidate: CandidateData }) {
 
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 gap-8">
-      <PhotoZone slot="closeup" label={t('candidate.photo.closeupLabel')} spec={t('candidate.photo.spec')} currentUrl={urls.closeup} onUploaded={(url) => onUploaded('closeup', url)} isLocked={candidate.isLocked} />
-      <PhotoZone slot="fullbody" label={t('candidate.photo.fullbodyLabel')} spec={t('candidate.photo.spec')} currentUrl={urls.fullbody} onUploaded={(url) => onUploaded('fullbody', url)} isLocked={candidate.isLocked} />
+      <PhotoZone slot="closeup" label={t('candidate.photo.closeupLabel')} spec={t('candidate.photo.spec')} currentUrl={urls.closeup} onUploaded={(url) => onUploaded('closeup', url)} isLocked={candidate.isLocked} bgEnabled={bgEnabled} />
+      <PhotoZone slot="fullbody" label={t('candidate.photo.fullbodyLabel')} spec={t('candidate.photo.spec')} currentUrl={urls.fullbody} onUploaded={(url) => onUploaded('fullbody', url)} isLocked={candidate.isLocked} bgEnabled={bgEnabled} />
     </div>
   );
 }

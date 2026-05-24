@@ -300,7 +300,10 @@
       "dropzone": "クリックまたはドラッグして写真をアップロード",
       "uploading": "アップロード中…",
       "errorSize": "ファイルサイズが5MBを超えています。",
-      "errorType": "無効なファイル形式です。JPG・PNG・WebPのみ対応しています。"
+      "errorType": "無効なファイル形式です。JPG・PNG・WebPのみ対応しています。",
+      "save": "写真を保存",
+      "pendingHint": "写真が選択されました。「写真を保存」をクリックしてアップロードしてください。",
+      "bgRemovalBadge": "背景自動変換"
     }
   },
   "admin": {
