@@ -197,6 +197,7 @@ apps/frontend/src/
 - v0.4.2 — Fix CV: Skill and Promosi Diri fields were swapped (selfPr=Keahlian, selfIntro=Promosi Diri)
 - v0.4.3 — Monitor charts: hover tooltip with crosshair, timestamp, and exact value; flips side near right edge
 - v0.4.4 — Audit log: record login events (password and Google OAuth) with IP, user agent, and method
+- v0.4.5 — Superadmin configurable completeness mode: Legacy (23 fields) vs CV (24 CV-visible fields); persisted in global_settings; restored on startup
 
-Current: v0.4.4
+Current: v0.4.5
 Live at: https://jinzai.jobagus.id
