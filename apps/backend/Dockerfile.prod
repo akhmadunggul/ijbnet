@@ -38,7 +38,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && rm -rf /var/lib/apt/lists/* \
     && npm install -g pnpm@10.33.0 \
     && python3 -m venv /opt/rembg-venv \
-    && /opt/rembg-venv/bin/pip install --no-cache-dir rembg \
+    && /opt/rembg-venv/bin/pip install --no-cache-dir "rembg[cpu]" \
     && /opt/rembg-venv/bin/python3 -c "from rembg import new_session; new_session('u2netp')"
 
 WORKDIR /app
