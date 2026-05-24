@@ -15,7 +15,7 @@ COPY packages/shared/package.json ./packages/shared/
 
 # Install dependencies — cache mount keeps the pnpm store across builds
 # so packages are not re-downloaded even when lock file changes
-RUN --mount=type=cache,id=ijbnet-pnpm,target=/root/.local/share/pnpm/store \
+RUN --mount=type=cache,id=ijbnet-pnpm-slim,target=/root/.local/share/pnpm/store \
     pnpm install --frozen-lockfile --shamefully-hoist
 
 # Copy source
@@ -49,7 +49,7 @@ COPY apps/backend/package.json ./apps/backend/
 COPY packages/shared/package.json ./packages/shared/
 
 # Install runtime dependencies — same cache mount as builder
-RUN --mount=type=cache,id=ijbnet-pnpm,target=/root/.local/share/pnpm/store \
+RUN --mount=type=cache,id=ijbnet-pnpm-slim,target=/root/.local/share/pnpm/store \
     pnpm install --frozen-lockfile --shamefully-hoist
 
 # Copy built output
