@@ -11,6 +11,7 @@
  * Step 2 — run the test:
  *   k6 run \
  *     --env BASE_URL=https://jinzai.jobagus.id \
+ *     --env BYPASS_KEY=$LOAD_TEST_BYPASS_KEY \
  *     --env TOKEN_CANDIDATE_1=$TOKEN_CANDIDATE_1 \
  *     --env TOKEN_CANDIDATE_2=$TOKEN_CANDIDATE_2 \
  *     --env TOKEN_CANDIDATE_3=$TOKEN_CANDIDATE_3 \
@@ -18,6 +19,10 @@
  *     --env TOKEN_MANAGER=$TOKEN_MANAGER \
  *     --env TOKEN_RECRUITER=$TOKEN_RECRUITER \
  *     k6/stress-test.js
+ *
+ * BYPASS_KEY must match LOAD_TEST_BYPASS_KEY in the server's .env. Without it
+ * all 100 VUs share one external IP and will be rate-limited to 300 req/min,
+ * causing 429 errors that cross the http_req_failed threshold.
  *
  * If tokens are NOT supplied, setup() will attempt login (subject to rate limit).
  *
