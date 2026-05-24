@@ -87,7 +87,7 @@ export async function savePhoto(
 
   await pipeline.webp({ quality: 80 }).toFile(filePath);
 
-  const urlPath = `/api/uploads/candidates/${safe}/${filename}`;
+  const urlPath = `/api/uploads/candidates/${safe}/${filename}?t=${Date.now()}`;
   return { filePath, urlPath };
 }
 
