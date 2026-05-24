@@ -2,7 +2,7 @@ import { QueryInterface } from 'sequelize';
 import bcrypt from 'bcrypt';
 import { v4 as uuidv4 } from 'uuid';
 
-// Three dedicated load-test candidate accounts.
+// Sixteen dedicated load-test candidate accounts (k6.cand1–k6.cand16).
 // Idempotent — safe to run multiple times.
 // Run in container: cd /app/apps/backend && NODE_ENV=production npx sequelize-cli db:seed --seed 20250101000100-k6-test-candidates.ts
 
@@ -23,9 +23,22 @@ module.exports = {
     const lpkId: string = (lpkRows as { id: string }[])[0]!.id;
 
     const accounts = [
-      { email: 'k6.cand1@candidate.ijbnet.org', name: 'K6 Test Candidate 1', code: 'K6T-0001' },
-      { email: 'k6.cand2@candidate.ijbnet.org', name: 'K6 Test Candidate 2', code: 'K6T-0002' },
-      { email: 'k6.cand3@candidate.ijbnet.org', name: 'K6 Test Candidate 3', code: 'K6T-0003' },
+      { email: 'k6.cand1@candidate.ijbnet.org',  name: 'K6 Test Candidate 1',  code: 'K6T-0001' },
+      { email: 'k6.cand2@candidate.ijbnet.org',  name: 'K6 Test Candidate 2',  code: 'K6T-0002' },
+      { email: 'k6.cand3@candidate.ijbnet.org',  name: 'K6 Test Candidate 3',  code: 'K6T-0003' },
+      { email: 'k6.cand4@candidate.ijbnet.org',  name: 'K6 Test Candidate 4',  code: 'K6T-0004' },
+      { email: 'k6.cand5@candidate.ijbnet.org',  name: 'K6 Test Candidate 5',  code: 'K6T-0005' },
+      { email: 'k6.cand6@candidate.ijbnet.org',  name: 'K6 Test Candidate 6',  code: 'K6T-0006' },
+      { email: 'k6.cand7@candidate.ijbnet.org',  name: 'K6 Test Candidate 7',  code: 'K6T-0007' },
+      { email: 'k6.cand8@candidate.ijbnet.org',  name: 'K6 Test Candidate 8',  code: 'K6T-0008' },
+      { email: 'k6.cand9@candidate.ijbnet.org',  name: 'K6 Test Candidate 9',  code: 'K6T-0009' },
+      { email: 'k6.cand10@candidate.ijbnet.org', name: 'K6 Test Candidate 10', code: 'K6T-0010' },
+      { email: 'k6.cand11@candidate.ijbnet.org', name: 'K6 Test Candidate 11', code: 'K6T-0011' },
+      { email: 'k6.cand12@candidate.ijbnet.org', name: 'K6 Test Candidate 12', code: 'K6T-0012' },
+      { email: 'k6.cand13@candidate.ijbnet.org', name: 'K6 Test Candidate 13', code: 'K6T-0013' },
+      { email: 'k6.cand14@candidate.ijbnet.org', name: 'K6 Test Candidate 14', code: 'K6T-0014' },
+      { email: 'k6.cand15@candidate.ijbnet.org', name: 'K6 Test Candidate 15', code: 'K6T-0015' },
+      { email: 'k6.cand16@candidate.ijbnet.org', name: 'K6 Test Candidate 16', code: 'K6T-0016' },
     ];
 
     for (const acc of accounts) {
@@ -90,6 +103,19 @@ module.exports = {
       'k6.cand1@candidate.ijbnet.org',
       'k6.cand2@candidate.ijbnet.org',
       'k6.cand3@candidate.ijbnet.org',
+      'k6.cand4@candidate.ijbnet.org',
+      'k6.cand5@candidate.ijbnet.org',
+      'k6.cand6@candidate.ijbnet.org',
+      'k6.cand7@candidate.ijbnet.org',
+      'k6.cand8@candidate.ijbnet.org',
+      'k6.cand9@candidate.ijbnet.org',
+      'k6.cand10@candidate.ijbnet.org',
+      'k6.cand11@candidate.ijbnet.org',
+      'k6.cand12@candidate.ijbnet.org',
+      'k6.cand13@candidate.ijbnet.org',
+      'k6.cand14@candidate.ijbnet.org',
+      'k6.cand15@candidate.ijbnet.org',
+      'k6.cand16@candidate.ijbnet.org',
     ];
     for (const email of emails) {
       const [rows] = await queryInterface.sequelize.query(

@@ -15,6 +15,19 @@
  *     --env TOKEN_CANDIDATE_1=$TOKEN_CANDIDATE_1 \
  *     --env TOKEN_CANDIDATE_2=$TOKEN_CANDIDATE_2 \
  *     --env TOKEN_CANDIDATE_3=$TOKEN_CANDIDATE_3 \
+ *     --env TOKEN_CANDIDATE_4=$TOKEN_CANDIDATE_4 \
+ *     --env TOKEN_CANDIDATE_5=$TOKEN_CANDIDATE_5 \
+ *     --env TOKEN_CANDIDATE_6=$TOKEN_CANDIDATE_6 \
+ *     --env TOKEN_CANDIDATE_7=$TOKEN_CANDIDATE_7 \
+ *     --env TOKEN_CANDIDATE_8=$TOKEN_CANDIDATE_8 \
+ *     --env TOKEN_CANDIDATE_9=$TOKEN_CANDIDATE_9 \
+ *     --env TOKEN_CANDIDATE_10=$TOKEN_CANDIDATE_10 \
+ *     --env TOKEN_CANDIDATE_11=$TOKEN_CANDIDATE_11 \
+ *     --env TOKEN_CANDIDATE_12=$TOKEN_CANDIDATE_12 \
+ *     --env TOKEN_CANDIDATE_13=$TOKEN_CANDIDATE_13 \
+ *     --env TOKEN_CANDIDATE_14=$TOKEN_CANDIDATE_14 \
+ *     --env TOKEN_CANDIDATE_15=$TOKEN_CANDIDATE_15 \
+ *     --env TOKEN_CANDIDATE_16=$TOKEN_CANDIDATE_16 \
  *     --env TOKEN_ADMIN=$TOKEN_ADMIN \
  *     --env TOKEN_MANAGER=$TOKEN_MANAGER \
  *     --env TOKEN_RECRUITER=$TOKEN_RECRUITER \
@@ -179,9 +192,22 @@ export function setup() {
   }
 
   const candidateTokens = [
-    loginFallback('ahmad.fauzi@candidate.ijbnet.org',   'Demo1234!', __ENV.TOKEN_CANDIDATE_1 || null),
-    loginFallback('hendra.kusuma@candidate.ijbnet.org', 'Demo1234!', __ENV.TOKEN_CANDIDATE_2 || null),
-    loginFallback('budi.santoso@candidate.ijbnet.org',  'Demo1234!', __ENV.TOKEN_CANDIDATE_3 || null),
+    loginFallback('k6.cand1@candidate.ijbnet.org',  'Demo1234!', __ENV.TOKEN_CANDIDATE_1  || null),
+    loginFallback('k6.cand2@candidate.ijbnet.org',  'Demo1234!', __ENV.TOKEN_CANDIDATE_2  || null),
+    loginFallback('k6.cand3@candidate.ijbnet.org',  'Demo1234!', __ENV.TOKEN_CANDIDATE_3  || null),
+    loginFallback('k6.cand4@candidate.ijbnet.org',  'Demo1234!', __ENV.TOKEN_CANDIDATE_4  || null),
+    loginFallback('k6.cand5@candidate.ijbnet.org',  'Demo1234!', __ENV.TOKEN_CANDIDATE_5  || null),
+    loginFallback('k6.cand6@candidate.ijbnet.org',  'Demo1234!', __ENV.TOKEN_CANDIDATE_6  || null),
+    loginFallback('k6.cand7@candidate.ijbnet.org',  'Demo1234!', __ENV.TOKEN_CANDIDATE_7  || null),
+    loginFallback('k6.cand8@candidate.ijbnet.org',  'Demo1234!', __ENV.TOKEN_CANDIDATE_8  || null),
+    loginFallback('k6.cand9@candidate.ijbnet.org',  'Demo1234!', __ENV.TOKEN_CANDIDATE_9  || null),
+    loginFallback('k6.cand10@candidate.ijbnet.org', 'Demo1234!', __ENV.TOKEN_CANDIDATE_10 || null),
+    loginFallback('k6.cand11@candidate.ijbnet.org', 'Demo1234!', __ENV.TOKEN_CANDIDATE_11 || null),
+    loginFallback('k6.cand12@candidate.ijbnet.org', 'Demo1234!', __ENV.TOKEN_CANDIDATE_12 || null),
+    loginFallback('k6.cand13@candidate.ijbnet.org', 'Demo1234!', __ENV.TOKEN_CANDIDATE_13 || null),
+    loginFallback('k6.cand14@candidate.ijbnet.org', 'Demo1234!', __ENV.TOKEN_CANDIDATE_14 || null),
+    loginFallback('k6.cand15@candidate.ijbnet.org', 'Demo1234!', __ENV.TOKEN_CANDIDATE_15 || null),
+    loginFallback('k6.cand16@candidate.ijbnet.org', 'Demo1234!', __ENV.TOKEN_CANDIDATE_16 || null),
   ];
   const adminToken     = loginFallback('admin@ijbnet.org',       'Demo1234!', __ENV.TOKEN_ADMIN     || null);
   const managerToken   = loginFallback('manager@ijbnet.org',     'Demo1234!', __ENV.TOKEN_MANAGER   || null);
@@ -193,7 +219,7 @@ export function setup() {
     manager: managerToken ? 1 : 0,
     recruiter: recruiterToken ? 1 : 0,
   };
-  console.log(`Tokens ready — candidates: ${tokenSources.candidates}/3, admin: ${tokenSources.admin}, manager: ${tokenSources.manager}, recruiter: ${tokenSources.recruiter}`);
+  console.log(`Tokens ready — candidates: ${tokenSources.candidates}/16, admin: ${tokenSources.admin}, manager: ${tokenSources.manager}, recruiter: ${tokenSources.recruiter}`);
 
   if (tokenSources.candidates === 0 && !adminToken && !managerToken && !recruiterToken) {
     console.error('No tokens obtained. Run k6/get-tokens.sh first and pass TOKEN_* env vars.');
