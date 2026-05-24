@@ -117,6 +117,13 @@ router.get('/recruiter-selection-columns', wrap(async (_req, res) => {
   res.json({ config: row ? (row.toJSON() as unknown as Record<string, unknown>)['value'] : defaultConfig });
 }));
 
+// ── GET /api/superadmin/journey-visualization — PUBLIC ───────────────────────
+router.get('/journey-visualization', wrap(async (_req, res) => {
+  const row = await GlobalSettings.findOne({ where: { key: 'journey_visualization' } });
+  const mode = row ? (row.toJSON() as unknown as Record<string, unknown>)['value'] : 'graphical';
+  res.json({ mode });
+}));
+
 router.use(authenticate, requireRole('super_admin'));
 
 // ── System Stats ──────────────────────────────────────────────────────────────
@@ -346,13 +353,6 @@ router.put('/completeness-mode', wrap(async (req, res) => {
   if (!created) await row.update({ value: mode });
 
   setCompletenessMode(mode);
-  res.json({ mode });
-}));
-
-// ── GET /api/superadmin/journey-visualization — PUBLIC ───────────────────────
-router.get('/journey-visualization', wrap(async (_req, res) => {
-  const row = await GlobalSettings.findOne({ where: { key: 'journey_visualization' } });
-  const mode = row ? (row.toJSON() as unknown as Record<string, unknown>)['value'] : 'graphical';
   res.json({ mode });
 }));
 

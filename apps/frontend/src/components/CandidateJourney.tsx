@@ -244,8 +244,8 @@ export default function CandidateJourney() {
         {PROCESS_STEPS.map((step, index) => {
           const ev = eventMap.get(step);
           const isDone = !!ev;
-          const isBlocked = negativeTerminalEvent !== null && index > negativeAfterIndex;
-          const isCurrent = isDone && index === lastCompletedIndex && !negativeTerminalEvent;
+          const isBlocked = negativeTerminalEvent !== null && negativeAfterIndex >= 0 && index > negativeAfterIndex;
+          const isCurrent = isDone && index === lastCompletedIndex && !negativeTerminalEvent && step !== 'provisional_acceptance';
           const showNegativeHere = negativeTerminalEvent && index === negativeAfterIndex;
           const cfg = STEP_COLORS[step];
 
