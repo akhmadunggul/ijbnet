@@ -1,8 +1,10 @@
 # ── Stage 1: Build ──────────────────────────────────────────────
-FROM node:20-alpine AS builder
+FROM node:20-slim AS builder
 
-RUN apk add --no-cache python3 make g++ && \
-    npm install -g pnpm@10.33.0
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    python3 make g++ \
+    && rm -rf /var/lib/apt/lists/* \
+    && npm install -g pnpm@10.33.0
 
 WORKDIR /app
 
@@ -27,15 +29,17 @@ RUN pnpm --filter @ijbnet/shared build || true
 RUN pnpm --filter @ijbnet/backend build
 
 # ── Stage 2: Production ──────────────────────────────────────────
-FROM node:20-alpine AS production
-ENV CHROME_PATH=/usr/bin/chromium-browser
+FROM node:20-slim AS production
+ENV CHROME_PATH=/usr/bin/chromium
 ENV U2NET_HOME=/opt/u2net-models
 
-RUN apk add --no-cache python3 py3-pip make g++ chromium && \
-    npm install -g pnpm@10.33.0 && \
-    python3 -m venv /opt/rembg-venv && \
-    /opt/rembg-venv/bin/pip install --no-cache-dir rembg && \
-    /opt/rembg-venv/bin/python3 -c "from rembg import new_session; new_session('u2netp')"
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    chromium python3 python3-pip python3-venv make g++ \
+    && rm -rf /var/lib/apt/lists/* \
+    && npm install -g pnpm@10.33.0 \
+    && python3 -m venv /opt/rembg-venv \
+    && /opt/rembg-venv/bin/pip install --no-cache-dir rembg \
+    && /opt/rembg-venv/bin/python3 -c "from rembg import new_session; new_session('u2netp')"
 
 WORKDIR /app
 
