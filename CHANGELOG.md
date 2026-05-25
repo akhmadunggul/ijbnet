@@ -5,6 +5,14 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ---
 
+## [v0.4.9] - 2026-05-25
+
+### Fixed
+- **Completeness stuck at 92% for candidates without body check**: `calcLegacy` was checking `heightCm` and `weightKg` (admin-verified fields set only during body check, never fillable by candidates) instead of `selfReportedHeight` / `selfReportedWeight` (the candidate-visible input fields). Candidates who had not had a body check were permanently blocked from reaching 100% and the Submit button never appeared. Fix aligns `calcLegacy` with the existing `calcCV` fallback pattern (`selfReportedHeight ?? heightCm`).
+- **Manager approval errors invisible**: `approveOneMutation` and `approveAllMutation` in the manager batch-detail page had no `onError` handlers. When the backend returned an error the mutation failed silently — no query invalidation, no feedback to the manager. Fix adds `onError` handlers and a dismissable red error banner above the approval action row.
+
+---
+
 ## [v0.4.8] - 2026-05-25
 
 ### Fixed

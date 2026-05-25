@@ -201,6 +201,7 @@ apps/frontend/src/
 - v0.4.6 — AI photo background removal: rembg (u2netp) via Python venv in Docker; superadmin colour picker; applies to closeup + fullbody on upload
 - v0.4.7 — Fix Docker base image: switch Alpine→node:20-slim (Debian) for rembg/onnxruntime glibc compat; bust stale musl pnpm cache
 - v0.4.8 — Fix recruiter selection: candidate notification and timeline event skipped due to Sequelize in-place mutation of isSelected before wasSelected guard
+- v0.4.9 — Fix completeness: calcLegacy checked admin-only heightCm/weightKg instead of selfReportedHeight/selfReportedWeight; fix manager approval mutations silently swallowing errors (added onError handlers + error banner)
 
-Current: v0.4.8
+Current: v0.4.9
 Live at: https://jinzai.jobagus.id
