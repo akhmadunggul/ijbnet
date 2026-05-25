@@ -84,6 +84,7 @@ services:
       DB_HOST: db
       REDIS_URL: redis://redis:6379
       LIBRETRANSLATE_URL: http://libretranslate:5000
+      HF_TOKEN: ${HF_TOKEN:-}
       UV_THREADPOOL_SIZE: 64
       # Cap Node.js heap to 2 GB — leaves room for MySQL buffer pool + OS
       NODE_OPTIONS: --max-old-space-size=2048
