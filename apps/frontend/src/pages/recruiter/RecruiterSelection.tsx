@@ -525,6 +525,7 @@ function ConfirmDialog({
   candidateMap,
   lang,
   isPending,
+  error,
   onConfirm,
   onCancel,
 }: {
@@ -532,48 +533,62 @@ function ConfirmDialog({
   candidateMap: Map<string, RecruiterBatchCandidate>;
   lang: string;
   isPending: boolean;
+  error: string | null;
   onConfirm: () => void;
   onCancel: () => void;
 }) {
   const selected = [...selectedIds].map((id) => candidateMap.get(id)).filter(Boolean) as RecruiterBatchCandidate[];
   return (
     <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
-      <div className="bg-white rounded-2xl w-full max-w-md p-6 space-y-4">
-        <h2 className="text-lg font-semibold text-navy-900">
-          {lang === 'ja' ? '選択確定' : 'Konfirmasi Pilihan'}
-        </h2>
-        <p className="text-sm text-gray-500">
-          {lang === 'ja'
-            ? `以下の ${selected.length} 名を選択します：`
-            : `Anda akan memilih ${selected.length} kandidat berikut:`}
-        </p>
-        <ul className="space-y-1">
+      {/* max-h + flex-col ensures buttons are always visible regardless of candidate count */}
+      <div className="bg-white rounded-2xl w-full max-w-md max-h-[90vh] flex flex-col">
+        {/* Header — never scrolls away */}
+        <div className="px-6 pt-6 pb-3 shrink-0">
+          <h2 className="text-lg font-semibold text-navy-900">
+            {lang === 'ja' ? '選択確定' : 'Konfirmasi Pilihan'}
+          </h2>
+          <p className="text-sm text-gray-500 mt-1">
+            {lang === 'ja'
+              ? `以下の ${selected.length} 名を選択します：`
+              : `Anda akan memilih ${selected.length} kandidat berikut:`}
+          </p>
+        </div>
+
+        {/* Candidate list — scrollable when list is long */}
+        <ul className="flex-1 overflow-y-auto px-6 py-1 space-y-1 min-h-0">
           {selected.map((bc) => (
             <li key={bc.candidateId} className="text-sm flex items-center gap-2">
-              <span className="w-1.5 h-1.5 bg-navy-400 rounded-full" />
-              <span className="text-gray-400 font-mono text-xs">{bc.candidate.candidateCode}</span>
-              <span className="text-gray-800">{bc.candidate.fullName}</span>
+              <span className="w-1.5 h-1.5 bg-navy-400 rounded-full shrink-0" />
+              <span className="text-gray-400 font-mono text-xs shrink-0">{bc.candidate.candidateCode}</span>
+              <span className="text-gray-800 truncate">{bc.candidate.fullName}</span>
             </li>
           ))}
         </ul>
-        <p className="text-xs text-amber-600">
-          {lang === 'ja' ? '確定後は変更できません。' : 'Setelah dikonfirmasi, pilihan tidak dapat diubah.'}
-        </p>
-        <div className="flex gap-3 justify-end pt-2">
-          <button
-            onClick={onCancel}
-            disabled={isPending}
-            className="px-4 py-2 rounded-lg text-sm border border-gray-200 hover:bg-gray-50 transition disabled:opacity-50"
-          >
-            {lang === 'ja' ? 'キャンセル' : 'Batal'}
-          </button>
-          <button
-            onClick={onConfirm}
-            disabled={isPending}
-            className="px-4 py-2 rounded-lg text-sm bg-navy-700 text-white hover:bg-navy-900 transition disabled:opacity-50"
-          >
-            {isPending ? '…' : (lang === 'ja' ? '確定' : 'Konfirmasi')}
-          </button>
+
+        {/* Footer — never scrolls away; buttons always reachable */}
+        <div className="px-6 pb-6 pt-3 shrink-0 border-t border-gray-50">
+          <p className="text-xs text-amber-600 mb-3">
+            {lang === 'ja' ? '確定後は変更できません。' : 'Setelah dikonfirmasi, pilihan tidak dapat diubah.'}
+          </p>
+          {error && (
+            <p className="text-xs text-red-500 mb-3">{error}</p>
+          )}
+          <div className="flex gap-3 justify-end">
+            <button
+              onClick={onCancel}
+              disabled={isPending}
+              className="px-4 py-2 rounded-lg text-sm border border-gray-200 hover:bg-gray-50 transition disabled:opacity-50"
+            >
+              {lang === 'ja' ? 'キャンセル' : 'Batal'}
+            </button>
+            <button
+              onClick={onConfirm}
+              disabled={isPending}
+              className="px-4 py-2 rounded-lg text-sm bg-navy-700 text-white hover:bg-navy-900 transition disabled:opacity-50"
+            >
+              {isPending ? '…' : (lang === 'ja' ? '確定' : 'Konfirmasi')}
+            </button>
+          </div>
         </div>
       </div>
     </div>
@@ -608,6 +623,7 @@ export default function RecruiterSelection() {
   const [profileBc, setProfileBc] = useState<RecruiterBatchCandidate | null>(null);
   const [fullbodyBc, setFullbodyBc] = useState<RecruiterBatchCandidate | null>(null);
   const [showConfirm, setShowConfirm] = useState(false);
+  const [confirmError, setConfirmError] = useState<string | null>(null);
   const initRef = useRef(false);
 
   const { initialize, toggleSelect, selectedIds, limit, isAtLimit, clearAll } = useSelectionStore();
@@ -652,11 +668,17 @@ export default function RecruiterSelection() {
       api.post(`/recruiter/batches/${data!.batch.id}/select`, { candidateIds }),
     onSuccess: () => {
       setShowConfirm(false);
+      setConfirmError(null);
       clearAll(); // hide tray; cards fall back to bc.isSelected for visual state
       initRef.current = true; // prevent re-init — store stays empty until session resets
       sessionStorage.setItem(`recruiter_confirmed_${data!.batch.id}`, 'true');
       queryClient.invalidateQueries({ queryKey: ['recruiter-batch'] });
     },
+    onError: () => setConfirmError(
+      lang === 'ja'
+        ? '選択の確定に失敗しました。もう一度お試しください。'
+        : 'Gagal mengkonfirmasi pilihan. Silakan coba lagi.',
+    ),
   });
 
   const allCandidates = data?.candidates ?? [];
@@ -968,6 +990,7 @@ export default function RecruiterSelection() {
           candidateMap={candidateMap}
           lang={lang}
           isPending={confirmMutation.isPending}
+          error={confirmError}
           onConfirm={() => {
               // Always include existing DB-selected (non-confirmed) IDs so they are never deselected
               const dbSelected = allCandidates
@@ -975,7 +998,7 @@ export default function RecruiterSelection() {
                 .map((bc) => bc.candidateId);
               confirmMutation.mutate([...new Set([...dbSelected, ...selectedIds])]);
             }}
-          onCancel={() => setShowConfirm(false)}
+          onCancel={() => { setShowConfirm(false); setConfirmError(null); }}
         />
       )}
 
