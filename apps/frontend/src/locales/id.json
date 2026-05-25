@@ -740,7 +740,8 @@
       "deselectAll": "Batal Pilih Semua",
       "addSelected": "Tambah Terpilih ({{n}})",
       "allocationLocked": "Alokasi dikunci — batch sudah dalam status {{status}}",
-      "allocationError": "Gagal mengalokasikan kandidat. Pastikan batch masih dalam status Draft atau Aktif."
+      "allocationError": "Gagal mengalokasikan kandidat. Pastikan batch masih dalam status Draft atau Aktif.",
+      "approveError": "Gagal mengkonfirmasi kandidat. Silakan coba lagi."
     },
     "interviews": {
       "title": "Manajemen Wawancara",

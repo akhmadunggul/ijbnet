@@ -739,7 +739,8 @@
       "deselectAll": "選択解除",
       "addSelected": "選択済みを追加 ({{n}})",
       "allocationLocked": "割り当てロック済み — バッチのステータスは {{status}} です",
-      "allocationError": "候補者の割り当てに失敗しました。バッチが Draft または Active 状態であることを確認してください。"
+      "allocationError": "候補者の割り当てに失敗しました。バッチが Draft または Active 状態であることを確認してください。",
+      "approveError": "候補者の承認に失敗しました。もう一度お試しください。"
     },
     "interviews": {
       "title": "面接管理",

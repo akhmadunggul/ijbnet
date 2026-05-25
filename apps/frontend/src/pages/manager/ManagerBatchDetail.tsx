@@ -27,6 +27,7 @@ export default function ManagerBatchDetail() {
   const [poolKubun, setPoolKubun] = useState('');
   const [selectedPool, setSelectedPool] = useState<Set<string>>(new Set());
   const [allocateError, setAllocateError] = useState<string | null>(null);
+  const [approveError, setApproveError] = useState<string | null>(null);
 
   const { data: batch, isLoading } = useQuery<ManagerBatch>({
     queryKey: ['manager-batch', id],
@@ -70,12 +71,20 @@ export default function ManagerBatchDetail() {
   const approveOneMutation = useMutation({
     mutationFn: (candidateId: string) =>
       api.patch(`/manager/batches/${id}/candidates/${candidateId}/approve`),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['manager-batch', id] }),
+    onSuccess: () => {
+      setApproveError(null);
+      queryClient.invalidateQueries({ queryKey: ['manager-batch', id] });
+    },
+    onError: () => setApproveError(t('manager.batches.approveError')),
   });
 
   const approveAllMutation = useMutation({
     mutationFn: () => api.post(`/manager/batches/${id}/approve-all`),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['manager-batch', id] }),
+    onSuccess: () => {
+      setApproveError(null);
+      queryClient.invalidateQueries({ queryKey: ['manager-batch', id] });
+    },
+    onError: () => setApproveError(t('manager.batches.approveError')),
   });
 
   if (isLoading) return <div className="text-sm text-gray-400">{t('loading')}</div>;
@@ -332,6 +341,15 @@ export default function ManagerBatchDetail() {
       {/* Approval tab */}
       {activeTab === 'approval' && (
         <div className="space-y-3">
+          {/* Approve error */}
+          {approveError && (
+            <div className="flex items-center gap-2 bg-red-50 border border-red-200 text-red-700 text-sm px-4 py-3 rounded-xl">
+              <span className="text-base">⚠</span>
+              <span>{approveError}</span>
+              <button onClick={() => setApproveError(null)} className="ml-auto text-red-400 hover:text-red-600">×</button>
+            </div>
+          )}
+
           {selectedAllocations.length > 0 && (
             <div className="flex justify-end">
               <button
