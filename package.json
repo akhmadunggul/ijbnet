@@ -4,8 +4,8 @@
   "private": true,
   "packageManager": "pnpm@10.33.0",
   "scripts": {
-    "dev": "pnpm --parallel --filter './apps/*' dev",
-    "build": "pnpm --filter './packages/*' build && pnpm --filter './apps/*' build",
+    "dev": "pnpm --parallel --filter @ijbnet/backend --filter @ijbnet/frontend dev",
+    "build": "pnpm --filter @ijbnet/shared build && pnpm --filter @ijbnet/backend --filter @ijbnet/frontend build",
     "lint": "pnpm --recursive lint",
     "migrate": "pnpm --filter backend migrate",
     "migrate:undo": "pnpm --filter backend migrate:undo",
