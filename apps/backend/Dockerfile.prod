@@ -86,5 +86,11 @@ RUN mkdir -p /app/uploads
 
 EXPOSE 3001
 
-# Auto-migrate then start server
-CMD ["sh", "-c", "cd /app/apps/backend && npx sequelize-cli db:migrate && exec node /app/apps/backend/dist/apps/backend/src/index.js"]
+# Ensure RMBG-1.4 model weights are present (downloads once into the hf_cache volume),
+# then run migrations and start the server.
+CMD ["sh", "-c", "\
+  /opt/rembg-venv/bin/python3 -c \
+    \"from transformers import pipeline; pipeline('image-segmentation', model='briaai/RMBG-1.4', trust_remote_code=True)\" \
+  && echo 'RMBG-1.4 model ready' \
+  || echo 'RMBG-1.4 model load failed — photo bg removal will be unavailable'; \
+  cd /app/apps/backend && npx sequelize-cli db:migrate && exec node /app/apps/backend/dist/apps/backend/src/index.js"]

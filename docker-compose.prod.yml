@@ -91,6 +91,7 @@ services:
       - "127.0.0.1:3001:3001"   # loopback-only — used by server-side k6 tests; not public
     volumes:
       - uploads_data:/app/uploads
+      - hf_cache:/opt/hf-cache
     depends_on:
       db:
         condition: service_healthy
@@ -133,6 +134,7 @@ volumes:
   db_data:
   redis_data:
   uploads_data:
+  hf_cache:
   caddy_data:
   caddy_config:
   lt_models:
