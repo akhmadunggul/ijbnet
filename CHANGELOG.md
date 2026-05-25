@@ -5,6 +5,13 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ---
 
+## [v0.5.5] - 2026-05-25
+
+### Fixed
+- **Photo background hairline (take 3 — correct fix)**: The colour fringe is a colour problem, not a transparency problem. Boundary pixels in the rembg output carry the original photo's physically blended subject+background RGB (camera optics). Raising the threshold could never fix RGB that is already contaminated. Fix: two-step process — `threshold(250)` hard-cuts all contaminated boundary pixels to transparent (only near-100%-confidence foreground pixels survive), then `blur(0.5)` re-feathers the clean tight mask so the new edge composites as natural anti-aliasing against the white fill with zero tint.
+
+---
+
 ## [v0.5.4] - 2026-05-25
 
 ### Fixed

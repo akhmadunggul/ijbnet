@@ -89,15 +89,27 @@ export async function savePhoto(
 
     const noBg = await removeBackground(forRembg);
 
-    // Remove the hairline colour fringe around the subject.  rembg keeps the original
-    // photo RGB values for all pixels — boundary pixels are a physical blend of subject
-    // and original background.  threshold(230) retains only pixels where rembg had
-    // ≥90% foreground confidence; those have ≤10% background colour contamination,
-    // imperceptible on a white fill.  Everything below 230 is cut to fully transparent.
+    // Two-step edge cleanup to eliminate the hairline colour fringe.
+    //
+    // The fringe is not a transparency problem — it is a colour problem.  Boundary pixels
+    // in the rembg output carry the original photo's physically blended subject+background
+    // colour (camera optics mixing them together before rembg ever ran).  No threshold
+    // value alone can fix RGB that is already contaminated.
+    //
+    // Step 1 — threshold(250): hard cut that discards ALL semi-transparent boundary pixels.
+    //   Only pixels where rembg had near-100% foreground confidence survive; those have
+    //   negligible background colour contamination in their RGB.
+    //
+    // Step 2 — blur(0.5) on the tight binary mask: re-feathers the newly clean edge.
+    //   The re-feathered zone is drawn from clean subject territory, so it composites
+    //   against the white fill as natural anti-aliasing with no visible tint.
     const { width: rw, height: rh } = await sharp(noBg).metadata();
-    const cleanAlpha = await sharp(noBg)
+    const tightAlpha = await sharp(noBg)
       .extractChannel('alpha')
-      .threshold(230)
+      .threshold(250)
+      .toBuffer();
+    const cleanAlpha = await sharp(tightAlpha)
+      .blur(0.5)
       .raw()
       .toBuffer();
     const cleanNoBg = await sharp(noBg)
