@@ -737,7 +737,9 @@
       "approved": "承認済み",
       "selectAll": "全て選択",
       "deselectAll": "選択解除",
-      "addSelected": "選択済みを追加 ({{n}})"
+      "addSelected": "選択済みを追加 ({{n}})",
+      "allocationLocked": "割り当てロック済み — バッチのステータスは {{status}} です",
+      "allocationError": "候補者の割り当てに失敗しました。バッチが Draft または Active 状態であることを確認してください。"
     },
     "interviews": {
       "title": "面接管理",

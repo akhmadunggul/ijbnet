@@ -738,7 +738,9 @@
       "approved": "Disetujui",
       "selectAll": "Pilih Semua",
       "deselectAll": "Batal Pilih Semua",
-      "addSelected": "Tambah Terpilih ({{n}})"
+      "addSelected": "Tambah Terpilih ({{n}})",
+      "allocationLocked": "Alokasi dikunci — batch sudah dalam status {{status}}",
+      "allocationError": "Gagal mengalokasikan kandidat. Pastikan batch masih dalam status Draft atau Aktif."
     },
     "interviews": {
       "title": "Manajemen Wawancara",

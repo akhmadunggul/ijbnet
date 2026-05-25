@@ -26,6 +26,7 @@ export default function ManagerBatchDetail() {
   const [poolLpkId, setPoolLpkId] = useState('');
   const [poolKubun, setPoolKubun] = useState('');
   const [selectedPool, setSelectedPool] = useState<Set<string>>(new Set());
+  const [allocateError, setAllocateError] = useState<string | null>(null);
 
   const { data: batch, isLoading } = useQuery<ManagerBatch>({
     queryKey: ['manager-batch', id],
@@ -52,7 +53,11 @@ export default function ManagerBatchDetail() {
       api.post(`/manager/batches/${id}/allocate`, { candidateIds }),
     onSuccess: () => {
       setSelectedPool(new Set());
+      setAllocateError(null);
       queryClient.invalidateQueries({ queryKey: ['manager-batch', id] });
+    },
+    onError: () => {
+      setAllocateError(t('manager.batches.allocationError'));
     },
   });
 
@@ -80,6 +85,7 @@ export default function ManagerBatchDetail() {
   const allocatedIds = new Set(allocations.map((a) => a.candidateId));
   const poolCandidates = (poolData?.candidates ?? []).filter((c) => !allocatedIds.has(c.id));
   const selectedAllocations = allocations.filter((a) => a.isSelected);
+  const allocationOpen = batch.status === 'draft' || batch.status === 'active';
 
   const allPoolSelected =
     poolCandidates.length > 0 && poolCandidates.every((c) => selectedPool.has(c.id));
@@ -155,6 +161,24 @@ export default function ManagerBatchDetail() {
 
       {/* Allocation tab */}
       {activeTab === 'allocation' && (
+        <div className="space-y-3">
+          {/* Locked banner */}
+          {!allocationOpen && (
+            <div className="flex items-center gap-2 bg-amber-50 border border-amber-200 text-amber-800 text-sm px-4 py-3 rounded-xl">
+              <span className="text-base">🔒</span>
+              <span>{t('manager.batches.allocationLocked', { status: batch.status })}</span>
+            </div>
+          )}
+
+          {/* Allocate error */}
+          {allocateError && (
+            <div className="flex items-center gap-2 bg-red-50 border border-red-200 text-red-700 text-sm px-4 py-3 rounded-xl">
+              <span className="text-base">⚠</span>
+              <span>{allocateError}</span>
+              <button onClick={() => setAllocateError(null)} className="ml-auto text-red-400 hover:text-red-600">×</button>
+            </div>
+          )}
+
         <div className="grid lg:grid-cols-2 gap-4">
           {/* Left: Pool */}
           <div className="bg-white border border-gray-100 rounded-xl p-4 shadow-sm space-y-3">
@@ -166,7 +190,7 @@ export default function ManagerBatchDetail() {
                   <span className="ml-1.5 text-gray-400 font-normal">({poolCandidates.length})</span>
                 )}
               </h2>
-              {selectedPool.size > 0 && (
+              {selectedPool.size > 0 && allocationOpen && (
                 <button
                   onClick={() => allocateMutation.mutate([...selectedPool])}
                   disabled={allocateMutation.isPending}
@@ -249,7 +273,7 @@ export default function ManagerBatchDetail() {
                           e.preventDefault();
                           allocateMutation.mutate([c.id]);
                         }}
-                        disabled={allocateMutation.isPending}
+                        disabled={allocateMutation.isPending || !allocationOpen}
                         className="w-7 h-7 flex items-center justify-center bg-navy-700 text-white rounded-full hover:bg-navy-900 transition disabled:opacity-50 text-lg leading-none flex-shrink-0"
                         title={t('manager.batches.allocate')}
                       >
@@ -301,6 +325,7 @@ export default function ManagerBatchDetail() {
               )}
             </div>
           </div>
+        </div>
         </div>
       )}
 
