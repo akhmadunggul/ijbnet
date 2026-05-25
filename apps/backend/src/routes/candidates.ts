@@ -219,7 +219,8 @@ router.patch('/me/consent', authenticate, requireRole('candidate'), async (req: 
       consentClauseId: clauseId,
     });
 
-    await AuditLog.create({
+    // Audit log and timeline are supplementary — don't let failures block the response.
+    AuditLog.create({
       userId: req.user!.sub,
       action: 'CONSENT_GIVEN',
       entityType: 'candidate',
@@ -228,9 +229,10 @@ router.patch('/me/consent', authenticate, requireRole('candidate'), async (req: 
       ipAddress: req.ip ?? null,
       userAgent: req.headers['user-agent'] ?? null,
       payload: clauseId ? { clauseId } : null,
-    });
+    }).catch((e) => console.error('[consent] audit log failed:', e));
 
-    await recordTimelineEvent(candidate.id, 'consent_given', req.user!.sub, 'candidate');
+    recordTimelineEvent(candidate.id, 'consent_given', req.user!.sub, 'candidate')
+      .catch((e) => console.error('[consent] timeline event failed:', e));
 
     res.json({ message: 'Consent recorded.' });
   } catch (err) {

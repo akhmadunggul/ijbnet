@@ -23,9 +23,10 @@ export default function CandidateLayout() {
 
   useEffect(() => {
     if (!data) return;
+    if (!data.candidate) return; // new user — no candidate record yet, skip consent gate
     const needsConsent =
-      !data.candidate?.consentGiven ||
-      data.candidate?.consentUpToDate === false;
+      !data.candidate.consentGiven ||
+      data.candidate.consentUpToDate === false;
     setShowConsent(needsConsent);
   }, [data]);
 
