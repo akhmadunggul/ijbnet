@@ -35,19 +35,26 @@ ENV HF_HOME=/opt/hf-cache
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
     chromium python3 python3-pip python3-venv make g++ wget \
-    libgomp1 libgl1 libglib2.0-0 libsm6 libxext6 libxrender-dev \
-    && rm -rf /var/lib/apt/lists/* \
-    && npm install -g pnpm@10.33.0 \
-    && python3 -m venv /opt/rembg-venv \
+    libgomp1 libgl1 libglib2.0-0 \
+    && rm -rf /var/lib/apt/lists/*
+
+RUN npm install -g pnpm@10.33.0
+
+RUN python3 -m venv /opt/rembg-venv \
     && /opt/rembg-venv/bin/pip install --no-cache-dir \
-        torch --index-url https://download.pytorch.org/whl/cpu \
-    && /opt/rembg-venv/bin/pip install --no-cache-dir \
-        "transformers>=4.36.0" \
-        "opencv-python-headless>=4.8.0" \
-        "numpy" \
-        "pillow" \
-    && /opt/rembg-venv/bin/python3 -c \
-        "from transformers import pipeline; pipeline('image-segmentation', model='briaai/RMBG-1.4', trust_remote_code=True)"
+        torch --index-url https://download.pytorch.org/whl/cpu
+
+RUN /opt/rembg-venv/bin/pip install --no-cache-dir \
+    "transformers>=4.36.0" \
+    "opencv-python-headless>=4.8.0" \
+    "numpy" \
+    "pillow"
+
+# Pre-download RMBG-1.4 model weights — non-fatal so build succeeds even if
+# HuggingFace is unreachable; weights download on first upload instead.
+RUN /opt/rembg-venv/bin/python3 -c \
+    "from transformers import pipeline; pipeline('image-segmentation', model='briaai/RMBG-1.4', trust_remote_code=True)" \
+    || echo "RMBG-1.4 pre-download skipped — will fetch on first use"
 
 WORKDIR /app
 
