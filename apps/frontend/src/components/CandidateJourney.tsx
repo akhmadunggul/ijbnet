@@ -5,7 +5,7 @@ import { api } from '../lib/api';
 // ── Types ─────────────────────────────────────────────────────────────────────
 type StepKey =
   | 'registered' | 'consent_given' | 'profile_submitted' | 'profile_under_review'
-  | 'profile_approved' | 'profile_rejected' | 'batch_allocated' | 'recruiter_selected'
+  | 'profile_approved' | 'profile_rejected' | 'batch_allocated'
   | 'interview_proposed' | 'interview_date_confirmed' | 'interview_scheduled'
   | 'interview_passed' | 'interview_failed' | 'recruiter_accepted' | 'manager_confirmed'
   | 'provisional_acceptance';
@@ -22,7 +22,7 @@ interface TimelineEvent {
 // ── Static config ─────────────────────────────────────────────────────────────
 const PROCESS_STEPS: StepKey[] = [
   'registered', 'consent_given', 'profile_submitted', 'profile_under_review',
-  'profile_approved', 'batch_allocated', 'recruiter_selected', 'interview_proposed',
+  'profile_approved', 'batch_allocated', 'interview_proposed',
   'interview_date_confirmed', 'interview_scheduled', 'interview_passed',
   'recruiter_accepted', 'manager_confirmed', 'provisional_acceptance',
 ];
@@ -40,7 +40,6 @@ const STEP_ICON: Record<StepKey, string> = {
   profile_approved:         '✅',
   profile_rejected:         '❌',
   batch_allocated:          '📋',
-  recruiter_selected:       '⭐',
   interview_proposed:       '📅',
   interview_date_confirmed: '📌',
   interview_scheduled:      '🗓️',
@@ -61,7 +60,6 @@ const STEP_COLORS: Record<StepKey, StepColors> = {
   profile_approved:         { card: 'bg-green-50 border-green-200',    iconBg: 'bg-green-100',   text: 'text-green-800',   subtext: 'text-green-500',   badge: 'bg-green-500' },
   profile_rejected:         { card: 'bg-red-50 border-red-200',        iconBg: 'bg-red-100',     text: 'text-red-800',     subtext: 'text-red-400',     badge: 'bg-red-500' },
   batch_allocated:          { card: 'bg-cyan-50 border-cyan-200',      iconBg: 'bg-cyan-100',    text: 'text-cyan-800',    subtext: 'text-cyan-500',    badge: 'bg-cyan-500' },
-  recruiter_selected:       { card: 'bg-yellow-50 border-yellow-200',  iconBg: 'bg-yellow-100',  text: 'text-yellow-800',  subtext: 'text-yellow-500',  badge: 'bg-yellow-500' },
   interview_proposed:       { card: 'bg-orange-50 border-orange-200',  iconBg: 'bg-orange-100',  text: 'text-orange-800',  subtext: 'text-orange-500',  badge: 'bg-orange-500' },
   interview_date_confirmed: { card: 'bg-pink-50 border-pink-200',      iconBg: 'bg-pink-100',    text: 'text-pink-800',    subtext: 'text-pink-400',    badge: 'bg-pink-500' },
   interview_scheduled:      { card: 'bg-violet-50 border-violet-200',  iconBg: 'bg-violet-100',  text: 'text-violet-800',  subtext: 'text-violet-400',  badge: 'bg-violet-500' },

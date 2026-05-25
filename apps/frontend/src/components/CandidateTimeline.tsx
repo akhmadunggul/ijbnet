@@ -10,7 +10,6 @@ type TimelineEventType =
   | 'profile_approved'
   | 'profile_rejected'
   | 'batch_allocated'
-  | 'recruiter_selected'
   | 'interview_proposed'
   | 'interview_scheduled'
   | 'interview_date_confirmed'
@@ -42,7 +41,6 @@ const PROCESS_STEPS: TimelineEventType[] = [
   'profile_under_review',
   'profile_approved',
   'batch_allocated',
-  'recruiter_selected',
   'interview_proposed',
   'interview_scheduled',
   'interview_date_confirmed',

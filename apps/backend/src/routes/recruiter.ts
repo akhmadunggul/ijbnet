@@ -236,7 +236,6 @@ router.post('/batches/:batchId/select', wrap(async (req: Request, res: Response)
       });
       const wasSelected = preUpdateSelected.get(cid) ?? false;
       if (!wasSelected) {
-        await recordTimelineEvent(cid, 'recruiter_selected', req.user!.sub, 'recruiter', { batchId });
         const cand = await Candidate.findByPk(cid, { attributes: ['userId'] });
         if (cand?.userId) {
           await notifyUser(
@@ -613,7 +612,7 @@ router.get('/candidates/:id/timeline', wrap(async (req: Request, res: Response):
 
   // Recruiters see only post-allocation events
   const RECRUITER_EVENTS = [
-    'batch_allocated', 'recruiter_selected', 'interview_proposed',
+    'batch_allocated', 'interview_proposed',
     'interview_date_confirmed', 'interview_scheduled', 'manager_confirmed',
     'interview_passed', 'interview_failed', 'recruiter_accepted',
   ];

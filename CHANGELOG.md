@@ -5,6 +5,13 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ---
 
+## [v0.5.2] - 2026-05-25
+
+### Removed
+- **`recruiter_selected` timeline step**: Removed the intermediate "Dipilih Rekruter / 採用担当者に選択済み" step from the candidate journey. The step was structurally unreliable (batch is typically already in `approved` state by the time a recruiter clicks Konfirmasi, so the event was never recorded) and added noise without actionable meaning for the candidate. Removed from: `PROCESS_STEPS` in both `CandidateTimeline` and `CandidateJourney` frontend components; `RECRUITER_EVENTS` filter in the recruiter candidate-timeline API endpoint; `recordTimelineEvent` call in `POST /batches/:batchId/select`. The `RECRUITER_SELECTED` in-app notification is retained. The `recruiter_selected` ENUM value is preserved in the DB model and migration to avoid a disruptive ALTER TABLE and to remain compatible with any existing rows.
+
+---
+
 ## [v0.5.1] - 2026-05-25
 
 ### Fixed
