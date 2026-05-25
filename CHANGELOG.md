@@ -5,6 +5,15 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ---
 
+## [v0.5.3] - 2026-05-25
+
+### Fixed
+- **Photo background removal — hairline fringe around subject**: rembg's soft alpha mask leaves semi-transparent edge pixels that blend the original background colour into the fill colour, producing a visible fringe around the face/subject. Fix: after `removeBackground`, extract the alpha channel, apply Gaussian blur (σ=1) to diffuse the soft boundary, then snap to binary with `threshold(100)`. Every edge pixel is now either fully opaque or fully transparent before `flatten` runs — eliminating colour contamination entirely.
+- **Photo background removal — pre-existing alpha not normalised**: if a candidate uploaded a PNG with a pre-existing transparency channel, `sharp().png()` preserved it and rembg received an RGBA input the model was not designed for. Fix: flatten the input to white before the PNG conversion to ensure rembg always receives a clean RGB image.
+- **Photo background removal — large-image mask upscaling artefacts**: u2netp runs segmentation at 320×320 then upscales the mask to the original image size. For a 4K phone photo the upscale ratio was 12×, creating wide semi-opaque boundary fringes that retained the original (often warm/red) background colour. Fix: resize to final output dimensions (800×800 closeup / 1920px fullbody) *before* rembg so the mask upscale is at most 2.5×.
+
+---
+
 ## [v0.5.2] - 2026-05-25
 
 ### Removed

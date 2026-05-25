@@ -66,26 +66,63 @@ export async function savePhoto(
   const filename = `${slot}.webp`;
   const filePath = path.join(dir, filename);
 
-  // EXIF strip + orientation correction; work as PNG for alpha support
-  let workBuffer = await sharp(inputBuffer).rotate().png().toBuffer();
+  // EXIF strip + orientation correction.
+  // Flatten any pre-existing alpha to white so rembg always receives a clean RGB PNG.
+  // (Uploading a transparent PNG would otherwise send RGBA to rembg which produces
+  // undefined behaviour and can cause the transparent regions to composite incorrectly.)
+  let workBuffer = await sharp(inputBuffer)
+    .rotate()
+    .flatten({ background: { r: 255, g: 255, b: 255 } })
+    .png()
+    .toBuffer();
 
-  // Background removal + solid colour fill
   if (bgColor) {
-    const noBg = await removeBackground(workBuffer);
-    workBuffer = await sharp(noBg)
+    // Resize to final output dimensions BEFORE rembg.
+    // u2netp runs inference at 320×320 internally then upscales the alpha mask back to
+    // the input size.  Feeding a full 4K phone photo means a 12× mask upscale, which
+    // creates wide semi-opaque boundary fringes that keep their original colour
+    // (red/pink from warm studio lighting) after flatten.  Pre-resizing caps the upscale
+    // at ~2.5× (320 → 800) and eliminates those coloured-fringe artefacts.
+    const forRembg = slot === 'closeup'
+      ? await sharp(workBuffer).resize(800, 800, { fit: 'cover', position: 'centre' }).png().toBuffer()
+      : await sharp(workBuffer).resize(null, 1920, { fit: 'inside', withoutEnlargement: true }).png().toBuffer();
+
+    const noBg = await removeBackground(forRembg);
+
+    // Erode the rembg alpha mask to eliminate the semi-transparent colour fringe
+    // that appears as a hairline of original background colour around the subject.
+    // Gaussian blur (sigma=1) diffuses the soft boundary, then threshold(100) snaps
+    // it to binary (0 or 255) — every edge pixel is either fully opaque or fully
+    // transparent, so flatten has no semi-transparent pixels to colour-contaminate.
+    const { width: rw, height: rh } = await sharp(noBg).metadata();
+    const cleanAlpha = await sharp(noBg)
+      .extractChannel('alpha')
+      .blur(1)
+      .threshold(100)
+      .raw()
+      .toBuffer();
+    const cleanNoBg = await sharp(noBg)
+      .removeAlpha()
+      .joinChannel(cleanAlpha, { raw: { width: rw!, height: rh!, channels: 1 } })
+      .png()
+      .toBuffer();
+
+    workBuffer = await sharp(cleanNoBg)
       .flatten({ background: hexToRgb(bgColor) })
       .png()
       .toBuffer();
-  }
 
-  let pipeline = sharp(workBuffer);
-  if (slot === 'closeup') {
-    pipeline = pipeline.resize(800, 800, { fit: 'cover', position: 'centre' });
+    // No further resize needed — image is already at target dimensions.
+    await sharp(workBuffer).webp({ quality: 80 }).toFile(filePath);
   } else {
-    pipeline = pipeline.resize(null, 1920, { fit: 'inside', withoutEnlargement: true });
+    let pipeline = sharp(workBuffer);
+    if (slot === 'closeup') {
+      pipeline = pipeline.resize(800, 800, { fit: 'cover', position: 'centre' });
+    } else {
+      pipeline = pipeline.resize(null, 1920, { fit: 'inside', withoutEnlargement: true });
+    }
+    await pipeline.webp({ quality: 80 }).toFile(filePath);
   }
-
-  await pipeline.webp({ quality: 80 }).toFile(filePath);
 
   const urlPath = `/api/uploads/candidates/${safe}/${filename}?t=${Date.now()}`;
   return { filePath, urlPath };

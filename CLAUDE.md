@@ -205,6 +205,7 @@ apps/frontend/src/
 - v0.5.0 — Fix recruiter ConfirmDialog: buttons unreachable when many candidates selected (no max-height); add full navy/gold Tailwind palette (was missing 200/300/400/600/800 navy and 50/200/600/700 gold — root cause of recurring invisible-button class of bug)
 - v0.5.1 — Fix recruiter selection: batch in 'approved'/'closed' status caused consistent 404 on every Konfirmasi attempt; add canSelect gate (read-only mode for non-selectable batches); typed onError with code-specific messages
 - v0.5.2 — Remove recruiter_selected timeline step: unreliable (batch already approved by the time recruiter confirms); removed from PROCESS_STEPS, RECRUITER_EVENTS filter, and recordTimelineEvent call; RECRUITER_SELECTED in-app notification retained; DB ENUM preserved for backward compat
+- v0.5.3 — Fix photo background removal: pre-flatten input alpha to white; resize to final dimensions before rembg (reduces mask upscale from 12× to 2.5×); erode alpha mask (blur σ=1 + threshold 100) to eliminate hairline colour fringe around subject
 
-Current: v0.5.2
+Current: v0.5.3
 Live at: https://jinzai.jobagus.id
