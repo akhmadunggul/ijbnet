@@ -174,6 +174,7 @@ router.post('/batches/:batchId/select', wrap(async (req: Request, res: Response)
   // Validate all IDs are in the batch
   const allAllocations = await BatchCandidate.findAll({ where: { batchId } });
   const allocMap = new Map(allAllocations.map((a) => [a.candidateId, a]));
+  const preUpdateSelected = new Map(allAllocations.map((a) => [a.candidateId, a.isSelected]));
 
   for (const cid of candidateIds) {
     if (!allocMap.has(cid)) {
@@ -233,7 +234,7 @@ router.post('/batches/:batchId/select', wrap(async (req: Request, res: Response)
         userAgent: req.headers['user-agent'] ?? null,
         payload: { batchId },
       });
-      const wasSelected = allocMap.get(cid)?.isSelected ?? false;
+      const wasSelected = preUpdateSelected.get(cid) ?? false;
       if (!wasSelected) {
         await recordTimelineEvent(cid, 'recruiter_selected', req.user!.sub, 'recruiter', { batchId });
         const cand = await Candidate.findByPk(cid, { attributes: ['userId'] });
