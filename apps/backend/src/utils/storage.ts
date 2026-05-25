@@ -30,21 +30,20 @@ export function validateImageBuffer(buffer: Buffer): void {
   }
 }
 
-function hexToRgb(hex: string): { r: number; g: number; b: number } {
-  const m = /^#([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
-  return m
-    ? { r: parseInt(m[1]!, 16), g: parseInt(m[2]!, 16), b: parseInt(m[3]!, 16) }
-    : { r: 255, g: 255, b: 255 };
-}
 
-async function removeBackground(inputBuffer: Buffer): Promise<Buffer> {
+async function removeBackground(
+  inputBuffer: Buffer,
+  slot: PhotoSlot,
+  bgColor: string,
+): Promise<Buffer> {
   return new Promise((resolve, reject) => {
-    const proc = spawn('/opt/rembg-venv/bin/rembg', ['i', '-m', 'u2netp', '-', '-']);
+    const proc = spawn('/opt/rembg-venv/bin/python3',
+      ['/opt/bg/remove_bg.py', slot, bgColor]);
     const chunks: Buffer[] = [];
     proc.stdout.on('data', (chunk: Buffer) => chunks.push(chunk));
-    proc.stderr.on('data', (d: Buffer) => console.error('[rembg]', d.toString().trim()));
+    proc.stderr.on('data', (d: Buffer) => console.error('[remove_bg]', d.toString().trim()));
     proc.on('close', (code) => {
-      if (code !== 0) reject(new Error(`rembg exited with code ${code}`));
+      if (code !== 0) reject(new Error(`remove_bg exited with code ${code}`));
       else resolve(Buffer.concat(chunks));
     });
     proc.on('error', reject);
@@ -66,65 +65,15 @@ export async function savePhoto(
   const filename = `${slot}.webp`;
   const filePath = path.join(dir, filename);
 
-  // EXIF strip + orientation correction.
-  // Flatten any pre-existing alpha to white so rembg always receives a clean RGB PNG.
-  // (Uploading a transparent PNG would otherwise send RGBA to rembg which produces
-  // undefined behaviour and can cause the transparent regions to composite incorrectly.)
-  let workBuffer = await sharp(inputBuffer)
+  // EXIF strip only — Python script handles crop, resize, bg removal, and composite.
+  const workBuffer = await sharp(inputBuffer)
     .rotate()
-    .flatten({ background: { r: 255, g: 255, b: 255 } })
     .png()
     .toBuffer();
 
   if (bgColor) {
-    // Resize to final output dimensions BEFORE rembg.
-    // u2netp runs inference at 320×320 internally then upscales the alpha mask back to
-    // the input size.  Feeding a full 4K phone photo means a 12× mask upscale, which
-    // creates wide semi-opaque boundary fringes that keep their original colour
-    // (red/pink from warm studio lighting) after flatten.  Pre-resizing caps the upscale
-    // at ~2.5× (320 → 800) and eliminates those coloured-fringe artefacts.
-    const forRembg = slot === 'closeup'
-      ? await sharp(workBuffer).resize(800, 800, { fit: 'cover', position: 'centre' }).png().toBuffer()
-      : await sharp(workBuffer).resize(null, 1920, { fit: 'inside', withoutEnlargement: true }).png().toBuffer();
-
-    const noBg = await removeBackground(forRembg);
-
-    // Two-step edge cleanup to eliminate the hairline colour fringe.
-    //
-    // The fringe is not a transparency problem — it is a colour problem.  Boundary pixels
-    // in the rembg output carry the original photo's physically blended subject+background
-    // colour (camera optics mixing them together before rembg ever ran).  No threshold
-    // value alone can fix RGB that is already contaminated.
-    //
-    // Step 1 — threshold(250): hard cut that discards ALL semi-transparent boundary pixels.
-    //   Only pixels where rembg had near-100% foreground confidence survive; those have
-    //   negligible background colour contamination in their RGB.
-    //
-    // Step 2 — blur(0.5) on the tight binary mask: re-feathers the newly clean edge.
-    //   The re-feathered zone is drawn from clean subject territory, so it composites
-    //   against the white fill as natural anti-aliasing with no visible tint.
-    const { width: rw, height: rh } = await sharp(noBg).metadata();
-    const tightAlpha = await sharp(noBg)
-      .extractChannel('alpha')
-      .threshold(250)
-      .toBuffer();
-    const cleanAlpha = await sharp(tightAlpha)
-      .blur(0.5)
-      .raw()
-      .toBuffer();
-    const cleanNoBg = await sharp(noBg)
-      .removeAlpha()
-      .joinChannel(cleanAlpha, { raw: { width: rw!, height: rh!, channels: 1 } })
-      .png()
-      .toBuffer();
-
-    workBuffer = await sharp(cleanNoBg)
-      .flatten({ background: hexToRgb(bgColor) })
-      .png()
-      .toBuffer();
-
-    // No further resize needed — image is already at target dimensions.
-    await sharp(workBuffer).webp({ quality: 80 }).toFile(filePath);
+    const processed = await removeBackground(workBuffer, slot, bgColor);
+    await sharp(processed).webp({ quality: 80 }).toFile(filePath);
   } else {
     let pipeline = sharp(workBuffer);
     if (slot === 'closeup') {

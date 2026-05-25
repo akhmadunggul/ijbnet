@@ -5,6 +5,13 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ---
 
+## [v0.5.6] - 2026-05-26
+
+### Changed
+- **Photo background removal — replace engine with RMBG-1.4**: Switched from rembg/u2netp to `briaai/RMBG-1.4` (HuggingFace Transformers) for background removal. The hairline colour fringe was unfixable via downstream alpha manipulation because boundary pixel RGB is contaminated by camera optics before the model ever runs; only a higher-quality model can produce clean-boundary masks. New pipeline: (1) OpenCV Haar Cascade face detection for passport-style face-centred crop on closeup photos; (2) RMBG-1.4 segmentation via Python subprocess; (3) Gaussian blur alpha compositing (`img × α + bg × (1−α)`) for smooth, fringe-free edges. Python script at `apps/backend/src/python/remove_bg.py`; Node.js `storage.ts` simplified to EXIF-strip + WebP conversion only. Docker image updated with CPU-only PyTorch, Transformers, OpenCV; RMBG-1.4 weights pre-downloaded at build time.
+
+---
+
 ## [v0.5.5] - 2026-05-25
 
 ### Fixed
