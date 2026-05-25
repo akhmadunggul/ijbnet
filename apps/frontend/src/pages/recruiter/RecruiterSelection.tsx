@@ -674,11 +674,27 @@ export default function RecruiterSelection() {
       sessionStorage.setItem(`recruiter_confirmed_${data!.batch.id}`, 'true');
       queryClient.invalidateQueries({ queryKey: ['recruiter-batch'] });
     },
-    onError: () => setConfirmError(
-      lang === 'ja'
-        ? '選択の確定に失敗しました。もう一度お試しください。'
-        : 'Gagal mengkonfirmasi pilihan. Silakan coba lagi.',
-    ),
+    onError: (err: unknown) => {
+      const ax = err as { response?: { data?: { error?: string } } };
+      const code = ax?.response?.data?.error ?? '';
+      if (code === 'NOT_FOUND') {
+        setConfirmError(lang === 'ja'
+          ? 'バッチが選択不可状態です。ページを更新してください。'
+          : 'Batch sudah tidak dapat diubah. Muat ulang halaman.');
+      } else if (code === 'QUOTA_EXCEEDED') {
+        setConfirmError(lang === 'ja'
+          ? '選択候補者数が上限を超えています。'
+          : 'Jumlah kandidat melebihi batas yang diizinkan.');
+      } else if (code === 'INVALID_CANDIDATE') {
+        setConfirmError(lang === 'ja'
+          ? 'データが古くなっています。ページを更新して再試行してください。'
+          : 'Data sudah tidak valid. Muat ulang halaman lalu coba lagi.');
+      } else {
+        setConfirmError(lang === 'ja'
+          ? '選択の確定に失敗しました。もう一度お試しください。'
+          : 'Gagal mengkonfirmasi pilihan. Silakan coba lagi.');
+      }
+    },
   });
 
   const allCandidates = data?.candidates ?? [];
@@ -710,9 +726,22 @@ export default function RecruiterSelection() {
 
   const batch = data.batch;
   const atLimit = isAtLimit();
+  // Batch is selectable only while active or in recruiter-selection phase.
+  // Once the manager moves it to 'approved' or 'closed', the recruiter view
+  // becomes read-only — the POST /select endpoint rejects those statuses.
+  const canSelect = batch.status === 'active' || batch.status === 'selection';
 
   return (
     <div className="space-y-4 pb-20">
+      {/* Read-only banner when batch is past the selection phase */}
+      {!canSelect && (
+        <div className="bg-amber-50 border border-amber-200 rounded-xl px-4 py-3 text-sm text-amber-800">
+          {batch.status === 'approved'
+            ? (lang === 'ja' ? 'このバッチはマネージャーにより承認済みです。候補者の選択は締め切られています。' : 'Batch ini telah disetujui oleh manajer. Pemilihan kandidat telah ditutup.')
+            : (lang === 'ja' ? 'このバッチはクローズされています。' : 'Batch ini sudah ditutup.')}
+        </div>
+      )}
+
       {/* Header row */}
       <div className="flex items-start gap-4 flex-wrap">
         {/* Company card */}
@@ -960,13 +989,17 @@ export default function RecruiterSelection() {
                     )}
                     {cols.pilih && (
                       <td className="px-3 py-3 text-center">
-                        <input
-                          type="checkbox"
-                          checked={isSelected}
-                          disabled={bc.isConfirmed || (atLimit && !isSelected)}
-                          onChange={() => toggleSelect(bc.candidateId, bc.isConfirmed)}
-                          className="w-4 h-4 accent-navy-700 disabled:opacity-40 cursor-pointer"
-                        />
+                        {canSelect ? (
+                          <input
+                            type="checkbox"
+                            checked={isSelected}
+                            disabled={bc.isConfirmed || (atLimit && !isSelected)}
+                            onChange={() => toggleSelect(bc.candidateId, bc.isConfirmed)}
+                            className="w-4 h-4 accent-navy-700 disabled:opacity-40 cursor-pointer"
+                          />
+                        ) : (
+                          <span className="text-gray-300 text-xs">—</span>
+                        )}
                       </td>
                     )}
                   </tr>
@@ -983,8 +1016,8 @@ export default function RecruiterSelection() {
       <ProfileModal bc={profileBc} lang={lang} onClose={() => setProfileBc(null)} />
       <FullbodyModal bc={fullbodyBc} lang={lang} onClose={() => setFullbodyBc(null)} />
 
-      {/* Confirmation dialog */}
-      {showConfirm && (
+      {/* Confirmation dialog — only when batch is selectable */}
+      {canSelect && showConfirm && (
         <ConfirmDialog
           selectedIds={selectedIds}
           candidateMap={candidateMap}
@@ -1002,14 +1035,16 @@ export default function RecruiterSelection() {
         />
       )}
 
-      {/* Selection tray */}
-      <SelectionTray
-        selectedIds={selectedIds}
-        candidateMap={candidateMap}
-        lang={lang}
-        onRemove={(id) => toggleSelect(id, false)}
-        onConfirm={() => setShowConfirm(true)}
-      />
+      {/* Selection tray — only when batch is selectable */}
+      {canSelect && (
+        <SelectionTray
+          selectedIds={selectedIds}
+          candidateMap={candidateMap}
+          lang={lang}
+          onRemove={(id) => toggleSelect(id, false)}
+          onConfirm={() => setShowConfirm(true)}
+        />
+      )}
     </div>
   );
 }
