@@ -200,6 +200,7 @@ apps/frontend/src/
 - v0.4.5 — Superadmin configurable completeness mode: Legacy (23 fields) vs CV (24 CV-visible fields); persisted in global_settings; restored on startup
 - v0.4.6 — AI photo background removal: rembg (u2netp) via Python venv in Docker; superadmin colour picker; applies to closeup + fullbody on upload
 - v0.4.7 — Fix Docker base image: switch Alpine→node:20-slim (Debian) for rembg/onnxruntime glibc compat; bust stale musl pnpm cache
+- v0.4.8 — Fix recruiter selection: candidate notification and timeline event skipped due to Sequelize in-place mutation of isSelected before wasSelected guard
 
-Current: v0.4.7
+Current: v0.4.8
 Live at: https://jinzai.jobagus.id
