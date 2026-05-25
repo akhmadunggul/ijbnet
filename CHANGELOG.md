@@ -5,6 +5,14 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ---
 
+## [v0.5.1] - 2026-05-25
+
+### Fixed
+- **Recruiter Konfirmasi — consistent 404 on every attempt (batch status mismatch)**: `GET /recruiter/batch` returns batches with status `approved` (so the recruiter can still view them), but `POST /batches/:batchId/select` only accepts status `active` or `selection`. Once a manager advances the batch to `approved`, every Konfirmasi click returned a 404 — a structurally guaranteed, non-retryable failure that looked like the button doing nothing. Fix: derive `canSelect = batch.status === 'active' || 'selection'` from the query response already in hand. When `!canSelect`: amber banner explains the batch is approved/closed; checkboxes are hidden (`—`); `SelectionTray` and `ConfirmDialog` are not rendered, so the state machine cannot be entered.
+- **Generic error message replaced with code-specific messages**: The `onError` handler now decodes the backend error code (`NOT_FOUND` / `QUOTA_EXCEEDED` / `INVALID_CANDIDATE`) and shows a bilingual, actionable message for each case instead of a single generic retry prompt.
+
+---
+
 ## [v0.5.0] - 2026-05-25
 
 ### Fixed

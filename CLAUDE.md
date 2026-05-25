@@ -203,6 +203,7 @@ apps/frontend/src/
 - v0.4.8 — Fix recruiter selection: candidate notification and timeline event skipped due to Sequelize in-place mutation of isSelected before wasSelected guard
 - v0.4.9 — Fix completeness: calcLegacy checked admin-only heightCm/weightKg instead of selfReportedHeight/selfReportedWeight; fix manager approval mutations silently swallowing errors (added onError handlers + error banner)
 - v0.5.0 — Fix recruiter ConfirmDialog: buttons unreachable when many candidates selected (no max-height); add full navy/gold Tailwind palette (was missing 200/300/400/600/800 navy and 50/200/600/700 gold — root cause of recurring invisible-button class of bug)
+- v0.5.1 — Fix recruiter selection: batch in 'approved'/'closed' status caused consistent 404 on every Konfirmasi attempt; add canSelect gate (read-only mode for non-selectable batches); typed onError with code-specific messages
 
-Current: v0.5.0
+Current: v0.5.1
 Live at: https://jinzai.jobagus.id
