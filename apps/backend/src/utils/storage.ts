@@ -31,14 +31,16 @@ export function validateImageBuffer(buffer: Buffer): void {
 }
 
 
+const PYTHON_BIN = process.env.PYTHON_BIN ?? '/opt/rembg-venv/bin/python3';
+const REMOVE_BG_SCRIPT = process.env.REMOVE_BG_SCRIPT ?? '/opt/bg/remove_bg.py';
+
 async function removeBackground(
   inputBuffer: Buffer,
   slot: PhotoSlot,
   bgColor: string,
 ): Promise<Buffer> {
   return new Promise((resolve, reject) => {
-    const proc = spawn('/opt/rembg-venv/bin/python3',
-      ['/opt/bg/remove_bg.py', slot, bgColor]);
+    const proc = spawn(PYTHON_BIN, [REMOVE_BG_SCRIPT, slot, bgColor]);
     const chunks: Buffer[] = [];
     proc.stdout.on('data', (chunk: Buffer) => chunks.push(chunk));
     proc.stderr.on('data', (d: Buffer) => console.error('[remove_bg]', d.toString().trim()));
