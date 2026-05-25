@@ -5,6 +5,15 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ---
 
+## [v0.5.0] - 2026-05-25
+
+### Fixed
+- **Recruiter Konfirmasi button unreachable (dialog overflow)**: `ConfirmDialog` had no `max-height`, so when enough candidates were in the selection list the white card grew beyond the viewport and the action buttons were pushed below the visible area — invisible and unclickable. Fix: `max-h-[90vh] flex flex-col` on the dialog card; the candidate list section is `flex-1 overflow-y-auto` (scrolls independently); header and footer are `shrink-0` so the Batal / Konfirmasi buttons are always on screen regardless of how many candidates are listed.
+- **ConfirmDialog silent failure on API error**: `confirmMutation` had no `onError` handler. When the backend rejected the request (network error, quota exceeded, etc.) the dialog stayed open with no feedback and the button appeared frozen. Fix: added `onError` with an inline bilingual error message and cleared the error on success or cancel.
+- **Recurring invisible/missing-button bug class (Tailwind palette gaps)**: `tailwind.config.js` only defined `navy-50/100/500/700/900` and `gold-400/500`. The codebase uses `navy-200/300/400/600/800` (42+ navy-300 usages alone) and `gold-50/200/600/700` across many components. Tailwind silently drops undefined classes, causing transparent backgrounds and invisible text — the same root cause as the v0.3.0 "navy-800 invisible button" incident. Fix: complete both scales (`navy-200` through `navy-800`, `gold-50/200/600/700`) so any future component can use any shade without triggering this bug.
+
+---
+
 ## [v0.4.9] - 2026-05-25
 
 ### Fixed
