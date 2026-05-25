@@ -5,6 +5,13 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ---
 
+## [v0.5.4] - 2026-05-25
+
+### Fixed
+- **Photo background removal — hairline colour fringe around subject (take 2)**: The previous `threshold(100)` fix removed fully-transparent fringe pixels but promoted boundary pixels with rembg alpha 100–229 to fully opaque — those pixels still carry the original photo's blended subject+background colour, so the ring remained visible. Fix: raise to `threshold(230)`, keeping only pixels where rembg had ≥90% foreground confidence (≤10% background colour contamination, imperceptible on the white fill). Also remove the `blur(1)` pre-step; the pure threshold is simpler and more predictable without the blur causing unintended over-erosion at the edge.
+
+---
+
 ## [v0.5.3] - 2026-05-25
 
 ### Fixed

@@ -206,6 +206,7 @@ apps/frontend/src/
 - v0.5.1 — Fix recruiter selection: batch in 'approved'/'closed' status caused consistent 404 on every Konfirmasi attempt; add canSelect gate (read-only mode for non-selectable batches); typed onError with code-specific messages
 - v0.5.2 — Remove recruiter_selected timeline step: unreliable (batch already approved by the time recruiter confirms); removed from PROCESS_STEPS, RECRUITER_EVENTS filter, and recordTimelineEvent call; RECRUITER_SELECTED in-app notification retained; DB ENUM preserved for backward compat
 - v0.5.3 — Fix photo background removal: pre-flatten input alpha to white; resize to final dimensions before rembg (reduces mask upscale from 12× to 2.5×); erode alpha mask (blur σ=1 + threshold 100) to eliminate hairline colour fringe around subject
+- v0.5.4 — Fix photo background hairline (take 2): raise alpha threshold from 100 to 230; boundary pixels with rembg alpha 100–229 were promoted to fully opaque but retained blended face+background colour; threshold 230 keeps only ≥90%-confidence foreground pixels
 
-Current: v0.5.3
+Current: v0.5.4
 Live at: https://jinzai.jobagus.id
