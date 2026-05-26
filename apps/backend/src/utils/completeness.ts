@@ -65,6 +65,7 @@ function calcCV(candidate: Record<string, unknown>): CompletenessResult {
   const career    = candidate['career']           as unknown[];
   const tests     = candidate['tests']            as unknown[];
   const education = candidate['educationHistory'] as unknown[];
+  const certs     = candidate['certifications']   as unknown[];
 
   const checks = [
     // Personal visible on CV (14)
@@ -86,15 +87,14 @@ function calcCV(candidate: Record<string, unknown>): CompletenessResult {
     (education?.length ?? 0) > 0,
     // Career (1)
     (career?.length ?? 0) > 0,
-    // Japanese test (1)
-    (tests?.length ?? 0) > 0,
+    // Qualifications: JP test or certification (1) — CV "Sertifikasi" section shows both merged
+    (tests?.length ?? 0) + (certs?.length ?? 0) > 0,
     // CV text fields (3)
     !!candidate['selfPrId'],
     !!candidate['motivationId'],
     !!candidate['selfIntroId'],
-    // Photos (2)
+    // Closeup photo (1) — the only photo rendered on the CV
     !!candidate['closeupUrl'],
-    !!candidate['fullbodyUrl'],
     // Consent (1)
     !!candidate['consentGiven'],
     // LPK assignment (1)
@@ -102,7 +102,7 @@ function calcCV(candidate: Record<string, unknown>): CompletenessResult {
   ];
 
   const score = checks.filter(Boolean).length;
-  const total = checks.length; // 24
+  const total = checks.length; // 23
   return { score, total, pct: Math.round((score / total) * 100) };
 }
 
