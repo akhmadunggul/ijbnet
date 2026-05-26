@@ -1,6 +1,5 @@
 import fs from 'fs';
 import path from 'path';
-import { spawn } from 'child_process';
 import sharp from 'sharp';
 import { config } from '../config';
 
@@ -31,27 +30,29 @@ export function validateImageBuffer(buffer: Buffer): void {
 }
 
 
-const PYTHON_BIN = process.env.PYTHON_BIN ?? '/opt/rembg-venv/bin/python3';
-const REMOVE_BG_SCRIPT = process.env.REMOVE_BG_SCRIPT ?? '/opt/bg/remove_bg.py';
+const IMAGE_PROCESSOR_URL = process.env.IMAGE_PROCESSOR_URL ?? 'http://image-processor:8000';
 
 async function removeBackground(
   inputBuffer: Buffer,
   slot: PhotoSlot,
   bgColor: string,
 ): Promise<Buffer> {
-  return new Promise((resolve, reject) => {
-    const proc = spawn(PYTHON_BIN, [REMOVE_BG_SCRIPT, slot, bgColor]);
-    const chunks: Buffer[] = [];
-    proc.stdout.on('data', (chunk: Buffer) => chunks.push(chunk));
-    proc.stderr.on('data', (d: Buffer) => console.error('[remove_bg]', d.toString().trim()));
-    proc.on('close', (code) => {
-      if (code !== 0) reject(new Error(`remove_bg exited with code ${code}`));
-      else resolve(Buffer.concat(chunks));
-    });
-    proc.on('error', reject);
-    proc.stdin.write(inputBuffer);
-    proc.stdin.end();
+  const form = new FormData();
+  form.append('slot', slot);
+  form.append('bg_color', bgColor);
+  form.append('file', new Blob([inputBuffer], { type: 'image/png' }), 'image.png');
+
+  const response = await fetch(`${IMAGE_PROCESSOR_URL}/process`, {
+    method: 'POST',
+    body: form,
   });
+
+  if (!response.ok) {
+    const text = await response.text();
+    throw new Error(`image-processor returned ${response.status}: ${text}`);
+  }
+
+  return Buffer.from(await response.arrayBuffer());
 }
 
 export async function savePhoto(
