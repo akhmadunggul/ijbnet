@@ -621,7 +621,7 @@
       "completeness_legacyLabel": "標準モード（レガシー）",
       "completeness_legacyDesc": "24項目：個人情報・SSW・学歴・職歴・就労計画・写真・同意・LPK選択を対象とします。",
       "completeness_cvLabel": "CVベースモード",
-      "completeness_cvDesc": "CVに表示される24項目：個人情報・学歴・職歴・日本語テスト・スキル・モチベーション・自己PR・写真・LPK選択を対象とします。",
+      "completeness_cvDesc": "CVの基本21項目：個人情報・学歴・スキル・モチベーション・自己PR・写真・同意・LPK選択。職歴・資格は必須外。",
       "translateTitle": "自動翻訳設定",
       "translateDesc": "候補者がプロフィールを保存する際に、スキル・モチベーション・自己PRを自動的に日本語に翻訳するかどうかを制御します。無効にすると、CVの日本語欄にはインドネシア語のテキストが表示されます。",
       "translateLabel": "日本語への自動翻訳",

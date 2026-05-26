@@ -1040,11 +1040,11 @@ export default function CandidateProfile() {
           <h1 className="text-2xl font-semibold text-navy-900">{t('trayProfile')}</h1>
           <p className="text-sm text-gray-500 mt-0.5">{candidate.candidateCode} · {pct}% complete</p>
         </div>
-        {candidate.profileStatus === 'incomplete' && pct === 100 && candidate.consentGiven && (
+        {candidate.profileStatus === 'incomplete' && (
           <button
             onClick={() => submitMutation.mutate()}
-            disabled={submitMutation.isPending}
-            className="px-4 py-2 bg-green-600 text-white text-sm rounded-lg hover:bg-green-700 transition disabled:opacity-60 shrink-0"
+            disabled={submitMutation.isPending || pct < 100 || !candidate.consentGiven}
+            className="px-4 py-2 bg-green-600 text-white text-sm rounded-lg hover:bg-green-700 transition disabled:opacity-60 disabled:cursor-not-allowed shrink-0"
           >
             {submitMutation.isPending ? '…' : t('candidate.profile.submitBtn')}
           </button>

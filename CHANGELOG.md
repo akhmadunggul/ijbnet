@@ -5,6 +5,14 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ---
 
+## [v0.5.8] - 2026-05-26
+
+### Changed
+- **CV completeness baseline tightened**: `calcCV` now covers 21 fields — removes career history and tests/certifications (not all candidates have these at registration time). Superadmin setting description updated in both languages to reflect the new 21-field scope.
+- **Submit button always visible**: The "Submit Profile" button in the candidate portal is now always rendered when `profileStatus === 'incomplete'`, but disabled (greyed, `cursor-not-allowed`) until both `pct === 100` and `consentGiven`. Previously the button was hidden entirely until both conditions were met.
+
+---
+
 ## [v0.5.7] - 2026-05-26
 
 ### Changed

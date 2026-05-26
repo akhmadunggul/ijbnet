@@ -62,11 +62,10 @@ function calcLegacy(candidate: Record<string, unknown>): CompletenessResult {
 }
 
 function calcCV(candidate: Record<string, unknown>): CompletenessResult {
-  const career    = candidate['career']           as unknown[];
-  const tests     = candidate['tests']            as unknown[];
   const education = candidate['educationHistory'] as unknown[];
-  const certs     = candidate['certifications']   as unknown[];
 
+  // Career and qualifications (tests/certs) are excluded — not all candidates
+  // have this data when initially filling their profile.
   const checks = [
     // Personal visible on CV (14)
     !!candidate['fullName'],
@@ -85,10 +84,6 @@ function calcCV(candidate: Record<string, unknown>): CompletenessResult {
     !!candidate['hobbies'],
     // Education history (1)
     (education?.length ?? 0) > 0,
-    // Career (1)
-    (career?.length ?? 0) > 0,
-    // Qualifications: JP test or certification (1) — CV "Sertifikasi" section shows both merged
-    (tests?.length ?? 0) + (certs?.length ?? 0) > 0,
     // CV text fields (3)
     !!candidate['selfPrId'],
     !!candidate['motivationId'],
@@ -102,7 +97,7 @@ function calcCV(candidate: Record<string, unknown>): CompletenessResult {
   ];
 
   const score = checks.filter(Boolean).length;
-  const total = checks.length; // 23
+  const total = checks.length; // 21
   return { score, total, pct: Math.round((score / total) * 100) };
 }
 
