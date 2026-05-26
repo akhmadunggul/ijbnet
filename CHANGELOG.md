@@ -5,6 +5,16 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ---
 
+## [v0.5.7] - 2026-05-26
+
+### Changed
+- **Image processing extracted to dedicated sidecar container**: Background removal and cropping moved from a per-request Python subprocess into a persistent `image-processor` FastAPI service (`apps/image-processor/`). RMBG-1.4 model loads once at startup and stays in memory — eliminates cold-start delay on every upload. Backend image is now significantly smaller (no Python/torch/opencv). `docker-compose.prod.yml` gains an `image-processor` service with `hf_cache` volume; backend waits for its healthcheck before starting.
+
+### Fixed
+- **Consent modal stays open when audit/timeline write fails**: If `recordTimelineEvent` or `AuditLog.create` threw after `candidate.update` succeeded, the API returned 500 even though consent was saved. Audit log and timeline writes are now fire-and-forget. Also fixed consent modal showing for users with no candidate record (new users).
+
+---
+
 ## [v0.5.6] - 2026-05-26
 
 ### Changed
