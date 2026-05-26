@@ -2,7 +2,7 @@
 # ─────────────────────────────────────────────────────────────────────────────
 # Get K6 stress-test tokens (valid 15 min).
 # Usage: eval "$(bash k6/get-tokens.sh https://jinzai.jobagus.id)"
-# This exports TOKEN_CANDIDATE_1..16, TOKEN_ADMIN, TOKEN_MANAGER, TOKEN_RECRUITER
+# This exports TOKEN_CANDIDATE_1..20, TOKEN_ADMIN, TOKEN_MANAGER, TOKEN_RECRUITER
 # into your current shell, ready to pass to k6 run.
 # ─────────────────────────────────────────────────────────────────────────────
 set -euo pipefail
@@ -43,6 +43,10 @@ T13=$(login 'k6.cand13@candidate.ijbnet.org' 'Demo1234!'); sleep 2
 T14=$(login 'k6.cand14@candidate.ijbnet.org' 'Demo1234!'); sleep 2
 T15=$(login 'k6.cand15@candidate.ijbnet.org' 'Demo1234!'); sleep 2
 T16=$(login 'k6.cand16@candidate.ijbnet.org' 'Demo1234!'); sleep 2
+T17=$(login 'k6.cand17@candidate.ijbnet.org' 'Demo1234!'); sleep 2
+T18=$(login 'k6.cand18@candidate.ijbnet.org' 'Demo1234!'); sleep 2
+T19=$(login 'k6.cand19@candidate.ijbnet.org' 'Demo1234!'); sleep 2
+T20=$(login 'k6.cand20@candidate.ijbnet.org' 'Demo1234!'); sleep 2
 TA=$(login  'admin@ijbnet.org'               'Demo1234!'); sleep 2
 TM=$(login  'manager@ijbnet.org'             'Demo1234!'); sleep 2
 TR=$(login  'recruiter@yamada.co.jp'         'Demo1234!')
@@ -68,6 +72,10 @@ echo "export TOKEN_CANDIDATE_13='$T13'"
 echo "export TOKEN_CANDIDATE_14='$T14'"
 echo "export TOKEN_CANDIDATE_15='$T15'"
 echo "export TOKEN_CANDIDATE_16='$T16'"
+echo "export TOKEN_CANDIDATE_17='$T17'"
+echo "export TOKEN_CANDIDATE_18='$T18'"
+echo "export TOKEN_CANDIDATE_19='$T19'"
+echo "export TOKEN_CANDIDATE_20='$T20'"
 echo "export TOKEN_ADMIN='$TA'"
 echo "export TOKEN_MANAGER='$TM'"
 echo "export TOKEN_RECRUITER='$TR'"

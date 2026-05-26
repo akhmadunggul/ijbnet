@@ -28,6 +28,10 @@
  *     --env TOKEN_CANDIDATE_14=$TOKEN_CANDIDATE_14 \
  *     --env TOKEN_CANDIDATE_15=$TOKEN_CANDIDATE_15 \
  *     --env TOKEN_CANDIDATE_16=$TOKEN_CANDIDATE_16 \
+ *     --env TOKEN_CANDIDATE_17=$TOKEN_CANDIDATE_17 \
+ *     --env TOKEN_CANDIDATE_18=$TOKEN_CANDIDATE_18 \
+ *     --env TOKEN_CANDIDATE_19=$TOKEN_CANDIDATE_19 \
+ *     --env TOKEN_CANDIDATE_20=$TOKEN_CANDIDATE_20 \
  *     --env TOKEN_ADMIN=$TOKEN_ADMIN \
  *     --env TOKEN_MANAGER=$TOKEN_MANAGER \
  *     --env TOKEN_RECRUITER=$TOKEN_RECRUITER \
@@ -208,6 +212,10 @@ export function setup() {
     loginFallback('k6.cand14@candidate.ijbnet.org', 'Demo1234!', __ENV.TOKEN_CANDIDATE_14 || null),
     loginFallback('k6.cand15@candidate.ijbnet.org', 'Demo1234!', __ENV.TOKEN_CANDIDATE_15 || null),
     loginFallback('k6.cand16@candidate.ijbnet.org', 'Demo1234!', __ENV.TOKEN_CANDIDATE_16 || null),
+    loginFallback('k6.cand17@candidate.ijbnet.org', 'Demo1234!', __ENV.TOKEN_CANDIDATE_17 || null),
+    loginFallback('k6.cand18@candidate.ijbnet.org', 'Demo1234!', __ENV.TOKEN_CANDIDATE_18 || null),
+    loginFallback('k6.cand19@candidate.ijbnet.org', 'Demo1234!', __ENV.TOKEN_CANDIDATE_19 || null),
+    loginFallback('k6.cand20@candidate.ijbnet.org', 'Demo1234!', __ENV.TOKEN_CANDIDATE_20 || null),
   ];
   const adminToken     = loginFallback('admin@ijbnet.org',       'Demo1234!', __ENV.TOKEN_ADMIN     || null);
   const managerToken   = loginFallback('manager@ijbnet.org',     'Demo1234!', __ENV.TOKEN_MANAGER   || null);
@@ -219,7 +227,7 @@ export function setup() {
     manager: managerToken ? 1 : 0,
     recruiter: recruiterToken ? 1 : 0,
   };
-  console.log(`Tokens ready — candidates: ${tokenSources.candidates}/16, admin: ${tokenSources.admin}, manager: ${tokenSources.manager}, recruiter: ${tokenSources.recruiter}`);
+  console.log(`Tokens ready — candidates: ${tokenSources.candidates}/20, admin: ${tokenSources.admin}, manager: ${tokenSources.manager}, recruiter: ${tokenSources.recruiter}`);
 
   if (tokenSources.candidates === 0 && !adminToken && !managerToken && !recruiterToken) {
     console.error('No tokens obtained. Run k6/get-tokens.sh first and pass TOKEN_* env vars.');
