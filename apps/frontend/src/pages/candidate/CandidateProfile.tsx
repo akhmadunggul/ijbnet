@@ -528,11 +528,7 @@ function SswTab({ candidate, onSave, saving }: { candidate: CandidateData; onSav
       <input type="hidden" {...register('sswSectorJa')} />
       <input type="hidden" {...register('sswFieldJa')} />
       <input type="hidden" {...register('jobCategory')} />
-
-      {/* Study duration */}
-      <Field label={t('candidate.profile.ssw.jpStudy')}>
-        <input {...register('jpStudyDuration')} className={inputCls} placeholder="18 bulan" />
-      </Field>
+      <input type="hidden" {...register('jpStudyDuration')} />
 
       <div className="flex items-center gap-3 pt-2">
         <button type="submit" disabled={saving} className="px-4 py-2 bg-navy-700 text-white text-sm rounded-lg hover:bg-navy-900 transition disabled:opacity-60">
