@@ -207,7 +207,13 @@
         "email": "Email",
         "address": "Alamat",
         "lpk": "LPK / Lembaga Pelatihan",
-        "lpkPlaceholder": "Pilih LPK Anda"
+        "lpkPlaceholder": "Pilih LPK Anda",
+        "marital": "Status Pernikahan",
+        "maritalSingle": "Lajang",
+        "maritalMarried": "Menikah",
+        "maritalDivorced": "Cerai",
+        "maritalWidowed": "Janda/Duda",
+        "spouse": "Info Pasangan"
       },
       "ssw": {
         "kubun": "Tipe SSW",

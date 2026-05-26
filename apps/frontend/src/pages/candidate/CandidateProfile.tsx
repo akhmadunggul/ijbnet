@@ -23,6 +23,8 @@ const personalSchema = z.object({
   hasVisitedJapan:     z.boolean().nullable().optional(),
   hasPassport:         z.boolean().nullable().optional(),
   hobbies:             z.string().nullable().optional(),
+  maritalStatus:       z.enum(['single', 'married', 'divorced', 'widowed']).nullable().optional(),
+  spouseInfo:          z.string().nullable().optional(),
   email:               z.string().email().nullable().optional().or(z.literal('')),
   phone:               z.string().nullable().optional(),
   address:             z.string().nullable().optional(),
@@ -77,8 +79,6 @@ const workplanSchema = z.object({
   workplanGoal:        z.string().nullable().optional(),
   workplanAfter:       z.string().nullable().optional(),
   workplanExpectation: z.string().nullable().optional(),
-  maritalStatus: z.enum(['single', 'married', 'divorced', 'widowed']).nullable().optional(),
-  spouseInfo:    z.string().nullable().optional(),
   childrenCount: z.coerce.number().int().min(0).optional(),
   accompany:     z.enum(['none', 'yes']).optional(),
 });
@@ -281,7 +281,7 @@ function PersonalTab({ candidate, onSave, saving }: { candidate: CandidateData; 
     onSuccess: () => qc.invalidateQueries({ queryKey: ['my-candidate'] }),
   });
 
-  const { register, handleSubmit, reset, formState: { isDirty, errors } } = useForm<PersonalForm>({
+  const { register, watch, handleSubmit, reset, formState: { isDirty, errors } } = useForm<PersonalForm>({
     resolver: zodResolver(personalSchema),
     defaultValues: {
       fullName:           candidate.fullName ?? '',
@@ -297,6 +297,8 @@ function PersonalTab({ candidate, onSave, saving }: { candidate: CandidateData; 
       hasVisitedJapan:    candidate.hasVisitedJapan ?? false,
       hasPassport:        candidate.hasPassport ?? false,
       hobbies:            candidate.hobbies ?? '',
+      maritalStatus:      candidate.maritalStatus ?? undefined,
+      spouseInfo:         candidate.spouseInfo ?? '',
       email:              candidate.email ?? '',
       phone:              candidate.phone ?? '',
       address:            candidate.address ?? '',
@@ -313,6 +315,7 @@ function PersonalTab({ candidate, onSave, saving }: { candidate: CandidateData; 
   }
 
   const lpkLocked = !!candidate.lpkId;
+  const marital = watch('maritalStatus');
 
   return (
     <form onSubmit={handleSubmit(handlePersonalSubmit)} className="space-y-4">
@@ -390,6 +393,18 @@ function PersonalTab({ candidate, onSave, saving }: { candidate: CandidateData; 
         </label>
       </div>
       <Field label={t('candidate.profile.personal.hobbies')}><input {...register('hobbies')} className={inputCls} /></Field>
+      <Field label={t('candidate.profile.personal.marital')}>
+        <select {...register('maritalStatus')} className={selectCls}>
+          <option value="">—</option>
+          <option value="single">{t('candidate.profile.personal.maritalSingle')}</option>
+          <option value="married">{t('candidate.profile.personal.maritalMarried')}</option>
+          <option value="divorced">{t('candidate.profile.personal.maritalDivorced')}</option>
+          <option value="widowed">{t('candidate.profile.personal.maritalWidowed')}</option>
+        </select>
+      </Field>
+      {marital === 'married' && (
+        <Field label={t('candidate.profile.personal.spouse')}><input {...register('spouseInfo')} className={inputCls} /></Field>
+      )}
       <Field label={t('candidate.profile.personal.email')}><input type="email" {...register('email')} className={inputCls} /></Field>
       <Field label={t('candidate.profile.personal.phone')}><input {...register('phone')} className={inputCls} /></Field>
       <Field label={t('candidate.profile.personal.address')}><textarea {...register('address')} rows={3} className={inputCls} /></Field>
@@ -754,20 +769,17 @@ function JapaneseTab({ candidate }: { candidate: CandidateData }) {
 // ── Tab 6 — Work Plan ─────────────────────────────────────────────────────────
 function WorkplanTab({ candidate, onSave, saving }: { candidate: CandidateData; onSave: (d: WorkplanForm) => void; saving: boolean }) {
   const { t } = useTranslation();
-  const { register, watch, handleSubmit, reset, formState: { isDirty } } = useForm<WorkplanForm>({
+  const { register, handleSubmit, reset, formState: { isDirty } } = useForm<WorkplanForm>({
     resolver: zodResolver(workplanSchema),
     defaultValues: {
       workplanDuration:    candidate.workplanDuration ?? '',
       workplanGoal:        candidate.workplanGoal ?? '',
       workplanAfter:       candidate.workplanAfter ?? '',
       workplanExpectation: candidate.workplanExpectation ?? '',
-      maritalStatus: candidate.maritalStatus ?? undefined,
-      spouseInfo:    candidate.spouseInfo ?? '',
       childrenCount: candidate.childrenCount ?? 0,
       accompany:     candidate.accompany ?? 'none',
     },
   });
-  const marital = watch('maritalStatus');
 
   return (
     <form onSubmit={handleSubmit(async (d) => { await onSave(d); reset(d); })} className="space-y-4">
@@ -775,18 +787,6 @@ function WorkplanTab({ candidate, onSave, saving }: { candidate: CandidateData; 
       <Field label={t('candidate.profile.workplan.goal')}><textarea {...register('workplanGoal')} rows={3} className={textareaCls} /></Field>
       <Field label={t('candidate.profile.workplan.after')}><textarea {...register('workplanAfter')} rows={3} className={textareaCls} /></Field>
       <Field label={t('candidate.profile.workplan.expectation')}><textarea {...register('workplanExpectation')} rows={3} className={textareaCls} /></Field>
-      <Field label={t('candidate.profile.workplan.marital')}>
-        <select {...register('maritalStatus')} className={selectCls}>
-          <option value="">—</option>
-          <option value="single">{t('candidate.profile.workplan.maritalSingle')}</option>
-          <option value="married">{t('candidate.profile.workplan.maritalMarried')}</option>
-          <option value="divorced">{t('candidate.profile.workplan.maritalDivorced')}</option>
-          <option value="widowed">{t('candidate.profile.workplan.maritalWidowed')}</option>
-        </select>
-      </Field>
-      {marital === 'married' && (
-        <Field label={t('candidate.profile.workplan.spouse')}><input {...register('spouseInfo')} className={inputCls} /></Field>
-      )}
       <div className="grid grid-cols-2 gap-4">
         <Field label={t('candidate.profile.workplan.children')}><input type="number" min={0} {...register('childrenCount')} className={inputCls} /></Field>
         <Field label={t('candidate.profile.workplan.accompany')}>

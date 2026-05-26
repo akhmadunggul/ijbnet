@@ -206,7 +206,13 @@
         "email": "メールアドレス",
         "address": "住所",
         "lpk": "LPK / 研修機関",
-        "lpkPlaceholder": "LPKを選択してください"
+        "lpkPlaceholder": "LPKを選択してください",
+        "marital": "婚姻状況",
+        "maritalSingle": "未婚",
+        "maritalMarried": "既婚",
+        "maritalDivorced": "離婚",
+        "maritalWidowed": "死別",
+        "spouse": "配偶者情報"
       },
       "ssw": {
         "kubun": "SSW区分",
