@@ -214,6 +214,7 @@ apps/frontend/src/
 - v0.5.9 — Node.js cluster mode: master forks os.cpus() workers; dead workers auto-restart; SET_COMPLETENESS_MODE IPC broadcast keeps in-memory state consistent; snapshotMetrics() runs on worker 1 only to prevent duplicate DB writes; CLUSTER_WORKERS env override
 - v0.6.0 — Prometheus + Grafana monitoring stack: prom-client metrics (HTTP req/s, latency histogram, DB queries, 429 hits, 5xx errors, active users, Node.js heap/event loop); /api/metrics scrape endpoint (internal only); Grafana served at /grafana subpath via Caddy; auto-provisioned datasource + IJBNet overview dashboard; superadmin monitor page replaced with health cards + Grafana link; DB pool max raised 35→50; k6 load test expanded to 50 VUs / 50 candidate accounts
 - v0.6.1 — Fix Grafana "no data": Prometheus now scrapes backend:3001/api/metrics (not port 9464); IPv4-mapped IPv6 IP allowlist fix (strip ::ffff: prefix before checking); CLUSTER_WORKERS=1 in prod compose to ensure stable single worker
+- v0.6.2 — Monitoring stack confirmed operational: Prometheus target UP, all ijbnet_* metrics flowing, Grafana IJBNet Overview dashboard live at /grafana
 
-Current: v0.6.1
+Current: v0.6.2
 Live at: https://jinzai.jobagus.id
