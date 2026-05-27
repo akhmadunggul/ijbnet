@@ -32,6 +32,36 @@
  *     --env TOKEN_CANDIDATE_18=$TOKEN_CANDIDATE_18 \
  *     --env TOKEN_CANDIDATE_19=$TOKEN_CANDIDATE_19 \
  *     --env TOKEN_CANDIDATE_20=$TOKEN_CANDIDATE_20 \
+ *     --env TOKEN_CANDIDATE_21=$TOKEN_CANDIDATE_21 \
+ *     --env TOKEN_CANDIDATE_22=$TOKEN_CANDIDATE_22 \
+ *     --env TOKEN_CANDIDATE_23=$TOKEN_CANDIDATE_23 \
+ *     --env TOKEN_CANDIDATE_24=$TOKEN_CANDIDATE_24 \
+ *     --env TOKEN_CANDIDATE_25=$TOKEN_CANDIDATE_25 \
+ *     --env TOKEN_CANDIDATE_26=$TOKEN_CANDIDATE_26 \
+ *     --env TOKEN_CANDIDATE_27=$TOKEN_CANDIDATE_27 \
+ *     --env TOKEN_CANDIDATE_28=$TOKEN_CANDIDATE_28 \
+ *     --env TOKEN_CANDIDATE_29=$TOKEN_CANDIDATE_29 \
+ *     --env TOKEN_CANDIDATE_30=$TOKEN_CANDIDATE_30 \
+ *     --env TOKEN_CANDIDATE_31=$TOKEN_CANDIDATE_31 \
+ *     --env TOKEN_CANDIDATE_32=$TOKEN_CANDIDATE_32 \
+ *     --env TOKEN_CANDIDATE_33=$TOKEN_CANDIDATE_33 \
+ *     --env TOKEN_CANDIDATE_34=$TOKEN_CANDIDATE_34 \
+ *     --env TOKEN_CANDIDATE_35=$TOKEN_CANDIDATE_35 \
+ *     --env TOKEN_CANDIDATE_36=$TOKEN_CANDIDATE_36 \
+ *     --env TOKEN_CANDIDATE_37=$TOKEN_CANDIDATE_37 \
+ *     --env TOKEN_CANDIDATE_38=$TOKEN_CANDIDATE_38 \
+ *     --env TOKEN_CANDIDATE_39=$TOKEN_CANDIDATE_39 \
+ *     --env TOKEN_CANDIDATE_40=$TOKEN_CANDIDATE_40 \
+ *     --env TOKEN_CANDIDATE_41=$TOKEN_CANDIDATE_41 \
+ *     --env TOKEN_CANDIDATE_42=$TOKEN_CANDIDATE_42 \
+ *     --env TOKEN_CANDIDATE_43=$TOKEN_CANDIDATE_43 \
+ *     --env TOKEN_CANDIDATE_44=$TOKEN_CANDIDATE_44 \
+ *     --env TOKEN_CANDIDATE_45=$TOKEN_CANDIDATE_45 \
+ *     --env TOKEN_CANDIDATE_46=$TOKEN_CANDIDATE_46 \
+ *     --env TOKEN_CANDIDATE_47=$TOKEN_CANDIDATE_47 \
+ *     --env TOKEN_CANDIDATE_48=$TOKEN_CANDIDATE_48 \
+ *     --env TOKEN_CANDIDATE_49=$TOKEN_CANDIDATE_49 \
+ *     --env TOKEN_CANDIDATE_50=$TOKEN_CANDIDATE_50 \
  *     --env TOKEN_ADMIN=$TOKEN_ADMIN \
  *     --env TOKEN_MANAGER=$TOKEN_MANAGER \
  *     --env TOKEN_RECRUITER=$TOKEN_RECRUITER \
@@ -216,6 +246,36 @@ export function setup() {
     loginFallback('k6.cand18@candidate.ijbnet.org', 'Demo1234!', __ENV.TOKEN_CANDIDATE_18 || null),
     loginFallback('k6.cand19@candidate.ijbnet.org', 'Demo1234!', __ENV.TOKEN_CANDIDATE_19 || null),
     loginFallback('k6.cand20@candidate.ijbnet.org', 'Demo1234!', __ENV.TOKEN_CANDIDATE_20 || null),
+    loginFallback('k6.cand21@candidate.ijbnet.org', 'Demo1234!', __ENV.TOKEN_CANDIDATE_21 || null),
+    loginFallback('k6.cand22@candidate.ijbnet.org', 'Demo1234!', __ENV.TOKEN_CANDIDATE_22 || null),
+    loginFallback('k6.cand23@candidate.ijbnet.org', 'Demo1234!', __ENV.TOKEN_CANDIDATE_23 || null),
+    loginFallback('k6.cand24@candidate.ijbnet.org', 'Demo1234!', __ENV.TOKEN_CANDIDATE_24 || null),
+    loginFallback('k6.cand25@candidate.ijbnet.org', 'Demo1234!', __ENV.TOKEN_CANDIDATE_25 || null),
+    loginFallback('k6.cand26@candidate.ijbnet.org', 'Demo1234!', __ENV.TOKEN_CANDIDATE_26 || null),
+    loginFallback('k6.cand27@candidate.ijbnet.org', 'Demo1234!', __ENV.TOKEN_CANDIDATE_27 || null),
+    loginFallback('k6.cand28@candidate.ijbnet.org', 'Demo1234!', __ENV.TOKEN_CANDIDATE_28 || null),
+    loginFallback('k6.cand29@candidate.ijbnet.org', 'Demo1234!', __ENV.TOKEN_CANDIDATE_29 || null),
+    loginFallback('k6.cand30@candidate.ijbnet.org', 'Demo1234!', __ENV.TOKEN_CANDIDATE_30 || null),
+    loginFallback('k6.cand31@candidate.ijbnet.org', 'Demo1234!', __ENV.TOKEN_CANDIDATE_31 || null),
+    loginFallback('k6.cand32@candidate.ijbnet.org', 'Demo1234!', __ENV.TOKEN_CANDIDATE_32 || null),
+    loginFallback('k6.cand33@candidate.ijbnet.org', 'Demo1234!', __ENV.TOKEN_CANDIDATE_33 || null),
+    loginFallback('k6.cand34@candidate.ijbnet.org', 'Demo1234!', __ENV.TOKEN_CANDIDATE_34 || null),
+    loginFallback('k6.cand35@candidate.ijbnet.org', 'Demo1234!', __ENV.TOKEN_CANDIDATE_35 || null),
+    loginFallback('k6.cand36@candidate.ijbnet.org', 'Demo1234!', __ENV.TOKEN_CANDIDATE_36 || null),
+    loginFallback('k6.cand37@candidate.ijbnet.org', 'Demo1234!', __ENV.TOKEN_CANDIDATE_37 || null),
+    loginFallback('k6.cand38@candidate.ijbnet.org', 'Demo1234!', __ENV.TOKEN_CANDIDATE_38 || null),
+    loginFallback('k6.cand39@candidate.ijbnet.org', 'Demo1234!', __ENV.TOKEN_CANDIDATE_39 || null),
+    loginFallback('k6.cand40@candidate.ijbnet.org', 'Demo1234!', __ENV.TOKEN_CANDIDATE_40 || null),
+    loginFallback('k6.cand41@candidate.ijbnet.org', 'Demo1234!', __ENV.TOKEN_CANDIDATE_41 || null),
+    loginFallback('k6.cand42@candidate.ijbnet.org', 'Demo1234!', __ENV.TOKEN_CANDIDATE_42 || null),
+    loginFallback('k6.cand43@candidate.ijbnet.org', 'Demo1234!', __ENV.TOKEN_CANDIDATE_43 || null),
+    loginFallback('k6.cand44@candidate.ijbnet.org', 'Demo1234!', __ENV.TOKEN_CANDIDATE_44 || null),
+    loginFallback('k6.cand45@candidate.ijbnet.org', 'Demo1234!', __ENV.TOKEN_CANDIDATE_45 || null),
+    loginFallback('k6.cand46@candidate.ijbnet.org', 'Demo1234!', __ENV.TOKEN_CANDIDATE_46 || null),
+    loginFallback('k6.cand47@candidate.ijbnet.org', 'Demo1234!', __ENV.TOKEN_CANDIDATE_47 || null),
+    loginFallback('k6.cand48@candidate.ijbnet.org', 'Demo1234!', __ENV.TOKEN_CANDIDATE_48 || null),
+    loginFallback('k6.cand49@candidate.ijbnet.org', 'Demo1234!', __ENV.TOKEN_CANDIDATE_49 || null),
+    loginFallback('k6.cand50@candidate.ijbnet.org', 'Demo1234!', __ENV.TOKEN_CANDIDATE_50 || null),
   ];
   const adminToken     = loginFallback('admin@ijbnet.org',       'Demo1234!', __ENV.TOKEN_ADMIN     || null);
   const managerToken   = loginFallback('manager@ijbnet.org',     'Demo1234!', __ENV.TOKEN_MANAGER   || null);
@@ -227,7 +287,7 @@ export function setup() {
     manager: managerToken ? 1 : 0,
     recruiter: recruiterToken ? 1 : 0,
   };
-  console.log(`Tokens ready — candidates: ${tokenSources.candidates}/20, admin: ${tokenSources.admin}, manager: ${tokenSources.manager}, recruiter: ${tokenSources.recruiter}`);
+  console.log(`Tokens ready — candidates: ${tokenSources.candidates}/50, admin: ${tokenSources.admin}, manager: ${tokenSources.manager}, recruiter: ${tokenSources.recruiter}`);
 
   if (tokenSources.candidates === 0 && !adminToken && !managerToken && !recruiterToken) {
     console.error('No tokens obtained. Run k6/get-tokens.sh first and pass TOKEN_* env vars.');

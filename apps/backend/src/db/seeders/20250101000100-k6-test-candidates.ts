@@ -43,6 +43,36 @@ module.exports = {
       { email: 'k6.cand18@candidate.ijbnet.org', name: 'K6 Test Candidate 18', code: 'K6T-0018' },
       { email: 'k6.cand19@candidate.ijbnet.org', name: 'K6 Test Candidate 19', code: 'K6T-0019' },
       { email: 'k6.cand20@candidate.ijbnet.org', name: 'K6 Test Candidate 20', code: 'K6T-0020' },
+      { email: 'k6.cand21@candidate.ijbnet.org', name: 'K6 Test Candidate 21', code: 'K6T-0021' },
+      { email: 'k6.cand22@candidate.ijbnet.org', name: 'K6 Test Candidate 22', code: 'K6T-0022' },
+      { email: 'k6.cand23@candidate.ijbnet.org', name: 'K6 Test Candidate 23', code: 'K6T-0023' },
+      { email: 'k6.cand24@candidate.ijbnet.org', name: 'K6 Test Candidate 24', code: 'K6T-0024' },
+      { email: 'k6.cand25@candidate.ijbnet.org', name: 'K6 Test Candidate 25', code: 'K6T-0025' },
+      { email: 'k6.cand26@candidate.ijbnet.org', name: 'K6 Test Candidate 26', code: 'K6T-0026' },
+      { email: 'k6.cand27@candidate.ijbnet.org', name: 'K6 Test Candidate 27', code: 'K6T-0027' },
+      { email: 'k6.cand28@candidate.ijbnet.org', name: 'K6 Test Candidate 28', code: 'K6T-0028' },
+      { email: 'k6.cand29@candidate.ijbnet.org', name: 'K6 Test Candidate 29', code: 'K6T-0029' },
+      { email: 'k6.cand30@candidate.ijbnet.org', name: 'K6 Test Candidate 30', code: 'K6T-0030' },
+      { email: 'k6.cand31@candidate.ijbnet.org', name: 'K6 Test Candidate 31', code: 'K6T-0031' },
+      { email: 'k6.cand32@candidate.ijbnet.org', name: 'K6 Test Candidate 32', code: 'K6T-0032' },
+      { email: 'k6.cand33@candidate.ijbnet.org', name: 'K6 Test Candidate 33', code: 'K6T-0033' },
+      { email: 'k6.cand34@candidate.ijbnet.org', name: 'K6 Test Candidate 34', code: 'K6T-0034' },
+      { email: 'k6.cand35@candidate.ijbnet.org', name: 'K6 Test Candidate 35', code: 'K6T-0035' },
+      { email: 'k6.cand36@candidate.ijbnet.org', name: 'K6 Test Candidate 36', code: 'K6T-0036' },
+      { email: 'k6.cand37@candidate.ijbnet.org', name: 'K6 Test Candidate 37', code: 'K6T-0037' },
+      { email: 'k6.cand38@candidate.ijbnet.org', name: 'K6 Test Candidate 38', code: 'K6T-0038' },
+      { email: 'k6.cand39@candidate.ijbnet.org', name: 'K6 Test Candidate 39', code: 'K6T-0039' },
+      { email: 'k6.cand40@candidate.ijbnet.org', name: 'K6 Test Candidate 40', code: 'K6T-0040' },
+      { email: 'k6.cand41@candidate.ijbnet.org', name: 'K6 Test Candidate 41', code: 'K6T-0041' },
+      { email: 'k6.cand42@candidate.ijbnet.org', name: 'K6 Test Candidate 42', code: 'K6T-0042' },
+      { email: 'k6.cand43@candidate.ijbnet.org', name: 'K6 Test Candidate 43', code: 'K6T-0043' },
+      { email: 'k6.cand44@candidate.ijbnet.org', name: 'K6 Test Candidate 44', code: 'K6T-0044' },
+      { email: 'k6.cand45@candidate.ijbnet.org', name: 'K6 Test Candidate 45', code: 'K6T-0045' },
+      { email: 'k6.cand46@candidate.ijbnet.org', name: 'K6 Test Candidate 46', code: 'K6T-0046' },
+      { email: 'k6.cand47@candidate.ijbnet.org', name: 'K6 Test Candidate 47', code: 'K6T-0047' },
+      { email: 'k6.cand48@candidate.ijbnet.org', name: 'K6 Test Candidate 48', code: 'K6T-0048' },
+      { email: 'k6.cand49@candidate.ijbnet.org', name: 'K6 Test Candidate 49', code: 'K6T-0049' },
+      { email: 'k6.cand50@candidate.ijbnet.org', name: 'K6 Test Candidate 50', code: 'K6T-0050' },
     ];
 
     for (const acc of accounts) {
@@ -100,7 +130,7 @@ module.exports = {
       }
     }
 
-    console.log('K6 test candidates ready.');
+    console.log('K6 test candidates ready (50 accounts).');
   },
 
   async down(queryInterface: QueryInterface): Promise<void> {
@@ -125,6 +155,36 @@ module.exports = {
       'k6.cand18@candidate.ijbnet.org',
       'k6.cand19@candidate.ijbnet.org',
       'k6.cand20@candidate.ijbnet.org',
+      'k6.cand21@candidate.ijbnet.org',
+      'k6.cand22@candidate.ijbnet.org',
+      'k6.cand23@candidate.ijbnet.org',
+      'k6.cand24@candidate.ijbnet.org',
+      'k6.cand25@candidate.ijbnet.org',
+      'k6.cand26@candidate.ijbnet.org',
+      'k6.cand27@candidate.ijbnet.org',
+      'k6.cand28@candidate.ijbnet.org',
+      'k6.cand29@candidate.ijbnet.org',
+      'k6.cand30@candidate.ijbnet.org',
+      'k6.cand31@candidate.ijbnet.org',
+      'k6.cand32@candidate.ijbnet.org',
+      'k6.cand33@candidate.ijbnet.org',
+      'k6.cand34@candidate.ijbnet.org',
+      'k6.cand35@candidate.ijbnet.org',
+      'k6.cand36@candidate.ijbnet.org',
+      'k6.cand37@candidate.ijbnet.org',
+      'k6.cand38@candidate.ijbnet.org',
+      'k6.cand39@candidate.ijbnet.org',
+      'k6.cand40@candidate.ijbnet.org',
+      'k6.cand41@candidate.ijbnet.org',
+      'k6.cand42@candidate.ijbnet.org',
+      'k6.cand43@candidate.ijbnet.org',
+      'k6.cand44@candidate.ijbnet.org',
+      'k6.cand45@candidate.ijbnet.org',
+      'k6.cand46@candidate.ijbnet.org',
+      'k6.cand47@candidate.ijbnet.org',
+      'k6.cand48@candidate.ijbnet.org',
+      'k6.cand49@candidate.ijbnet.org',
+      'k6.cand50@candidate.ijbnet.org',
     ];
     for (const email of emails) {
       const [rows] = await queryInterface.sequelize.query(

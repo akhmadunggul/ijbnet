@@ -1,18 +1,18 @@
 /**
- * IJBNet — Candidate Full-Session Load Test (20 VUs)
+ * IJBNet — Candidate Full-Session Load Test (50 VUs)
  *
- * Simulates 20 concurrent candidates doing a realistic portal session:
+ * Simulates 50 concurrent candidates doing a realistic portal session:
  *   load profile page → check timeline → edit a field → save → refetch
  *
  * Prerequisites
  * ─────────────
- * 1. Ensure all 20 k6 test accounts exist in the database:
+ * 1. Ensure all 50 k6 test accounts exist in the database:
  *      docker compose -f docker-compose.prod.yml exec backend sh -c \
  *        "cd /app/apps/backend && NODE_ENV=production npx sequelize-cli db:seed \
  *         --seed 20250101000100-k6-test-candidates.ts"
  *
  * 2. Set LOAD_TEST_BYPASS_KEY in the server .env — this header bypasses the
- *    per-IP login rate limiter so all 20 logins can complete in setup().
+ *    per-IP login rate limiter so all 50 logins can complete in setup().
  *
  * 3. Pre-fetch tokens (they expire in 15 min — do this right before running):
  *      eval "$(bash k6/get-tokens.sh https://jinzai.jobagus.id)"
@@ -41,6 +41,36 @@
  *        --env TOKEN_CANDIDATE_18=$TOKEN_CANDIDATE_18 \
  *        --env TOKEN_CANDIDATE_19=$TOKEN_CANDIDATE_19 \
  *        --env TOKEN_CANDIDATE_20=$TOKEN_CANDIDATE_20 \
+ *        --env TOKEN_CANDIDATE_21=$TOKEN_CANDIDATE_21 \
+ *        --env TOKEN_CANDIDATE_22=$TOKEN_CANDIDATE_22 \
+ *        --env TOKEN_CANDIDATE_23=$TOKEN_CANDIDATE_23 \
+ *        --env TOKEN_CANDIDATE_24=$TOKEN_CANDIDATE_24 \
+ *        --env TOKEN_CANDIDATE_25=$TOKEN_CANDIDATE_25 \
+ *        --env TOKEN_CANDIDATE_26=$TOKEN_CANDIDATE_26 \
+ *        --env TOKEN_CANDIDATE_27=$TOKEN_CANDIDATE_27 \
+ *        --env TOKEN_CANDIDATE_28=$TOKEN_CANDIDATE_28 \
+ *        --env TOKEN_CANDIDATE_29=$TOKEN_CANDIDATE_29 \
+ *        --env TOKEN_CANDIDATE_30=$TOKEN_CANDIDATE_30 \
+ *        --env TOKEN_CANDIDATE_31=$TOKEN_CANDIDATE_31 \
+ *        --env TOKEN_CANDIDATE_32=$TOKEN_CANDIDATE_32 \
+ *        --env TOKEN_CANDIDATE_33=$TOKEN_CANDIDATE_33 \
+ *        --env TOKEN_CANDIDATE_34=$TOKEN_CANDIDATE_34 \
+ *        --env TOKEN_CANDIDATE_35=$TOKEN_CANDIDATE_35 \
+ *        --env TOKEN_CANDIDATE_36=$TOKEN_CANDIDATE_36 \
+ *        --env TOKEN_CANDIDATE_37=$TOKEN_CANDIDATE_37 \
+ *        --env TOKEN_CANDIDATE_38=$TOKEN_CANDIDATE_38 \
+ *        --env TOKEN_CANDIDATE_39=$TOKEN_CANDIDATE_39 \
+ *        --env TOKEN_CANDIDATE_40=$TOKEN_CANDIDATE_40 \
+ *        --env TOKEN_CANDIDATE_41=$TOKEN_CANDIDATE_41 \
+ *        --env TOKEN_CANDIDATE_42=$TOKEN_CANDIDATE_42 \
+ *        --env TOKEN_CANDIDATE_43=$TOKEN_CANDIDATE_43 \
+ *        --env TOKEN_CANDIDATE_44=$TOKEN_CANDIDATE_44 \
+ *        --env TOKEN_CANDIDATE_45=$TOKEN_CANDIDATE_45 \
+ *        --env TOKEN_CANDIDATE_46=$TOKEN_CANDIDATE_46 \
+ *        --env TOKEN_CANDIDATE_47=$TOKEN_CANDIDATE_47 \
+ *        --env TOKEN_CANDIDATE_48=$TOKEN_CANDIDATE_48 \
+ *        --env TOKEN_CANDIDATE_49=$TOKEN_CANDIDATE_49 \
+ *        --env TOKEN_CANDIDATE_50=$TOKEN_CANDIDATE_50 \
  *        k6/candidate-session.js
  *
  *    Or without pre-supplied tokens (setup() will login sequentially,
@@ -52,12 +82,12 @@
  *
  * Load profile
  * ────────────
- *   0 → 20 VUs over 30 s  (ramp up)
- *  20 VUs for 2 min        (steady state)
- *  20 → 0 VUs over 30 s   (ramp down)
+ *   0 → 50 VUs over 30 s  (ramp up)
+ *  50 VUs for 2 min        (steady state)
+ *  50 → 0 VUs over 30 s   (ramp down)
  *  Total wall time: ~3 min
  *
- * Each VU is pinned to one account (__VU mod 20), so there is no shared
+ * Each VU is pinned to one account (__VU mod 50), so there is no shared
  * state or write contention between virtual users.
  */
 
@@ -76,7 +106,7 @@ const BASE_URL   = __ENV.BASE_URL   || 'https://jinzai.jobagus.id';
 const API        = `${BASE_URL}/api`;
 const BYPASS_KEY = __ENV.BYPASS_KEY || '';
 
-const ACCOUNTS = Array.from({ length: 20 }, (_, i) => ({
+const ACCOUNTS = Array.from({ length: 50 }, (_, i) => ({
   email:  `k6.cand${i + 1}@candidate.ijbnet.org`,
   envKey: `TOKEN_CANDIDATE_${i + 1}`,
 }));
@@ -84,8 +114,8 @@ const ACCOUNTS = Array.from({ length: 20 }, (_, i) => ({
 // ── Options ────────────────────────────────────────────────────────────────────
 export const options = {
   stages: [
-    { duration: '30s', target: 20 },   // ramp up
-    { duration: '2m',  target: 20 },   // steady state
+    { duration: '30s', target: 50 },   // ramp up
+    { duration: '2m',  target: 50 },   // steady state
     { duration: '30s', target: 0  },   // ramp down
   ],
   thresholds: {
@@ -161,7 +191,7 @@ export function setup() {
   });
 
   const valid = tokens.filter(Boolean).length;
-  console.log(`\nSetup complete — ${valid}/20 tokens ready\n`);
+  console.log(`\nSetup complete — ${valid}/50 tokens ready\n`);
   if (valid === 0) {
     console.error('No tokens obtained. Pass BYPASS_KEY or pre-supply TOKEN_CANDIDATE_* vars.');
   }
