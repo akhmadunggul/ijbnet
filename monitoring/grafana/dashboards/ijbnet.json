@@ -1,0 +1,163 @@
+{
+  "title": "IJBNet Overview",
+  "uid": "ijbnet-overview",
+  "schemaVersion": 39,
+  "version": 1,
+  "tags": ["ijbnet"],
+  "timezone": "browser",
+  "graphTooltip": 1,
+  "time": { "from": "now-1h", "to": "now" },
+  "refresh": "30s",
+  "panels": [
+    {
+      "id": 1,
+      "type": "stat",
+      "title": "Active Users (5 min)",
+      "gridPos": { "x": 0, "y": 0, "w": 4, "h": 4 },
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "colorMode": "background", "graphMode": "area", "textMode": "auto" },
+      "fieldConfig": { "defaults": { "color": { "mode": "thresholds" }, "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": null }, { "color": "yellow", "value": 50 }, { "color": "red", "value": 200 }] }, "unit": "short" } },
+      "targets": [{ "datasource": { "type": "prometheus" }, "expr": "ijbnet_active_users", "legendFormat": "active users" }],
+      "datasource": { "type": "prometheus" }
+    },
+    {
+      "id": 2,
+      "type": "stat",
+      "title": "Request Rate",
+      "gridPos": { "x": 4, "y": 0, "w": 4, "h": 4 },
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "colorMode": "background", "graphMode": "area" },
+      "fieldConfig": { "defaults": { "color": { "mode": "thresholds" }, "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": null }, { "color": "yellow", "value": 100 }, { "color": "red", "value": 300 }] }, "unit": "reqps", "decimals": 1 } },
+      "targets": [{ "datasource": { "type": "prometheus" }, "expr": "sum(rate(ijbnet_http_requests_total[1m]))", "legendFormat": "req/s" }],
+      "datasource": { "type": "prometheus" }
+    },
+    {
+      "id": 3,
+      "type": "stat",
+      "title": "p95 Latency",
+      "gridPos": { "x": 8, "y": 0, "w": 4, "h": 4 },
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "colorMode": "background", "graphMode": "area" },
+      "fieldConfig": { "defaults": { "color": { "mode": "thresholds" }, "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": null }, { "color": "yellow", "value": 0.5 }, { "color": "red", "value": 2 }] }, "unit": "s", "decimals": 2 } },
+      "targets": [{ "datasource": { "type": "prometheus" }, "expr": "histogram_quantile(0.95, sum by(le) (rate(ijbnet_http_request_duration_seconds_bucket[5m])))", "legendFormat": "p95" }],
+      "datasource": { "type": "prometheus" }
+    },
+    {
+      "id": 4,
+      "type": "stat",
+      "title": "Error Rate",
+      "gridPos": { "x": 12, "y": 0, "w": 4, "h": 4 },
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "colorMode": "background", "graphMode": "area" },
+      "fieldConfig": { "defaults": { "color": { "mode": "thresholds" }, "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": null }, { "color": "yellow", "value": 0.01 }, { "color": "red", "value": 0.05 }] }, "unit": "percentunit", "decimals": 2 } },
+      "targets": [{ "datasource": { "type": "prometheus" }, "expr": "sum(rate(ijbnet_http_requests_total{status_code=~\"5..\"}[5m])) / sum(rate(ijbnet_http_requests_total[5m]))", "legendFormat": "error %" }],
+      "datasource": { "type": "prometheus" }
+    },
+    {
+      "id": 5,
+      "type": "stat",
+      "title": "Node.js Heap Used",
+      "gridPos": { "x": 16, "y": 0, "w": 4, "h": 4 },
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "colorMode": "background", "graphMode": "area" },
+      "fieldConfig": { "defaults": { "color": { "mode": "thresholds" }, "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": null }, { "color": "yellow", "value": 1073741824 }, { "color": "red", "value": 1610612736 }] }, "unit": "bytes" } },
+      "targets": [{ "datasource": { "type": "prometheus" }, "expr": "sum(ijbnet_node_nodejs_heap_size_used_bytes)", "legendFormat": "heap used" }],
+      "datasource": { "type": "prometheus" }
+    },
+    {
+      "id": 6,
+      "type": "stat",
+      "title": "DB Queries/sec",
+      "gridPos": { "x": 20, "y": 0, "w": 4, "h": 4 },
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "colorMode": "background", "graphMode": "area" },
+      "fieldConfig": { "defaults": { "color": { "mode": "thresholds" }, "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": null }, { "color": "yellow", "value": 200 }, { "color": "red", "value": 500 }] }, "unit": "ops", "decimals": 1 } },
+      "targets": [{ "datasource": { "type": "prometheus" }, "expr": "sum(rate(ijbnet_db_queries_total[1m]))", "legendFormat": "queries/s" }],
+      "datasource": { "type": "prometheus" }
+    },
+    {
+      "id": 10,
+      "type": "timeseries",
+      "title": "HTTP Requests / sec",
+      "gridPos": { "x": 0, "y": 4, "w": 12, "h": 8 },
+      "options": { "tooltip": { "mode": "multi", "sort": "desc" }, "legend": { "displayMode": "list", "placement": "bottom" } },
+      "fieldConfig": { "defaults": { "unit": "reqps", "custom": { "lineWidth": 2, "fillOpacity": 10 } } },
+      "targets": [
+        { "datasource": { "type": "prometheus" }, "expr": "sum(rate(ijbnet_http_requests_total[1m]))", "legendFormat": "total" },
+        { "datasource": { "type": "prometheus" }, "expr": "sum(rate(ijbnet_http_requests_total{status_code=~\"2..\"}[1m]))", "legendFormat": "2xx" },
+        { "datasource": { "type": "prometheus" }, "expr": "sum(rate(ijbnet_http_requests_total{status_code=~\"4..\"}[1m]))", "legendFormat": "4xx" },
+        { "datasource": { "type": "prometheus" }, "expr": "sum(rate(ijbnet_http_requests_total{status_code=~\"5..\"}[1m]))", "legendFormat": "5xx" }
+      ],
+      "datasource": { "type": "prometheus" }
+    },
+    {
+      "id": 11,
+      "type": "timeseries",
+      "title": "Request Duration",
+      "gridPos": { "x": 12, "y": 4, "w": 12, "h": 8 },
+      "options": { "tooltip": { "mode": "multi", "sort": "desc" }, "legend": { "displayMode": "list", "placement": "bottom" } },
+      "fieldConfig": { "defaults": { "unit": "s", "custom": { "lineWidth": 2, "fillOpacity": 10 } } },
+      "targets": [
+        { "datasource": { "type": "prometheus" }, "expr": "histogram_quantile(0.50, sum by(le) (rate(ijbnet_http_request_duration_seconds_bucket[5m])))", "legendFormat": "p50" },
+        { "datasource": { "type": "prometheus" }, "expr": "histogram_quantile(0.95, sum by(le) (rate(ijbnet_http_request_duration_seconds_bucket[5m])))", "legendFormat": "p95" },
+        { "datasource": { "type": "prometheus" }, "expr": "histogram_quantile(0.99, sum by(le) (rate(ijbnet_http_request_duration_seconds_bucket[5m])))", "legendFormat": "p99" }
+      ],
+      "datasource": { "type": "prometheus" }
+    },
+    {
+      "id": 20,
+      "type": "timeseries",
+      "title": "Active Users",
+      "gridPos": { "x": 0, "y": 12, "w": 8, "h": 8 },
+      "options": { "tooltip": { "mode": "single" }, "legend": { "displayMode": "list", "placement": "bottom" } },
+      "fieldConfig": { "defaults": { "unit": "short", "custom": { "lineWidth": 2, "fillOpacity": 20 }, "color": { "fixedColor": "#73BF69", "mode": "fixed" } } },
+      "targets": [{ "datasource": { "type": "prometheus" }, "expr": "ijbnet_active_users", "legendFormat": "active users" }],
+      "datasource": { "type": "prometheus" }
+    },
+    {
+      "id": 21,
+      "type": "timeseries",
+      "title": "DB Queries / sec",
+      "gridPos": { "x": 8, "y": 12, "w": 8, "h": 8 },
+      "options": { "tooltip": { "mode": "single" }, "legend": { "displayMode": "list", "placement": "bottom" } },
+      "fieldConfig": { "defaults": { "unit": "ops", "custom": { "lineWidth": 2, "fillOpacity": 10 }, "color": { "fixedColor": "#5794F2", "mode": "fixed" } } },
+      "targets": [{ "datasource": { "type": "prometheus" }, "expr": "sum(rate(ijbnet_db_queries_total[1m]))", "legendFormat": "queries/s" }],
+      "datasource": { "type": "prometheus" }
+    },
+    {
+      "id": 22,
+      "type": "timeseries",
+      "title": "Rate Limit Hits / sec",
+      "gridPos": { "x": 16, "y": 12, "w": 8, "h": 8 },
+      "options": { "tooltip": { "mode": "multi", "sort": "desc" }, "legend": { "displayMode": "list", "placement": "bottom" } },
+      "fieldConfig": { "defaults": { "unit": "ops", "custom": { "lineWidth": 2, "fillOpacity": 10 }, "color": { "fixedColor": "#FF9830", "mode": "fixed" } } },
+      "targets": [
+        { "datasource": { "type": "prometheus" }, "expr": "sum(rate(ijbnet_rate_limit_hits_total[1m]))", "legendFormat": "total 429/s" },
+        { "datasource": { "type": "prometheus" }, "expr": "rate(ijbnet_rate_limit_hits_total{context=\"429:login\"}[1m])", "legendFormat": "login limiter" },
+        { "datasource": { "type": "prometheus" }, "expr": "rate(ijbnet_rate_limit_hits_total{context=\"429:global\"}[1m])", "legendFormat": "global limiter" }
+      ],
+      "datasource": { "type": "prometheus" }
+    },
+    {
+      "id": 30,
+      "type": "timeseries",
+      "title": "Node.js Heap",
+      "gridPos": { "x": 0, "y": 20, "w": 12, "h": 8 },
+      "options": { "tooltip": { "mode": "multi", "sort": "desc" }, "legend": { "displayMode": "list", "placement": "bottom" } },
+      "fieldConfig": { "defaults": { "unit": "bytes", "custom": { "lineWidth": 2, "fillOpacity": 10 } } },
+      "targets": [
+        { "datasource": { "type": "prometheus" }, "expr": "sum(ijbnet_node_nodejs_heap_size_used_bytes)", "legendFormat": "heap used" },
+        { "datasource": { "type": "prometheus" }, "expr": "sum(ijbnet_node_nodejs_heap_size_total_bytes)", "legendFormat": "heap total" },
+        { "datasource": { "type": "prometheus" }, "expr": "sum(ijbnet_node_process_resident_memory_bytes)", "legendFormat": "RSS" }
+      ],
+      "datasource": { "type": "prometheus" }
+    },
+    {
+      "id": 31,
+      "type": "timeseries",
+      "title": "Event Loop Lag",
+      "gridPos": { "x": 12, "y": 20, "w": 12, "h": 8 },
+      "options": { "tooltip": { "mode": "multi", "sort": "desc" }, "legend": { "displayMode": "list", "placement": "bottom" } },
+      "fieldConfig": { "defaults": { "unit": "s", "custom": { "lineWidth": 2, "fillOpacity": 10 }, "color": { "fixedColor": "#F2495C", "mode": "fixed" } } },
+      "targets": [
+        { "datasource": { "type": "prometheus" }, "expr": "ijbnet_node_nodejs_eventloop_lag_p95_seconds", "legendFormat": "p95 lag" },
+        { "datasource": { "type": "prometheus" }, "expr": "ijbnet_node_nodejs_eventloop_lag_p99_seconds", "legendFormat": "p99 lag" }
+      ],
+      "datasource": { "type": "prometheus" }
+    }
+  ]
+}

@@ -2,6 +2,7 @@ import type { Sequelize } from 'sequelize';
 import { QueryTypes } from 'sequelize';
 import { sendEmail } from './email';
 import { config } from '../config';
+import { dbQueriesTotal, rateLimitHitsTotal, errors5xxTotal, activeUsersGauge } from './metrics';
 
 // ── Sequelize ref (injected after DB connects to avoid circular import) ────────
 let _seq: Sequelize | null = null;
@@ -37,6 +38,7 @@ let _dbRequestCount = 0;
 
 export function recordDbQuery(): void {
   _dbRequestCount++;
+  dbQueriesTotal.inc();
 }
 
 // ── HTTP requests + response times ───────────────────────────────────────────
@@ -100,6 +102,7 @@ export function snapshotMetrics(): void {
     errorRatePct:       errorRate,
   };
 
+  activeUsersGauge.set(point.activeUsers);
   metricsHistory.push(point);
   if (metricsHistory.length > HISTORY_SIZE) metricsHistory.shift();
 
@@ -258,6 +261,7 @@ export function record5xx(path: string, err: Error): void {
 }
 
 export function record429(context: '429:global' | '429:login'): void {
+  rateLimitHitsTotal.inc({ context });
   c429.increment();
   const count = c429.get();
   // Only alert when a burst is detected, not on every individual hit

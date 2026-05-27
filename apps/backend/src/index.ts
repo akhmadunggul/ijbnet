@@ -14,6 +14,7 @@ import apiRouter from './routes/index';
 import { errorHandler, notFound } from './middleware/errorHandler';
 import { config } from './config';
 import { record429, recordFatal, recordHighMemory, snapshotMetrics, recordHttpRequest, initMonitorDb } from './utils/monitor';
+import { httpRequestsTotal, httpRequestDuration, errors5xxTotal, normalizeRoute } from './utils/metrics';
 import { setCompletenessMode, type CompletenessMode } from './utils/completeness';
 import { GlobalSettings } from './db/models/index';
 
@@ -58,7 +59,15 @@ app.use(
 // Response-time recorder — fires on every request after rate limiter
 app.use((_req, res, next) => {
   const start = Date.now();
-  res.on('finish', () => recordHttpRequest(Date.now() - start, res.statusCode));
+  const route = normalizeRoute(_req.url);
+  res.on('finish', () => {
+    const durationMs = Date.now() - start;
+    const labels = { method: _req.method, route, status_code: String(res.statusCode) };
+    httpRequestsTotal.inc(labels);
+    httpRequestDuration.observe(labels, durationMs / 1000);
+    if (res.statusCode >= 500) errors5xxTotal.inc();
+    recordHttpRequest(durationMs, res.statusCode);
+  });
   next();
 });
 app.use(morgan(config.NODE_ENV === 'production' ? 'combined' : 'dev'));

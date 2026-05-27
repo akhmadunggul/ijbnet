@@ -129,6 +129,43 @@ services:
       retries: 3
       start_period: 30s
 
+  prometheus:
+    image: prom/prometheus:v2.51.0
+    container_name: ijbnet_prometheus
+    restart: unless-stopped
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.retention.time=30d'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.enable-lifecycle'
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus_data:/prometheus
+    networks:
+      - ijbnet
+
+  grafana:
+    image: grafana/grafana:10.4.0
+    container_name: ijbnet_grafana
+    restart: unless-stopped
+    environment:
+      GF_SERVER_ROOT_URL: https://jinzai.jobagus.id/grafana
+      GF_SERVER_SERVE_FROM_SUB_PATH: "true"
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_PASSWORD:-IJBNet@Grafana2025}
+      GF_USERS_ALLOW_SIGN_UP: "false"
+      GF_AUTH_ANONYMOUS_ENABLED: "false"
+      GF_ANALYTICS_REPORTING_ENABLED: "false"
+      GF_ANALYTICS_CHECK_FOR_UPDATES: "false"
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./monitoring/grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./monitoring/grafana/dashboards:/var/lib/grafana/dashboards:ro
+    depends_on:
+      - prometheus
+    networks:
+      - ijbnet
+
   frontend:
     build:
       context: .
@@ -159,6 +196,8 @@ volumes:
   caddy_data:
   caddy_config:
   lt_models:
+  prometheus_data:
+  grafana_data:
 
 networks:
   ijbnet:

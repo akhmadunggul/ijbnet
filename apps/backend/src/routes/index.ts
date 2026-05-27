@@ -12,6 +12,7 @@ import translateRouter from './translate';
 import { sequelize } from '../db/connection';
 import { redisClient } from '../utils/redis';
 import { getMetrics, recordDbError } from '../utils/monitor';
+import { register } from '../utils/metrics';
 
 const router = Router();
 
@@ -25,6 +26,20 @@ router.use('/manager', managerRouter);
 router.use('/superadmin', superadminRouter);
 router.use('/export', exportRouter);
 router.use('/translate', translateRouter);
+
+// Prometheus scrape endpoint — internal Docker network only (blocked externally by Caddy)
+router.get('/metrics', async (req, res) => {
+  const ip = req.ip ?? '';
+  const internal =
+    ip === '127.0.0.1' || ip === '::1' || ip === '::ffff:127.0.0.1' ||
+    ip.startsWith('172.') || ip.startsWith('10.') || ip.startsWith('192.168.');
+  if (!internal) {
+    res.status(403).end();
+    return;
+  }
+  res.set('Content-Type', register.contentType);
+  res.end(await register.metrics());
+});
 
 // Health check — returns rich status for ops dashboards and uptime monitors
 router.get('/health', async (_req, res) => {
