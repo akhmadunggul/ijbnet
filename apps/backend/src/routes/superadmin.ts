@@ -7,7 +7,7 @@ import multer from 'multer';
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 const pdfParse = require('pdf-parse') as (buf: Buffer) => Promise<{ text: string; numpages: number }>;
 import { authenticate, requireRole } from '../middleware/auth';
-import { redisClient } from '../utils/redis';
+import { redisClient, cacheGet, cacheSet, cacheDel } from '../utils/redis';
 import { getMetrics, recordDbError, getMetricsRange, type MetricsRange } from '../utils/monitor';
 import { config } from '../config';
 import { validateUuidParam } from '../middleware/rbac';
@@ -67,37 +67,53 @@ router.get('/consent-clause/active', wrap(async (_req, res) => {
 // ── GET /api/superadmin/candidate-tab-config — PUBLIC ────────────────────────
 // Candidate portal reads this to know which tabs to display.
 router.get('/candidate-tab-config', wrap(async (_req, res) => {
+  const cached = await cacheGet('gs:tab_config');
+  if (cached) { res.json(JSON.parse(cached)); return; }
   const row = await GlobalSettings.findOne({ where: { key: 'candidate_tab_config' } });
   const defaultConfig = { tab1: true, tab2: true, tab3: true, tab4: true, tab5: true, tab6: true, tab7: true, tab8: true, tab9: true };
-  res.json({ config: row ? (row.toJSON() as unknown as Record<string, unknown>)['value'] : defaultConfig });
+  const payload = { config: row ? (row.toJSON() as unknown as Record<string, unknown>)['value'] : defaultConfig };
+  await cacheSet('gs:tab_config', JSON.stringify(payload), 60);
+  res.json(payload);
 }));
 
 // ── GET /api/superadmin/translation-config — PUBLIC ──────────────────────────
 router.get('/translation-config', wrap(async (_req, res) => {
+  const cached = await cacheGet('gs:translate');
+  if (cached) { res.json(JSON.parse(cached)); return; }
   const row = await GlobalSettings.findOne({ where: { key: 'auto_translate_enabled' } });
-  const enabled = row ? (row.toJSON() as unknown as Record<string, unknown>)['value'] !== false : true;
-  res.json({ enabled });
+  const payload = { enabled: row ? (row.toJSON() as unknown as Record<string, unknown>)['value'] !== false : true };
+  await cacheSet('gs:translate', JSON.stringify(payload), 60);
+  res.json(payload);
 }));
 
 // ── GET /api/superadmin/cv-font — PUBLIC ─────────────────────────────────────
 router.get('/cv-font', wrap(async (_req, res) => {
+  const cached = await cacheGet('gs:cv_font');
+  if (cached) { res.json(JSON.parse(cached)); return; }
   const row = await GlobalSettings.findOne({ where: { key: 'cv_font' } });
-  const fontKey = row ? (row.toJSON() as unknown as Record<string, unknown>)['value'] : 'ms-mincho';
-  res.json({ fontKey });
+  const payload = { fontKey: row ? (row.toJSON() as unknown as Record<string, unknown>)['value'] : 'ms-mincho' };
+  await cacheSet('gs:cv_font', JSON.stringify(payload), 60);
+  res.json(payload);
 }));
 
 // ── GET /api/superadmin/cv-layout — PUBLIC ───────────────────────────────────
 router.get('/cv-layout', wrap(async (_req, res) => {
+  const cached = await cacheGet('gs:cv_layout');
+  if (cached) { res.json(JSON.parse(cached)); return; }
   const row = await GlobalSettings.findOne({ where: { key: 'cv_layout' } });
-  const layout = row ? (row.toJSON() as unknown as Record<string, unknown>)['value'] : 'layout1';
-  res.json({ layout });
+  const payload = { layout: row ? (row.toJSON() as unknown as Record<string, unknown>)['value'] : 'layout1' };
+  await cacheSet('gs:cv_layout', JSON.stringify(payload), 60);
+  res.json(payload);
 }));
 
 // ── GET /api/superadmin/completeness-mode — PUBLIC ───────────────────────────
 router.get('/completeness-mode', wrap(async (_req, res) => {
+  const cached = await cacheGet('gs:completeness');
+  if (cached) { res.json(JSON.parse(cached)); return; }
   const row = await GlobalSettings.findOne({ where: { key: 'completeness_mode' } });
-  const mode = row ? (row.toJSON() as unknown as Record<string, unknown>)['value'] : 'legacy';
-  res.json({ mode });
+  const payload = { mode: row ? (row.toJSON() as unknown as Record<string, unknown>)['value'] : 'legacy' };
+  await cacheSet('gs:completeness', JSON.stringify(payload), 60);
+  res.json(payload);
 }));
 
 // ── GET /api/superadmin/photo-bg-color — PUBLIC ───────────────────────────────
@@ -265,6 +281,7 @@ router.put('/translation-config', wrap(async (req, res) => {
     await row.update({ value: enabled });
   }
 
+  await cacheDel('gs:translate');
   res.json({ enabled });
 }));
 
@@ -302,6 +319,7 @@ router.put('/cv-font', wrap(async (req, res) => {
     await row.update({ value: fontKey });
   }
 
+  await cacheDel('gs:cv_font');
   res.json({ fontKey });
 }));
 
@@ -319,6 +337,7 @@ router.put('/cv-layout', wrap(async (req, res) => {
     await row.update({ value: layout });
   }
 
+  await cacheDel('gs:cv_layout');
   res.json({ layout });
 }));
 
@@ -353,6 +372,7 @@ router.put('/completeness-mode', wrap(async (req, res) => {
   if (!created) await row.update({ value: mode });
 
   setCompletenessMode(mode);
+  await cacheDel('gs:completeness');
   res.json({ mode });
 }));
 
@@ -388,6 +408,7 @@ router.put('/candidate-tab-config', wrap(async (req, res) => {
     await row.update({ value: config });
   }
 
+  await cacheDel('gs:tab_config');
   res.json({ config });
 }));
 
@@ -602,6 +623,7 @@ router.post('/lpks', wrap(async (req, res) => {
     phone: phone ?? null,
     assignedAdmin: assignedAdmin && isUUID(assignedAdmin) ? assignedAdmin : null,
   });
+  await cacheDel('lpks:active');
   res.status(201).json({ lpk: lpk.toJSON() });
 }));
 
@@ -628,6 +650,7 @@ router.put('/lpks/:id', validateUuidParam('id'), wrap(async (req, res) => {
       ? (assignedAdmin && isUUID(assignedAdmin) ? assignedAdmin : null)
       : lpk.assignedAdmin,
   });
+  await cacheDel('lpks:active');
   res.json({ lpk: lpk.toJSON() });
 }));
 
@@ -635,6 +658,7 @@ router.patch('/lpks/:id/deactivate', validateUuidParam('id'), wrap(async (req, r
   const lpk = await Lpk.findByPk(req.params['id']);
   if (!lpk) { res.status(404).json({ error: 'NOT_FOUND' }); return; }
   await lpk.update({ isActive: false });
+  await cacheDel('lpks:active');
   res.json({ lpk: lpk.toJSON() });
 }));
 

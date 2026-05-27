@@ -33,9 +33,15 @@ import { calcCompleteness } from '../utils/completeness';
 import { validateImageBuffer, savePhoto } from '../utils/storage';
 import type { PhotoSlot } from '../utils/storage';
 import { encrypt } from '../utils/crypto';
+import { cacheGet, cacheSet, cacheDel } from '../utils/redis';
 import { v4 as uuidv4 } from 'uuid';
 
 const router = Router();
+
+/** Drop the cached /candidates/me response for a given user. Fire-and-forget. */
+function invalidateMe(userId: string): void {
+  cacheDel(`cand:me:${userId}`).catch(() => { /* ignore */ });
+}
 
 function serializeTimeline(events: CandidateTimeline[]): unknown[] {
   return events.map((e, i) => {
@@ -64,12 +70,18 @@ router.get('/ssw-options', authenticate, async (_req: Request, res: Response): P
 
 // ── GET /api/candidates/lpks — public list for onboarding dropdown ────────────
 router.get('/lpks', authenticate, requireRole('candidate'), async (_req: Request, res: Response): Promise<void> => {
+  const CACHE_KEY = 'lpks:active';
+  const cached = await cacheGet(CACHE_KEY);
+  if (cached) { res.json(JSON.parse(cached)); return; }
+
   const lpks = await Lpk.findAll({
     where: { isActive: true },
     attributes: ['id', 'name', 'city'],
     order: [['name', 'ASC']],
   });
-  res.json({ lpks: lpks.map((l) => l.toJSON()) });
+  const payload = { lpks: lpks.map((l) => l.toJSON()) };
+  await cacheSet(CACHE_KEY, JSON.stringify(payload), 300);
+  res.json(payload);
 });
 
 // All candidate routes require auth + candidate role
@@ -102,6 +114,10 @@ const BLOCKED_FIELDS = new Set([
 
 // ── GET /api/candidates/me ────────────────────────────────────────────────────
 router.get('/me', async (req: Request, res: Response): Promise<void> => {
+  const cacheKey = `cand:me:${req.user!.sub}`;
+  const cached = await cacheGet(cacheKey);
+  if (cached) { res.json(JSON.parse(cached)); return; }
+
   const candidate = await findMyCandidate(req.user!.sub);
   if (!candidate) {
     res.json({ candidate: null, isNewUser: true });
@@ -117,14 +133,16 @@ router.get('/me', async (req: Request, res: Response): Promise<void> => {
     activeClause !== null &&
     candidate.consentClauseId === activeClause.id;
 
-  res.json({
+  const payload = {
     candidate: {
       ...serializeCandidate(data, 'candidate'),
       completeness,
       consentUpToDate,
       activeConsentClauseId: activeClause?.id ?? null,
     },
-  });
+  };
+  await cacheSet(cacheKey, JSON.stringify(payload), 10);
+  res.json(payload);
 });
 
 // ── PATCH /api/candidates/me ──────────────────────────────────────────────────
@@ -186,6 +204,7 @@ router.patch('/me', async (req: Request, res: Response): Promise<void> => {
   );
 
   await candidate.update(updates);
+  invalidateMe(req.user!.sub);
 
   const fresh = await findMyCandidate(req.user!.sub);
   const data = fresh!.toJSON() as unknown as Record<string, unknown>;
@@ -234,6 +253,7 @@ router.patch('/me/consent', authenticate, requireRole('candidate'), async (req: 
     recordTimelineEvent(candidate.id, 'consent_given', req.user!.sub, 'candidate')
       .catch((e) => console.error('[consent] timeline event failed:', e));
 
+    invalidateMe(req.user!.sub);
     res.json({ message: 'Consent recorded.' });
   } catch (err) {
     console.error('[PATCH /me/consent] error:', err);
@@ -260,6 +280,7 @@ router.patch('/me/nik', async (req: Request, res: Response): Promise<void> => {
   }
 
   await candidate.update({ nikEncrypted: encrypt(nik) });
+  invalidateMe(req.user!.sub);
 
   await AuditLog.create({
     userId: req.user!.sub,
@@ -304,6 +325,7 @@ router.post('/me/submit', async (req: Request, res: Response): Promise<void> => 
   }
 
   await candidate.update({ profileStatus: 'submitted' });
+  invalidateMe(req.user!.sub);
 
   // Notify managers (global) + admins scoped to this candidate's LPK
   const admins = await User.findAll({
@@ -377,6 +399,7 @@ router.put('/me/career', async (req: Request, res: Response): Promise<void> => {
     );
   }
 
+  invalidateMe(req.user!.sub);
   const career = await CandidateCareer.findAll({ where: { candidateId: candidate.id }, order: [['startDate', 'ASC'], ['sortOrder', 'ASC']] });
   res.json({ career: career.map((c) => c.toJSON()) });
 });
@@ -412,6 +435,7 @@ router.put('/me/certifications', async (req: Request, res: Response): Promise<vo
     );
   }
 
+  invalidateMe(req.user!.sub);
   const certifications = await CandidateCertification.findAll({
     where: { candidateId: candidate.id },
     order: [['createdAt', 'ASC']],
@@ -451,6 +475,7 @@ router.put('/me/education-history', async (req: Request, res: Response): Promise
     );
   }
 
+  invalidateMe(req.user!.sub);
   const educationHistory = await CandidateEducationHistory.findAll({
     where: { candidateId: candidate.id },
     order: [['sortOrder', 'ASC']],
@@ -489,6 +514,7 @@ router.put('/me/tests', async (req: Request, res: Response): Promise<void> => {
     );
   }
 
+  invalidateMe(req.user!.sub);
   const tests = await CandidateJapaneseTest.findAll({ where: { candidateId: candidate.id }, order: [['testDate', 'DESC']] });
   res.json({ tests: tests.map((t) => t.toJSON()) });
 });
@@ -543,6 +569,7 @@ router.post(
 
     const updateField = slot === 'closeup' ? 'closeupUrl' : 'fullbodyUrl';
     await candidate.update({ [updateField]: urlPath });
+    invalidateMe(req.user!.sub);
 
     await AuditLog.create({
       userId: req.user!.sub,

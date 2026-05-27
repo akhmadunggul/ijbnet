@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import { isUUID } from 'validator';
 import { AuditLog } from '../db/models/index';
+import { auditDebounced } from '../utils/redis';
 import type { UserRole } from '@ijbnet/shared';
 
 const PII_ROLES: UserRole[] = ['admin', 'manager', 'recruiter', 'super_admin'];
@@ -22,16 +23,19 @@ export function auditCandidateAccess(action: string) {
       targetCandidateId && isUUID(targetCandidateId) ? targetCandidateId : null;
 
     try {
-      await AuditLog.create({
-        userId: user.sub,
-        action,
-        entityType: 'candidate',
-        entityId: validTarget ?? undefined,
-        targetCandidateId: validTarget ?? undefined,
-        ipAddress: req.ip ?? null,
-        userAgent: req.headers['user-agent'] ?? null,
-        payload: null,
-      });
+      const skip = await auditDebounced(user.sub, validTarget, action);
+      if (!skip) {
+        await AuditLog.create({
+          userId: user.sub,
+          action,
+          entityType: 'candidate',
+          entityId: validTarget ?? undefined,
+          targetCandidateId: validTarget ?? undefined,
+          ipAddress: req.ip ?? null,
+          userAgent: req.headers['user-agent'] ?? null,
+          payload: null,
+        });
+      }
     } catch (err) {
       // Audit failure must not block the request — log and continue
       console.error('Audit log write failed:', err);
