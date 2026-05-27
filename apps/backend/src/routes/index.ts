@@ -29,9 +29,12 @@ router.use('/translate', translateRouter);
 
 // Prometheus scrape endpoint — internal Docker network only (blocked externally by Caddy)
 router.get('/metrics', async (req, res) => {
-  const ip = req.ip ?? '';
+  // req.ip may be an IPv4-mapped IPv6 address (::ffff:172.x.x.x) from Docker.
+  // Strip the ::ffff: prefix before checking to normalise all formats.
+  const raw = req.ip ?? '';
+  const ip = raw.startsWith('::ffff:') ? raw.slice(7) : raw;
   const internal =
-    ip === '127.0.0.1' || ip === '::1' || ip === '::ffff:127.0.0.1' ||
+    ip === '127.0.0.1' || ip === '::1' ||
     ip.startsWith('172.') || ip.startsWith('10.') || ip.startsWith('192.168.');
   if (!internal) {
     res.status(403).end();

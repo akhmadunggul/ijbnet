@@ -106,6 +106,7 @@ services:
       UV_THREADPOOL_SIZE: 64
       # Cap Node.js heap to 2 GB — leaves room for MySQL buffer pool + OS
       NODE_OPTIONS: --max-old-space-size=2048
+      CLUSTER_WORKERS: "1"
     ports:
       - "127.0.0.1:3001:3001"   # loopback-only — used by server-side k6 tests; not public
     volumes:
