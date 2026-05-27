@@ -212,6 +212,7 @@ apps/frontend/src/
 - v0.5.7 — Extract image processing into dedicated sidecar container (apps/image-processor/ FastAPI); model loads once at startup; backend calls HTTP instead of spawning subprocess; fix consent modal stuck open when audit/timeline write fails
 - v0.5.8 — CV completeness: 21-field baseline (removes career + tests/certs not required at registration); superadmin setting descriptions updated; Submit Profile button always visible but disabled until profile 100% complete + consent given
 - v0.5.9 — Node.js cluster mode: master forks os.cpus() workers; dead workers auto-restart; SET_COMPLETENESS_MODE IPC broadcast keeps in-memory state consistent; snapshotMetrics() runs on worker 1 only to prevent duplicate DB writes; CLUSTER_WORKERS env override
+- v0.6.0 — Prometheus + Grafana monitoring stack: prom-client metrics (HTTP req/s, latency histogram, DB queries, 429 hits, 5xx errors, active users, Node.js heap/event loop); /api/metrics scrape endpoint (internal only); Grafana served at /grafana subpath via Caddy; auto-provisioned datasource + IJBNet overview dashboard; superadmin monitor page replaced with health cards + Grafana link; DB pool max raised 35→50; k6 load test expanded to 50 VUs / 50 candidate accounts
 
-Current: v0.5.9
+Current: v0.6.0
 Live at: https://jinzai.jobagus.id
