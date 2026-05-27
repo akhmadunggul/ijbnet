@@ -26,6 +26,11 @@ const loginLimiter = rateLimit({
     const email = (req.body?.email ?? '').toLowerCase().trim();
     return email || req.ip || 'unknown';
   },
+  // Authorised load-test runners bypass the per-email login limiter too.
+  skip: (req) => {
+    const bypassKey = config.LOAD_TEST_BYPASS_KEY;
+    return Boolean(bypassKey && req.headers['x-load-test-key'] === bypassKey);
+  },
   handler: (_req, res) => {
     record429('429:login');
     res.status(429).json({ error: 'TOO_MANY_REQUESTS', message: 'Too many login attempts. Please try again later.' });
