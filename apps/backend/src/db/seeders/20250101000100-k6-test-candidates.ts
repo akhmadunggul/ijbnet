@@ -78,7 +78,8 @@ module.exports = {
       if ((existingCand as { id: string }[]).length === 0) {
         await queryInterface.bulkInsert('candidates', [
           {
-            id: userId,            // reuse userId as candidateId for simplicity
+            id: userId,
+            userId,
             candidateCode: acc.code,
             lpkId,
             profileStatus: 'approved',
