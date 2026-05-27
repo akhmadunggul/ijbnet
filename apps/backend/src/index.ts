@@ -1,4 +1,5 @@
 import './config'; // Load env vars first
+import cluster from 'cluster';
 import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
@@ -118,8 +119,12 @@ async function start(): Promise<void> {
       console.log(`Backend running on http://localhost:${config.PORT}`);
     });
 
-    // Metrics snapshot every minute — populates charts in the monitor dashboard
-    setInterval(() => snapshotMetrics(), 60_000).unref();
+    // Metrics snapshot every minute — only on worker 1 (or non-cluster) to
+    // avoid N duplicate DB writes when running in cluster mode.
+    const isWorker1 = !cluster.isWorker || cluster.worker?.id === 1;
+    if (isWorker1) {
+      setInterval(() => snapshotMetrics(), 60_000).unref();
+    }
   } catch (err) {
     console.error('Failed to start server:', err);
     process.exit(1);

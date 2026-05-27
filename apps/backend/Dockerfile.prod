@@ -65,4 +65,4 @@ RUN mkdir -p /app/uploads
 
 EXPOSE 3001
 
-CMD ["sh", "-c", "cd /app/apps/backend && npx sequelize-cli db:migrate && exec node /app/apps/backend/dist/apps/backend/src/index.js"]
+CMD ["sh", "-c", "cd /app/apps/backend && npx sequelize-cli db:migrate && exec node /app/apps/backend/dist/apps/backend/src/cluster.js"]

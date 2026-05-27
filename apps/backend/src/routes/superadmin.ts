@@ -372,6 +372,8 @@ router.put('/completeness-mode', wrap(async (req, res) => {
   if (!created) await row.update({ value: mode });
 
   setCompletenessMode(mode);
+  // Broadcast to sibling workers in cluster mode so their in-memory mode stays in sync
+  if (process.send) process.send({ type: 'SET_COMPLETENESS_MODE', mode });
   await cacheDel('gs:completeness');
   res.json({ mode });
 }));

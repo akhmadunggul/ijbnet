@@ -211,6 +211,7 @@ apps/frontend/src/
 - v0.5.6 — Replace background removal engine: rembg/u2netp → briaai/RMBG-1.4 (HuggingFace); OpenCV Haar Cascade face-centred crop for closeup; Gaussian blur alpha compositing for fringe-free edges; Python script at apps/backend/src/python/remove_bg.py
 - v0.5.7 — Extract image processing into dedicated sidecar container (apps/image-processor/ FastAPI); model loads once at startup; backend calls HTTP instead of spawning subprocess; fix consent modal stuck open when audit/timeline write fails
 - v0.5.8 — CV completeness: 21-field baseline (removes career + tests/certs not required at registration); superadmin setting descriptions updated; Submit Profile button always visible but disabled until profile 100% complete + consent given
+- v0.5.9 — Node.js cluster mode: master forks os.cpus() workers; dead workers auto-restart; SET_COMPLETENESS_MODE IPC broadcast keeps in-memory state consistent; snapshotMetrics() runs on worker 1 only to prevent duplicate DB writes; CLUSTER_WORKERS env override
 
-Current: v0.5.8
+Current: v0.5.9
 Live at: https://jinzai.jobagus.id
