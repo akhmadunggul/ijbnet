@@ -10,6 +10,28 @@ from transformers import pipeline as hf_pipeline
 
 _pipe = None
 
+# Passport-format validation tolerance (10 %).
+# Used for both the square-aspect check and the crop-coverage check.
+_PASSPORT_TOL = 0.10
+
+
+def _passport_ok(w: int, h: int, x1: int, y1: int, x2: int, y2: int) -> bool:
+    """Return True when the frame already satisfies passport-photo framing.
+
+    Both conditions must hold:
+      - The image is already nearly square (aspect ratio within _PASSPORT_TOL).
+      - The computed crop window covers ≥ (1 - _PASSPORT_TOL) of the frame in
+        both axes without requiring any out-of-bounds padding.
+    If the crop window extends outside the frame the photo is clearly too tight
+    around the face, so this returns False immediately.
+    """
+    if x1 < 0 or y1 < 0 or x2 > w or y2 > h:
+        return False
+    aspect_ok = abs(w - h) / max(w, h) <= _PASSPORT_TOL
+    crop_w, crop_h = x2 - x1, y2 - y1
+    coverage_ok = (crop_w / w >= 1 - _PASSPORT_TOL) and (crop_h / h >= 1 - _PASSPORT_TOL)
+    return aspect_ok and coverage_ok
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -53,27 +75,36 @@ async def process(
                 gray, scaleFactor=1.1, minNeighbors=5, minSize=(60, 60))
 
             if len(faces) > 0:
-                x, y, w, h = faces[0]
-                cx, cy = x + w // 2, y + h // 2
-                crop_h = int(h * 2.8)
-                crop_w = int(crop_h * TARGET_W / TARGET_H)
-                x1, y1 = cx - crop_w // 2, cy - int(h * 1.1)
-                x2, y2 = x1 + crop_w, y1 + crop_h
-                p_left = max(0, -x1)
-                p_top = max(0, -y1)
-                p_right = max(0, x2 - w_orig)
-                p_bottom = max(0, y2 - h_orig)
-                if any([p_left, p_top, p_right, p_bottom]):
-                    img_cv = cv2.copyMakeBorder(
-                        img_cv, p_top, p_bottom, p_left, p_right,
-                        cv2.BORDER_CONSTANT, value=[255, 255, 255])
-                    x1 += p_left; x2 += p_left; y1 += p_top; y2 += p_top
-                img_cv = img_cv[y1:y2, x1:x2]
+                fx, fy, fw, fh = faces[0]
+                cx, cy = fx + fw // 2, fy + fh // 2
+                crop_h_px = int(fh * 2.8)
+                crop_w_px = int(crop_h_px * TARGET_W / TARGET_H)
+                x1 = cx - crop_w_px // 2
+                y1 = cy - int(fh * 1.1)
+                x2 = x1 + crop_w_px
+                y2 = y1 + crop_h_px
+
+                if not _passport_ok(w_orig, h_orig, x1, y1, x2, y2):
+                    # Frame does not already match passport framing — crop it.
+                    p_left   = max(0, -x1)
+                    p_top    = max(0, -y1)
+                    p_right  = max(0, x2 - w_orig)
+                    p_bottom = max(0, y2 - h_orig)
+                    if any([p_left, p_top, p_right, p_bottom]):
+                        img_cv = cv2.copyMakeBorder(
+                            img_cv, p_top, p_bottom, p_left, p_right,
+                            cv2.BORDER_CONSTANT, value=[255, 255, 255])
+                        x1 += p_left; x2 += p_left; y1 += p_top; y2 += p_top
+                    img_cv = img_cv[y1:y2, x1:x2]
+                # else: frame already matches passport framing — skip coordinate-shifting.
+
             else:
-                side = min(h_orig, w_orig)
-                cx, cy = w_orig // 2, h_orig // 2
-                img_cv = img_cv[cy - side // 2:cy + side // 2,
-                                cx - side // 2:cx + side // 2]
+                # No face detected; centre-square crop only when the image is not square.
+                if abs(w_orig - h_orig) / max(w_orig, h_orig) > _PASSPORT_TOL:
+                    side = min(h_orig, w_orig)
+                    cx, cy = w_orig // 2, h_orig // 2
+                    img_cv = img_cv[cy - side // 2:cy + side // 2,
+                                    cx - side // 2:cx + side // 2]
 
             img_cv = cv2.resize(img_cv, (TARGET_W, TARGET_H), interpolation=cv2.INTER_CUBIC)
 

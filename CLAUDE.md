@@ -215,6 +215,7 @@ apps/frontend/src/
 - v0.6.0 — Prometheus + Grafana monitoring stack: prom-client metrics (HTTP req/s, latency histogram, DB queries, 429 hits, 5xx errors, active users, Node.js heap/event loop); /api/metrics scrape endpoint (internal only); Grafana served at /grafana subpath via Caddy; auto-provisioned datasource + IJBNet overview dashboard; superadmin monitor page replaced with health cards + Grafana link; DB pool max raised 35→50; k6 load test expanded to 50 VUs / 50 candidate accounts
 - v0.6.1 — Fix Grafana "no data": Prometheus now scrapes backend:3001/api/metrics (not port 9464); IPv4-mapped IPv6 IP allowlist fix (strip ::ffff: prefix before checking); CLUSTER_WORKERS=1 in prod compose to ensure stable single worker
 - v0.6.2 — Monitoring stack confirmed operational: Prometheus target UP, all ijbnet_* metrics flowing, Grafana IJBNet Overview dashboard live at /grafana
+- v0.6.3 — Fix closeup photo processing: validate passport framing before cropping; if the frame is already square (±10%) and the computed crop window covers ≥90% of the original frame, skip coordinate-shifting entirely and run only background removal on the full frame; no-face fallback applies the same square-aspect check before centre-cropping
 
-Current: v0.6.2
+Current: v0.6.3
 Live at: https://jinzai.jobagus.id
