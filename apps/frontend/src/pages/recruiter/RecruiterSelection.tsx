@@ -137,7 +137,7 @@ function BodyCheckCard({ c, lang }: { c: RecruiterCandidate; lang: string }) {
   );
 }
 
-function JapaneseDrawer({
+function JapaneseModal({
   bc,
   lang,
   onClose,
@@ -151,12 +151,15 @@ function JapaneseDrawer({
   const highest = getHighestJlpt(c.tests ?? []);
 
   return (
-    <>
-      <div className="fixed inset-0 z-40 bg-black/30" onClick={onClose} />
-      <div className="fixed right-0 top-0 h-full z-50 w-[480px] max-w-full bg-white shadow-xl flex flex-col">
-        <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
+    <div className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4" onClick={onClose}>
+      <div
+        className="bg-white rounded-2xl w-full max-w-lg max-h-[85vh] flex flex-col overflow-hidden"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100 shrink-0">
           <div>
             <p className="font-semibold text-navy-900">{c.fullName}</p>
+            {c.nameKatakana && <p className="text-xs text-gray-500">{c.nameKatakana}</p>}
             <p className="text-xs text-gray-400">{c.candidateCode}</p>
           </div>
           <button onClick={onClose} className="text-gray-400 hover:text-gray-600 text-xl">×</button>
@@ -259,7 +262,7 @@ function JapaneseDrawer({
           )}
         </div>
       </div>
-    </>
+    </div>
   );
 }
 
@@ -326,23 +329,29 @@ function FullbodyModal({ bc, lang, onClose }: { bc: RecruiterBatchCandidate | nu
   const c = bc.candidate;
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/70 flex items-center justify-center p-4" onClick={onClose}>
+    <div className="fixed inset-0 z-50 bg-black/95 flex flex-col" onClick={onClose}>
+      {/* Minimal header on dark canvas */}
       <div
-        className="bg-white rounded-2xl max-w-sm w-full overflow-hidden"
+        className="flex items-center justify-between px-5 py-3 shrink-0"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex items-center justify-between px-5 py-3 border-b border-gray-100">
-          <p className="font-semibold text-navy-900 text-sm">{c.fullName}</p>
-          <button onClick={onClose} className="text-gray-400 hover:text-gray-600 text-xl">×</button>
+        <div>
+          <p className="font-semibold text-white text-sm">{c.fullName}</p>
+          {c.nameKatakana && <p className="text-xs text-white/50">{c.nameKatakana}</p>}
         </div>
-        <div className="flex items-center justify-center bg-gray-50 p-4">
-          <AuthImage
-            src={c.fullbodyUrl}
-            alt={c.fullName}
-            className="max-h-[70vh] max-w-full object-contain rounded-lg"
-            fallback={<div className="text-xs text-gray-400 py-12">{lang === 'ja' ? '読込中...' : 'Memuat...'}</div>}
-          />
-        </div>
+        <button onClick={onClose} className="text-white/60 hover:text-white text-2xl leading-none">×</button>
+      </div>
+      {/* Image fills remaining viewport height */}
+      <div
+        className="flex-1 min-h-0 flex items-center justify-center p-4"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <AuthImage
+          src={c.fullbodyUrl}
+          alt={c.fullName}
+          className="max-h-full max-w-full object-contain"
+          fallback={<p className="text-white/50 text-sm">{lang === 'ja' ? '読込中...' : 'Memuat...'}</p>}
+        />
       </div>
     </div>
   );
@@ -1029,7 +1038,7 @@ export default function RecruiterSelection() {
       </div>
 
       {/* Drawers / Modals */}
-      <JapaneseDrawer bc={drawerBc} lang={lang} onClose={() => setDrawerBc(null)} />
+      <JapaneseModal bc={drawerBc} lang={lang} onClose={() => setDrawerBc(null)} />
       <VideoModal bc={videoBc} lang={lang} onClose={() => setVideoBc(null)} />
       <ProfileModal bc={profileBc} lang={lang} onClose={() => setProfileBc(null)} />
       <FullbodyModal bc={fullbodyBc} lang={lang} onClose={() => setFullbodyBc(null)} />
