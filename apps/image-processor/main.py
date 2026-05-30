@@ -10,27 +10,41 @@ from transformers import pipeline as hf_pipeline
 
 _pipe = None
 
-# Passport-format validation tolerance (10 %).
-# Used for both the square-aspect check and the crop-coverage check.
-_PASSPORT_TOL = 0.10
+# Passport-format validation tolerance (15 %).
+_PASSPORT_TOL = 0.15
 
 
 def _passport_ok(w: int, h: int, x1: int, y1: int, x2: int, y2: int) -> bool:
     """Return True when the frame already satisfies passport-photo framing.
 
-    Both conditions must hold:
-      - The image is already nearly square (aspect ratio within _PASSPORT_TOL).
-      - The computed crop window covers ≥ (1 - _PASSPORT_TOL) of the frame in
-        both axes without requiring any out-of-bounds padding.
-    If the crop window extends outside the frame the photo is clearly too tight
-    around the face, so this returns False immediately.
+    Three conditions must all hold:
+      1. Nearly square aspect ratio (within _PASSPORT_TOL).
+      2. Face horizontally centred — left and right margins differ by ≤ _PASSPORT_TOL.
+      3a. The required crop height fills ≥ (1 - _PASSPORT_TOL) of the frame: the photo
+          is already zoomed-in to passport proportions; skip the crop entirely.
+      3b. Smaller crop window: must sit within the frame (no padding) and trim ≤
+          _PASSPORT_TOL from every edge.
+
+    NOTE: for real passport photos the face is large (fh / h ~ 0.5–0.8), so the crop
+    formula produces a window taller than the frame.  Checking out-of-bounds first
+    (as the old code did) made _passport_ok always return False for these photos.
+    Condition 3a handles this case correctly.
     """
+    # 1. Square aspect ratio
+    if abs(w - h) / max(w, h) > _PASSPORT_TOL:
+        return False
+    # 2. Face horizontally centred (left margin ≈ right margin)
+    if abs(x1 - (w - x2)) / w > _PASSPORT_TOL:
+        return False
+    crop_h = y2 - y1
+    # 3a. Face already fills the frame height → passport-format zoom level
+    if crop_h >= h * (1 - _PASSPORT_TOL):
+        return True
+    # 3b. Smaller crop: must fit without padding and without over-trimming any edge
     if x1 < 0 or y1 < 0 or x2 > w or y2 > h:
         return False
-    aspect_ok = abs(w - h) / max(w, h) <= _PASSPORT_TOL
-    crop_w, crop_h = x2 - x1, y2 - y1
-    coverage_ok = (crop_w / w >= 1 - _PASSPORT_TOL) and (crop_h / h >= 1 - _PASSPORT_TOL)
-    return aspect_ok and coverage_ok
+    max_trim = max(x1 / w, y1 / h, (w - x2) / w, (h - y2) / h)
+    return max_trim <= _PASSPORT_TOL
 
 
 @asynccontextmanager
@@ -85,17 +99,27 @@ async def process(
                 y2 = y1 + crop_h_px
 
                 if not _passport_ok(w_orig, h_orig, x1, y1, x2, y2):
-                    # Frame does not already match passport framing — crop it.
-                    p_left   = max(0, -x1)
-                    p_top    = max(0, -y1)
-                    p_right  = max(0, x2 - w_orig)
-                    p_bottom = max(0, y2 - h_orig)
-                    if any([p_left, p_top, p_right, p_bottom]):
-                        img_cv = cv2.copyMakeBorder(
-                            img_cv, p_top, p_bottom, p_left, p_right,
-                            cv2.BORDER_CONSTANT, value=[255, 255, 255])
-                        x1 += p_left; x2 += p_left; y1 += p_top; y2 += p_top
-                    img_cv = img_cv[y1:y2, x1:x2]
+                    if crop_h_px > min(w_orig, h_orig):
+                        # The formula window exceeds the frame (face is large / portrait
+                        # photo). Adding padding would zoom the face out drastically.
+                        # Instead: clamp to the largest fitting square, keeping the face
+                        # at the same proportional headroom (face top at ~21% from top).
+                        side = min(w_orig, h_orig)
+                        x1_c = max(0, min(cx - side // 2, w_orig - side))
+                        y1_c = max(0, min(fy - int(side * 0.6 / 2.8), h_orig - side))
+                        img_cv = img_cv[y1_c:y1_c + side, x1_c:x1_c + side]
+                    else:
+                        # Normal crop — pad with white only where needed.
+                        p_left   = max(0, -x1)
+                        p_top    = max(0, -y1)
+                        p_right  = max(0, x2 - w_orig)
+                        p_bottom = max(0, y2 - h_orig)
+                        if any([p_left, p_top, p_right, p_bottom]):
+                            img_cv = cv2.copyMakeBorder(
+                                img_cv, p_top, p_bottom, p_left, p_right,
+                                cv2.BORDER_CONSTANT, value=[255, 255, 255])
+                            x1 += p_left; x2 += p_left; y1 += p_top; y2 += p_top
+                        img_cv = img_cv[y1:y2, x1:x2]
                 # else: frame already matches passport framing — skip coordinate-shifting.
 
             else:

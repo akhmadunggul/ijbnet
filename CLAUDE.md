@@ -217,6 +217,7 @@ apps/frontend/src/
 - v0.6.2 — Monitoring stack confirmed operational: Prometheus target UP, all ijbnet_* metrics flowing, Grafana IJBNet Overview dashboard live at /grafana
 - v0.6.3 — Fix closeup photo processing: validate passport framing before cropping; if the frame is already square (±10%) and the computed crop window covers ≥90% of the original frame, skip coordinate-shifting entirely and run only background removal on the full frame; no-face fallback applies the same square-aspect check before centre-cropping
 - v0.6.4 — Bump version: sync all package.json versions (root, backend, frontend) to match CLAUDE.md version track
+- v0.6.5 — Fix closeup photo processing (take 2): rewrite _passport_ok with three-condition logic (square aspect, horizontal symmetry, face-fills-frame); add clamped-square-crop path for portrait photos where face is large (crop formula exceeds frame), preserving 21% face-top headroom without padding; fix Sharp fallback to use fit:fill instead of fit:cover for already-square inputs
 
-Current: v0.6.4
+Current: v0.6.5
 Live at: https://jinzai.jobagus.id

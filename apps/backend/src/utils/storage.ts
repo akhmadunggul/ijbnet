@@ -80,7 +80,15 @@ export async function savePhoto(
   } else {
     let pipeline = sharp(workBuffer);
     if (slot === 'closeup') {
-      pipeline = pipeline.resize(800, 800, { fit: 'cover', position: 'centre' });
+      const meta = await sharp(workBuffer).metadata();
+      const w = meta.width ?? 0;
+      const h = meta.height ?? 0;
+      const isSquare = w > 0 && h > 0 && Math.abs(w - h) / Math.max(w, h) <= 0.15;
+      // Already square: plain resize preserves the original framing.
+      // Non-square: center-crop to square then resize (existing behaviour).
+      pipeline = isSquare
+        ? pipeline.resize(800, 800, { fit: 'fill' })
+        : pipeline.resize(800, 800, { fit: 'cover', position: 'centre' });
     } else {
       pipeline = pipeline.resize(null, 1920, { fit: 'inside', withoutEnlargement: true });
     }
