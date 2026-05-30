@@ -12,6 +12,7 @@ interface InterviewEntry extends InterviewProposalData {
       id: string;
       candidateCode: string;
       fullName: string;
+      nameKatakana: string | null;
       sswFieldId: string | null;
       sswFieldJa: string | null;
     };
@@ -89,6 +90,9 @@ export default function RecruiterInterviews() {
                     {cand ? (
                       <div>
                         <p className="font-medium text-gray-900">{cand.fullName}</p>
+                        {cand.nameKatakana && (
+                          <p className="text-xs text-gray-500">{cand.nameKatakana}</p>
+                        )}
                         <p className="text-xs text-gray-400 font-mono">{cand.candidateCode}</p>
                       </div>
                     ) : (
@@ -96,7 +100,7 @@ export default function RecruiterInterviews() {
                     )}
                   </div>
 
-                  <div className="hidden sm:block text-xs text-gray-500 shrink-0">
+                  <div className="text-xs text-gray-500 shrink-0">
                     {iv.proposedDates && iv.proposedDates.length > 0 ? (
                       <ul className="space-y-0.5">
                         {iv.proposedDates.map((d, i) => (

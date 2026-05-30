@@ -25,7 +25,7 @@ function ProposalModal({
   const { t, i18n } = useTranslation();
   const lang = i18n.language;
   const queryClient = useQueryClient();
-  const [dates, setDates] = useState<string[]>(['', '', '']);
+  const [dates, setDates] = useState<string[]>(['']);
 
   const mutation = useMutation({
     mutationFn: (proposedDates: string[]) =>
@@ -51,22 +51,41 @@ function ProposalModal({
         <p className="text-xs text-gray-400">{t('selection.proposeDateHint')}</p>
         <div className="space-y-2">
           {dates.map((d, i) => (
-            <div key={i}>
-              <label className="block text-xs text-gray-400 mb-1">
-                {t('selection.proposeDateLabel', { num: i + 1 })}
-              </label>
-              <input
-                type="datetime-local"
-                value={d}
-                onChange={(e) => {
-                  const next = [...dates];
-                  next[i] = e.target.value;
-                  setDates(next);
-                }}
-                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-navy-300"
-              />
+            <div key={i} className="flex items-end gap-2">
+              <div className="flex-1">
+                <label className="block text-xs text-gray-400 mb-1">
+                  {t('selection.proposeDateLabel', { num: i + 1 })}
+                </label>
+                <input
+                  type="datetime-local"
+                  value={d}
+                  onChange={(e) => {
+                    const next = [...dates];
+                    next[i] = e.target.value;
+                    setDates(next);
+                  }}
+                  className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-navy-300"
+                />
+              </div>
+              {dates.length > 1 && (
+                <button
+                  type="button"
+                  onClick={() => setDates((d) => d.filter((_, idx) => idx !== i))}
+                  className="mb-px text-gray-400 hover:text-red-500 text-lg leading-none"
+                  aria-label="削除"
+                >×</button>
+              )}
             </div>
           ))}
+          {dates.length < 3 && (
+            <button
+              type="button"
+              onClick={() => setDates((d) => [...d, ''])}
+              className="text-xs text-navy-600 hover:underline"
+            >
+              + {lang === 'ja' ? '候補日を追加' : 'Tambah tanggal'}
+            </button>
+          )}
         </div>
         {mutation.isError && (
           <p className="text-xs text-red-500">{t('toastError')}</p>
@@ -163,7 +182,12 @@ export default function RecruiterConfirmed() {
                 return (
                   <tr key={bc.id} className="hover:bg-gray-50 transition">
                     <td className="px-4 py-3 font-mono text-xs text-gray-500">{c.candidateCode}</td>
-                    <td className="px-4 py-3 font-medium text-gray-900">{c.fullName}</td>
+                    <td className="px-4 py-3">
+                      <p className="font-medium text-gray-900 text-sm leading-none">{c.fullName}</p>
+                      {c.nameKatakana && (
+                        <p className="text-xs text-gray-400 mt-0.5">{c.nameKatakana}</p>
+                      )}
+                    </td>
                     <td className="px-4 py-3 text-xs text-gray-600">
                       {lang === 'ja' ? c.sswFieldJa : c.sswFieldId}
                     </td>

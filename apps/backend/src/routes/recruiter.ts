@@ -496,7 +496,7 @@ router.get('/interviews', wrap(async (req: Request, res: Response): Promise<void
           {
             model: Candidate,
             as: 'candidate',
-            attributes: ['id', 'candidateCode', 'fullName', 'sswFieldId', 'sswFieldJa', 'closeupUrl'],
+            attributes: ['id', 'candidateCode', 'fullName', 'nameKatakana', 'sswFieldId', 'sswFieldJa', 'closeupUrl'],
           },
         ],
       },

@@ -6,6 +6,41 @@ import { useAuth } from '../../hooks/useAuth';
 import { api } from '../../lib/api';
 import type { RecruiterBatchResponse } from '../../types/recruiter';
 
+const IconClipboard = () => (
+  <svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="1.75" viewBox="0 0 24 24" aria-hidden="true">
+    <path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/>
+    <rect x="9" y="3" width="6" height="4" rx="1"/>
+  </svg>
+);
+const IconUsers = () => (
+  <svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="1.75" viewBox="0 0 24 24" aria-hidden="true">
+    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/>
+    <path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/>
+  </svg>
+);
+const IconCheckCircle = () => (
+  <svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="1.75" viewBox="0 0 24 24" aria-hidden="true">
+    <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/>
+  </svg>
+);
+const IconCalendar = () => (
+  <svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="1.75" viewBox="0 0 24 24" aria-hidden="true">
+    <rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/>
+    <line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>
+  </svg>
+);
+const IconBell = () => (
+  <svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="1.75" viewBox="0 0 24 24" aria-hidden="true">
+    <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+  </svg>
+);
+const IconLogOut = () => (
+  <svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="1.75" viewBox="0 0 24 24" aria-hidden="true">
+    <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/>
+    <line x1="21" y1="12" x2="9" y2="12"/>
+  </svg>
+);
+
 export default function RecruiterLayout() {
   const { t, i18n } = useTranslation();
   const { logout } = useAuth();
@@ -35,11 +70,11 @@ export default function RecruiterLayout() {
   const company = batchData?.batch?.company;
 
   const navItems = [
-    { to: '/recruiter/requests',      icon: '📋', ja: '候補者依頼', id: 'Permintaan Kandidat' },
-    { to: '/recruiter/selection',     icon: '👥', ja: '選考中',         id: 'Dalam Seleksi' },
-    { to: '/recruiter/confirmed',     icon: '✅', ja: '選択済み',        id: 'Dipilih' },
-    { to: '/recruiter/interviews',    icon: '📅', ja: '面接',            id: 'Wawancara' },
-    { to: '/recruiter/notifications', icon: '🔔', ja: '通知',            id: 'Notifikasi' },
+    { to: '/recruiter/requests',      icon: <IconClipboard />,   ja: '候補者依頼', id: 'Permintaan Kandidat' },
+    { to: '/recruiter/selection',     icon: <IconUsers />,       ja: '選考中',     id: 'Dalam Seleksi' },
+    { to: '/recruiter/confirmed',     icon: <IconCheckCircle />, ja: '選択済み',   id: 'Dipilih' },
+    { to: '/recruiter/interviews',    icon: <IconCalendar />,    ja: '面接',       id: 'Wawancara' },
+    { to: '/recruiter/notifications', icon: <IconBell />,        ja: '通知',       id: 'Notifikasi' },
   ];
 
   return (
@@ -101,7 +136,7 @@ export default function RecruiterLayout() {
             onClick={logout}
             className="flex items-center gap-3 w-full px-3 py-2.5 text-sm text-white/60 hover:text-white hover:bg-white/10 rounded-lg transition"
           >
-            <span>🚪</span>
+            <IconLogOut />
             <span>{lang === 'ja' ? 'ログアウト' : 'Keluar'}</span>
           </button>
         </div>
@@ -131,10 +166,10 @@ export default function RecruiterLayout() {
             onClick={() => i18n.changeLanguage(lang === 'ja' ? 'id' : 'ja')}
             className="text-xs font-medium text-navy-700 border border-navy-100 rounded-full px-3 py-1 hover:bg-navy-50 transition"
           >
-            {lang === 'ja' ? 'Indonesia' : '日本語'}
+            {lang === 'ja' ? 'インドネシア語' : '日本語'}
           </button>
-          <NavLink to="/recruiter/notifications" className="relative text-gray-500 hover:text-navy-700">
-            🔔
+          <NavLink to="/recruiter/notifications" className="relative text-gray-500 hover:text-navy-700 p-1">
+            <IconBell />
             {unreadCount > 0 && (
               <span className="absolute -top-1 -right-1 bg-gold-400 text-navy-900 text-[10px] font-bold px-1 rounded-full">
                 {unreadCount}

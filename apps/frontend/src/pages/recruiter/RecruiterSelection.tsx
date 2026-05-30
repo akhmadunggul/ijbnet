@@ -85,7 +85,9 @@ function QuotaBar({ selected, limit, lang }: { selected: number; limit: number; 
   return (
     <div className="bg-white border border-gray-100 rounded-xl p-4 min-w-48">
       <p className="text-xs text-gray-400 mb-1">
-        {lang === 'ja' ? '選択済み' : 'Dipilih'}: <strong className={full ? 'text-gold-600' : 'text-navy-700'}>{selected}</strong> / {limit}
+        {lang === 'ja' ? '選択済み' : 'Dipilih'}:{' '}
+        <strong className={full ? 'text-gold-600' : 'text-navy-700'}>{selected}</strong>
+        {lang === 'ja' ? '名' : ''} / {limit}{lang === 'ja' ? '名' : ''}
       </p>
       <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
         <div
@@ -98,31 +100,39 @@ function QuotaBar({ selected, limit, lang }: { selected: number; limit: number; 
 }
 
 function BodyCheckCard({ c, lang }: { c: RecruiterCandidate; lang: string }) {
+  const [open, setOpen] = useState(false);
   const bc = c.bodyCheck;
   if (!bc) return <span className="text-gray-300 text-xs">—</span>;
   const resultColor =
     bc.overallResult === 'pass' ? 'text-green-600' :
     bc.overallResult === 'fail' ? 'text-red-500' : 'text-amber-600';
   return (
-    <div className="relative group inline-block">
-      <span className={`text-xs font-medium cursor-default ${resultColor}`}>
+    <div className="relative inline-block">
+      <button
+        onClick={() => setOpen((v) => !v)}
+        className={`text-xs font-medium underline decoration-dotted underline-offset-2 ${resultColor}`}
+      >
         {bc.overallResult === 'pass' ? (lang === 'ja' ? '合格' : 'Lulus') :
          bc.overallResult === 'fail' ? (lang === 'ja' ? '不合格' : 'Gagal') :
          bc.overallResult === 'hold' ? (lang === 'ja' ? '保留' : 'Tahan') : '—'}
-      </span>
-      {/* Hover card */}
-      <div className="absolute bottom-6 left-0 z-50 hidden group-hover:block w-52 bg-white border border-gray-200 rounded-xl shadow-lg p-3 text-xs">
-        <p className="font-semibold text-gray-700 mb-2">{lang === 'ja' ? '体力検査結果' : 'Hasil Cek Fisik'}</p>
-        <div className="space-y-1 text-gray-600">
-          {bc.verifiedHeight && <p>{lang === 'ja' ? '身長' : 'Tinggi'}: {bc.verifiedHeight} cm</p>}
-          {bc.verifiedWeight && <p>{lang === 'ja' ? '体重' : 'Berat'}: {bc.verifiedWeight} kg</p>}
-          {bc.carrySeconds != null && <p>{lang === 'ja' ? '持ち上げ' : 'Angkat'}: {bc.carrySeconds}s</p>}
-          <p className={`font-semibold ${resultColor}`}>
-            {lang === 'ja' ? '総合' : 'Hasil'}: {bc.overallResult?.toUpperCase() ?? '—'}
-          </p>
-          {bc.checkedDate && <p className="text-gray-400">{bc.checkedDate}</p>}
-        </div>
-      </div>
+      </button>
+      {open && (
+        <>
+          <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
+          <div className="absolute bottom-7 left-0 z-50 w-52 bg-white border border-gray-200 rounded-xl shadow-lg p-3 text-xs">
+            <p className="font-semibold text-gray-700 mb-2">{lang === 'ja' ? '体力検査結果' : 'Hasil Cek Fisik'}</p>
+            <div className="space-y-1 text-gray-600">
+              {bc.verifiedHeight && <p>{lang === 'ja' ? '身長' : 'Tinggi'}: {bc.verifiedHeight} cm</p>}
+              {bc.verifiedWeight && <p>{lang === 'ja' ? '体重' : 'Berat'}: {bc.verifiedWeight} kg</p>}
+              {bc.carrySeconds != null && <p>{lang === 'ja' ? '持ち上げ' : 'Angkat'}: {bc.carrySeconds}s</p>}
+              <p className={`font-semibold ${resultColor}`}>
+                {lang === 'ja' ? '総合' : 'Hasil'}: {bc.overallResult?.toUpperCase() ?? '—'}
+              </p>
+              {bc.checkedDate && <p className="text-gray-400">{bc.checkedDate}</p>}
+            </div>
+          </div>
+        </>
+      )}
     </div>
   );
 }
@@ -502,7 +512,8 @@ function SelectionTray({
             key={bc.candidateId}
             className="flex items-center gap-1 bg-gold-50 border border-gold-200 rounded-full px-2.5 py-1 text-xs font-medium text-gold-700"
           >
-            {bc.candidate.candidateCode}
+            <span className="font-mono">{bc.candidate.candidateCode}</span>
+            <span className="text-gold-600">{bc.candidate.fullName}</span>
             <button
               onClick={() => onRemove(bc.candidateId)}
               className="hover:text-red-500 ml-0.5"
@@ -708,11 +719,12 @@ export default function RecruiterSelection() {
 
   // Distinct SSW fields for filter dropdown
   const sswFields = useMemo(() => {
-    const fields = new Set<string>();
+    const map = new Map<string, string>();
     visibleCandidates.forEach((bc) => {
-      if (bc.candidate.sswFieldId) fields.add(bc.candidate.sswFieldId);
+      const { sswFieldId, sswFieldJa } = bc.candidate;
+      if (sswFieldId) map.set(sswFieldId, sswFieldJa ?? sswFieldId);
     });
-    return [...fields];
+    return [...map.entries()].map(([id, ja]) => ({ id, ja }));
   }, [visibleCandidates]);
 
   const filtered = useMemo(() => applyFilters(visibleCandidates, filters), [visibleCandidates, filters]);
@@ -783,7 +795,8 @@ export default function RecruiterSelection() {
               filters.sswKubun === v ? 'bg-navy-700 text-white border-navy-700' : 'text-gray-600 border-gray-200 hover:border-navy-300'
             }`}
           >
-            {v === 'ALL' ? (lang === 'ja' ? '全て' : 'Semua') : v}
+            {v === 'ALL' ? (lang === 'ja' ? '全て' : 'Semua') :
+             v === 'Trainee' && lang === 'ja' ? '研修生' : v}
           </button>
         ))}
         {/* SSW field */}
@@ -795,7 +808,7 @@ export default function RecruiterSelection() {
           >
             <option value="ALL">{lang === 'ja' ? '職種: 全て' : 'Bidang: Semua'}</option>
             {sswFields.map((f) => (
-              <option key={f} value={f}>{f}</option>
+              <option key={f.id} value={f.id}>{lang === 'ja' ? f.ja : f.id}</option>
             ))}
           </select>
         )}
@@ -904,12 +917,17 @@ export default function RecruiterSelection() {
                     {cols.nama && (
                       <td className="px-3 py-3">
                         <p className="font-medium text-gray-900 text-xs leading-none">{c.fullName}</p>
+                        {c.nameKatakana && (
+                          <p className="text-gray-400 text-[10px] mt-0.5">{c.nameKatakana}</p>
+                        )}
                         <p className="text-gray-400 font-mono text-[10px] mt-0.5">{c.candidateCode}</p>
                       </td>
                     )}
                     {cols.ju && (
                       <td className="px-3 py-3 text-xs text-gray-600 whitespace-nowrap">
-                        {c.gender ?? '—'} {age != null ? `· ${age}${lang === 'ja' ? '歳' : 'thn'}` : ''}
+                        {c.gender === 'M' ? (lang === 'ja' ? '男性' : 'L') :
+                         c.gender === 'F' ? (lang === 'ja' ? '女性' : 'P') : '—'}
+                        {age != null ? ` · ${age}${lang === 'ja' ? '歳' : 'thn'}` : ''}
                       </td>
                     )}
                     {cols.pendidikan && (
@@ -936,7 +954,7 @@ export default function RecruiterSelection() {
                           className="text-left hover:underline"
                         >
                           {highest ? (
-                            <span className="text-xs font-semibold text-navy-700">{highest.level}</span>
+                            <span className="text-xs font-semibold text-navy-700 underline decoration-dotted underline-offset-2">{highest.level}</span>
                           ) : (
                             <span className="text-xs text-gray-300">—</span>
                           )}
@@ -956,7 +974,7 @@ export default function RecruiterSelection() {
                             className="text-xs text-navy-600 hover:underline"
                             title={lang === 'ja' ? '全身写真を見る' : 'Lihat foto badan'}
                           >
-                            {lang === 'ja' ? '写真' : 'Foto'}
+                            {lang === 'ja' ? '全身写真' : 'Foto'}
                           </button>
                         ) : (
                           <span className="text-gray-300 text-xs">—</span>
@@ -970,7 +988,7 @@ export default function RecruiterSelection() {
                             onClick={() => setVideoBc(bc)}
                             className="text-xs text-blue-600 hover:underline"
                           >
-                            ▶ {c.videos.length}
+                            ▶ {lang === 'ja' ? `動画 (${c.videos.length})` : `Video (${c.videos.length})`}
                           </button>
                         ) : (
                           <span className="text-gray-300 text-xs">—</span>

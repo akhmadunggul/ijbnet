@@ -153,7 +153,9 @@ export default function RecruiterRequests() {
                     onChange={() => setForm((f) => ({ ...f, kubun: k, sswSectorId: '', sswFieldId: '' }))}
                     className="accent-navy-700 w-4 h-4"
                   />
-                  <span className="text-sm font-medium text-gray-700">{k}</span>
+                  <span className="text-sm font-medium text-gray-700">
+                    {k === 'Trainee' && lang === 'ja' ? '研修生' : k}
+                  </span>
                 </label>
               ))}
             </div>
@@ -256,7 +258,9 @@ export default function RecruiterRequests() {
                 <thead className="bg-gray-50 border-b border-gray-100">
                   <tr>
                     <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">{t('requests.code')}</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">{lang === 'ja' ? '日付' : 'Tanggal'}</th>
                     <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">{t('requests.kubun')}</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">{lang === 'ja' ? '分野' : 'Sektor'}</th>
                     <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">{t('requests.field')}</th>
                     <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">{t('requests.requestedCount')}</th>
                     <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">{t('requests.allocatedCount')}</th>
@@ -268,14 +272,26 @@ export default function RecruiterRequests() {
                   {requests.map((req) => (
                     <tr key={req.id} className="hover:bg-gray-50 transition">
                       <td className="px-4 py-3 font-mono font-medium text-navy-700 text-xs">{req.requestCode}</td>
+                      <td className="px-4 py-3 text-xs text-gray-500 whitespace-nowrap">
+                        {new Date(req.createdAt).toLocaleDateString(lang === 'ja' ? 'ja-JP' : 'id-ID')}
+                      </td>
                       <td className="px-4 py-3">
-                        <span className="px-2 py-0.5 bg-navy-50 text-navy-700 rounded text-xs font-medium">{req.kubun}</span>
+                        <span className="px-2 py-0.5 bg-navy-50 text-navy-700 rounded text-xs font-medium">
+                          {req.kubun === 'Trainee' && lang === 'ja' ? '研修生' : req.kubun}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3 text-xs text-gray-600">
+                        {lang === 'ja' ? req.sswSectorJa : req.sswSectorId}
                       </td>
                       <td className="px-4 py-3 text-gray-700">
                         {lang === 'ja' ? req.sswFieldJa : req.sswFieldId}
                       </td>
-                      <td className="px-4 py-3 text-right font-medium">{req.requestedCount}</td>
-                      <td className="px-4 py-3 text-right text-gray-500">{req.allocatedCount ?? '—'}</td>
+                      <td className="px-4 py-3 text-right font-medium">
+                        {req.requestedCount}{lang === 'ja' ? '名' : ''}
+                      </td>
+                      <td className="px-4 py-3 text-right text-gray-500">
+                        {req.allocatedCount != null ? `${req.allocatedCount}${lang === 'ja' ? '名' : ''}` : '—'}
+                      </td>
                       <td className="px-4 py-3"><StatusBadge status={req.status} t={t} /></td>
                       <td className="px-4 py-3">
                         {req.batch ? (
