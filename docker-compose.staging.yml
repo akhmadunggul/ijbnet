@@ -42,33 +42,6 @@ services:
     networks:
       - ijbnet
 
-  libretranslate:
-    image: libretranslate/libretranslate:latest
-    container_name: ijbnet_libretranslate
-    restart: unless-stopped
-    user: root
-    environment:
-      - LT_LOAD_ONLY=id,en,ja
-      - LT_API_KEYS=false
-      - LT_HOST=0.0.0.0
-      - LT_PORT=5000
-    volumes:
-      - lt_models:/home/libretranslate/.local/share
-    networks:
-      - ijbnet
-    deploy:
-      resources:
-        limits:
-          memory: 3G
-        reservations:
-          memory: 1G
-    healthcheck:
-      test: ['CMD', 'curl', '-sf', 'http://localhost:5000/languages']
-      interval: 30s
-      timeout: 10s
-      retries: 10
-      start_period: 300s
-
   backend:
     build:
       context: .
@@ -80,7 +53,6 @@ services:
       NODE_ENV: production
       DB_HOST: db
       REDIS_URL: redis://redis:6379
-      LIBRETRANSLATE_URL: http://libretranslate:5000
       UV_THREADPOOL_SIZE: 64
       NODE_OPTIONS: --max-old-space-size=2048
     ulimits:
@@ -93,8 +65,6 @@ services:
       db:
         condition: service_healthy
       redis:
-        condition: service_started
-      libretranslate:
         condition: service_started
     networks:
       - ijbnet
@@ -137,7 +107,6 @@ volumes:
   uploads_data:
   caddy_data:
   caddy_config:
-  lt_models:
 
 networks:
   ijbnet:

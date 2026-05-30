@@ -5,6 +5,8 @@ import puppeteer from 'puppeteer-core';
 import { authenticate, requireRole } from '../middleware/auth';
 import { decryptNullable } from '../utils/crypto';
 import { resolveChromePath, buildCandidatePdfHtml } from '../utils/candidatePdf';
+import { buildShokumuHtml } from '../utils/shokumuTemplate';
+import { translateId2Ja } from '../utils/translate';
 import {
   Candidate,
   CandidateJapaneseTest,
@@ -180,26 +182,13 @@ router.patch('/me', async (req: Request, res: Response): Promise<void> => {
     { idKey: 'motivationId', jaKey: 'motivationJa' },
     { idKey: 'selfPrId',     jaKey: 'selfPrJa'     },
   ];
-  const libreUrl = process.env['LIBRETRANSLATE_URL'] ?? 'http://libretranslate:5000';
   if (autoTranslateEnabled) await Promise.all(
     translatePairs.map(async ({ idKey, jaKey }) => {
       const idText = (updates[idKey] ?? (candidate as unknown as Record<string, unknown>)[idKey]) as string | null | undefined;
       const jaText = (updates[jaKey] ?? (candidate as unknown as Record<string, unknown>)[jaKey]) as string | null | undefined;
       if (!idText || jaText) return;
-      try {
-        const resp = await fetch(`${libreUrl}/translate`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ q: idText.trim(), source: 'id', target: 'ja', format: 'text' }),
-          signal: AbortSignal.timeout(10_000),
-        });
-        if (resp.ok) {
-          const data = await resp.json() as { translatedText: string };
-          updates[jaKey] = data.translatedText;
-        }
-      } catch {
-        // translation unavailable — save without it
-      }
+      const translated = await translateId2Ja(idText);
+      if (translated) updates[jaKey] = translated;
     }),
   );
 
@@ -733,6 +722,245 @@ router.patch('/me/interviews/:proposalId/confirm-date', authenticate, requireRol
   ));
 
   res.json({ message: 'Preferred date confirmed.', candidatePreferredDate: date });
+});
+
+// ── GET /api/candidates/me/shokumu ────────────────────────────────────────────
+router.get('/me/shokumu', authenticate, requireRole('candidate'), async (_req: Request, res: Response): Promise<void> => {
+  const [enabledRow, layoutRow, mergeRow] = await Promise.all([
+    GlobalSettings.findOne({ where: { key: 'shokumu_enabled' } }),
+    GlobalSettings.findOne({ where: { key: 'shokumu_layout' } }),
+    GlobalSettings.findOne({ where: { key: 'shokumu_merge_cv' } }),
+  ]);
+  const enabled  = enabledRow  ? (enabledRow.toJSON()  as unknown as Record<string, unknown>)['value'] === true   : false;
+  const layout   = layoutRow   ? String((layoutRow.toJSON()   as unknown as Record<string, unknown>)['value'] ?? 'reverse') : 'reverse';
+  const mergeCv  = mergeRow    ? (mergeRow.toJSON()    as unknown as Record<string, unknown>)['value'] === true   : false;
+  res.json({ enabled, layout, mergeCv });
+});
+
+// ── PATCH /api/candidates/me/shokumu ─────────────────────────────────────────
+router.patch('/me/shokumu', authenticate, requireRole('candidate'), async (req: Request, res: Response): Promise<void> => {
+  const candidate = await Candidate.findOne({ where: { userId: req.user!.sub } });
+  if (!candidate) {
+    res.status(404).json({ error: 'NOT_FOUND' });
+    return;
+  }
+  if (candidate.isLocked) {
+    res.status(403).json({ error: 'PROFILE_LOCKED' });
+    return;
+  }
+
+  const body = req.body as {
+    careerSummaryId?: string;
+    careerSummaryJa?: string;
+    career?: Array<{
+      id: string;
+      companyType?: string;
+      employeeCount?: number | null;
+      annualSales?: string;
+      capitalAmount?: string;
+      dutiesId?: string;
+      dutiesJa?: string;
+      achievementsId?: string;
+      achievementsJa?: string;
+    }>;
+  };
+
+  // Auto-translate enabled?
+  const translateSetting = await GlobalSettings.findOne({ where: { key: 'auto_translate_enabled' } });
+  const autoTranslate = translateSetting
+    ? (translateSetting.toJSON() as unknown as Record<string, unknown>)['value'] !== false
+    : true;
+
+  // Update candidate summary fields + auto-translate careerSummaryId → careerSummaryJa
+  const candidateUpdates: Record<string, unknown> = {};
+  if (body.careerSummaryId !== undefined) candidateUpdates['careerSummaryId'] = body.careerSummaryId ?? null;
+  if (body.careerSummaryJa !== undefined) candidateUpdates['careerSummaryJa'] = body.careerSummaryJa ?? null;
+
+  if (autoTranslate && body.careerSummaryId) {
+    const existingJa = (candidateUpdates['careerSummaryJa'] ?? (candidate as unknown as Record<string, unknown>)['careerSummaryJa']) as string | null | undefined;
+    if (!existingJa) {
+      const translated = await translateId2Ja(body.careerSummaryId);
+      if (translated) candidateUpdates['careerSummaryJa'] = translated;
+    }
+  }
+
+  if (Object.keys(candidateUpdates).length > 0) {
+    await candidate.update(candidateUpdates);
+  }
+
+  // Update individual career entries (verify ownership)
+  if (Array.isArray(body.career) && body.career.length > 0) {
+    await Promise.all(
+      body.career.map(async (entry) => {
+        const careerRow = await CandidateCareer.findOne({
+          where: { id: entry.id, candidateId: candidate.id },
+        });
+        if (!careerRow) return;
+        const updates: Record<string, unknown> = {};
+        if (entry.companyType    !== undefined) updates['companyType']    = entry.companyType    ?? null;
+        if (entry.employeeCount  !== undefined) updates['employeeCount']  = entry.employeeCount  ?? null;
+        if (entry.annualSales    !== undefined) updates['annualSales']    = entry.annualSales    ?? null;
+        if (entry.capitalAmount  !== undefined) updates['capitalAmount']  = entry.capitalAmount  ?? null;
+        if (entry.dutiesId       !== undefined) updates['dutiesId']       = entry.dutiesId       ?? null;
+        if (entry.dutiesJa       !== undefined) updates['dutiesJa']       = entry.dutiesJa       ?? null;
+        if (entry.achievementsId !== undefined) updates['achievementsId'] = entry.achievementsId ?? null;
+        if (entry.achievementsJa !== undefined) updates['achievementsJa'] = entry.achievementsJa ?? null;
+
+        // Auto-translate dutiesId → dutiesJa and achievementsId → achievementsJa
+        if (autoTranslate) {
+          for (const [idKey, jaKey] of [['dutiesId', 'dutiesJa'], ['achievementsId', 'achievementsJa']] as const) {
+            const idText = (updates[idKey] ?? (careerRow as unknown as Record<string, unknown>)[idKey]) as string | null | undefined;
+            const jaText = (updates[jaKey] ?? (careerRow as unknown as Record<string, unknown>)[jaKey]) as string | null | undefined;
+            if (idText && !jaText) {
+              const translated = await translateId2Ja(idText);
+              if (translated) updates[jaKey] = translated;
+            }
+          }
+        }
+
+        if (Object.keys(updates).length > 0) await careerRow.update(updates);
+      }),
+    );
+  }
+
+  invalidateMe(req.user!.sub);
+  res.json({ message: 'Shokumu data saved.' });
+});
+
+// ── GET /api/candidates/me/shokumu-pdf ────────────────────────────────────────
+router.get('/me/shokumu-pdf', authenticate, requireRole('candidate'), async (req: Request, res: Response): Promise<void> => {
+  const candidate = await Candidate.findOne({
+    where: { userId: req.user!.sub },
+    include: [
+      { model: CandidateJapaneseTest,     as: 'tests',          required: false },
+      { model: CandidateCareer,           as: 'career',         required: false, separate: true, order: [['startDate', 'ASC'] as [string, string]] },
+      { model: CandidateCertification,    as: 'certifications', required: false },
+    ],
+  });
+  if (!candidate) { res.status(404).json({ error: 'NOT_FOUND' }); return; }
+
+  const executablePath = resolveChromePath();
+  if (!executablePath) {
+    res.status(503).json({ error: 'PDF_UNAVAILABLE', message: 'Chrome not found on server.' });
+    return;
+  }
+
+  const [layoutRow, fontRow] = await Promise.all([
+    GlobalSettings.findOne({ where: { key: 'shokumu_layout' } }),
+    GlobalSettings.findOne({ where: { key: 'cv_font' } }),
+  ]);
+  const layout = layoutRow ? String((layoutRow.toJSON() as unknown as Record<string, unknown>)['value'] ?? 'reverse') : 'reverse';
+  const font   = fontRow   ? String((fontRow.toJSON()   as unknown as Record<string, unknown>)['value'] ?? 'ms-mincho') : 'ms-mincho';
+
+  const cj = candidate.toJSON() as unknown as Record<string, unknown>;
+  const html = buildShokumuHtml(cj, { layout, font, includePhoto: true });
+
+  const browser = await puppeteer.launch({ executablePath, args: ['--no-sandbox', '--disable-setuid-sandbox'], headless: true });
+  try {
+    const page = await browser.newPage();
+    await page.setJavaScriptEnabled(false);
+    await page.setContent(html, { waitUntil: 'networkidle0' });
+    const pdf = await page.pdf({ format: 'A4', margin: { top: '15mm', bottom: '15mm', left: '20mm', right: '15mm' } });
+
+    await AuditLog.create({
+      userId: req.user!.sub,
+      action: 'SHOKUMU_EXPORT',
+      entityType: 'candidate',
+      entityId: candidate.id,
+      targetCandidateId: candidate.id,
+      ipAddress: req.ip ?? null,
+      userAgent: req.headers['user-agent'] ?? null,
+      payload: null,
+    });
+
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `attachment; filename="${candidate.candidateCode}-shokumu.pdf"`);
+    res.send(Buffer.from(pdf));
+  } finally {
+    await browser.close();
+  }
+});
+
+// ── GET /api/candidates/me/merged-pdf ─────────────────────────────────────────
+router.get('/me/merged-pdf', authenticate, requireRole('candidate'), async (req: Request, res: Response): Promise<void> => {
+  // Check if merge is enabled
+  const mergeRow = await GlobalSettings.findOne({ where: { key: 'shokumu_merge_cv' } });
+  const mergeCv  = mergeRow ? (mergeRow.toJSON() as unknown as Record<string, unknown>)['value'] === true : false;
+  if (!mergeCv) {
+    res.status(403).json({ error: 'MERGE_DISABLED', message: 'Merged PDF is not enabled.' });
+    return;
+  }
+
+  const candidate = await Candidate.findOne({
+    where: { userId: req.user!.sub },
+    include: [
+      { model: User,                      as: 'user',             attributes: ['name', 'email'], required: false },
+      { model: Lpk,                       as: 'lpk',              attributes: ['name', 'city'],  required: false },
+      { model: CandidateJapaneseTest,     as: 'tests',            required: false },
+      { model: CandidateCareer,           as: 'career',           required: false, separate: true, order: [['startDate', 'ASC'] as [string, string]] },
+      { model: CandidateBodyCheck,        as: 'bodyCheck',        required: false },
+      { model: CandidateCertification,    as: 'certifications',   required: false },
+      { model: CandidateEducationHistory, as: 'educationHistory', required: false, separate: true, order: [['startDate', 'ASC'] as [string, string]] },
+    ],
+  });
+  if (!candidate) { res.status(404).json({ error: 'NOT_FOUND' }); return; }
+
+  const executablePath = resolveChromePath();
+  if (!executablePath) {
+    res.status(503).json({ error: 'PDF_UNAVAILABLE', message: 'Chrome not found on server.' });
+    return;
+  }
+
+  const [layoutRow, fontRow] = await Promise.all([
+    GlobalSettings.findOne({ where: { key: 'shokumu_layout' } }),
+    GlobalSettings.findOne({ where: { key: 'cv_font' } }),
+  ]);
+  const layout = layoutRow ? String((layoutRow.toJSON() as unknown as Record<string, unknown>)['value'] ?? 'reverse') : 'reverse';
+  const font   = fontRow   ? String((fontRow.toJSON()   as unknown as Record<string, unknown>)['value'] ?? 'ms-mincho') : 'ms-mincho';
+
+  const cj  = candidate.toJSON() as unknown as Record<string, unknown>;
+  const nik = decryptNullable(candidate.nikEncrypted ?? null);
+
+  // Build CV html, strip closing tags, then append shokumu body content
+  const cvHtml = buildCandidatePdfHtml(cj, nik);
+  const shokumuHtml = buildShokumuHtml(cj, { layout, font, includePhoto: false });
+
+  // Extract inner body from shokumu HTML (strip html/head/body wrappers)
+  const shokumuBody = shokumuHtml
+    .replace(/^[\s\S]*?<body[^>]*>/i, '')
+    .replace(/<\/body>[\s\S]*$/i, '');
+
+  // Strip closing body/html from CV html and append shokumu content
+  const combinedHtml = cvHtml
+    .replace(/<\/body>[\s\S]*$/i, '')
+    + '\n<div style="page-break-before:always"></div>\n'
+    + shokumuBody
+    + '\n</body></html>';
+
+  const browser = await puppeteer.launch({ executablePath, args: ['--no-sandbox', '--disable-setuid-sandbox'], headless: true });
+  try {
+    const page = await browser.newPage();
+    await page.setJavaScriptEnabled(false);
+    await page.setContent(combinedHtml, { waitUntil: 'networkidle0' });
+    const pdf = await page.pdf({ format: 'A4', margin: { top: '12mm', bottom: '12mm', left: '10mm', right: '10mm' } });
+
+    await AuditLog.create({
+      userId: req.user!.sub,
+      action: 'SHOKUMU_EXPORT',
+      entityType: 'candidate',
+      entityId: candidate.id,
+      targetCandidateId: candidate.id,
+      ipAddress: req.ip ?? null,
+      userAgent: req.headers['user-agent'] ?? null,
+      payload: { merged: true },
+    });
+
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `attachment; filename="${candidate.candidateCode}-resume.pdf"`);
+    res.send(Buffer.from(pdf));
+  } finally {
+    await browser.close();
+  }
 });
 
 export default router;

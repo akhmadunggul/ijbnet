@@ -1,5 +1,6 @@
 import { Router, Request, Response } from 'express';
 import { authenticate } from '../middleware/auth';
+import { translateId2Ja } from '../utils/translate';
 
 function wrap(fn: (req: Request, res: Response) => Promise<void>) {
   return (req: Request, res: Response, next: (err?: unknown) => void) => {
@@ -10,11 +11,7 @@ function wrap(fn: (req: Request, res: Response) => Promise<void>) {
 const router = Router();
 
 router.post('/', authenticate, wrap(async (req, res) => {
-  const { text, source = 'id', target = 'ja' } = req.body as {
-    text: unknown;
-    source?: string;
-    target?: string;
-  };
+  const { text } = req.body as { text: unknown };
 
   if (!text || typeof text !== 'string' || text.trim().length === 0) {
     res.status(400).json({ error: 'INVALID_INPUT' });
@@ -26,22 +23,18 @@ router.post('/', authenticate, wrap(async (req, res) => {
     return;
   }
 
-  const libreUrl = process.env['LIBRETRANSLATE_URL'] ?? 'http://libretranslate:5000';
+  if (!process.env['DEEPSEEK_API_KEY']) {
+    res.status(503).json({ error: 'TRANSLATION_UNAVAILABLE' });
+    return;
+  }
 
-  const response = await fetch(`${libreUrl}/translate`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ q: text.trim(), source, target, format: 'text' }),
-    signal: AbortSignal.timeout(10_000),
-  });
-
-  if (!response.ok) {
+  const translated = await translateId2Ja(text);
+  if (!translated) {
     res.status(502).json({ error: 'TRANSLATION_FAILED' });
     return;
   }
 
-  const data = await response.json() as { translatedText: string };
-  res.json({ translated: data.translatedText });
+  res.json({ translated });
 }));
 
 export default router;
