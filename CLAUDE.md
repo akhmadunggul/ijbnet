@@ -227,6 +227,7 @@ apps/frontend/src/
 - v0.6.12 — Translation hardening: per-user (15/min) + global (120/min) rate limiting; structured JSON request logging with context/user-hash/latency; user_id (SHA-256 hashed JWT sub) sent to DeepSeek for content safety; 504 timeout vs 502 API error distinction; 20s live / 25s background timeouts
 - v0.6.13 — Security hardening (threat model top-2): (1) Zod allowlist validation on all 6 candidate mutation endpoints — replaces BLOCKED_FIELDS denylist, .strict() schemas reject unknown keys with 422; (2) Puppeteer pool caps concurrent Chromium processes at 3 with 45s queue timeout + per-user PDF rate limit (5/5min); PDF Japanese font fix (fonts-noto-cjk in Docker, Noto CJK JP in all font stacks); shokumu settings shows active CV font
 - v0.6.14 — Resume preview adopts CV method: new ShokumuCV React component renders 職務経歴書 in-browser (mirrors shokumuTemplate.ts); ShokumuCVPage at /portal/shokumu with back/print/download toolbar; live auto-translate for missing Japanese fields; zoom controls; window.print() support — replaces iframe PDF blob preview
+- v0.6.15 — Align ShokumuCV preview UI exactly with CandidateCV: −/[pct%]/+ zoom controls (right-aligned, 50–200% in 10% steps); print CSS via dangerouslySetInnerHTML inside container; <> fragment wrapper
 
-Current: v0.6.14
+Current: v0.6.15
 Live at: https://jinzai.jobagus.id
