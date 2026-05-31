@@ -874,6 +874,47 @@ router.get('/me/shokumu-pdf', authenticate, requireRole('candidate'), async (req
 
   const cj = candidate.toJSON() as unknown as Record<string, unknown>;
 
+  // Auto-translate missing Japanese fields before rendering
+  const translateRow = await GlobalSettings.findOne({ where: { key: 'auto_translate_enabled' } });
+  const autoTranslate = translateRow
+    ? (translateRow.toJSON() as unknown as Record<string, unknown>)['value'] !== false
+    : true;
+
+  if (autoTranslate) {
+    // Candidate-level text fields
+    const candidateUpdates: Record<string, string> = {};
+    for (const [idKey, jaKey] of [
+      ['careerSummaryId', 'careerSummaryJa'],
+      ['selfPrId', 'selfPrJa'],
+      ['selfIntroId', 'selfIntroJa'],
+    ] as const) {
+      const idText = cj[idKey] as string | null;
+      const jaText = cj[jaKey] as string | null;
+      if (idText && !jaText) {
+        const translated = await translateId2Ja(idText);
+        if (translated) { cj[jaKey] = translated; candidateUpdates[jaKey] = translated; }
+      }
+    }
+    if (Object.keys(candidateUpdates).length > 0) await candidate.update(candidateUpdates);
+
+    // Per-career-entry fields
+    const career = (cj['career'] as Record<string, unknown>[] | null) ?? [];
+    await Promise.all(career.map(async (entry) => {
+      const entryUpdates: Record<string, string> = {};
+      for (const [idKey, jaKey] of [['dutiesId', 'dutiesJa'], ['achievementsId', 'achievementsJa']] as const) {
+        const idText = entry[idKey] as string | null;
+        const jaText = entry[jaKey] as string | null;
+        if (idText && !jaText) {
+          const translated = await translateId2Ja(idText);
+          if (translated) { entry[jaKey] = translated; entryUpdates[jaKey] = translated; }
+        }
+      }
+      if (Object.keys(entryUpdates).length > 0 && entry['id']) {
+        await CandidateCareer.update(entryUpdates, { where: { id: entry['id'] as string, candidateId: candidate.id } });
+      }
+    }));
+  }
+
   // Embed closeup photo as base64 — puppeteer's setContent can't load authed API URLs
   const photoFilePath = path.join(config.UPLOADS_DIR, 'candidates', candidate.id, 'closeup.webp');
   try {
