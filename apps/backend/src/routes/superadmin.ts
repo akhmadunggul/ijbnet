@@ -114,15 +114,26 @@ router.post('/translation-status/test', wrap(async (req, res) => {
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${apiKey}` },
         body: JSON.stringify({
           model: 'deepseek-chat',
-          messages: [{ role: 'user', content: 'ping' }],
-          max_tokens: 1,
+          messages: [{ role: 'user', content: 'こんにちは' }],
+          max_tokens: 5,
         }),
-        signal: AbortSignal.timeout(10_000),
+        signal: AbortSignal.timeout(15_000),
       });
       const latencyMs = Date.now() - start;
-      res.json({ status: resp.ok ? 'online' : 'error', latencyMs, httpStatus: resp.status });
-    } catch {
-      res.json({ status: 'offline', latencyMs: Date.now() - start });
+      let errorDetail: string | null = null;
+      if (!resp.ok) {
+        try {
+          const body = await resp.json() as Record<string, unknown>;
+          const msg = (body['error'] as Record<string, unknown> | null)?.['message']
+            ?? body['message']
+            ?? JSON.stringify(body);
+          errorDetail = String(msg).slice(0, 200);
+        } catch { errorDetail = `HTTP ${resp.status}`; }
+      }
+      res.json({ status: resp.ok ? 'online' : 'error', latencyMs, httpStatus: resp.status, errorDetail });
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : 'Network error';
+      res.json({ status: 'offline', latencyMs: Date.now() - start, errorDetail: msg });
     }
     return;
   }
@@ -364,7 +375,7 @@ router.get('/system/metrics-history', wrap(async (req, res) => {
 
 // ── PUT /api/superadmin/translation-api-config ───────────────────────────────
 router.put('/translation-api-config', wrap(async (req, res) => {
-  const { apiKey } = req.body as { apiKey?: string | null };
+  const { apiKey, skipValidation } = req.body as { apiKey?: string | null; skipValidation?: boolean };
 
   if (!apiKey || typeof apiKey !== 'string' || !apiKey.trim()) {
     // Clear DB key — fall back to env var
@@ -375,6 +386,33 @@ router.put('/translation-api-config', wrap(async (req, res) => {
   }
 
   const trimmed = apiKey.trim();
+
+  // Validate the key against DeepSeek before persisting (unless explicitly skipped)
+  if (!skipValidation) {
+    try {
+      const testResp = await fetch('https://api.deepseek.com/chat/completions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${trimmed}` },
+        body: JSON.stringify({ model: 'deepseek-chat', messages: [{ role: 'user', content: 'ping' }], max_tokens: 1 }),
+        signal: AbortSignal.timeout(10_000),
+      });
+      if (!testResp.ok) {
+        let detail = `HTTP ${testResp.status}`;
+        try {
+          const body = await testResp.json() as Record<string, unknown>;
+          const msg = (body['error'] as Record<string, unknown> | null)?.['message'] ?? body['message'];
+          if (msg) detail = `${testResp.status}: ${String(msg).slice(0, 150)}`;
+        } catch { /* ignore */ }
+        res.status(422).json({ error: 'KEY_VALIDATION_FAILED', detail });
+        return;
+      }
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : 'Network error';
+      res.status(422).json({ error: 'KEY_VALIDATION_FAILED', detail: msg });
+      return;
+    }
+  }
+
   const encrypted = encrypt(trimmed);
   const [row, created] = await GlobalSettings.findOrCreate({
     where: { key: 'deepseek_api_key' },

@@ -88,6 +88,7 @@ export default function SuperAdminDataEntrySettings() {
   const [shokumuSaveError, setShokumuSaveError] = useState(false);
   const [serviceTestStatus, setServiceTestStatus] = useState<Record<string, ServiceTestStatus>>({});
   const [serviceTestLatency, setServiceTestLatency] = useState<Record<string, number | null>>({});
+  const [serviceTestDetail, setServiceTestDetail] = useState<Record<string, string | null>>({});
   const [apiKeyInput, setApiKeyInput] = useState<Record<string, string>>({});
   const [apiKeySaving, setApiKeySaving] = useState<Record<string, boolean>>({});
   const [apiKeySaved, setApiKeySaved] = useState<Record<string, boolean>>({});
@@ -322,6 +323,7 @@ export default function SuperAdminDataEntrySettings() {
     setApiKeySaving((p) => ({ ...p, [serviceId]: true }));
     setApiKeySaved((p) => ({ ...p, [serviceId]: false }));
     setApiKeyError((p) => ({ ...p, [serviceId]: false }));
+    setServiceTestDetail((p) => ({ ...p, [serviceId]: null }));
     try {
       await api.put('/superadmin/translation-api-config', { apiKey: key });
       setApiKeyInput((p) => ({ ...p, [serviceId]: '' }));
@@ -329,8 +331,10 @@ export default function SuperAdminDataEntrySettings() {
       void refetchApiConfig();
       void refetchStatus();
       setTimeout(() => setApiKeySaved((p) => ({ ...p, [serviceId]: false })), 3000);
-    } catch {
+    } catch (err: unknown) {
+      const detail = (err as { response?: { data?: { detail?: string } } })?.response?.data?.detail ?? null;
       setApiKeyError((p) => ({ ...p, [serviceId]: true }));
+      if (detail) setServiceTestDetail((p) => ({ ...p, [serviceId]: detail }));
     } finally {
       setApiKeySaving((p) => ({ ...p, [serviceId]: false }));
     }
@@ -352,12 +356,17 @@ export default function SuperAdminDataEntrySettings() {
   async function testService(serviceId: string) {
     setServiceTestStatus((prev) => ({ ...prev, [serviceId]: 'testing' }));
     setServiceTestLatency((prev) => ({ ...prev, [serviceId]: null }));
+    setServiceTestDetail((prev) => ({ ...prev, [serviceId]: null }));
     try {
-      const result = await api.post<{ status: string; latencyMs: number | null }>('/superadmin/translation-status/test', { serviceId }).then((r) => r.data);
+      const result = await api.post<{ status: string; latencyMs: number | null; httpStatus?: number; errorDetail?: string | null }>(
+        '/superadmin/translation-status/test', { serviceId },
+      ).then((r) => r.data);
       setServiceTestStatus((prev) => ({ ...prev, [serviceId]: result.status as ServiceTestStatus }));
       setServiceTestLatency((prev) => ({ ...prev, [serviceId]: result.latencyMs ?? null }));
+      if (result.errorDetail) setServiceTestDetail((prev) => ({ ...prev, [serviceId]: `HTTP ${result.httpStatus ?? '?'}: ${result.errorDetail}` }));
     } catch {
       setServiceTestStatus((prev) => ({ ...prev, [serviceId]: 'offline' }));
+      setServiceTestDetail((prev) => ({ ...prev, [serviceId]: 'Network error' }));
     }
   }
 
@@ -487,6 +496,7 @@ export default function SuperAdminDataEntrySettings() {
         {(translationStatusData?.services ?? []).map((svc) => {
           const testStatus = serviceTestStatus[svc.id] ?? 'idle';
           const latency = serviceTestLatency[svc.id];
+          const testDetail = serviceTestDetail[svc.id] ?? null;
           const statusDot =
             testStatus === 'online'         ? 'bg-green-500' :
             testStatus === 'offline'        ? 'bg-red-500'   :
@@ -523,7 +533,7 @@ export default function SuperAdminDataEntrySettings() {
                 <div className="flex items-center gap-3 shrink-0">
                   {sourceBadge}
                   {statusLabel && (
-                    <span className="text-xs text-gray-500">
+                    <span className={`text-xs ${testStatus === 'error' || testStatus === 'offline' ? 'text-red-500' : 'text-gray-500'}`}>
                       {statusLabel}{latency != null ? ` (${latency}ms)` : ''}
                     </span>
                   )}
@@ -573,7 +583,15 @@ export default function SuperAdminDataEntrySettings() {
                   )}
                 </div>
                 {apiKeySaved[svc.id] && <p className="text-xs text-green-600">✓ {t('superadmin.dataEntrySettings.saved')}</p>}
-                {apiKeyError[svc.id] && <p className="text-xs text-red-500">{t('superadmin.dataEntrySettings.errorSave')}</p>}
+                {apiKeyError[svc.id] && (
+                  <p className="text-xs text-red-500">
+                    {t('superadmin.dataEntrySettings.errorSave')}
+                    {serviceTestDetail[svc.id] && <span className="ml-1 font-mono">— {serviceTestDetail[svc.id]}</span>}
+                  </p>
+                )}
+                {testDetail && !apiKeyError[svc.id] && (
+                  <p className="text-xs text-red-400 font-mono mt-1">{testDetail}</p>
+                )}
               </div>
             </div>
           );
