@@ -5,6 +5,15 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ---
 
+## [v0.6.14] - 2026-05-31
+
+### Changed
+- **Resume preview now uses the same method as the candidate CV**: The "Pratinjau" button in the Resume tab previously fetched a PDF blob from the server and displayed it in a full-screen iframe. It now navigates to a dedicated route `/portal/shokumu` that renders the document as a React component in the browser — identical in approach to how `/portal/cv` works for the candidate CV.
+- **New `ShokumuCV` component**: Renders the 職務経歴書 document as React/JSX with inline styles mirroring `shokumuTemplate.ts`. Reads `cv-font` and layout settings from the superadmin API. Live auto-translates missing Japanese candidate-level fields (`careerSummaryId`, `selfPrId`, `selfIntroId`) using the same `jaOverride` mechanism as `CandidateCV`.
+- **New `ShokumuCVPage`** at `/portal/shokumu`: page wrapper with Back, Print (`window.print()`), and Download buttons — mirrors `CandidateCVPage`. Zoom controls (50%–150%) and print CSS that isolates the document for clean printing.
+
+---
+
 ## [v0.6.13] - 2026-05-31
 
 ### Security
