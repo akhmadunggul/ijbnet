@@ -663,6 +663,8 @@
       "shokumuTitle": "Kontrol Resume / 職務経歴書設定",
       "shokumuDesc": "Kelola tab Resume pada profil kandidat dan output PDF.",
       "shokumuEnable": "Aktifkan tab Resume pada profil kandidat",
+      "shokumuFontLabel": "Font",
+      "shokumuFontNote": "Menggunakan font yang sama dengan CV (dapat diubah di pengaturan Font CV di atas)",
       "shokumuLayoutTitle": "Layout",
       "shokumuLayout_reverseLabel": "逆編年体（新しい順）/ Reverse Chronological",
       "shokumuLayout_chronologicalLabel": "編年体（古い順）/ Chronological",

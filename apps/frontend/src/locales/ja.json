@@ -662,6 +662,8 @@
       "shokumuTitle": "Kontrol Resume / 職務経歴書設定",
       "shokumuDesc": "候補者プロフィールの職務経歴書タブとPDF出力を管理します。",
       "shokumuEnable": "候補者プロフィールにResumeタブを有効にする",
+      "shokumuFontLabel": "フォント",
+      "shokumuFontNote": "上の「CVフォント設定」と同じフォントを使用します",
       "shokumuLayoutTitle": "レイアウト",
       "shokumuLayout_reverseLabel": "逆編年体（新しい順）/ Reverse Chronological",
       "shokumuLayout_chronologicalLabel": "編年体（古い順）/ Chronological",

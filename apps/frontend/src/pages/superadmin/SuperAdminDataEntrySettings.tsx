@@ -848,6 +848,17 @@ export default function SuperAdminDataEntrySettings() {
           <span className="text-sm font-medium text-gray-800">{t('superadmin.dataEntrySettings.shokumuEnable')}</span>
         </label>
 
+        {/* Font — shared with CV font setting */}
+        <div className="flex items-center justify-between py-1">
+          <div>
+            <p className="text-sm font-medium text-gray-700">{t('superadmin.dataEntrySettings.shokumuFontLabel')}</p>
+            <p className="text-xs text-gray-400 mt-0.5">{t('superadmin.dataEntrySettings.shokumuFontNote')}</p>
+          </div>
+          <span className="text-xs bg-gray-100 text-gray-700 rounded-full px-3 py-1 font-medium">
+            {FONT_OPTIONS.find((o) => o.key === fontKey)?.label ?? fontKey}
+          </span>
+        </div>
+
         {/* Layout */}
         <div>
           <p className="text-sm font-medium text-gray-700 mb-2">{t('superadmin.dataEntrySettings.shokumuLayoutTitle')}</p>
