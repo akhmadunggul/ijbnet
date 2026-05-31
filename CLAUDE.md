@@ -222,6 +222,7 @@ apps/frontend/src/
 - v0.6.7 — Recruiter selection: convert Japanese exam result from right-side drawer to centered modal (consistent with video/profile modals); enlarge fullbody photo from constrained white card to full-screen dark-canvas viewer (flex-1 min-h-0 layout, image fills remaining viewport height)
 - v0.6.8 — Replace LibreTranslate with DeepSeek API for Indonesian→Japanese auto-translation; DEEPSEEK_API_KEY in .env; remove libretranslate container + lt_models volume from all compose files; auto-translate extended to shokumu fields (careerSummaryId→Ja, dutiesId→dutiesJa, achievementsId→achievementsJa)
 - v0.6.9 — 職務経歴書 (Resume) tab: new candidate profile Tab 10 with bilingual career summary, per-company duties/achievements, A4 PDF export, and merged CV+shokumu PDF; superadmin A/B rollout control (all users vs selected LPKs); CV Japanese formatting (DOB→年月日, age→歳, hobbies auto-translated); superadmin translation service status panel with live latency test
+- v0.6.10 — Superadmin translation API key management: configure DeepSeek API key from UI (stored AES-256-GCM encrypted in DB); DB key takes precedence over .env; masked key display with source badge (DB/Env/Missing); clear button reverts to env fallback
 
-Current: v0.6.9
+Current: v0.6.10
 Live at: https://jinzai.jobagus.id
