@@ -14,6 +14,20 @@ interface TranslationConfigResponse {
   enabled: boolean;
 }
 
+interface TranslationService {
+  id: string;
+  name: string;
+  model: string;
+  endpoint: string;
+  keyConfigured: boolean;
+}
+
+interface TranslationStatusResponse {
+  services: TranslationService[];
+}
+
+type ServiceTestStatus = 'idle' | 'testing' | 'online' | 'offline' | 'not_configured' | 'error';
+
 type FontKey = 'ms-mincho' | 'yu-mincho' | 'yu-gothic' | 'noto-serif-jp' | 'noto-sans-jp';
 type LayoutKey = 'layout1' | 'layout2';
 type CompletenessMode = 'legacy' | 'cv';
@@ -67,6 +81,8 @@ export default function SuperAdminDataEntrySettings() {
   const [shokumuRolloutLpkIds, setShokumuRolloutLpkIds] = useState<string[]>([]);
   const [shokumuSaveSuccess, setShokumuSaveSuccess] = useState(false);
   const [shokumuSaveError, setShokumuSaveError] = useState(false);
+  const [serviceTestStatus, setServiceTestStatus] = useState<Record<string, ServiceTestStatus>>({});
+  const [serviceTestLatency, setServiceTestLatency] = useState<Record<string, number | null>>({});
 
   const { data, isLoading } = useQuery<TabConfigResponse>({
     queryKey: ['candidate-tab-config'],
@@ -112,6 +128,12 @@ export default function SuperAdminDataEntrySettings() {
     queryKey: ['superadmin-lpks'],
     queryFn: () => api.get('/superadmin/lpks').then((r) => r.data),
     staleTime: 120_000,
+  });
+
+  const { data: translationStatusData } = useQuery<TranslationStatusResponse>({
+    queryKey: ['translation-status'],
+    queryFn: () => api.get('/superadmin/translation-status').then((r) => r.data),
+    staleTime: 30_000,
   });
 
   useEffect(() => {
@@ -279,6 +301,18 @@ export default function SuperAdminDataEntrySettings() {
     },
   });
 
+  async function testService(serviceId: string) {
+    setServiceTestStatus((prev) => ({ ...prev, [serviceId]: 'testing' }));
+    setServiceTestLatency((prev) => ({ ...prev, [serviceId]: null }));
+    try {
+      const result = await api.post<{ status: string; latencyMs: number | null }>('/superadmin/translation-status/test', { serviceId }).then((r) => r.data);
+      setServiceTestStatus((prev) => ({ ...prev, [serviceId]: result.status as ServiceTestStatus }));
+      setServiceTestLatency((prev) => ({ ...prev, [serviceId]: result.latencyMs ?? null }));
+    } catch {
+      setServiceTestStatus((prev) => ({ ...prev, [serviceId]: 'offline' }));
+    }
+  }
+
   if (isLoading) {
     return <div className="text-sm text-gray-400">{t('loading')}</div>;
   }
@@ -392,6 +426,70 @@ export default function SuperAdminDataEntrySettings() {
         )}
         {translateSaveError && (
           <span className="text-sm text-red-600">{t('superadmin.dataEntrySettings.errorSave')}</span>
+        )}
+      </div>
+
+      {/* Translation Service Status */}
+      <div>
+        <h2 className="text-base font-semibold text-gray-900 mb-1">{t('superadmin.dataEntrySettings.translateServicesTitle')}</h2>
+        <p className="text-sm text-gray-500 mb-4">{t('superadmin.dataEntrySettings.translateServicesDesc')}</p>
+      </div>
+
+      <div className="bg-white rounded-xl border border-gray-100 shadow-sm divide-y divide-gray-50">
+        {(translationStatusData?.services ?? []).map((svc) => {
+          const testStatus = serviceTestStatus[svc.id] ?? 'idle';
+          const latency = serviceTestLatency[svc.id];
+          const statusDot =
+            testStatus === 'online'         ? 'bg-green-500' :
+            testStatus === 'offline'        ? 'bg-red-500'   :
+            testStatus === 'error'          ? 'bg-orange-400':
+            testStatus === 'not_configured' ? 'bg-gray-300'  :
+            testStatus === 'testing'        ? 'bg-yellow-400 animate-pulse' :
+            'bg-gray-200';
+          const statusLabel =
+            testStatus === 'online'         ? t('superadmin.dataEntrySettings.svcOnline')         :
+            testStatus === 'offline'        ? t('superadmin.dataEntrySettings.svcOffline')        :
+            testStatus === 'error'          ? t('superadmin.dataEntrySettings.svcError')          :
+            testStatus === 'not_configured' ? t('superadmin.dataEntrySettings.svcNotConfigured')  :
+            testStatus === 'testing'        ? t('superadmin.dataEntrySettings.svcTesting')        :
+            null;
+          return (
+            <div key={svc.id} className="flex items-center justify-between px-5 py-4 gap-4">
+              <div className="flex items-center gap-3 min-w-0">
+                <span className={`w-2.5 h-2.5 rounded-full shrink-0 ${statusDot}`} />
+                <div className="min-w-0">
+                  <p className="text-sm font-medium text-gray-800">{svc.name}</p>
+                  <p className="text-xs text-gray-400 mt-0.5">{svc.model} · {svc.endpoint}</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-3 shrink-0">
+                {svc.keyConfigured ? (
+                  <span className="text-xs bg-green-50 text-green-700 border border-green-200 rounded-full px-2 py-0.5">
+                    {t('superadmin.dataEntrySettings.svcKeyOk')}
+                  </span>
+                ) : (
+                  <span className="text-xs bg-red-50 text-red-600 border border-red-200 rounded-full px-2 py-0.5">
+                    {t('superadmin.dataEntrySettings.svcKeyMissing')}
+                  </span>
+                )}
+                {statusLabel && (
+                  <span className="text-xs text-gray-500">
+                    {statusLabel}{latency != null ? ` (${latency}ms)` : ''}
+                  </span>
+                )}
+                <button
+                  onClick={() => { void testService(svc.id); }}
+                  disabled={testStatus === 'testing'}
+                  className="px-3 py-1.5 text-xs bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition disabled:opacity-50"
+                >
+                  {testStatus === 'testing' ? '…' : t('superadmin.dataEntrySettings.svcTest')}
+                </button>
+              </div>
+            </div>
+          );
+        })}
+        {(translationStatusData?.services ?? []).length === 0 && (
+          <p className="px-5 py-4 text-sm text-gray-400">{t('superadmin.dataEntrySettings.svcNone')}</p>
         )}
       </div>
 

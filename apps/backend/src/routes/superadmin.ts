@@ -76,6 +76,53 @@ router.get('/candidate-tab-config', wrap(async (_req, res) => {
   res.json(payload);
 }));
 
+// ── GET /api/superadmin/translation-status — PUBLIC ──────────────────────────
+router.get('/translation-status', wrap(async (_req, res) => {
+  const services = [
+    {
+      id: 'deepseek',
+      name: 'DeepSeek API',
+      model: 'deepseek-chat',
+      endpoint: 'https://api.deepseek.com',
+      keyConfigured: !!process.env['DEEPSEEK_API_KEY'],
+    },
+  ];
+  res.json({ services });
+}));
+
+// ── POST /api/superadmin/translation-status/test — PUBLIC ────────────────────
+router.post('/translation-status/test', wrap(async (req, res) => {
+  const { serviceId } = req.body as { serviceId?: string };
+
+  if (serviceId === 'deepseek') {
+    const apiKey = process.env['DEEPSEEK_API_KEY'];
+    if (!apiKey) {
+      res.json({ status: 'not_configured', latencyMs: null });
+      return;
+    }
+    const start = Date.now();
+    try {
+      const resp = await fetch('https://api.deepseek.com/chat/completions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${apiKey}` },
+        body: JSON.stringify({
+          model: 'deepseek-chat',
+          messages: [{ role: 'user', content: 'ping' }],
+          max_tokens: 1,
+        }),
+        signal: AbortSignal.timeout(10_000),
+      });
+      const latencyMs = Date.now() - start;
+      res.json({ status: resp.ok ? 'online' : 'error', latencyMs, httpStatus: resp.status });
+    } catch {
+      res.json({ status: 'offline', latencyMs: Date.now() - start });
+    }
+    return;
+  }
+
+  res.status(400).json({ error: 'UNKNOWN_SERVICE' });
+}));
+
 // ── GET /api/superadmin/translation-config — PUBLIC ──────────────────────────
 router.get('/translation-config', wrap(async (_req, res) => {
   const cached = await cacheGet('gs:translate');
