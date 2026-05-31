@@ -317,7 +317,7 @@ export default function SuperAdminDataEntrySettings() {
     },
   });
 
-  async function saveApiKey(serviceId: string) {
+  async function saveApiKey(serviceId: string, skipValidation = false) {
     const key = apiKeyInput[serviceId]?.trim() ?? '';
     if (!key) return;
     setApiKeySaving((p) => ({ ...p, [serviceId]: true }));
@@ -325,7 +325,7 @@ export default function SuperAdminDataEntrySettings() {
     setApiKeyError((p) => ({ ...p, [serviceId]: false }));
     setServiceTestDetail((p) => ({ ...p, [serviceId]: null }));
     try {
-      await api.put('/superadmin/translation-api-config', { apiKey: key });
+      await api.put('/superadmin/translation-api-config', { apiKey: key, skipValidation });
       setApiKeyInput((p) => ({ ...p, [serviceId]: '' }));
       setApiKeySaved((p) => ({ ...p, [serviceId]: true }));
       void refetchApiConfig();
@@ -584,10 +584,21 @@ export default function SuperAdminDataEntrySettings() {
                 </div>
                 {apiKeySaved[svc.id] && <p className="text-xs text-green-600">✓ {t('superadmin.dataEntrySettings.saved')}</p>}
                 {apiKeyError[svc.id] && (
-                  <p className="text-xs text-red-500">
-                    {t('superadmin.dataEntrySettings.errorSave')}
-                    {serviceTestDetail[svc.id] && <span className="ml-1 font-mono">— {serviceTestDetail[svc.id]}</span>}
-                  </p>
+                  <div className="space-y-1">
+                    <p className="text-xs text-red-500">
+                      {t('superadmin.dataEntrySettings.errorSave')}
+                      {serviceTestDetail[svc.id] && <span className="ml-1 font-mono">— {serviceTestDetail[svc.id]}</span>}
+                    </p>
+                    {apiKeyInput[svc.id]?.trim() && (
+                      <button
+                        onClick={() => { void saveApiKey(svc.id, true); }}
+                        disabled={apiKeySaving[svc.id]}
+                        className="text-xs text-gray-500 underline hover:text-gray-700 disabled:opacity-50"
+                      >
+                        {t('superadmin.dataEntrySettings.svcApiKeySaveForce')}
+                      </button>
+                    )}
+                  </div>
                 )}
                 {testDetail && !apiKeyError[svc.id] && (
                   <p className="text-xs text-red-400 font-mono mt-1">{testDetail}</p>

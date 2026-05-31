@@ -652,6 +652,7 @@
       "svcCurrentKey": "Key aktif",
       "svcApiKeyPlaceholder": "Masukkan API key baru…",
       "svcApiKeySave": "Simpan Key",
+      "svcApiKeySaveForce": "Simpan tanpa validasi →",
       "svcApiKeyClear": "Hapus (gunakan .env)",
       "journeyVizTitle": "Visualisasi Perjalanan Kandidat",
       "journeyVizDesc": "Pilih tampilan perjalanan (timeline) yang ditampilkan di dashboard kandidat.",

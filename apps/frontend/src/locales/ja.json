@@ -651,6 +651,7 @@
       "svcCurrentKey": "現在のキー",
       "svcApiKeyPlaceholder": "新しいAPIキーを入力…",
       "svcApiKeySave": "キーを保存",
+      "svcApiKeySaveForce": "検証なしで保存 →",
       "svcApiKeyClear": "削除（.envを使用）",
       "journeyVizTitle": "候補者の歩み表示形式",
       "journeyVizDesc": "候補者ダッシュボードに表示するタイムラインの形式を選択します。",
