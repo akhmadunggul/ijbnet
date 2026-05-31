@@ -228,6 +228,7 @@ apps/frontend/src/
 - v0.6.13 — Security hardening (threat model top-2): (1) Zod allowlist validation on all 6 candidate mutation endpoints — replaces BLOCKED_FIELDS denylist, .strict() schemas reject unknown keys with 422; (2) Puppeteer pool caps concurrent Chromium processes at 3 with 45s queue timeout + per-user PDF rate limit (5/5min); PDF Japanese font fix (fonts-noto-cjk in Docker, Noto CJK JP in all font stacks); shokumu settings shows active CV font
 - v0.6.14 — Resume preview adopts CV method: new ShokumuCV React component renders 職務経歴書 in-browser (mirrors shokumuTemplate.ts); ShokumuCVPage at /portal/shokumu with back/print/download toolbar; live auto-translate for missing Japanese fields; zoom controls; window.print() support — replaces iframe PDF blob preview
 - v0.6.15 — Align ShokumuCV preview UI exactly with CandidateCV: −/[pct%]/+ zoom controls (right-aligned, 50–200% in 10% steps); print CSS via dangerouslySetInnerHTML inside container; <> fragment wrapper
+- v0.6.16 — Fix ShokumuCV preview: add A4 page border (2px solid #000), white background, print-margin padding, boxSizing to S.doc so the preview accurately shows where the A4 boundary is
 
-Current: v0.6.15
+Current: v0.6.16
 Live at: https://jinzai.jobagus.id
