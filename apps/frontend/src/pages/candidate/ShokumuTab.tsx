@@ -8,6 +8,7 @@ interface ShokumuSettings {
   enabled: boolean;
   layout: string;
   mergeCv: boolean;
+  eligible: boolean;
 }
 
 interface ShokumuTabProps {
@@ -32,7 +33,7 @@ export default function ShokumuTab({ candidate, isLocked }: ShokumuTabProps) {
 
   const { data: settings } = useQuery<ShokumuSettings>({
     queryKey: ['shokumu-config'],
-    queryFn: () => api.get('/superadmin/shokumu-config').then((r) => r.data),
+    queryFn: () => api.get('/candidates/me/shokumu').then((r) => r.data),
     staleTime: 60_000,
   });
 
@@ -264,7 +265,7 @@ export default function ShokumuTab({ candidate, isLocked }: ShokumuTabProps) {
       )}
 
       {/* PDF download buttons */}
-      {settings?.enabled && (
+      {settings?.eligible && (
         <div className="border-t border-gray-100 pt-4 space-y-3">
           {settings.mergeCv ? (
             <button

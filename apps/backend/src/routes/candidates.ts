@@ -728,16 +728,33 @@ router.patch('/me/interviews/:proposalId/confirm-date', authenticate, requireRol
 });
 
 // ── GET /api/candidates/me/shokumu ────────────────────────────────────────────
-router.get('/me/shokumu', authenticate, requireRole('candidate'), async (_req: Request, res: Response): Promise<void> => {
-  const [enabledRow, layoutRow, mergeRow] = await Promise.all([
+router.get('/me/shokumu', authenticate, requireRole('candidate'), async (req: Request, res: Response): Promise<void> => {
+  const [enabledRow, layoutRow, mergeRow, rolloutModeRow, rolloutLpkRow] = await Promise.all([
     GlobalSettings.findOne({ where: { key: 'shokumu_enabled' } }),
     GlobalSettings.findOne({ where: { key: 'shokumu_layout' } }),
     GlobalSettings.findOne({ where: { key: 'shokumu_merge_cv' } }),
+    GlobalSettings.findOne({ where: { key: 'shokumu_rollout_mode' } }),
+    GlobalSettings.findOne({ where: { key: 'shokumu_rollout_lpk_ids' } }),
   ]);
-  const enabled  = enabledRow  ? (enabledRow.toJSON()  as unknown as Record<string, unknown>)['value'] === true   : false;
-  const layout   = layoutRow   ? String((layoutRow.toJSON()   as unknown as Record<string, unknown>)['value'] ?? 'reverse') : 'reverse';
-  const mergeCv  = mergeRow    ? (mergeRow.toJSON()    as unknown as Record<string, unknown>)['value'] === true   : false;
-  res.json({ enabled, layout, mergeCv });
+  const enabled       = enabledRow      ? (enabledRow.toJSON()      as unknown as Record<string, unknown>)['value'] === true  : false;
+  const layout        = layoutRow       ? String((layoutRow.toJSON() as unknown as Record<string, unknown>)['value'] ?? 'reverse') : 'reverse';
+  const mergeCv       = mergeRow        ? (mergeRow.toJSON()        as unknown as Record<string, unknown>)['value'] === true  : false;
+  const rolloutMode   = rolloutModeRow  ? String((rolloutModeRow.toJSON()  as unknown as Record<string, unknown>)['value'] ?? 'all') : 'all';
+  const rolloutLpkIds = rolloutLpkRow
+    ? ((rolloutLpkRow.toJSON() as unknown as Record<string, unknown>)['value'] as string[] | null) ?? []
+    : [];
+
+  let eligible = false;
+  if (enabled) {
+    if (rolloutMode === 'all') {
+      eligible = true;
+    } else if (rolloutMode === 'lpk') {
+      const candidate = await Candidate.findOne({ where: { userId: req.user!.sub }, attributes: ['lpkId'] });
+      eligible = candidate?.lpkId != null && rolloutLpkIds.includes(candidate.lpkId);
+    }
+  }
+
+  res.json({ enabled, layout, mergeCv, eligible });
 });
 
 // ── PATCH /api/candidates/me/shokumu ─────────────────────────────────────────

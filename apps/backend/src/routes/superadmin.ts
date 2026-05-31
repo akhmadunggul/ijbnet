@@ -142,15 +142,21 @@ router.get('/journey-visualization', wrap(async (_req, res) => {
 
 // ── GET /api/superadmin/shokumu-config — PUBLIC ──────────────────────────────
 router.get('/shokumu-config', wrap(async (_req, res) => {
-  const [enabledRow, layoutRow, mergeRow] = await Promise.all([
+  const [enabledRow, layoutRow, mergeRow, rolloutModeRow, rolloutLpkRow] = await Promise.all([
     GlobalSettings.findOne({ where: { key: 'shokumu_enabled' } }),
     GlobalSettings.findOne({ where: { key: 'shokumu_layout' } }),
     GlobalSettings.findOne({ where: { key: 'shokumu_merge_cv' } }),
+    GlobalSettings.findOne({ where: { key: 'shokumu_rollout_mode' } }),
+    GlobalSettings.findOne({ where: { key: 'shokumu_rollout_lpk_ids' } }),
   ]);
-  const enabled = enabledRow ? (enabledRow.toJSON() as unknown as Record<string, unknown>)['value'] === true  : false;
-  const layout  = layoutRow  ? String((layoutRow.toJSON()  as unknown as Record<string, unknown>)['value'] ?? 'reverse') : 'reverse';
-  const mergeCv = mergeRow   ? (mergeRow.toJSON()   as unknown as Record<string, unknown>)['value'] === true : false;
-  res.json({ enabled, layout, mergeCv });
+  const enabled       = enabledRow      ? (enabledRow.toJSON()      as unknown as Record<string, unknown>)['value'] === true  : false;
+  const layout        = layoutRow       ? String((layoutRow.toJSON() as unknown as Record<string, unknown>)['value'] ?? 'reverse') : 'reverse';
+  const mergeCv       = mergeRow        ? (mergeRow.toJSON()        as unknown as Record<string, unknown>)['value'] === true  : false;
+  const rolloutMode   = rolloutModeRow  ? String((rolloutModeRow.toJSON()  as unknown as Record<string, unknown>)['value'] ?? 'all') : 'all';
+  const rolloutLpkIds = rolloutLpkRow
+    ? ((rolloutLpkRow.toJSON() as unknown as Record<string, unknown>)['value'] as string[] | null) ?? []
+    : [];
+  res.json({ enabled, layout, mergeCv, rolloutMode, rolloutLpkIds });
 }));
 
 router.use(authenticate, requireRole('super_admin'));
@@ -413,26 +419,24 @@ router.put('/shokumu-config', wrap(async (req, res) => {
   const validLayouts = ['chronological', 'reverse', 'career'];
   const layout = validLayouts.includes(String(body['layout'])) ? String(body['layout']) : 'reverse';
   const mergeCv = body['mergeCv'] === true;
+  const rolloutMode = body['rolloutMode'] === 'lpk' ? 'lpk' : 'all';
+  const rawLpkIds = Array.isArray(body['rolloutLpkIds']) ? body['rolloutLpkIds'] : [];
+  const rolloutLpkIds = (rawLpkIds as unknown[]).filter((id): id is string => typeof id === 'string' && isUUID(id));
 
-  const [rowEnabled, createdEnabled] = await GlobalSettings.findOrCreate({
-    where: { key: 'shokumu_enabled' },
-    defaults: { key: 'shokumu_enabled', value: enabled },
-  });
-  if (!createdEnabled) await rowEnabled.update({ value: enabled });
+  const upsert = async (key: string, value: unknown) => {
+    const [row, created] = await GlobalSettings.findOrCreate({ where: { key }, defaults: { key, value } });
+    if (!created) await row.update({ value });
+  };
 
-  const [rowLayout, createdLayout] = await GlobalSettings.findOrCreate({
-    where: { key: 'shokumu_layout' },
-    defaults: { key: 'shokumu_layout', value: layout },
-  });
-  if (!createdLayout) await rowLayout.update({ value: layout });
+  await Promise.all([
+    upsert('shokumu_enabled', enabled),
+    upsert('shokumu_layout', layout),
+    upsert('shokumu_merge_cv', mergeCv),
+    upsert('shokumu_rollout_mode', rolloutMode),
+    upsert('shokumu_rollout_lpk_ids', rolloutLpkIds),
+  ]);
 
-  const [rowMerge, createdMerge] = await GlobalSettings.findOrCreate({
-    where: { key: 'shokumu_merge_cv' },
-    defaults: { key: 'shokumu_merge_cv', value: mergeCv },
-  });
-  if (!createdMerge) await rowMerge.update({ value: mergeCv });
-
-  res.json({ enabled, layout, mergeCv });
+  res.json({ enabled, layout, mergeCv, rolloutMode, rolloutLpkIds });
 }));
 
 // ── PUT /api/superadmin/candidate-tab-config ──────────────────────────────────

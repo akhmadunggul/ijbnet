@@ -649,7 +649,10 @@
       "shokumuLayout_careerLabel": "キャリア形式 / Career-based",
       "shokumuOutputTitle": "Output PDF",
       "shokumuOutputSeparate": "Terpisah dari CV / 別ファイル",
-      "shokumuOutputMerged": "Digabung dengan CV / CVと結合"
+      "shokumuOutputMerged": "Digabung dengan CV / CVと結合",
+      "shokumuRolloutTitle": "Target Pengguna (A/B Rollout)",
+      "shokumuRolloutAll": "Semua kandidat",
+      "shokumuRolloutLpk": "LPK tertentu saja"
     },
     "recruiterSettings": {
       "navLabel": "Tampilan Rekruiter",

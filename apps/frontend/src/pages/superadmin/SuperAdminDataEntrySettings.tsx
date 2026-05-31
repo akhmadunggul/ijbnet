@@ -19,6 +19,10 @@ type LayoutKey = 'layout1' | 'layout2';
 type CompletenessMode = 'legacy' | 'cv';
 type JourneyVizMode = 'text' | 'graphical';
 type ShokumuLayout = 'reverse' | 'chronological' | 'career';
+type ShokumuRolloutMode = 'all' | 'lpk';
+
+interface LpkOption { id: string; name: string; city: string | null; }
+interface LpkListResponse { lpks: LpkOption[]; }
 
 const FONT_OPTIONS: { key: FontKey; label: string; sublabel: string; value: string; googleFont?: string }[] = [
   { key: 'ms-mincho',    label: 'MS Mincho',      sublabel: 'Windows (既定)',          value: '"MS Mincho", serif' },
@@ -59,6 +63,8 @@ export default function SuperAdminDataEntrySettings() {
   const [shokumuEnabled, setShokumuEnabled] = useState(false);
   const [shokumuLayout, setShokumuLayout] = useState<ShokumuLayout>('reverse');
   const [shokumuMergeCv, setShokumuMergeCv] = useState(false);
+  const [shokumuRolloutMode, setShokumuRolloutMode] = useState<ShokumuRolloutMode>('all');
+  const [shokumuRolloutLpkIds, setShokumuRolloutLpkIds] = useState<string[]>([]);
   const [shokumuSaveSuccess, setShokumuSaveSuccess] = useState(false);
   const [shokumuSaveError, setShokumuSaveError] = useState(false);
 
@@ -97,9 +103,15 @@ export default function SuperAdminDataEntrySettings() {
     queryFn: () => api.get('/superadmin/journey-visualization').then((r) => r.data),
   });
 
-  const { data: shokumuConfigData } = useQuery<{ enabled: boolean; layout: ShokumuLayout; mergeCv: boolean }>({
+  const { data: shokumuConfigData } = useQuery<{ enabled: boolean; layout: ShokumuLayout; mergeCv: boolean; rolloutMode: ShokumuRolloutMode; rolloutLpkIds: string[] }>({
     queryKey: ['shokumu-config'],
     queryFn: () => api.get('/superadmin/shokumu-config').then((r) => r.data),
+  });
+
+  const { data: lpkListData } = useQuery<LpkListResponse>({
+    queryKey: ['superadmin-lpks'],
+    queryFn: () => api.get('/superadmin/lpks').then((r) => r.data),
+    staleTime: 120_000,
   });
 
   useEffect(() => {
@@ -142,6 +154,8 @@ export default function SuperAdminDataEntrySettings() {
       setShokumuEnabled(shokumuConfigData.enabled);
       if (shokumuConfigData.layout) setShokumuLayout(shokumuConfigData.layout);
       setShokumuMergeCv(shokumuConfigData.mergeCv);
+      if (shokumuConfigData.rolloutMode) setShokumuRolloutMode(shokumuConfigData.rolloutMode);
+      setShokumuRolloutLpkIds(shokumuConfigData.rolloutLpkIds ?? []);
     }
   }, [shokumuConfigData]);
 
@@ -236,8 +250,8 @@ export default function SuperAdminDataEntrySettings() {
   });
 
   const shokumuMutation = useMutation({
-    mutationFn: ({ enabled, layout, mergeCv }: { enabled: boolean; layout: string; mergeCv: boolean }) =>
-      api.put('/superadmin/shokumu-config', { enabled, layout, mergeCv }).then((r) => r.data),
+    mutationFn: ({ enabled, layout, mergeCv, rolloutMode, rolloutLpkIds }: { enabled: boolean; layout: string; mergeCv: boolean; rolloutMode: string; rolloutLpkIds: string[] }) =>
+      api.put('/superadmin/shokumu-config', { enabled, layout, mergeCv, rolloutMode, rolloutLpkIds }).then((r) => r.data),
     onSuccess: () => {
       setShokumuSaveSuccess(true);
       setShokumuSaveError(false);
@@ -667,11 +681,64 @@ export default function SuperAdminDataEntrySettings() {
             </label>
           </div>
         </div>
+
+        {/* Rollout / A-B target */}
+        <div>
+          <p className="text-sm font-medium text-gray-700 mb-2">{t('superadmin.dataEntrySettings.shokumuRolloutTitle')}</p>
+          <div className="space-y-2">
+            <label className="flex items-center gap-3 cursor-pointer">
+              <input
+                type="radio"
+                name="shokumu_rollout"
+                value="all"
+                checked={shokumuRolloutMode === 'all'}
+                onChange={() => setShokumuRolloutMode('all')}
+                className="accent-navy-700"
+              />
+              <span className="text-sm text-gray-800">{t('superadmin.dataEntrySettings.shokumuRolloutAll')}</span>
+            </label>
+            <label className="flex items-center gap-3 cursor-pointer">
+              <input
+                type="radio"
+                name="shokumu_rollout"
+                value="lpk"
+                checked={shokumuRolloutMode === 'lpk'}
+                onChange={() => setShokumuRolloutMode('lpk')}
+                className="accent-navy-700"
+              />
+              <span className="text-sm text-gray-800">{t('superadmin.dataEntrySettings.shokumuRolloutLpk')}</span>
+            </label>
+          </div>
+
+          {shokumuRolloutMode === 'lpk' && (
+            <div className="mt-3 ml-7 border border-gray-100 rounded-lg p-3 bg-gray-50 max-h-48 overflow-y-auto space-y-1.5">
+              {(lpkListData?.lpks ?? []).length === 0 && (
+                <p className="text-xs text-gray-400">No LPKs found.</p>
+              )}
+              {(lpkListData?.lpks ?? []).map((lpk) => (
+                <label key={lpk.id} className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={shokumuRolloutLpkIds.includes(lpk.id)}
+                    onChange={(e) =>
+                      setShokumuRolloutLpkIds((prev) =>
+                        e.target.checked ? [...prev, lpk.id] : prev.filter((id) => id !== lpk.id),
+                      )
+                    }
+                    className="accent-navy-700 w-4 h-4"
+                  />
+                  <span className="text-sm text-gray-800">{lpk.name}</span>
+                  {lpk.city && <span className="text-xs text-gray-400">{lpk.city}</span>}
+                </label>
+              ))}
+            </div>
+          )}
+        </div>
       </div>
 
       <div className="flex items-center gap-4">
         <button
-          onClick={() => shokumuMutation.mutate({ enabled: shokumuEnabled, layout: shokumuLayout, mergeCv: shokumuMergeCv })}
+          onClick={() => shokumuMutation.mutate({ enabled: shokumuEnabled, layout: shokumuLayout, mergeCv: shokumuMergeCv, rolloutMode: shokumuRolloutMode, rolloutLpkIds: shokumuRolloutLpkIds })}
           disabled={shokumuMutation.isPending}
           className="px-5 py-2 bg-gray-900 text-white text-sm rounded-lg hover:bg-gray-700 transition disabled:opacity-50"
         >

@@ -976,6 +976,7 @@ interface ShokumuConfigResponse {
   enabled: boolean;
   layout: string;
   mergeCv: boolean;
+  eligible: boolean;
 }
 
 export default function CandidateProfile() {
@@ -999,14 +1000,14 @@ export default function CandidateProfile() {
 
   const { data: shokumuConfig } = useQuery<ShokumuConfigResponse>({
     queryKey: ['shokumu-config'],
-    queryFn: () => api.get('/superadmin/shokumu-config').then((r) => r.data),
+    queryFn: () => api.get('/candidates/me/shokumu').then((r) => r.data),
     staleTime: 60_000,
   });
 
-  const shokumuEnabled = shokumuConfig?.enabled === true;
+  const shokumuEligible = shokumuConfig?.eligible === true;
 
   const visibleTabs = TABS.filter((tab) => {
-    if (tab === 'tab10') return shokumuEnabled;
+    if (tab === 'tab10') return shokumuEligible;
     return tabConfigData?.config?.[tab] !== false;
   });
 
