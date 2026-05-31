@@ -224,6 +224,7 @@ apps/frontend/src/
 - v0.6.9 — 職務経歴書 (Resume) tab: new candidate profile Tab 10 with bilingual career summary, per-company duties/achievements, A4 PDF export, and merged CV+shokumu PDF; superadmin A/B rollout control (all users vs selected LPKs); CV Japanese formatting (DOB→年月日, age→歳, hobbies auto-translated); superadmin translation service status panel with live latency test
 - v0.6.10 — Superadmin translation API key management: configure DeepSeek API key from UI (stored AES-256-GCM encrypted in DB); DB key takes precedence over .env; masked key display with source badge (DB/Env/Missing); clear button reverts to env fallback
 - v0.6.11 — Shokumu PDF: auto-translate missing Japanese fields (careerSummaryId, dutiesId, achievementsId, selfPrId, selfIntroId) at render time via active translation service, saved back to DB; resume preview modal (full-screen iframe with toolbar, download + close)
+- v0.6.12 — Translation hardening: per-user (15/min) + global (120/min) rate limiting; structured JSON request logging with context/user-hash/latency; user_id (SHA-256 hashed JWT sub) sent to DeepSeek for content safety; 504 timeout vs 502 API error distinction; 20s live / 25s background timeouts
 
-Current: v0.6.11
+Current: v0.6.12
 Live at: https://jinzai.jobagus.id
