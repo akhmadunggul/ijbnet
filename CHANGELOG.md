@@ -5,6 +5,58 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ---
 
+## [v0.6.13] - 2026-05-31
+
+### Security
+- **Zod allowlist validation on all candidate mutation endpoints**: Replaces the previous `BLOCKED_FIELDS` denylist in `PATCH /candidates/me` with an explicit `.strict()` allowlist schema. Unknown keys in request bodies now return `422 INVALID_INPUT` with field-level error details instead of being silently ignored. All 6 mutation endpoints (`PATCH /me`, `PUT /me/career`, `PUT /me/certifications`, `PUT /me/education-history`, `PUT /me/tests`, `PATCH /me/shokumu`) now have typed schemas with max-length caps and enum constraints. New `utils/candidateSchemas.ts` centralises all schemas and a `parseBody()` helper.
+- **Puppeteer pool — closes PDF Denial-of-Service vector**: New `utils/browserPool.ts` implements a semaphore-based pool capping concurrent Chromium processes at 3. Excess requests queue for up to 45 seconds then receive `503 PDF_BUSY`; absent Chromium returns `503 PDF_UNAVAILABLE`. All 4 PDF routes (`/me/export`, `/me/shokumu-pdf`, `/me/merged-pdf`, `/export/candidates/:id/profile.pdf`) now call the shared `renderPdf()` instead of spawning their own browser. Previously, an authenticated user could spawn unlimited Chromium processes in parallel, causing an OOM crash.
+- **Per-user PDF rate limit**: PDF export endpoints are now capped at 5 requests per user per 5 minutes as a secondary DoS guard.
+
+### Fixed
+- **PDF Japanese character rendering**: Production Docker image (`node:20-slim`) ships Chromium but no CJK fonts, causing all Japanese characters to render as tofu boxes. Fixed by adding `fonts-noto-cjk` to the `apt-get install` step in `Dockerfile.prod`. All PDF font stacks updated to list `"Noto Serif/Sans CJK JP"` first so the system font is used immediately without any CDN dependency.
+
+### Changed
+- **Shokumu settings shows active CV font**: The Resume/職務経歴書 section in Superadmin settings now shows a read-only badge with the currently active CV font name and a note that the shokumu PDF shares the CV font setting. The backend already used `cv_font` for shokumu PDF rendering — this makes the alignment visible in the UI.
+
+---
+
+## [v0.6.12] - 2026-05-31
+
+### Changed
+- **Translation rate limiting**: Live translation endpoint (`POST /translate`) now enforces per-user limit (15 req/min, keyed by JWT sub) and a global guard (120 req/min across all users). Both return structured `429` JSON with distinct error codes.
+- **Translation request logging**: Every DeepSeek API call emits a structured JSON log line: `{ context, user (SHA-256 hashed sub, first 16 hex chars), textLen, status, latencyMs, outputLen }`. Context labels: `cv-live`, `auto-save`, `shokumu-save`, `pdf-render`.
+- **user_id parameter**: All DeepSeek requests include the `user` field (hashed JWT sub) for content safety flagging and per-user isolation. Raw user ID is never sent to DeepSeek.
+- **Timeout handling**: Live translate route returns `504 TRANSLATION_TIMEOUT` on timeout vs `502 TRANSLATION_FAILED` on API error. `translateId2JaDetailed()` exposes the `timedOut` flag. Background translates (save/PDF) use a 25s timeout; live route uses 20s.
+
+---
+
+## [v0.6.11] - 2026-05-31
+
+### Added
+- **Shokumu PDF auto-translation**: `GET /candidates/me/shokumu-pdf` now translates missing Japanese fields (`careerSummaryId`, `dutiesId`, `achievementsId`, `selfPrId`, `selfIntroId`) at render time using the active translation service. Translations are saved back to DB so subsequent renders are instant.
+- **Resume preview modal**: "Pratinjau / プレビュー" button in the Resume tab fetches the PDF blob and opens it in a full-screen iframe modal with a dark overlay. Modal toolbar has title, Download button, and close (✕). Object URL is revoked on close to free memory. Works for both shokumu-only and merged CV+shokumu modes.
+
+---
+
+## [v0.6.10] - 2026-05-31
+
+### Added
+- **Translation API key management in Superadmin**: DeepSeek API key can now be configured directly from the Superadmin settings UI without touching the server's `.env` file. Key is stored AES-256-GCM encrypted in `global_settings`. DB key takes precedence over the `DEEPSEEK_API_KEY` env var. The UI shows source badge (`DB Key` / `Env Var` / `Missing`), masked key (first 6 + last 4 chars), password input, Save button, and Clear button (reverts to env var). Saving validates the key against DeepSeek first; a "Simpan tanpa validasi →" bypass link appears after a failed save.
+
+---
+
+## [v0.6.9] - 2026-05-31
+
+### Added
+- **職務経歴書 (Resume) Tab 10**: New candidate profile tab (gated by superadmin toggle) for Japanese-style work history resume. Includes bilingual career summary, per-company duties/achievements/company details (companyType, employeeCount, annualSales, capitalAmount), A4 PDF export, and merged CV+職務経歴書 PDF.
+- **Superadmin A/B rollout control**: Superadmin can target the Resume tab to all candidates or selected LPKs only. Eligibility is computed server-side in `GET /candidates/me/shokumu`.
+- **Superadmin translation service status panel**: New section in Pengaturan Data Entri shows available translation services with API key status badge, live latency test ("Uji Koneksi"), and HTTP status + error detail on failure.
+
+### Changed
+- **CV Japanese formatting**: Date of birth formatted as `YYYY年M月D日`; age unit changed from "tahun" to "歳"; hobbies (趣味) added to the live auto-translate pipeline in the CV component.
+
+---
+
 ## [v0.5.8] - 2026-05-26
 
 ### Changed

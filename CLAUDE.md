@@ -225,6 +225,7 @@ apps/frontend/src/
 - v0.6.10 — Superadmin translation API key management: configure DeepSeek API key from UI (stored AES-256-GCM encrypted in DB); DB key takes precedence over .env; masked key display with source badge (DB/Env/Missing); clear button reverts to env fallback
 - v0.6.11 — Shokumu PDF: auto-translate missing Japanese fields (careerSummaryId, dutiesId, achievementsId, selfPrId, selfIntroId) at render time via active translation service, saved back to DB; resume preview modal (full-screen iframe with toolbar, download + close)
 - v0.6.12 — Translation hardening: per-user (15/min) + global (120/min) rate limiting; structured JSON request logging with context/user-hash/latency; user_id (SHA-256 hashed JWT sub) sent to DeepSeek for content safety; 504 timeout vs 502 API error distinction; 20s live / 25s background timeouts
+- v0.6.13 — Security hardening (threat model top-2): (1) Zod allowlist validation on all 6 candidate mutation endpoints — replaces BLOCKED_FIELDS denylist, .strict() schemas reject unknown keys with 422; (2) Puppeteer pool caps concurrent Chromium processes at 3 with 45s queue timeout + per-user PDF rate limit (5/5min); PDF Japanese font fix (fonts-noto-cjk in Docker, Noto CJK JP in all font stacks); shokumu settings shows active CV font
 
-Current: v0.6.12
+Current: v0.6.13
 Live at: https://jinzai.jobagus.id
