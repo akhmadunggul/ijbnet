@@ -3,13 +3,23 @@ import path from 'path';
 import { Router, Request, Response } from 'express';
 import { Op } from 'sequelize';
 import multer from 'multer';
-import puppeteer from 'puppeteer-core';
+import rateLimit from 'express-rate-limit';
 import { authenticate, requireRole } from '../middleware/auth';
 import { decryptNullable } from '../utils/crypto';
-import { resolveChromePath, buildCandidatePdfHtml } from '../utils/candidatePdf';
+import { buildCandidatePdfHtml } from '../utils/candidatePdf';
 import { buildShokumuHtml } from '../utils/shokumuTemplate';
 import { config } from '../config';
 import { translateId2Ja } from '../utils/translate';
+import { renderPdf, isPdfError } from '../utils/browserPool';
+import {
+  parseBody,
+  patchMeSchema,
+  putCareerSchema,
+  putCertSchema,
+  putEduSchema,
+  putTestSchema,
+  patchShokumuSchema,
+} from '../utils/candidateSchemas';
 import {
   Candidate,
   CandidateJapaneseTest,
@@ -109,13 +119,18 @@ async function findMyCandidate(userId: string) {
   });
 }
 
-// ── Fields a candidate cannot update themselves ───────────────────────────────
-const BLOCKED_FIELDS = new Set([
-  'candidateCode', 'userId', 'lpkId', 'profileStatus', 'isLocked',
-  'nikEncrypted', 'nik', 'bankAccountEncrypted', 'internalNotes', 'id',
-  'createdAt', 'updatedAt',
-  'consentGiven', 'consentGivenAt', 'consentClauseId',
-]);
+// ── Per-user PDF rate limiter ─────────────────────────────────────────────────
+// 5 PDF exports per user per 5 minutes — prevents the Chromium spawn bomb.
+const pdfLimiter = rateLimit({
+  windowMs: 5 * 60_000,
+  max: 5,
+  standardHeaders: true,
+  legacyHeaders: false,
+  keyGenerator: (req: Request) => req.user?.sub ?? req.ip ?? 'anon',
+  handler: (_req, res) => {
+    res.status(429).json({ error: 'RATE_LIMITED', message: 'Too many PDF requests. Please wait a few minutes.' });
+  },
+});
 
 // ── GET /api/candidates/me ────────────────────────────────────────────────────
 router.get('/me', async (req: Request, res: Response): Promise<void> => {
@@ -162,15 +177,18 @@ router.patch('/me', async (req: Request, res: Response): Promise<void> => {
     return;
   }
 
-  const body = req.body as Record<string, unknown>;
-  const updates: Record<string, unknown> = {};
-  for (const [k, v] of Object.entries(body)) {
-    if (!BLOCKED_FIELDS.has(k)) updates[k] = v;
-  }
+  const parsed = parseBody(patchMeSchema, req.body, res);
+  if (parsed === null) return;
 
-  // Allow candidate to set lpkId once (only when not yet assigned)
-  if (body['lpkId'] && !candidate.lpkId) {
-    const lpk = await Lpk.findOne({ where: { id: body['lpkId'] as string, isActive: true } });
+  // Build updates — strip undefined (omitted optional fields)
+  const { lpkId: lpkIdInput, ...rest } = parsed;
+  const updates: Record<string, unknown> = Object.fromEntries(
+    Object.entries(rest).filter(([, v]) => v !== undefined),
+  );
+
+  // lpkId: allow setting once (only when not yet assigned)
+  if (lpkIdInput && !candidate.lpkId) {
+    const lpk = await Lpk.findOne({ where: { id: lpkIdInput, isActive: true } });
     if (lpk) updates['lpkId'] = lpk.id;
   }
 
@@ -370,9 +388,9 @@ router.put('/me/career', async (req: Request, res: Response): Promise<void> => {
     return;
   }
 
-  const { entries } = req.body as { entries: Array<{
-    companyName?: string; division?: string; skillGroup?: string; period?: string; startDate?: string; sortOrder?: number;
-  }> };
+  const body = parseBody(putCareerSchema, req.body, res);
+  if (body === null) return;
+  const { entries } = body;
 
   await CandidateCareer.destroy({ where: { candidateId: candidate.id } });
 
@@ -408,9 +426,9 @@ router.put('/me/certifications', async (req: Request, res: Response): Promise<vo
     return;
   }
 
-  const { entries } = req.body as { entries: Array<{
-    certName?: string; certLevel?: string; issuedDate?: string; issuedBy?: string;
-  }> };
+  const body = parseBody(putCertSchema, req.body, res);
+  if (body === null) return;
+  const { entries } = body;
 
   await CandidateCertification.destroy({ where: { candidateId: candidate.id } });
 
@@ -447,9 +465,9 @@ router.put('/me/education-history', async (req: Request, res: Response): Promise
     return;
   }
 
-  const { entries } = req.body as { entries: Array<{
-    schoolName?: string; major?: string; startDate?: string; endDate?: string; sortOrder?: number;
-  }> };
+  const body = parseBody(putEduSchema, req.body, res);
+  if (body === null) return;
+  const { entries } = body;
 
   await CandidateEducationHistory.destroy({ where: { candidateId: candidate.id } });
 
@@ -487,9 +505,9 @@ router.put('/me/tests', async (req: Request, res: Response): Promise<void> => {
     return;
   }
 
-  const { entries } = req.body as { entries: Array<{
-    testName?: string; score?: number; pass?: boolean; testDate?: string;
-  }> };
+  const body = parseBody(putTestSchema, req.body, res);
+  if (body === null) return;
+  const { entries } = body;
 
   await CandidateJapaneseTest.destroy({ where: { candidateId: candidate.id } });
 
@@ -579,7 +597,7 @@ router.post(
 );
 
 // ── GET /api/candidates/me/export ─────────────────────────────────────────────
-router.get('/me/export', async (req: Request, res: Response): Promise<void> => {
+router.get('/me/export', pdfLimiter, async (req: Request, res: Response): Promise<void> => {
   const candidate = await Candidate.findOne({
     where: { userId: req.user!.sub },
     include: [
@@ -594,22 +612,12 @@ router.get('/me/export', async (req: Request, res: Response): Promise<void> => {
   });
   if (!candidate) { res.status(404).json({ error: 'NOT_FOUND' }); return; }
 
-  const executablePath = resolveChromePath();
-  if (!executablePath) {
-    res.status(503).json({ error: 'PDF_UNAVAILABLE', message: 'Chrome not found on server.' });
-    return;
-  }
-
   const cj  = candidate.toJSON() as unknown as Record<string, unknown>;
   const nik = decryptNullable(candidate.nikEncrypted ?? null);
   const html = buildCandidatePdfHtml(cj, nik);
 
-  const browser = await puppeteer.launch({ executablePath, args: ['--no-sandbox', '--disable-setuid-sandbox'], headless: true });
   try {
-    const page = await browser.newPage();
-    await page.setJavaScriptEnabled(false);
-    await page.setContent(html, { waitUntil: 'networkidle0' });
-    const pdf = await page.pdf({ format: 'A4', margin: { top: '12mm', bottom: '12mm', left: '10mm', right: '10mm' } });
+    const pdf = await renderPdf(html, { top: '12mm', bottom: '12mm', left: '10mm', right: '10mm' });
 
     await AuditLog.create({
       userId: req.user!.sub,
@@ -624,9 +632,11 @@ router.get('/me/export', async (req: Request, res: Response): Promise<void> => {
 
     res.setHeader('Content-Type', 'application/pdf');
     res.setHeader('Content-Disposition', `attachment; filename="${candidate.candidateCode}-data.pdf"`);
-    res.send(Buffer.from(pdf));
-  } finally {
-    await browser.close();
+    res.send(pdf);
+  } catch (err) {
+    if (isPdfError(err, 'CHROME_NOT_FOUND')) { res.status(503).json({ error: 'PDF_UNAVAILABLE' }); return; }
+    if (isPdfError(err, 'PDF_QUEUE_TIMEOUT')) { res.status(503).json({ error: 'PDF_BUSY', message: 'PDF service is busy. Please try again shortly.' }); return; }
+    throw err;
   }
 });
 
@@ -769,21 +779,8 @@ router.patch('/me/shokumu', authenticate, requireRole('candidate'), async (req: 
     return;
   }
 
-  const body = req.body as {
-    careerSummaryId?: string;
-    careerSummaryJa?: string;
-    career?: Array<{
-      id: string;
-      companyType?: string;
-      employeeCount?: number | null;
-      annualSales?: string;
-      capitalAmount?: string;
-      dutiesId?: string;
-      dutiesJa?: string;
-      achievementsId?: string;
-      achievementsJa?: string;
-    }>;
-  };
+  const body = parseBody(patchShokumuSchema, req.body, res);
+  if (body === null) return;
 
   // Auto-translate enabled?
   const translateSetting = await GlobalSettings.findOne({ where: { key: 'auto_translate_enabled' } });
@@ -848,7 +845,7 @@ router.patch('/me/shokumu', authenticate, requireRole('candidate'), async (req: 
 });
 
 // ── GET /api/candidates/me/shokumu-pdf ────────────────────────────────────────
-router.get('/me/shokumu-pdf', authenticate, requireRole('candidate'), async (req: Request, res: Response): Promise<void> => {
+router.get('/me/shokumu-pdf', authenticate, requireRole('candidate'), pdfLimiter, async (req: Request, res: Response): Promise<void> => {
   const candidate = await Candidate.findOne({
     where: { userId: req.user!.sub },
     include: [
@@ -858,12 +855,6 @@ router.get('/me/shokumu-pdf', authenticate, requireRole('candidate'), async (req
     ],
   });
   if (!candidate) { res.status(404).json({ error: 'NOT_FOUND' }); return; }
-
-  const executablePath = resolveChromePath();
-  if (!executablePath) {
-    res.status(503).json({ error: 'PDF_UNAVAILABLE', message: 'Chrome not found on server.' });
-    return;
-  }
 
   const [layoutRow, fontRow] = await Promise.all([
     GlobalSettings.findOne({ where: { key: 'shokumu_layout' } }),
@@ -924,12 +915,8 @@ router.get('/me/shokumu-pdf', authenticate, requireRole('candidate'), async (req
 
   const html = buildShokumuHtml(cj, { layout, font, includePhoto: true });
 
-  const browser = await puppeteer.launch({ executablePath, args: ['--no-sandbox', '--disable-setuid-sandbox'], headless: true });
   try {
-    const page = await browser.newPage();
-    await page.setJavaScriptEnabled(false);
-    await page.setContent(html, { waitUntil: 'networkidle0' });
-    const pdf = await page.pdf({ format: 'A4', margin: { top: '15mm', bottom: '15mm', left: '20mm', right: '15mm' } });
+    const pdf = await renderPdf(html, { top: '15mm', bottom: '15mm', left: '20mm', right: '15mm' });
 
     await AuditLog.create({
       userId: req.user!.sub,
@@ -944,14 +931,16 @@ router.get('/me/shokumu-pdf', authenticate, requireRole('candidate'), async (req
 
     res.setHeader('Content-Type', 'application/pdf');
     res.setHeader('Content-Disposition', `attachment; filename="${candidate.candidateCode}-shokumu.pdf"`);
-    res.send(Buffer.from(pdf));
-  } finally {
-    await browser.close();
+    res.send(pdf);
+  } catch (err) {
+    if (isPdfError(err, 'CHROME_NOT_FOUND')) { res.status(503).json({ error: 'PDF_UNAVAILABLE' }); return; }
+    if (isPdfError(err, 'PDF_QUEUE_TIMEOUT')) { res.status(503).json({ error: 'PDF_BUSY', message: 'PDF service is busy. Please try again shortly.' }); return; }
+    throw err;
   }
 });
 
 // ── GET /api/candidates/me/merged-pdf ─────────────────────────────────────────
-router.get('/me/merged-pdf', authenticate, requireRole('candidate'), async (req: Request, res: Response): Promise<void> => {
+router.get('/me/merged-pdf', authenticate, requireRole('candidate'), pdfLimiter, async (req: Request, res: Response): Promise<void> => {
   // Check if merge is enabled
   const mergeRow = await GlobalSettings.findOne({ where: { key: 'shokumu_merge_cv' } });
   const mergeCv  = mergeRow ? (mergeRow.toJSON() as unknown as Record<string, unknown>)['value'] === true : false;
@@ -973,12 +962,6 @@ router.get('/me/merged-pdf', authenticate, requireRole('candidate'), async (req:
     ],
   });
   if (!candidate) { res.status(404).json({ error: 'NOT_FOUND' }); return; }
-
-  const executablePath = resolveChromePath();
-  if (!executablePath) {
-    res.status(503).json({ error: 'PDF_UNAVAILABLE', message: 'Chrome not found on server.' });
-    return;
-  }
 
   const [layoutRow, fontRow] = await Promise.all([
     GlobalSettings.findOne({ where: { key: 'shokumu_layout' } }),
@@ -1006,12 +989,8 @@ router.get('/me/merged-pdf', authenticate, requireRole('candidate'), async (req:
     + shokumuBody
     + '\n</body></html>';
 
-  const browser = await puppeteer.launch({ executablePath, args: ['--no-sandbox', '--disable-setuid-sandbox'], headless: true });
   try {
-    const page = await browser.newPage();
-    await page.setJavaScriptEnabled(false);
-    await page.setContent(combinedHtml, { waitUntil: 'networkidle0' });
-    const pdf = await page.pdf({ format: 'A4', margin: { top: '12mm', bottom: '12mm', left: '10mm', right: '10mm' } });
+    const pdf = await renderPdf(combinedHtml, { top: '12mm', bottom: '12mm', left: '10mm', right: '10mm' });
 
     await AuditLog.create({
       userId: req.user!.sub,
@@ -1026,9 +1005,11 @@ router.get('/me/merged-pdf', authenticate, requireRole('candidate'), async (req:
 
     res.setHeader('Content-Type', 'application/pdf');
     res.setHeader('Content-Disposition', `attachment; filename="${candidate.candidateCode}-resume.pdf"`);
-    res.send(Buffer.from(pdf));
-  } finally {
-    await browser.close();
+    res.send(pdf);
+  } catch (err) {
+    if (isPdfError(err, 'CHROME_NOT_FOUND')) { res.status(503).json({ error: 'PDF_UNAVAILABLE' }); return; }
+    if (isPdfError(err, 'PDF_QUEUE_TIMEOUT')) { res.status(503).json({ error: 'PDF_BUSY', message: 'PDF service is busy. Please try again shortly.' }); return; }
+    throw err;
   }
 });
 

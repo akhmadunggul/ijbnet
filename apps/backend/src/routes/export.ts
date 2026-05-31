@@ -1,6 +1,6 @@
 import { Router, Request, Response } from 'express';
 import ExcelJS from 'exceljs';
-import puppeteer from 'puppeteer-core';
+import { renderPdf, isPdfError } from '../utils/browserPool';
 import { isUUID } from 'validator';
 import { authenticate, requireRole } from '../middleware/auth';
 import {
@@ -21,7 +21,7 @@ import { serializeCandidate } from '../serializers/candidate';
 import { AuditLog } from '../db/models/index';
 import { decryptNullable } from '../utils/crypto';
 import { calcCompleteness } from '../utils/completeness';
-import { resolveChromePath, buildCandidatePdfHtml } from '../utils/candidatePdf';
+import { buildCandidatePdfHtml } from '../utils/candidatePdf';
 
 
 function wrap(fn: (req: Request, res: Response) => Promise<void>) {
@@ -240,22 +240,12 @@ router.get('/candidates/:id/profile.pdf', wrap(async (req, res) => {
     return;
   }
 
-  const executablePath = resolveChromePath();
-  if (!executablePath) {
-    res.status(503).json({ error: 'PDF_UNAVAILABLE', message: 'Chrome not found. Set CHROME_PATH in environment.' });
-    return;
-  }
-
   const cj  = candidate.toJSON() as unknown as Record<string, unknown>;
   const nik = decryptNullable(candidate.nikEncrypted ?? null);
   const html = buildCandidatePdfHtml(cj, nik);
 
-  const browser = await puppeteer.launch({ executablePath, args: ['--no-sandbox', '--disable-setuid-sandbox'], headless: true });
   try {
-    const page = await browser.newPage();
-    await page.setJavaScriptEnabled(false);
-    await page.setContent(html, { waitUntil: 'networkidle0' });
-    const pdf = await page.pdf({ format: 'A4', margin: { top: '12mm', bottom: '12mm', left: '10mm', right: '10mm' } });
+    const pdf = await renderPdf(html, { top: '12mm', bottom: '12mm', left: '10mm', right: '10mm' });
 
     await AuditLog.create({
       userId: req.user!.sub,
@@ -270,9 +260,11 @@ router.get('/candidates/:id/profile.pdf', wrap(async (req, res) => {
 
     res.setHeader('Content-Type', 'application/pdf');
     res.setHeader('Content-Disposition', `attachment; filename="${candidate.candidateCode}-profile.pdf"`);
-    res.send(Buffer.from(pdf));
-  } finally {
-    await browser.close();
+    res.send(pdf);
+  } catch (err) {
+    if (isPdfError(err, 'CHROME_NOT_FOUND')) { res.status(503).json({ error: 'PDF_UNAVAILABLE' }); return; }
+    if (isPdfError(err, 'PDF_QUEUE_TIMEOUT')) { res.status(503).json({ error: 'PDF_BUSY', message: 'PDF service is busy. Please try again shortly.' }); return; }
+    throw err;
   }
 }));
 
