@@ -28,7 +28,8 @@ import {
 import { serializeCandidate, serializeUser } from '../serializers/candidate';
 import { calcCompleteness, setCompletenessMode, type CompletenessMode } from '../utils/completeness';
 import { deleteCandidatePhotos } from '../utils/storage';
-import { decryptNullable } from '../utils/crypto';
+import { decryptNullable, encrypt } from '../utils/crypto';
+import { getDeepSeekApiKey } from '../utils/translate';
 
 const pdfUpload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 10 * 1024 * 1024 } });
 
@@ -76,15 +77,21 @@ router.get('/candidate-tab-config', wrap(async (_req, res) => {
   res.json(payload);
 }));
 
+function maskApiKey(key: string): string {
+  if (key.length <= 8) return '****';
+  return `${key.slice(0, 6)}****${key.slice(-4)}`;
+}
+
 // ── GET /api/superadmin/translation-status — PUBLIC ──────────────────────────
 router.get('/translation-status', wrap(async (_req, res) => {
+  const activeKey = await getDeepSeekApiKey();
   const services = [
     {
       id: 'deepseek',
       name: 'DeepSeek API',
       model: 'deepseek-chat',
       endpoint: 'https://api.deepseek.com',
-      keyConfigured: !!process.env['DEEPSEEK_API_KEY'],
+      keyConfigured: !!activeKey,
     },
   ];
   res.json({ services });
@@ -95,7 +102,7 @@ router.post('/translation-status/test', wrap(async (req, res) => {
   const { serviceId } = req.body as { serviceId?: string };
 
   if (serviceId === 'deepseek') {
-    const apiKey = process.env['DEEPSEEK_API_KEY'];
+    const apiKey = await getDeepSeekApiKey();
     if (!apiKey) {
       res.json({ status: 'not_configured', latencyMs: null });
       return;
@@ -121,6 +128,27 @@ router.post('/translation-status/test', wrap(async (req, res) => {
   }
 
   res.status(400).json({ error: 'UNKNOWN_SERVICE' });
+}));
+
+// ── GET /api/superadmin/translation-api-config — superadmin only ─────────────
+// (placed before the auth middleware so it is PUBLIC for status check;
+//  write access is auth-gated in the PUT below after router.use(authenticate))
+router.get('/translation-api-config', wrap(async (_req, res) => {
+  const dbRow = await GlobalSettings.findOne({ where: { key: 'deepseek_api_key' } });
+  if (dbRow) {
+    const encrypted = (dbRow.toJSON() as unknown as Record<string, unknown>)['value'];
+    if (typeof encrypted === 'string' && encrypted) {
+      const plain = decryptNullable(encrypted);
+      res.json({ keySource: 'db', keyMasked: plain ? maskApiKey(plain) : null });
+      return;
+    }
+  }
+  const envKey = process.env['DEEPSEEK_API_KEY'];
+  if (envKey) {
+    res.json({ keySource: 'env', keyMasked: maskApiKey(envKey) });
+    return;
+  }
+  res.json({ keySource: 'none', keyMasked: null });
 }));
 
 // ── GET /api/superadmin/translation-config — PUBLIC ──────────────────────────
@@ -332,6 +360,29 @@ router.get('/system/metrics-history', wrap(async (req, res) => {
       maxErrorPct:   config.MONITOR_MAX_ERROR_PCT,
     },
   });
+}));
+
+// ── PUT /api/superadmin/translation-api-config ───────────────────────────────
+router.put('/translation-api-config', wrap(async (req, res) => {
+  const { apiKey } = req.body as { apiKey?: string | null };
+
+  if (!apiKey || typeof apiKey !== 'string' || !apiKey.trim()) {
+    // Clear DB key — fall back to env var
+    await GlobalSettings.destroy({ where: { key: 'deepseek_api_key' } });
+    const envKey = process.env['DEEPSEEK_API_KEY'];
+    res.json({ keySource: envKey ? 'env' : 'none', keyMasked: envKey ? maskApiKey(envKey) : null });
+    return;
+  }
+
+  const trimmed = apiKey.trim();
+  const encrypted = encrypt(trimmed);
+  const [row, created] = await GlobalSettings.findOrCreate({
+    where: { key: 'deepseek_api_key' },
+    defaults: { key: 'deepseek_api_key', value: encrypted },
+  });
+  if (!created) await row.update({ value: encrypted });
+
+  res.json({ keySource: 'db', keyMasked: maskApiKey(trimmed) });
 }));
 
 // ── PUT /api/superadmin/translation-config ───────────────────────────────────

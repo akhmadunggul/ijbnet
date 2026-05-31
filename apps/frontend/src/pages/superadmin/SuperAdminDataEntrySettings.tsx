@@ -28,6 +28,11 @@ interface TranslationStatusResponse {
 
 type ServiceTestStatus = 'idle' | 'testing' | 'online' | 'offline' | 'not_configured' | 'error';
 
+interface TranslationApiConfig {
+  keySource: 'db' | 'env' | 'none';
+  keyMasked: string | null;
+}
+
 type FontKey = 'ms-mincho' | 'yu-mincho' | 'yu-gothic' | 'noto-serif-jp' | 'noto-sans-jp';
 type LayoutKey = 'layout1' | 'layout2';
 type CompletenessMode = 'legacy' | 'cv';
@@ -83,6 +88,10 @@ export default function SuperAdminDataEntrySettings() {
   const [shokumuSaveError, setShokumuSaveError] = useState(false);
   const [serviceTestStatus, setServiceTestStatus] = useState<Record<string, ServiceTestStatus>>({});
   const [serviceTestLatency, setServiceTestLatency] = useState<Record<string, number | null>>({});
+  const [apiKeyInput, setApiKeyInput] = useState<Record<string, string>>({});
+  const [apiKeySaving, setApiKeySaving] = useState<Record<string, boolean>>({});
+  const [apiKeySaved, setApiKeySaved] = useState<Record<string, boolean>>({});
+  const [apiKeyError, setApiKeyError] = useState<Record<string, boolean>>({});
 
   const { data, isLoading } = useQuery<TabConfigResponse>({
     queryKey: ['candidate-tab-config'],
@@ -130,9 +139,15 @@ export default function SuperAdminDataEntrySettings() {
     staleTime: 120_000,
   });
 
-  const { data: translationStatusData } = useQuery<TranslationStatusResponse>({
+  const { data: translationStatusData, refetch: refetchStatus } = useQuery<TranslationStatusResponse>({
     queryKey: ['translation-status'],
     queryFn: () => api.get('/superadmin/translation-status').then((r) => r.data),
+    staleTime: 30_000,
+  });
+
+  const { data: translationApiConfig, refetch: refetchApiConfig } = useQuery<TranslationApiConfig>({
+    queryKey: ['translation-api-config'],
+    queryFn: () => api.get('/superadmin/translation-api-config').then((r) => r.data),
     staleTime: 30_000,
   });
 
@@ -301,6 +316,39 @@ export default function SuperAdminDataEntrySettings() {
     },
   });
 
+  async function saveApiKey(serviceId: string) {
+    const key = apiKeyInput[serviceId]?.trim() ?? '';
+    if (!key) return;
+    setApiKeySaving((p) => ({ ...p, [serviceId]: true }));
+    setApiKeySaved((p) => ({ ...p, [serviceId]: false }));
+    setApiKeyError((p) => ({ ...p, [serviceId]: false }));
+    try {
+      await api.put('/superadmin/translation-api-config', { apiKey: key });
+      setApiKeyInput((p) => ({ ...p, [serviceId]: '' }));
+      setApiKeySaved((p) => ({ ...p, [serviceId]: true }));
+      void refetchApiConfig();
+      void refetchStatus();
+      setTimeout(() => setApiKeySaved((p) => ({ ...p, [serviceId]: false })), 3000);
+    } catch {
+      setApiKeyError((p) => ({ ...p, [serviceId]: true }));
+    } finally {
+      setApiKeySaving((p) => ({ ...p, [serviceId]: false }));
+    }
+  }
+
+  async function clearApiKey(serviceId: string) {
+    setApiKeySaving((p) => ({ ...p, [serviceId]: true }));
+    try {
+      await api.put('/superadmin/translation-api-config', { apiKey: null });
+      void refetchApiConfig();
+      void refetchStatus();
+    } catch {
+      setApiKeyError((p) => ({ ...p, [serviceId]: true }));
+    } finally {
+      setApiKeySaving((p) => ({ ...p, [serviceId]: false }));
+    }
+  }
+
   async function testService(serviceId: string) {
     setServiceTestStatus((prev) => ({ ...prev, [serviceId]: 'testing' }));
     setServiceTestLatency((prev) => ({ ...prev, [serviceId]: null }));
@@ -453,37 +501,79 @@ export default function SuperAdminDataEntrySettings() {
             testStatus === 'not_configured' ? t('superadmin.dataEntrySettings.svcNotConfigured')  :
             testStatus === 'testing'        ? t('superadmin.dataEntrySettings.svcTesting')        :
             null;
+
+          const keySource = translationApiConfig?.keySource ?? 'none';
+          const keyMasked = translationApiConfig?.keyMasked ?? null;
+          const sourceBadge =
+            keySource === 'db'  ? <span className="text-xs bg-blue-50 text-blue-700 border border-blue-200 rounded-full px-2 py-0.5">{t('superadmin.dataEntrySettings.svcKeyDb')}</span> :
+            keySource === 'env' ? <span className="text-xs bg-amber-50 text-amber-700 border border-amber-200 rounded-full px-2 py-0.5">{t('superadmin.dataEntrySettings.svcKeyEnv')}</span> :
+                                  <span className="text-xs bg-red-50 text-red-600 border border-red-200 rounded-full px-2 py-0.5">{t('superadmin.dataEntrySettings.svcKeyMissing')}</span>;
+
           return (
-            <div key={svc.id} className="flex items-center justify-between px-5 py-4 gap-4">
-              <div className="flex items-center gap-3 min-w-0">
-                <span className={`w-2.5 h-2.5 rounded-full shrink-0 ${statusDot}`} />
-                <div className="min-w-0">
-                  <p className="text-sm font-medium text-gray-800">{svc.name}</p>
-                  <p className="text-xs text-gray-400 mt-0.5">{svc.model} · {svc.endpoint}</p>
+            <div key={svc.id} className="divide-y divide-gray-50">
+              {/* Status row */}
+              <div className="flex items-center justify-between px-5 py-4 gap-4">
+                <div className="flex items-center gap-3 min-w-0">
+                  <span className={`w-2.5 h-2.5 rounded-full shrink-0 ${statusDot}`} />
+                  <div className="min-w-0">
+                    <p className="text-sm font-medium text-gray-800">{svc.name}</p>
+                    <p className="text-xs text-gray-400 mt-0.5">{svc.model} · {svc.endpoint}</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-3 shrink-0">
+                  {sourceBadge}
+                  {statusLabel && (
+                    <span className="text-xs text-gray-500">
+                      {statusLabel}{latency != null ? ` (${latency}ms)` : ''}
+                    </span>
+                  )}
+                  <button
+                    onClick={() => { void testService(svc.id); }}
+                    disabled={testStatus === 'testing'}
+                    className="px-3 py-1.5 text-xs bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition disabled:opacity-50"
+                  >
+                    {testStatus === 'testing' ? '…' : t('superadmin.dataEntrySettings.svcTest')}
+                  </button>
                 </div>
               </div>
-              <div className="flex items-center gap-3 shrink-0">
-                {svc.keyConfigured ? (
-                  <span className="text-xs bg-green-50 text-green-700 border border-green-200 rounded-full px-2 py-0.5">
-                    {t('superadmin.dataEntrySettings.svcKeyOk')}
-                  </span>
-                ) : (
-                  <span className="text-xs bg-red-50 text-red-600 border border-red-200 rounded-full px-2 py-0.5">
-                    {t('superadmin.dataEntrySettings.svcKeyMissing')}
-                  </span>
+
+              {/* API Key config row */}
+              <div className="px-5 py-3 bg-gray-50 space-y-2">
+                <p className="text-xs font-medium text-gray-600">{t('superadmin.dataEntrySettings.svcApiKeyTitle')}</p>
+                {keyMasked && (
+                  <p className="text-xs text-gray-500 font-mono">
+                    {t('superadmin.dataEntrySettings.svcCurrentKey')}: <span className="text-gray-700">{keyMasked}</span>
+                    {keySource === 'env' && <span className="ml-2 text-amber-600">({t('superadmin.dataEntrySettings.svcKeyEnvReadOnly')})</span>}
+                  </p>
                 )}
-                {statusLabel && (
-                  <span className="text-xs text-gray-500">
-                    {statusLabel}{latency != null ? ` (${latency}ms)` : ''}
-                  </span>
-                )}
-                <button
-                  onClick={() => { void testService(svc.id); }}
-                  disabled={testStatus === 'testing'}
-                  className="px-3 py-1.5 text-xs bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition disabled:opacity-50"
-                >
-                  {testStatus === 'testing' ? '…' : t('superadmin.dataEntrySettings.svcTest')}
-                </button>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="password"
+                    value={apiKeyInput[svc.id] ?? ''}
+                    onChange={(e) => setApiKeyInput((p) => ({ ...p, [svc.id]: e.target.value }))}
+                    placeholder={t('superadmin.dataEntrySettings.svcApiKeyPlaceholder')}
+                    className="flex-1 border border-gray-200 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-navy-500 font-mono"
+                    autoComplete="off"
+                  />
+                  <button
+                    onClick={() => { void saveApiKey(svc.id); }}
+                    disabled={!apiKeyInput[svc.id]?.trim() || apiKeySaving[svc.id]}
+                    className="px-3 py-1.5 text-xs bg-navy-700 text-white rounded-lg hover:bg-navy-900 transition disabled:opacity-40"
+                  >
+                    {apiKeySaving[svc.id] ? '…' : t('superadmin.dataEntrySettings.svcApiKeySave')}
+                  </button>
+                  {keySource === 'db' && (
+                    <button
+                      onClick={() => { void clearApiKey(svc.id); }}
+                      disabled={apiKeySaving[svc.id]}
+                      className="px-3 py-1.5 text-xs bg-red-50 text-red-600 border border-red-200 rounded-lg hover:bg-red-100 transition disabled:opacity-40"
+                    >
+                      {t('superadmin.dataEntrySettings.svcApiKeyClear')}
+                    </button>
+                  )}
+                </div>
+                {apiKeySaved[svc.id] && <p className="text-xs text-green-600">✓ {t('superadmin.dataEntrySettings.saved')}</p>}
+                {apiKeyError[svc.id] && <p className="text-xs text-red-500">{t('superadmin.dataEntrySettings.errorSave')}</p>}
               </div>
             </div>
           );

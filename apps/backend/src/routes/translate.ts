@@ -1,6 +1,6 @@
 import { Router, Request, Response } from 'express';
 import { authenticate } from '../middleware/auth';
-import { translateId2Ja } from '../utils/translate';
+import { translateId2Ja, getDeepSeekApiKey } from '../utils/translate';
 
 function wrap(fn: (req: Request, res: Response) => Promise<void>) {
   return (req: Request, res: Response, next: (err?: unknown) => void) => {
@@ -23,7 +23,8 @@ router.post('/', authenticate, wrap(async (req, res) => {
     return;
   }
 
-  if (!process.env['DEEPSEEK_API_KEY']) {
+  const apiKey = await getDeepSeekApiKey();
+  if (!apiKey) {
     res.status(503).json({ error: 'TRANSLATION_UNAVAILABLE' });
     return;
   }

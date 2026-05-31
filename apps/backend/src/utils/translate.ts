@@ -1,5 +1,24 @@
+import { GlobalSettings } from '../db/models/index';
+import { decryptNullable } from './crypto';
+
 interface DeepSeekResponse {
   choices: Array<{ message: { content: string } }>;
+}
+
+/**
+ * Resolves the active DeepSeek API key.
+ * DB value (encrypted) takes precedence over the DEEPSEEK_API_KEY env var.
+ * Returns null when neither is set or decryption fails.
+ */
+export async function getDeepSeekApiKey(): Promise<string | null> {
+  try {
+    const row = await GlobalSettings.findOne({ where: { key: 'deepseek_api_key' } });
+    if (row) {
+      const val = (row.toJSON() as unknown as Record<string, unknown>)['value'];
+      if (typeof val === 'string' && val) return decryptNullable(val);
+    }
+  } catch { /* DB not yet ready — fall through to env */ }
+  return process.env['DEEPSEEK_API_KEY'] ?? null;
 }
 
 /**
@@ -8,7 +27,7 @@ interface DeepSeekResponse {
  * Never throws — callers can safely fire-and-forget.
  */
 export async function translateId2Ja(text: string): Promise<string | null> {
-  const apiKey = process.env['DEEPSEEK_API_KEY'];
+  const apiKey = await getDeepSeekApiKey();
   if (!apiKey || !text.trim()) return null;
 
   try {
