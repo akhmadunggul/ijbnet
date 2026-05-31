@@ -59,6 +59,13 @@ function v(x: unknown): string {
   return String(x);
 }
 
+function formatDobJa(dateStr: string): string {
+  const parts = dateStr.slice(0, 10).split('-').map(Number);
+  const [y, m, d] = parts;
+  if (!y || !m || !d) return dateStr.slice(0, 10);
+  return `${y}年${m}月${d}日`;
+}
+
 function trunc(text: string, max: number): string {
   if (text.length <= max) return text;
   return text.slice(0, max).trimEnd() + '…';
@@ -238,6 +245,7 @@ export default function CandidateCV({
       { jaKey: 'selfIntroJa',  idKey: 'selfIntroId'  },
       { jaKey: 'motivationJa', idKey: 'motivationId' },
       { jaKey: 'selfPrJa',     idKey: 'selfPrId'     },
+      { jaKey: 'hobbiesJa',    idKey: 'hobbies'      },
     ].filter(f => !c[f.jaKey] && c[f.idKey]);
 
     if (fields.length === 0) return;
@@ -253,7 +261,7 @@ export default function CandidateCV({
       results.forEach(r => { if (r) updates[r.key] = r.value; });
       if (Object.keys(updates).length > 0) setJaOverride(updates);
     });
-  }, [autoTranslateEnabled, c.selfIntroId, c.selfIntroJa, c.motivationId, c.motivationJa, c.selfPrId, c.selfPrJa]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [autoTranslateEnabled, c.selfIntroId, c.selfIntroJa, c.motivationId, c.motivationJa, c.selfPrId, c.selfPrJa, c.hobbies]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Returns the Japanese value when available, or Indonesian as fallback.
   // jaOverride (live translation) is only consulted when auto-translate is on.
@@ -303,8 +311,8 @@ export default function CandidateCV({
     c.hasPassport === true  ? 'Ada（有）' :
     c.hasPassport === false ? 'Tidak（無）' : '';
 
-  const dobStr = c.dateOfBirth ? c.dateOfBirth.slice(0, 10) : '';
-  const birthDisplay = [v(c.birthPlace), dobStr].filter(Boolean).join(', ');
+  const dobStr = c.dateOfBirth ? formatDobJa(c.dateOfBirth) : '';
+  const birthDisplay = [v(c.birthPlace), dobStr].filter(Boolean).join('  ');
 
   // Merge certifications + tests into one list
   const combinedCerts = [
@@ -407,7 +415,7 @@ export default function CandidateCV({
             </tr>
             <tr>
               <td style={TD}>Usia ・ 年齢</td>
-              <td style={TD}>{age !== null ? `${age} tahun` : ''}</td>
+              <td style={TD}>{age !== null ? `${age}歳` : ''}</td>
               <td style={TD}>Agama ・ 宗教</td>
               <td style={TD}>{v(c.religion)}</td>
             </tr>
@@ -448,7 +456,7 @@ export default function CandidateCV({
           </tr>
           <tr>
             <td style={TD}>Hobi ・ 趣味</td>
-            <td style={TD} colSpan={3}>{v(c.hobbies)}</td>
+            <td style={TD} colSpan={3}>{getJa('hobbiesJa', 'hobbies')}</td>
           </tr>
         </tbody>
       </table>
