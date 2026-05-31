@@ -20,13 +20,13 @@ const GOOGLE_FONT_MAP: Record<string, string> = {
 
 const PRINT_CSS = `
   @media print {
-    body * { visibility: hidden; }
-    .shokumu-doc, .shokumu-doc * { visibility: visible; }
-    .shokumu-doc { position: absolute; top: 0; left: 0; width: 100%; }
-    .cv-zoom-wrapper { zoom: 1 !important; transform: none !important; }
+    body { margin: 0 !important; padding: 0 !important; }
     .no-print { display: none !important; }
-    @page { size: A4; margin: 15mm 15mm 15mm 20mm; }
+    aside, header { display: none !important; }
+    main { padding: 0 !important; overflow: visible !important; }
+    .cv-zoom-wrapper { zoom: 1 !important; }
   }
+  @page { size: A4; margin: 15mm 15mm 15mm 20mm; }
 `;
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -230,16 +230,6 @@ export default function ShokumuCV({ candidate }: { candidate: CandidateData }) {
     document.head.appendChild(link);
   }, [fontKey]);
 
-  // Inject print CSS once
-  useEffect(() => {
-    const id = 'shokumu-print-css';
-    if (document.getElementById(id)) return;
-    const style = document.createElement('style');
-    style.id = id; style.textContent = PRINT_CSS;
-    document.head.appendChild(style);
-    return () => { document.getElementById(id)?.remove(); };
-  }, []);
-
   // Live auto-translate candidate-level fields that are missing Japanese
   useEffect(() => {
     if (!autoTranslateEnabled) { setJaOverride({}); return; }
@@ -279,24 +269,26 @@ export default function ShokumuCV({ candidate }: { candidate: CandidateData }) {
   const certs: CertificationEntry[] = c.certifications ?? [];
 
   return (
-    <div style={{ fontFamily: FONT }}>
-      {/* Zoom controls */}
-      <div className="no-print flex items-center gap-2 mb-4 print:hidden" style={{ maxWidth: '860px', margin: '0 auto 16px' }}>
-        <span className="text-xs text-gray-500">表示倍率:</span>
-        {[0.5, 0.75, 1.0, 1.25, 1.5].map(z => (
-          <button
-            key={z}
-            onClick={() => setZoom(z)}
-            className={`text-xs px-2 py-1 rounded border transition ${zoom === z ? 'bg-navy-700 text-white border-navy-700' : 'border-gray-200 text-gray-600 hover:bg-gray-50'}`}
-          >
-            {Math.round(z * 100)}%
-          </button>
-        ))}
+    <>
+      {/* Zoom controls — same UI as CandidateCV */}
+      <div className="print:hidden flex items-center gap-2 justify-end mb-3">
+        <button
+          onClick={() => setZoom(z => Math.max(0.5, parseFloat((z - 0.1).toFixed(1))))}
+          disabled={zoom <= 0.5}
+          className="w-8 h-8 flex items-center justify-center border border-gray-200 rounded-lg text-gray-600 hover:bg-gray-100 disabled:opacity-30 text-base font-bold transition"
+        >−</button>
+        <span className="text-xs text-gray-500 w-12 text-center select-none">{Math.round(zoom * 100)}%</span>
+        <button
+          onClick={() => setZoom(z => Math.min(2.0, parseFloat((z + 0.1).toFixed(1))))}
+          disabled={zoom >= 2.0}
+          className="w-8 h-8 flex items-center justify-center border border-gray-200 rounded-lg text-gray-600 hover:bg-gray-100 disabled:opacity-30 text-base font-bold transition"
+        >+</button>
       </div>
 
       {/* A4 document */}
-      <div className="cv-zoom-wrapper" style={{ zoom }}>
-        <div className="shokumu-doc" style={S.doc}>
+      <div className="cv-zoom-wrapper" style={{ zoom: zoom as unknown as number }}>
+        <div className="shokumu-doc" style={{ ...S.doc, fontFamily: FONT }}>
+          <style dangerouslySetInnerHTML={{ __html: PRINT_CSS }} />
 
           {/* ── Header ── */}
           <div style={S.header}>
@@ -425,6 +417,6 @@ export default function ShokumuCV({ candidate }: { candidate: CandidateData }) {
 
         </div>
       </div>
-    </div>
+    </>
   );
 }
