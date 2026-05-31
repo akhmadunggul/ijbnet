@@ -190,7 +190,7 @@ router.patch('/me', async (req: Request, res: Response): Promise<void> => {
       const idText = (updates[idKey] ?? (candidate as unknown as Record<string, unknown>)[idKey]) as string | null | undefined;
       const jaText = (updates[jaKey] ?? (candidate as unknown as Record<string, unknown>)[jaKey]) as string | null | undefined;
       if (!idText || jaText) return;
-      const translated = await translateId2Ja(idText);
+      const translated = await translateId2Ja(idText, { userId: req.user!.sub, context: 'auto-save' });
       if (translated) updates[jaKey] = translated;
     }),
   );
@@ -799,7 +799,7 @@ router.patch('/me/shokumu', authenticate, requireRole('candidate'), async (req: 
   if (autoTranslate && body.careerSummaryId) {
     const existingJa = (candidateUpdates['careerSummaryJa'] ?? (candidate as unknown as Record<string, unknown>)['careerSummaryJa']) as string | null | undefined;
     if (!existingJa) {
-      const translated = await translateId2Ja(body.careerSummaryId);
+      const translated = await translateId2Ja(body.careerSummaryId, { userId: req.user!.sub, context: 'shokumu-save' });
       if (translated) candidateUpdates['careerSummaryJa'] = translated;
     }
   }
@@ -832,7 +832,7 @@ router.patch('/me/shokumu', authenticate, requireRole('candidate'), async (req: 
             const idText = (updates[idKey] ?? (careerRow as unknown as Record<string, unknown>)[idKey]) as string | null | undefined;
             const jaText = (updates[jaKey] ?? (careerRow as unknown as Record<string, unknown>)[jaKey]) as string | null | undefined;
             if (idText && !jaText) {
-              const translated = await translateId2Ja(idText);
+              const translated = await translateId2Ja(idText, { userId: req.user!.sub, context: 'shokumu-save' });
               if (translated) updates[jaKey] = translated;
             }
           }
@@ -891,7 +891,7 @@ router.get('/me/shokumu-pdf', authenticate, requireRole('candidate'), async (req
       const idText = cj[idKey] as string | null;
       const jaText = cj[jaKey] as string | null;
       if (idText && !jaText) {
-        const translated = await translateId2Ja(idText);
+        const translated = await translateId2Ja(idText, { userId: req.user!.sub, context: 'pdf-render' });
         if (translated) { cj[jaKey] = translated; candidateUpdates[jaKey] = translated; }
       }
     }
@@ -905,7 +905,7 @@ router.get('/me/shokumu-pdf', authenticate, requireRole('candidate'), async (req
         const idText = entry[idKey] as string | null;
         const jaText = entry[jaKey] as string | null;
         if (idText && !jaText) {
-          const translated = await translateId2Ja(idText);
+          const translated = await translateId2Ja(idText, { userId: req.user!.sub, context: 'pdf-render' });
           if (translated) { entry[jaKey] = translated; entryUpdates[jaKey] = translated; }
         }
       }
