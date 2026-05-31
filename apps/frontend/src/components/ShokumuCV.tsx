@@ -65,11 +65,15 @@ const navy = '#1a3050';
 
 const S = {
   doc: {
-    maxWidth: '860px',
+    width: '860px',
     margin: '0 auto',
+    border: '2px solid #000',
+    backgroundColor: '#fff',
+    padding: '20mm 15mm 15mm 20mm',
     fontSize: '10pt',
     lineHeight: '1.6',
     color: '#111',
+    boxSizing: 'border-box' as const,
   } as React.CSSProperties,
 
   header: {
