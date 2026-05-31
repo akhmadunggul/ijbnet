@@ -7,6 +7,7 @@ import { useTranslation } from 'react-i18next';
 import { api } from '../../lib/api';
 import AuthImage from '../../components/AuthImage';
 import type { CandidateMe, CandidateData, CareerEntry, JapaneseTest, CertificationEntry, EducationHistoryEntry } from '../../types/candidate';
+import ShokumuTab from './ShokumuTab';
 
 // ── Zod schemas ───────────────────────────────────────────────────────────────
 const personalSchema = z.object({
@@ -964,15 +965,22 @@ function PrMotivationTab({ candidate, onSave, saving }: { candidate: CandidateDa
 }
 
 // ── Main CandidateProfile ─────────────────────────────────────────────────────
-const TABS = ['tab1','tab2','tab3','tab4','tab5','tab6','tab7','tab8','tab9'] as const;
+const TABS = ['tab1','tab2','tab3','tab4','tab5','tab6','tab7','tab8','tab9','tab10'] as const;
 type TabKey = typeof TABS[number];
 
 interface TabConfigResponse {
-  config: Record<TabKey, boolean>;
+  config: Record<string, boolean>;
+}
+
+interface ShokumuConfigResponse {
+  enabled: boolean;
+  layout: string;
+  mergeCv: boolean;
 }
 
 export default function CandidateProfile() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const lang = i18n.language;
   const qc = useQueryClient();
   const [activeTab, setActiveTab] = useState<TabKey>('tab1');
   const [saving, setSaving] = useState(false);
@@ -989,11 +997,22 @@ export default function CandidateProfile() {
     staleTime: 60_000,
   });
 
-  const visibleTabs = TABS.filter((tab) => tabConfigData?.config?.[tab] !== false);
+  const { data: shokumuConfig } = useQuery<ShokumuConfigResponse>({
+    queryKey: ['shokumu-config'],
+    queryFn: () => api.get('/superadmin/shokumu-config').then((r) => r.data),
+    staleTime: 60_000,
+  });
+
+  const shokumuEnabled = shokumuConfig?.enabled === true;
+
+  const visibleTabs = TABS.filter((tab) => {
+    if (tab === 'tab10') return shokumuEnabled;
+    return tabConfigData?.config?.[tab] !== false;
+  });
 
   useEffect(() => {
     if (visibleTabs.length > 0 && !visibleTabs.includes(activeTab)) {
-      setActiveTab(visibleTabs[0]);
+      setActiveTab(visibleTabs[0]!);
     }
   }, [visibleTabs, activeTab]);
 
@@ -1022,15 +1041,16 @@ export default function CandidateProfile() {
   const { pct } = candidate.completeness;
 
   const tabLabels: Record<TabKey, string> = {
-    tab1: t('candidate.profile.tab1'),
-    tab2: t('candidate.profile.tab2'),
-    tab3: t('candidate.profile.tab3'),
-    tab4: t('candidate.profile.tab4'),
-    tab5: t('candidate.profile.tab5'),
-    tab6: t('candidate.profile.tab6'),
-    tab7: t('candidate.profile.tab7'),
-    tab8: t('candidate.profile.tab8'),
-    tab9: t('candidate.profile.tab9'),
+    tab1:  t('candidate.profile.tab1'),
+    tab2:  t('candidate.profile.tab2'),
+    tab3:  t('candidate.profile.tab3'),
+    tab4:  t('candidate.profile.tab4'),
+    tab5:  t('candidate.profile.tab5'),
+    tab6:  t('candidate.profile.tab6'),
+    tab7:  t('candidate.profile.tab7'),
+    tab8:  t('candidate.profile.tab8'),
+    tab9:  t('candidate.profile.tab9'),
+    tab10: lang === 'ja' ? '職務経歴書' : 'Resume',
   };
 
   return (
@@ -1083,15 +1103,16 @@ export default function CandidateProfile() {
 
       {/* Tab content */}
       <div className="bg-white rounded-xl border border-gray-100 p-6">
-        {activeTab === 'tab1' && <PersonalTab candidate={candidate} onSave={(d) => handleSave(d as Record<string, unknown>)} saving={saving} />}
-        {activeTab === 'tab2' && <SswTab candidate={candidate} onSave={(d) => handleSave(d as Record<string, unknown>)} saving={saving} />}
-        {activeTab === 'tab3' && <EducationTab candidate={candidate} />}
-        {activeTab === 'tab4' && <CareerTab candidate={candidate} saving={saving} />}
-        {activeTab === 'tab5' && <JapaneseTab candidate={candidate} />}
-        {activeTab === 'tab6' && <WorkplanTab candidate={candidate} onSave={(d) => handleSave(d as Record<string, unknown>)} saving={saving} />}
-        {activeTab === 'tab7' && <PhotosTab candidate={candidate} />}
-        {activeTab === 'tab8' && <CertificationsTab candidate={candidate} />}
-        {activeTab === 'tab9' && <PrMotivationTab candidate={candidate} onSave={(d) => handleSave(d as Record<string, unknown>)} saving={saving} />}
+        {activeTab === 'tab1'  && <PersonalTab candidate={candidate} onSave={(d) => handleSave(d as Record<string, unknown>)} saving={saving} />}
+        {activeTab === 'tab2'  && <SswTab candidate={candidate} onSave={(d) => handleSave(d as Record<string, unknown>)} saving={saving} />}
+        {activeTab === 'tab3'  && <EducationTab candidate={candidate} />}
+        {activeTab === 'tab4'  && <CareerTab candidate={candidate} saving={saving} />}
+        {activeTab === 'tab5'  && <JapaneseTab candidate={candidate} />}
+        {activeTab === 'tab6'  && <WorkplanTab candidate={candidate} onSave={(d) => handleSave(d as Record<string, unknown>)} saving={saving} />}
+        {activeTab === 'tab7'  && <PhotosTab candidate={candidate} />}
+        {activeTab === 'tab8'  && <CertificationsTab candidate={candidate} />}
+        {activeTab === 'tab9'  && <PrMotivationTab candidate={candidate} onSave={(d) => handleSave(d as Record<string, unknown>)} saving={saving} />}
+        {activeTab === 'tab10' && <ShokumuTab candidate={candidate} isLocked={isLocked} />}
       </div>
 
       {/* JP test warning dialog */}

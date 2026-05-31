@@ -277,6 +277,7 @@
       },
       "tab8": "資格・認定",
       "tab9": "PRと志望動機",
+      "tab10": "職務経歴書",
       "certifications": {
         "addEntry": "資格を追加",
         "certName": "資格名",
@@ -637,7 +638,17 @@
       "journeyViz_textLabel": "テキスト表示",
       "journeyViz_textDesc": "各ステップの状態・期間をテキストリストで表示します。",
       "journeyViz_graphicalLabel": "グラフィカル表示",
-      "journeyViz_graphicalDesc": "各ステップに固有のアイコンを持つカード形式で表示。最終ステップでは 日本へようこそ！ のお祝いバナーを表示します。"
+      "journeyViz_graphicalDesc": "各ステップに固有のアイコンを持つカード形式で表示。最終ステップでは 日本へようこそ！ のお祝いバナーを表示します。",
+      "shokumuTitle": "Kontrol Resume / 職務経歴書設定",
+      "shokumuDesc": "候補者プロフィールの職務経歴書タブとPDF出力を管理します。",
+      "shokumuEnable": "候補者プロフィールにResumeタブを有効にする",
+      "shokumuLayoutTitle": "レイアウト",
+      "shokumuLayout_reverseLabel": "逆編年体（新しい順）/ Reverse Chronological",
+      "shokumuLayout_chronologicalLabel": "編年体（古い順）/ Chronological",
+      "shokumuLayout_careerLabel": "キャリア形式 / Career-based",
+      "shokumuOutputTitle": "出力PDF",
+      "shokumuOutputSeparate": "Terpisah dari CV / 別ファイル",
+      "shokumuOutputMerged": "Digabung dengan CV / CVと結合"
     },
     "recruiterSettings": {
       "navLabel": "採用担当表示設定",
@@ -875,5 +886,24 @@
     "sending": "送信中…",
     "sentSuccess": "{{count}} 名に送信しました。",
     "errorGeneric": "送信中にエラーが発生しました。再試行してください。"
+  },
+  "shokumu": {
+    "title": "職務経歴書",
+    "careerSummaryLabel": "経歴要約",
+    "careerSummaryHint": "約250文字で職務経歴を要約してください",
+    "jobDetailTitle": "職務経歴",
+    "companyType": "会社形態",
+    "employeeCount": "従業員数",
+    "annualSales": "年商",
+    "capitalAmount": "資本金",
+    "duties": "業務内容",
+    "achievements": "実績・成果",
+    "skillsTitle": "活かせるスキル・知識",
+    "selfPrTitle": "自己PR",
+    "downloadShokumu": "職務経歴書をダウンロード",
+    "downloadMerged": "履歴書+職務経歴書をダウンロード",
+    "saveBtn": "保存",
+    "saved": "保存しました。",
+    "autoTranslateNote": "日本語欄が空の場合は自動翻訳されます。"
   }
 }

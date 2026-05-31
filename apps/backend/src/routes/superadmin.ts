@@ -140,6 +140,19 @@ router.get('/journey-visualization', wrap(async (_req, res) => {
   res.json({ mode });
 }));
 
+// ── GET /api/superadmin/shokumu-config — PUBLIC ──────────────────────────────
+router.get('/shokumu-config', wrap(async (_req, res) => {
+  const [enabledRow, layoutRow, mergeRow] = await Promise.all([
+    GlobalSettings.findOne({ where: { key: 'shokumu_enabled' } }),
+    GlobalSettings.findOne({ where: { key: 'shokumu_layout' } }),
+    GlobalSettings.findOne({ where: { key: 'shokumu_merge_cv' } }),
+  ]);
+  const enabled = enabledRow ? (enabledRow.toJSON() as unknown as Record<string, unknown>)['value'] === true  : false;
+  const layout  = layoutRow  ? String((layoutRow.toJSON()  as unknown as Record<string, unknown>)['value'] ?? 'reverse') : 'reverse';
+  const mergeCv = mergeRow   ? (mergeRow.toJSON()   as unknown as Record<string, unknown>)['value'] === true : false;
+  res.json({ enabled, layout, mergeCv });
+}));
+
 router.use(authenticate, requireRole('super_admin'));
 
 // ── System Stats ──────────────────────────────────────────────────────────────
@@ -391,6 +404,35 @@ router.put('/journey-visualization', wrap(async (req, res) => {
   if (!created) await row.update({ value: mode });
 
   res.json({ mode });
+}));
+
+// ── PUT /api/superadmin/shokumu-config ───────────────────────────────────────
+router.put('/shokumu-config', wrap(async (req, res) => {
+  const body = req.body as Record<string, unknown>;
+  const enabled = body['enabled'] === true;
+  const validLayouts = ['chronological', 'reverse', 'career'];
+  const layout = validLayouts.includes(String(body['layout'])) ? String(body['layout']) : 'reverse';
+  const mergeCv = body['mergeCv'] === true;
+
+  const [rowEnabled, createdEnabled] = await GlobalSettings.findOrCreate({
+    where: { key: 'shokumu_enabled' },
+    defaults: { key: 'shokumu_enabled', value: enabled },
+  });
+  if (!createdEnabled) await rowEnabled.update({ value: enabled });
+
+  const [rowLayout, createdLayout] = await GlobalSettings.findOrCreate({
+    where: { key: 'shokumu_layout' },
+    defaults: { key: 'shokumu_layout', value: layout },
+  });
+  if (!createdLayout) await rowLayout.update({ value: layout });
+
+  const [rowMerge, createdMerge] = await GlobalSettings.findOrCreate({
+    where: { key: 'shokumu_merge_cv' },
+    defaults: { key: 'shokumu_merge_cv', value: mergeCv },
+  });
+  if (!createdMerge) await rowMerge.update({ value: mergeCv });
+
+  res.json({ enabled, layout, mergeCv });
 }));
 
 // ── PUT /api/superadmin/candidate-tab-config ──────────────────────────────────

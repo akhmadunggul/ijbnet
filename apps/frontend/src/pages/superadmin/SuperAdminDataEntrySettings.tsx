@@ -18,6 +18,7 @@ type FontKey = 'ms-mincho' | 'yu-mincho' | 'yu-gothic' | 'noto-serif-jp' | 'noto
 type LayoutKey = 'layout1' | 'layout2';
 type CompletenessMode = 'legacy' | 'cv';
 type JourneyVizMode = 'text' | 'graphical';
+type ShokumuLayout = 'reverse' | 'chronological' | 'career';
 
 const FONT_OPTIONS: { key: FontKey; label: string; sublabel: string; value: string; googleFont?: string }[] = [
   { key: 'ms-mincho',    label: 'MS Mincho',      sublabel: 'Windows (既定)',          value: '"MS Mincho", serif' },
@@ -55,6 +56,11 @@ export default function SuperAdminDataEntrySettings() {
   const [journeyVizMode, setJourneyVizMode] = useState<JourneyVizMode>('graphical');
   const [journeyVizSaveSuccess, setJourneyVizSaveSuccess] = useState(false);
   const [journeyVizSaveError, setJourneyVizSaveError] = useState(false);
+  const [shokumuEnabled, setShokumuEnabled] = useState(false);
+  const [shokumuLayout, setShokumuLayout] = useState<ShokumuLayout>('reverse');
+  const [shokumuMergeCv, setShokumuMergeCv] = useState(false);
+  const [shokumuSaveSuccess, setShokumuSaveSuccess] = useState(false);
+  const [shokumuSaveError, setShokumuSaveError] = useState(false);
 
   const { data, isLoading } = useQuery<TabConfigResponse>({
     queryKey: ['candidate-tab-config'],
@@ -91,6 +97,11 @@ export default function SuperAdminDataEntrySettings() {
     queryFn: () => api.get('/superadmin/journey-visualization').then((r) => r.data),
   });
 
+  const { data: shokumuConfigData } = useQuery<{ enabled: boolean; layout: ShokumuLayout; mergeCv: boolean }>({
+    queryKey: ['shokumu-config'],
+    queryFn: () => api.get('/superadmin/shokumu-config').then((r) => r.data),
+  });
+
   useEffect(() => {
     if (data?.config) {
       setConfig({ ...data.config } as Record<TabKey, boolean>);
@@ -125,6 +136,14 @@ export default function SuperAdminDataEntrySettings() {
   useEffect(() => {
     if (journeyVizData?.mode) setJourneyVizMode(journeyVizData.mode);
   }, [journeyVizData]);
+
+  useEffect(() => {
+    if (shokumuConfigData !== undefined) {
+      setShokumuEnabled(shokumuConfigData.enabled);
+      if (shokumuConfigData.layout) setShokumuLayout(shokumuConfigData.layout);
+      setShokumuMergeCv(shokumuConfigData.mergeCv);
+    }
+  }, [shokumuConfigData]);
 
   const saveMutation = useMutation({
     mutationFn: (cfg: Record<TabKey, boolean>) =>
@@ -213,6 +232,21 @@ export default function SuperAdminDataEntrySettings() {
     onError: () => {
       setJourneyVizSaveError(true);
       setJourneyVizSaveSuccess(false);
+    },
+  });
+
+  const shokumuMutation = useMutation({
+    mutationFn: ({ enabled, layout, mergeCv }: { enabled: boolean; layout: string; mergeCv: boolean }) =>
+      api.put('/superadmin/shokumu-config', { enabled, layout, mergeCv }).then((r) => r.data),
+    onSuccess: () => {
+      setShokumuSaveSuccess(true);
+      setShokumuSaveError(false);
+      void qc.invalidateQueries({ queryKey: ['shokumu-config'] });
+      setTimeout(() => setShokumuSaveSuccess(false), 3000);
+    },
+    onError: () => {
+      setShokumuSaveError(true);
+      setShokumuSaveSuccess(false);
     },
   });
 
@@ -561,6 +595,92 @@ export default function SuperAdminDataEntrySettings() {
           <span className="text-sm text-green-600">✓ {t('superadmin.dataEntrySettings.saved')}</span>
         )}
         {journeyVizSaveError && (
+          <span className="text-sm text-red-600">{t('superadmin.dataEntrySettings.errorSave')}</span>
+        )}
+      </div>
+
+      {/* Resume / 職務経歴書 Settings */}
+      <div>
+        <h2 className="text-base font-semibold text-gray-900 mb-1">{t('superadmin.dataEntrySettings.shokumuTitle')}</h2>
+        <p className="text-sm text-gray-500 mb-4">{t('superadmin.dataEntrySettings.shokumuDesc')}</p>
+      </div>
+
+      <div className="bg-white rounded-xl border border-gray-100 shadow-sm px-5 py-4 space-y-4">
+        {/* Enable toggle */}
+        <label className="flex items-center gap-3 cursor-pointer">
+          <input
+            type="checkbox"
+            checked={shokumuEnabled}
+            onChange={(e) => setShokumuEnabled(e.target.checked)}
+            className="accent-navy-700 w-4 h-4"
+          />
+          <span className="text-sm font-medium text-gray-800">{t('superadmin.dataEntrySettings.shokumuEnable')}</span>
+        </label>
+
+        {/* Layout */}
+        <div>
+          <p className="text-sm font-medium text-gray-700 mb-2">{t('superadmin.dataEntrySettings.shokumuLayoutTitle')}</p>
+          <div className="space-y-2">
+            {(['reverse', 'chronological', 'career'] as ShokumuLayout[]).map((mode) => (
+              <label key={mode} className="flex items-center gap-3 cursor-pointer">
+                <input
+                  type="radio"
+                  name="shokumu_layout"
+                  value={mode}
+                  checked={shokumuLayout === mode}
+                  onChange={() => setShokumuLayout(mode)}
+                  className="accent-navy-700"
+                />
+                <div>
+                  <p className="text-sm font-medium text-gray-800">{t(`superadmin.dataEntrySettings.shokumuLayout_${mode}Label`)}</p>
+                </div>
+              </label>
+            ))}
+          </div>
+        </div>
+
+        {/* Output mode */}
+        <div>
+          <p className="text-sm font-medium text-gray-700 mb-2">{t('superadmin.dataEntrySettings.shokumuOutputTitle')}</p>
+          <div className="space-y-2">
+            <label className="flex items-center gap-3 cursor-pointer">
+              <input
+                type="radio"
+                name="shokumu_merge"
+                value="separate"
+                checked={!shokumuMergeCv}
+                onChange={() => setShokumuMergeCv(false)}
+                className="accent-navy-700"
+              />
+              <span className="text-sm text-gray-800">{t('superadmin.dataEntrySettings.shokumuOutputSeparate')}</span>
+            </label>
+            <label className="flex items-center gap-3 cursor-pointer">
+              <input
+                type="radio"
+                name="shokumu_merge"
+                value="merged"
+                checked={shokumuMergeCv}
+                onChange={() => setShokumuMergeCv(true)}
+                className="accent-navy-700"
+              />
+              <span className="text-sm text-gray-800">{t('superadmin.dataEntrySettings.shokumuOutputMerged')}</span>
+            </label>
+          </div>
+        </div>
+      </div>
+
+      <div className="flex items-center gap-4">
+        <button
+          onClick={() => shokumuMutation.mutate({ enabled: shokumuEnabled, layout: shokumuLayout, mergeCv: shokumuMergeCv })}
+          disabled={shokumuMutation.isPending}
+          className="px-5 py-2 bg-gray-900 text-white text-sm rounded-lg hover:bg-gray-700 transition disabled:opacity-50"
+        >
+          {shokumuMutation.isPending ? '…' : t('superadmin.dataEntrySettings.saveBtn')}
+        </button>
+        {shokumuSaveSuccess && (
+          <span className="text-sm text-green-600">✓ {t('superadmin.dataEntrySettings.saved')}</span>
+        )}
+        {shokumuSaveError && (
           <span className="text-sm text-red-600">{t('superadmin.dataEntrySettings.errorSave')}</span>
         )}
       </div>

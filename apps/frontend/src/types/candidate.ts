@@ -28,6 +28,14 @@ export interface CareerEntry {
   period: string | null;
   startDate: string | null;
   sortOrder: number;
+  companyType?: string | null;
+  employeeCount?: number | null;
+  annualSales?: string | null;
+  capitalAmount?: string | null;
+  dutiesId?: string | null;
+  dutiesJa?: string | null;
+  achievementsId?: string | null;
+  achievementsJa?: string | null;
 }
 
 export interface CertificationEntry {
@@ -96,6 +104,8 @@ export interface CandidateData {
   applyReasonJa: string | null;
   selfIntroId: string | null;
   selfIntroJa: string | null;
+  careerSummaryId?: string | null;
+  careerSummaryJa?: string | null;
   workplanDuration: string | null;
   workplanGoal: string | null;
   workplanAfter: string | null;

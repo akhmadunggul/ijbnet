@@ -62,6 +62,8 @@ export interface CandidateAttributes {
   bankName: string | null;
   bankAccountEncrypted: string | null;
   internalNotes: string | null;
+  careerSummaryId: string | null;
+  careerSummaryJa: string | null;
   createdAt?: Date;
   updatedAt?: Date;
 }
@@ -127,6 +129,8 @@ export interface CandidateCreationAttributes
     | 'bankName'
     | 'bankAccountEncrypted'
     | 'internalNotes'
+    | 'careerSummaryId'
+    | 'careerSummaryJa'
   > {}
 
 export class Candidate
@@ -192,6 +196,8 @@ export class Candidate
   declare bankName: string | null;
   declare bankAccountEncrypted: string | null;
   declare internalNotes: string | null;
+  declare careerSummaryId: string | null;
+  declare careerSummaryJa: string | null;
   declare readonly createdAt: Date;
   declare readonly updatedAt: Date;
 }
@@ -278,6 +284,8 @@ export function initCandidate(sequelize: Sequelize): void {
       bankName: { type: DataTypes.STRING(100), allowNull: true },
       bankAccountEncrypted: { type: DataTypes.TEXT, allowNull: true },
       internalNotes: { type: DataTypes.TEXT, allowNull: true },
+      careerSummaryId: { type: DataTypes.TEXT, allowNull: true },
+      careerSummaryJa: { type: DataTypes.TEXT, allowNull: true },
     },
     { sequelize, tableName: 'candidates', timestamps: true },
   );

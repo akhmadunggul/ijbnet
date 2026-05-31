@@ -9,6 +9,14 @@ export interface CandidateCareerAttributes {
   period: string | null;
   startDate: string | null;
   sortOrder: number;
+  companyType: string | null;
+  employeeCount: number | null;
+  annualSales: string | null;
+  capitalAmount: string | null;
+  dutiesId: string | null;
+  dutiesJa: string | null;
+  achievementsId: string | null;
+  achievementsJa: string | null;
   createdAt?: Date;
   updatedAt?: Date;
 }
@@ -16,7 +24,21 @@ export interface CandidateCareerAttributes {
 export interface CandidateCareerCreationAttributes
   extends Optional<
     CandidateCareerAttributes,
-    'id' | 'companyName' | 'division' | 'skillGroup' | 'period' | 'startDate' | 'sortOrder'
+    | 'id'
+    | 'companyName'
+    | 'division'
+    | 'skillGroup'
+    | 'period'
+    | 'startDate'
+    | 'sortOrder'
+    | 'companyType'
+    | 'employeeCount'
+    | 'annualSales'
+    | 'capitalAmount'
+    | 'dutiesId'
+    | 'dutiesJa'
+    | 'achievementsId'
+    | 'achievementsJa'
   > {}
 
 export class CandidateCareer
@@ -30,6 +52,14 @@ export class CandidateCareer
   declare period: string | null;
   declare startDate: string | null;
   declare sortOrder: number;
+  declare companyType: string | null;
+  declare employeeCount: number | null;
+  declare annualSales: string | null;
+  declare capitalAmount: string | null;
+  declare dutiesId: string | null;
+  declare dutiesJa: string | null;
+  declare achievementsId: string | null;
+  declare achievementsJa: string | null;
   declare readonly createdAt: Date;
   declare readonly updatedAt: Date;
 }
@@ -45,6 +75,14 @@ export function initCandidateCareer(sequelize: Sequelize): void {
       period: { type: DataTypes.STRING(50), allowNull: true },
       startDate: { type: DataTypes.DATEONLY, allowNull: true },
       sortOrder: { type: DataTypes.INTEGER, defaultValue: 0, allowNull: false },
+      companyType: { type: DataTypes.STRING(100), allowNull: true },
+      employeeCount: { type: DataTypes.INTEGER, allowNull: true },
+      annualSales: { type: DataTypes.STRING(100), allowNull: true },
+      capitalAmount: { type: DataTypes.STRING(100), allowNull: true },
+      dutiesId: { type: DataTypes.TEXT, allowNull: true },
+      dutiesJa: { type: DataTypes.TEXT, allowNull: true },
+      achievementsId: { type: DataTypes.TEXT, allowNull: true },
+      achievementsJa: { type: DataTypes.TEXT, allowNull: true },
     },
     { sequelize, tableName: 'candidate_careers', timestamps: true },
   );

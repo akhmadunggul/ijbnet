@@ -1,3 +1,5 @@
+import fs from 'fs';
+import path from 'path';
 import { Router, Request, Response } from 'express';
 import { Op } from 'sequelize';
 import multer from 'multer';
@@ -6,6 +8,7 @@ import { authenticate, requireRole } from '../middleware/auth';
 import { decryptNullable } from '../utils/crypto';
 import { resolveChromePath, buildCandidatePdfHtml } from '../utils/candidatePdf';
 import { buildShokumuHtml } from '../utils/shokumuTemplate';
+import { config } from '../config';
 import { translateId2Ja } from '../utils/translate';
 import {
   Candidate,
@@ -853,6 +856,14 @@ router.get('/me/shokumu-pdf', authenticate, requireRole('candidate'), async (req
   const font   = fontRow   ? String((fontRow.toJSON()   as unknown as Record<string, unknown>)['value'] ?? 'ms-mincho') : 'ms-mincho';
 
   const cj = candidate.toJSON() as unknown as Record<string, unknown>;
+
+  // Embed closeup photo as base64 — puppeteer's setContent can't load authed API URLs
+  const photoFilePath = path.join(config.UPLOADS_DIR, 'candidates', candidate.id, 'closeup.webp');
+  try {
+    const photoData = await fs.promises.readFile(photoFilePath);
+    cj['closeupUrl'] = `data:image/webp;base64,${photoData.toString('base64')}`;
+  } catch { /* photo not present on disk, skip */ }
+
   const html = buildShokumuHtml(cj, { layout, font, includePhoto: true });
 
   const browser = await puppeteer.launch({ executablePath, args: ['--no-sandbox', '--disable-setuid-sandbox'], headless: true });

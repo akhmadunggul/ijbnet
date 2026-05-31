@@ -278,6 +278,7 @@
       },
       "tab8": "Sertifikasi",
       "tab9": "PR & Motivasi",
+      "tab10": "Resume",
       "certifications": {
         "addEntry": "Tambah Sertifikasi",
         "certName": "Nama Sertifikat",
@@ -638,7 +639,17 @@
       "journeyViz_textLabel": "Visualisasi Teks",
       "journeyViz_textDesc": "Tampilan daftar teks dengan tahapan, status, dan durasi per langkah.",
       "journeyViz_graphicalLabel": "Visualisasi Grafis",
-      "journeyViz_graphicalDesc": "Tampilan kartu bergambar dengan ikon unik per tahapan dan banner perayaan 日本へようこそ！"
+      "journeyViz_graphicalDesc": "Tampilan kartu bergambar dengan ikon unik per tahapan dan banner perayaan 日本へようこそ！",
+      "shokumuTitle": "Kontrol Resume / 職務経歴書設定",
+      "shokumuDesc": "Kelola tab Resume pada profil kandidat dan output PDF.",
+      "shokumuEnable": "Aktifkan tab Resume pada profil kandidat",
+      "shokumuLayoutTitle": "Layout",
+      "shokumuLayout_reverseLabel": "逆編年体（新しい順）/ Reverse Chronological",
+      "shokumuLayout_chronologicalLabel": "編年体（古い順）/ Chronological",
+      "shokumuLayout_careerLabel": "キャリア形式 / Career-based",
+      "shokumuOutputTitle": "Output PDF",
+      "shokumuOutputSeparate": "Terpisah dari CV / 別ファイル",
+      "shokumuOutputMerged": "Digabung dengan CV / CVと結合"
     },
     "recruiterSettings": {
       "navLabel": "Tampilan Rekruiter",
@@ -876,5 +887,24 @@
     "sending": "Mengirim…",
     "sentSuccess": "Berhasil dikirim ke {{count}} penerima.",
     "errorGeneric": "Terjadi kesalahan saat mengirim. Silakan coba lagi."
+  },
+  "shokumu": {
+    "title": "職務経歴書",
+    "careerSummaryLabel": "Ringkasan Pengalaman Kerja",
+    "careerSummaryHint": "Tulis ringkasan pengalaman kerja Anda (~250 karakter)",
+    "jobDetailTitle": "Detail Pekerjaan",
+    "companyType": "Jenis Perusahaan",
+    "employeeCount": "Jumlah Karyawan",
+    "annualSales": "Omzet Tahunan",
+    "capitalAmount": "Modal Perusahaan",
+    "duties": "Uraian Tugas",
+    "achievements": "Pencapaian",
+    "skillsTitle": "Keahlian yang Dapat Dimanfaatkan",
+    "selfPrTitle": "Promosi Diri",
+    "downloadShokumu": "Unduh 職務経歴書",
+    "downloadMerged": "Unduh CV + 職務経歴書",
+    "saveBtn": "Simpan",
+    "saved": "Data berhasil disimpan.",
+    "autoTranslateNote": "Versi Jepang akan diterjemahkan otomatis jika kosong."
   }
 }
