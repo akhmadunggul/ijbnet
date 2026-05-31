@@ -33,7 +33,7 @@ FROM node:20-slim AS production
 ENV CHROME_PATH=/usr/bin/chromium
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    chromium make g++ wget \
+    chromium make g++ wget fonts-noto-cjk \
     && rm -rf /var/lib/apt/lists/*
 
 RUN npm install -g pnpm@10.33.0

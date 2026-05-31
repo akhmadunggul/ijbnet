@@ -120,7 +120,7 @@ export function buildCandidatePdfHtml(
 <head>
 <meta charset="UTF-8">
 <style>
-  * { font-family: 'Helvetica Neue', Arial, sans-serif; box-sizing: border-box; margin: 0; padding: 0; }
+  * { font-family: 'Helvetica Neue', Arial, "Noto Sans CJK JP", "Noto Sans JP", sans-serif; box-sizing: border-box; margin: 0; padding: 0; }
   body { color: #1a1a1a; padding: 36px 40px; font-size: 12px; line-height: 1.5; }
 
   .header { display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 3px solid #1E3A5F; padding-bottom: 16px; margin-bottom: 20px; }

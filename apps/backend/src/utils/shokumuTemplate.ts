@@ -1,11 +1,13 @@
 /** Build A4-ready 職務経歴書 HTML */
 
+// System CJK fonts (from fonts-noto-cjk package in Docker) are listed first
+// so PDFs render correctly on Linux without relying on any CDN.
 const FONT_MAP: Record<string, string> = {
-  'ms-mincho':     '"MS Mincho", serif',
-  'yu-mincho':     '"Hiragino Mincho ProN", "Yu Mincho", "YuMincho", "MS PMincho", serif',
-  'yu-gothic':     '"Hiragino Sans", "Yu Gothic", "Meiryo", "MS PGothic", sans-serif',
-  'noto-serif-jp': '"Noto Serif JP", serif',
-  'noto-sans-jp':  '"Noto Sans JP", sans-serif',
+  'ms-mincho':     '"Noto Serif CJK JP", "MS Mincho", serif',
+  'yu-mincho':     '"Noto Serif CJK JP", "Hiragino Mincho ProN", "Yu Mincho", "YuMincho", serif',
+  'yu-gothic':     '"Noto Sans CJK JP", "Hiragino Sans", "Yu Gothic", "Meiryo", sans-serif',
+  'noto-serif-jp': '"Noto Serif CJK JP", "Noto Serif JP", serif',
+  'noto-sans-jp':  '"Noto Sans CJK JP", "Noto Sans JP", sans-serif',
 };
 
 const GOOGLE_FONT_MAP: Record<string, string> = {
