@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { api } from '../../lib/api';
@@ -71,11 +72,10 @@ export default function ShokumuTab({ candidate, isLocked }: ShokumuTabProps) {
     return init;
   });
 
+  const navigate = useNavigate();
   const [saving, setSaving] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
   const [saveError, setSaveError] = useState(false);
-  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
-  const [previewLoading, setPreviewLoading] = useState(false);
 
   function updateCareerField(id: string, field: string, value: string) {
     setCareerFields((prev) => ({
@@ -131,24 +131,6 @@ export default function ShokumuTab({ candidate, isLocked }: ShokumuTabProps) {
     }
   }
 
-  async function handlePreview(url: string) {
-    setPreviewLoading(true);
-    try {
-      const resp = await api.get(url, { responseType: 'blob' });
-      const blob = new Blob([resp.data as BlobPart], { type: 'application/pdf' });
-      const href = URL.createObjectURL(blob);
-      setPreviewUrl(href);
-    } catch {
-      // fail silently
-    } finally {
-      setPreviewLoading(false);
-    }
-  }
-
-  function closePreview() {
-    if (previewUrl) URL.revokeObjectURL(previewUrl);
-    setPreviewUrl(null);
-  }
 
   return (
     <div className="space-y-8">
@@ -285,71 +267,30 @@ export default function ShokumuTab({ candidate, isLocked }: ShokumuTabProps) {
         </div>
       )}
 
-      {/* PDF preview + download buttons */}
+      {/* Preview + download buttons */}
       {settings?.eligible && (
         <div className="border-t border-gray-100 pt-4 flex flex-wrap gap-3">
+          <button
+            onClick={() => navigate('/portal/shokumu')}
+            className="flex items-center gap-2 px-4 py-2 bg-white border border-navy-700 text-navy-700 text-sm rounded-lg hover:bg-navy-50 transition"
+          >
+            {t('shokumu.previewBtn')}
+          </button>
           {settings.mergeCv ? (
-            <>
-              <button
-                onClick={() => { void handlePreview('/candidates/me/merged-pdf'); }}
-                disabled={previewLoading}
-                className="flex items-center gap-2 px-4 py-2 bg-white border border-navy-700 text-navy-700 text-sm rounded-lg hover:bg-navy-50 transition disabled:opacity-50"
-              >
-                {previewLoading ? '…' : t('shokumu.previewBtn')}
-              </button>
-              <button
-                onClick={() => { void handleDownloadPdf('/candidates/me/merged-pdf', `${candidate.candidateCode}-resume.pdf`); }}
-                className="flex items-center gap-2 px-4 py-2 bg-navy-700 text-white text-sm rounded-lg hover:bg-navy-900 transition"
-              >
-                {t('shokumu.downloadMerged')}
-              </button>
-            </>
+            <button
+              onClick={() => { void handleDownloadPdf('/candidates/me/merged-pdf', `${candidate.candidateCode}-resume.pdf`); }}
+              className="flex items-center gap-2 px-4 py-2 bg-navy-700 text-white text-sm rounded-lg hover:bg-navy-900 transition"
+            >
+              {t('shokumu.downloadMerged')}
+            </button>
           ) : (
-            <>
-              <button
-                onClick={() => { void handlePreview('/candidates/me/shokumu-pdf'); }}
-                disabled={previewLoading}
-                className="flex items-center gap-2 px-4 py-2 bg-white border border-navy-700 text-navy-700 text-sm rounded-lg hover:bg-navy-50 transition disabled:opacity-50"
-              >
-                {previewLoading ? '…' : t('shokumu.previewBtn')}
-              </button>
-              <button
-                onClick={() => { void handleDownloadPdf('/candidates/me/shokumu-pdf', `${candidate.candidateCode}-shokumu.pdf`); }}
-                className="flex items-center gap-2 px-4 py-2 bg-navy-700 text-white text-sm rounded-lg hover:bg-navy-900 transition"
-              >
-                {t('shokumu.downloadShokumu')}
-              </button>
-            </>
+            <button
+              onClick={() => { void handleDownloadPdf('/candidates/me/shokumu-pdf', `${candidate.candidateCode}-shokumu.pdf`); }}
+              className="flex items-center gap-2 px-4 py-2 bg-navy-700 text-white text-sm rounded-lg hover:bg-navy-900 transition"
+            >
+              {t('shokumu.downloadShokumu')}
+            </button>
           )}
-        </div>
-      )}
-
-      {/* PDF preview modal */}
-      {previewUrl && (
-        <div className="fixed inset-0 z-50 flex flex-col bg-black/80" onClick={closePreview}>
-          <div className="flex items-center justify-between px-4 py-2 bg-gray-900 shrink-0" onClick={(e) => e.stopPropagation()}>
-            <span className="text-white text-sm font-medium">{t('shokumu.previewTitle')}</span>
-            <div className="flex items-center gap-3">
-              <button
-                onClick={() => {
-                  const a = document.createElement('a');
-                  a.href = previewUrl;
-                  a.download = `${candidate.candidateCode}-shokumu.pdf`;
-                  a.click();
-                }}
-                className="text-xs px-3 py-1.5 bg-navy-700 text-white rounded-lg hover:bg-navy-900 transition"
-              >
-                {t('shokumu.downloadShokumu')}
-              </button>
-              <button onClick={closePreview} className="text-gray-300 hover:text-white text-lg leading-none px-2">✕</button>
-            </div>
-          </div>
-          <iframe
-            src={previewUrl}
-            className="flex-1 w-full border-0"
-            title={t('shokumu.previewTitle')}
-            onClick={(e) => e.stopPropagation()}
-          />
         </div>
       )}
     </div>
