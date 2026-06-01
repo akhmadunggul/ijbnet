@@ -8,6 +8,7 @@ import { authenticate, requireRole } from '../middleware/auth';
 import { decryptNullable } from '../utils/crypto';
 import { buildCandidatePdfHtml } from '../utils/candidatePdf';
 import { buildShokumuHtml } from '../utils/shokumuTemplate';
+import { buildGakkenHtml } from '../utils/gakkenTemplate';
 import { config } from '../config';
 import { translateId2Ja } from '../utils/translate';
 import { renderPdf, isPdfError } from '../utils/browserPool';
@@ -739,12 +740,13 @@ router.patch('/me/interviews/:proposalId/confirm-date', authenticate, requireRol
 
 // ── GET /api/candidates/me/shokumu ────────────────────────────────────────────
 router.get('/me/shokumu', authenticate, requireRole('candidate'), async (req: Request, res: Response): Promise<void> => {
-  const [enabledRow, layoutRow, mergeRow, rolloutModeRow, rolloutLpkRow] = await Promise.all([
+  const [enabledRow, layoutRow, mergeRow, rolloutModeRow, rolloutLpkRow, templateRow] = await Promise.all([
     GlobalSettings.findOne({ where: { key: 'shokumu_enabled' } }),
     GlobalSettings.findOne({ where: { key: 'shokumu_layout' } }),
     GlobalSettings.findOne({ where: { key: 'shokumu_merge_cv' } }),
     GlobalSettings.findOne({ where: { key: 'shokumu_rollout_mode' } }),
     GlobalSettings.findOne({ where: { key: 'shokumu_rollout_lpk_ids' } }),
+    GlobalSettings.findOne({ where: { key: 'shokumu_template' } }),
   ]);
   const enabled       = enabledRow      ? (enabledRow.toJSON()      as unknown as Record<string, unknown>)['value'] === true  : false;
   const layout        = layoutRow       ? String((layoutRow.toJSON() as unknown as Record<string, unknown>)['value'] ?? 'reverse') : 'reverse';
@@ -753,6 +755,7 @@ router.get('/me/shokumu', authenticate, requireRole('candidate'), async (req: Re
   const rolloutLpkIds = rolloutLpkRow
     ? ((rolloutLpkRow.toJSON() as unknown as Record<string, unknown>)['value'] as string[] | null) ?? []
     : [];
+  const template = templateRow ? String((templateRow.toJSON() as unknown as Record<string, unknown>)['value'] ?? 'generic') : 'generic';
 
   let eligible = false;
   if (enabled) {
@@ -764,7 +767,7 @@ router.get('/me/shokumu', authenticate, requireRole('candidate'), async (req: Re
     }
   }
 
-  res.json({ enabled, layout, mergeCv, eligible });
+  res.json({ enabled, layout, mergeCv, eligible, template });
 });
 
 // ── PATCH /api/candidates/me/shokumu ─────────────────────────────────────────
@@ -852,16 +855,19 @@ router.get('/me/shokumu-pdf', authenticate, requireRole('candidate'), pdfLimiter
       { model: CandidateJapaneseTest,     as: 'tests',          required: false },
       { model: CandidateCareer,           as: 'career',         required: false, separate: true, order: [['startDate', 'ASC'] as [string, string]] },
       { model: CandidateCertification,    as: 'certifications', required: false },
+      { model: CandidateEducationHistory, as: 'educationHistory', required: false, separate: true, order: [['startDate', 'ASC'] as [string, string]] },
     ],
   });
   if (!candidate) { res.status(404).json({ error: 'NOT_FOUND' }); return; }
 
-  const [layoutRow, fontRow] = await Promise.all([
+  const [layoutRow, fontRow, templateRow] = await Promise.all([
     GlobalSettings.findOne({ where: { key: 'shokumu_layout' } }),
     GlobalSettings.findOne({ where: { key: 'cv_font' } }),
+    GlobalSettings.findOne({ where: { key: 'shokumu_template' } }),
   ]);
-  const layout = layoutRow ? String((layoutRow.toJSON() as unknown as Record<string, unknown>)['value'] ?? 'reverse') : 'reverse';
-  const font   = fontRow   ? String((fontRow.toJSON()   as unknown as Record<string, unknown>)['value'] ?? 'ms-mincho') : 'ms-mincho';
+  const layout   = layoutRow   ? String((layoutRow.toJSON()   as unknown as Record<string, unknown>)['value'] ?? 'reverse')  : 'reverse';
+  const font     = fontRow     ? String((fontRow.toJSON()     as unknown as Record<string, unknown>)['value'] ?? 'ms-mincho') : 'ms-mincho';
+  const template = templateRow ? String((templateRow.toJSON() as unknown as Record<string, unknown>)['value'] ?? 'generic')  : 'generic';
 
   const cj = candidate.toJSON() as unknown as Record<string, unknown>;
 
@@ -913,7 +919,9 @@ router.get('/me/shokumu-pdf', authenticate, requireRole('candidate'), pdfLimiter
     cj['closeupUrl'] = `data:image/webp;base64,${photoData.toString('base64')}`;
   } catch { /* photo not present on disk, skip */ }
 
-  const html = buildShokumuHtml(cj, { layout, font, includePhoto: true });
+  const html = template === 'gakken'
+    ? buildGakkenHtml(cj, { font, includePhoto: true })
+    : buildShokumuHtml(cj, { layout, font, includePhoto: true });
 
   try {
     const pdf = await renderPdf(html, { top: '15mm', bottom: '15mm', left: '20mm', right: '15mm' });
@@ -963,19 +971,23 @@ router.get('/me/merged-pdf', authenticate, requireRole('candidate'), pdfLimiter,
   });
   if (!candidate) { res.status(404).json({ error: 'NOT_FOUND' }); return; }
 
-  const [layoutRow, fontRow] = await Promise.all([
+  const [layoutRow, fontRow, templateRow] = await Promise.all([
     GlobalSettings.findOne({ where: { key: 'shokumu_layout' } }),
     GlobalSettings.findOne({ where: { key: 'cv_font' } }),
+    GlobalSettings.findOne({ where: { key: 'shokumu_template' } }),
   ]);
-  const layout = layoutRow ? String((layoutRow.toJSON() as unknown as Record<string, unknown>)['value'] ?? 'reverse') : 'reverse';
-  const font   = fontRow   ? String((fontRow.toJSON()   as unknown as Record<string, unknown>)['value'] ?? 'ms-mincho') : 'ms-mincho';
+  const layout   = layoutRow   ? String((layoutRow.toJSON()   as unknown as Record<string, unknown>)['value'] ?? 'reverse')  : 'reverse';
+  const font     = fontRow     ? String((fontRow.toJSON()     as unknown as Record<string, unknown>)['value'] ?? 'ms-mincho') : 'ms-mincho';
+  const template = templateRow ? String((templateRow.toJSON() as unknown as Record<string, unknown>)['value'] ?? 'generic')  : 'generic';
 
   const cj  = candidate.toJSON() as unknown as Record<string, unknown>;
   const nik = decryptNullable(candidate.nikEncrypted ?? null);
 
   // Build CV html, strip closing tags, then append shokumu body content
   const cvHtml = buildCandidatePdfHtml(cj, nik);
-  const shokumuHtml = buildShokumuHtml(cj, { layout, font, includePhoto: false });
+  const shokumuHtml = template === 'gakken'
+    ? buildGakkenHtml(cj, { font, includePhoto: false })
+    : buildShokumuHtml(cj, { layout, font, includePhoto: false });
 
   // Extract inner body from shokumu HTML (strip html/head/body wrappers)
   const shokumuBody = shokumuHtml

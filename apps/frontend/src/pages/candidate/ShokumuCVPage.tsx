@@ -4,6 +4,7 @@ import { useQuery } from '@tanstack/react-query';
 import { api } from '../../lib/api';
 import type { CandidateMe } from '../../types/candidate';
 import ShokumuCV from '../../components/ShokumuCV';
+import GakkenCV from '../../components/GakkenCV';
 
 export default function ShokumuCVPage() {
   const { t, i18n } = useTranslation();
@@ -14,6 +15,13 @@ export default function ShokumuCVPage() {
     queryKey: ['my-candidate'],
     queryFn: () => api.get('/candidates/me').then(r => r.data),
   });
+
+  const { data: shokumuConfig } = useQuery<{ template: string }>({
+    queryKey: ['shokumu-config'],
+    queryFn: () => api.get('/candidates/me/shokumu').then(r => r.data),
+    staleTime: 60_000,
+  });
+  const template = shokumuConfig?.template ?? 'generic';
 
   async function handleDownload() {
     if (!data?.candidate?.candidateCode) return;
@@ -79,7 +87,10 @@ export default function ShokumuCVPage() {
         </div>
       </div>
 
-      <ShokumuCV candidate={data.candidate} />
+      {template === 'gakken'
+        ? <GakkenCV candidate={data.candidate} />
+        : <ShokumuCV candidate={data.candidate} />
+      }
     </div>
   );
 }

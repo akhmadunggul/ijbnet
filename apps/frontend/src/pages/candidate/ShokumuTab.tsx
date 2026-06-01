@@ -10,6 +10,7 @@ interface ShokumuSettings {
   layout: string;
   mergeCv: boolean;
   eligible: boolean;
+  template: string;
 }
 
 interface ShokumuTabProps {
@@ -132,40 +133,51 @@ export default function ShokumuTab({ candidate, isLocked }: ShokumuTabProps) {
   }
 
 
+  const isGakken = settings?.template === 'gakken';
+
   return (
     <div className="space-y-8">
-      <div>
-        <h2 className="text-base font-semibold text-gray-900">{t('shokumu.title')}</h2>
-        <p className="text-xs text-gray-400 mt-0.5">{t('shokumu.careerSummaryHint')}</p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-base font-semibold text-gray-900">{t('shokumu.title')}</h2>
+          <p className="text-xs text-gray-400 mt-0.5">{t('shokumu.careerSummaryHint')}</p>
+        </div>
+        {settings?.template && (
+          <span className={`text-xs px-2 py-1 rounded-full border font-medium ${isGakken ? 'bg-blue-50 text-blue-700 border-blue-200' : 'bg-gray-50 text-gray-600 border-gray-200'}`}>
+            {isGakken ? t('shokumu.templateGakken') : t('shokumu.templateGeneric')}
+          </span>
+        )}
       </div>
 
-      {/* Section A: 経歴要約 */}
-      <div className="space-y-4">
-        <h3 className="text-sm font-semibold text-gray-700 border-b border-gray-100 pb-1">{t('shokumu.careerSummaryLabel')}</h3>
-        <Field label="Indonesia">
-          <textarea
-            value={careerSummaryId}
-            onChange={(e) => setCareerSummaryId(e.target.value)}
-            rows={4}
-            maxLength={400}
-            disabled={isLocked}
-            className={textareaCls}
-          />
-          <p className="text-xs text-gray-400 text-right mt-0.5">{careerSummaryId.length}/400</p>
-        </Field>
-        <Field label={`日本語 (${t('shokumu.careerSummaryLabel')})`}>
-          <textarea
-            value={careerSummaryJa}
-            onChange={(e) => setCareerSummaryJa(e.target.value)}
-            rows={3}
-            maxLength={250}
-            disabled={isLocked}
-            className={textareaCls}
-            placeholder="自動翻訳または手動入力"
-          />
-          <p className="text-xs text-gray-400 mt-0.5">{t('shokumu.autoTranslateNote', { defaultValue: 'Japanese version will be auto-translated if left blank.' })}</p>
-        </Field>
-      </div>
+      {/* Section A: 経歴要約 — hidden for Gakken template */}
+      {!isGakken && (
+        <div className="space-y-4">
+          <h3 className="text-sm font-semibold text-gray-700 border-b border-gray-100 pb-1">{t('shokumu.careerSummaryLabel')}</h3>
+          <Field label="Indonesia">
+            <textarea
+              value={careerSummaryId}
+              onChange={(e) => setCareerSummaryId(e.target.value)}
+              rows={4}
+              maxLength={400}
+              disabled={isLocked}
+              className={textareaCls}
+            />
+            <p className="text-xs text-gray-400 text-right mt-0.5">{careerSummaryId.length}/400</p>
+          </Field>
+          <Field label={`日本語 (${t('shokumu.careerSummaryLabel')})`}>
+            <textarea
+              value={careerSummaryJa}
+              onChange={(e) => setCareerSummaryJa(e.target.value)}
+              rows={3}
+              maxLength={250}
+              disabled={isLocked}
+              className={textareaCls}
+              placeholder="自動翻訳または手動入力"
+            />
+            <p className="text-xs text-gray-400 mt-0.5">{t('shokumu.autoTranslateNote', { defaultValue: 'Japanese version will be auto-translated if left blank.' })}</p>
+          </Field>
+        </div>
+      )}
 
       {/* Section B: 職務詳細 per career entry */}
       {(candidate.career ?? []).length > 0 && (

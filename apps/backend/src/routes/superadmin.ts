@@ -228,12 +228,13 @@ router.get('/journey-visualization', wrap(async (_req, res) => {
 
 // ── GET /api/superadmin/shokumu-config — PUBLIC ──────────────────────────────
 router.get('/shokumu-config', wrap(async (_req, res) => {
-  const [enabledRow, layoutRow, mergeRow, rolloutModeRow, rolloutLpkRow] = await Promise.all([
+  const [enabledRow, layoutRow, mergeRow, rolloutModeRow, rolloutLpkRow, templateRow] = await Promise.all([
     GlobalSettings.findOne({ where: { key: 'shokumu_enabled' } }),
     GlobalSettings.findOne({ where: { key: 'shokumu_layout' } }),
     GlobalSettings.findOne({ where: { key: 'shokumu_merge_cv' } }),
     GlobalSettings.findOne({ where: { key: 'shokumu_rollout_mode' } }),
     GlobalSettings.findOne({ where: { key: 'shokumu_rollout_lpk_ids' } }),
+    GlobalSettings.findOne({ where: { key: 'shokumu_template' } }),
   ]);
   const enabled       = enabledRow      ? (enabledRow.toJSON()      as unknown as Record<string, unknown>)['value'] === true  : false;
   const layout        = layoutRow       ? String((layoutRow.toJSON() as unknown as Record<string, unknown>)['value'] ?? 'reverse') : 'reverse';
@@ -242,7 +243,8 @@ router.get('/shokumu-config', wrap(async (_req, res) => {
   const rolloutLpkIds = rolloutLpkRow
     ? ((rolloutLpkRow.toJSON() as unknown as Record<string, unknown>)['value'] as string[] | null) ?? []
     : [];
-  res.json({ enabled, layout, mergeCv, rolloutMode, rolloutLpkIds });
+  const template = templateRow ? String((templateRow.toJSON() as unknown as Record<string, unknown>)['value'] ?? 'generic') : 'generic';
+  res.json({ enabled, layout, mergeCv, rolloutMode, rolloutLpkIds, template });
 }));
 
 router.use(authenticate, requireRole('super_admin'));
@@ -558,6 +560,7 @@ router.put('/shokumu-config', wrap(async (req, res) => {
   const rolloutMode = body['rolloutMode'] === 'lpk' ? 'lpk' : 'all';
   const rawLpkIds = Array.isArray(body['rolloutLpkIds']) ? body['rolloutLpkIds'] : [];
   const rolloutLpkIds = (rawLpkIds as unknown[]).filter((id): id is string => typeof id === 'string' && isUUID(id));
+  const template = body['template'] === 'gakken' ? 'gakken' : 'generic';
 
   const upsert = async (key: string, value: unknown) => {
     const [row, created] = await GlobalSettings.findOrCreate({ where: { key }, defaults: { key, value } });
@@ -570,9 +573,10 @@ router.put('/shokumu-config', wrap(async (req, res) => {
     upsert('shokumu_merge_cv', mergeCv),
     upsert('shokumu_rollout_mode', rolloutMode),
     upsert('shokumu_rollout_lpk_ids', rolloutLpkIds),
+    upsert('shokumu_template', template),
   ]);
 
-  res.json({ enabled, layout, mergeCv, rolloutMode, rolloutLpkIds });
+  res.json({ enabled, layout, mergeCv, rolloutMode, rolloutLpkIds, template });
 }));
 
 // ── PUT /api/superadmin/candidate-tab-config ──────────────────────────────────

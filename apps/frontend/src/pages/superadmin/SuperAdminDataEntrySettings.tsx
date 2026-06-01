@@ -39,6 +39,7 @@ type CompletenessMode = 'legacy' | 'cv';
 type JourneyVizMode = 'text' | 'graphical';
 type ShokumuLayout = 'reverse' | 'chronological' | 'career';
 type ShokumuRolloutMode = 'all' | 'lpk';
+type ShokumuTemplate = 'generic' | 'gakken';
 
 interface LpkOption { id: string; name: string; city: string | null; }
 interface LpkListResponse { lpks: LpkOption[]; }
@@ -84,6 +85,7 @@ export default function SuperAdminDataEntrySettings() {
   const [shokumuMergeCv, setShokumuMergeCv] = useState(false);
   const [shokumuRolloutMode, setShokumuRolloutMode] = useState<ShokumuRolloutMode>('all');
   const [shokumuRolloutLpkIds, setShokumuRolloutLpkIds] = useState<string[]>([]);
+  const [shokumuTemplate, setShokumuTemplate] = useState<ShokumuTemplate>('generic');
   const [shokumuSaveSuccess, setShokumuSaveSuccess] = useState(false);
   const [shokumuSaveError, setShokumuSaveError] = useState(false);
   const [serviceTestStatus, setServiceTestStatus] = useState<Record<string, ServiceTestStatus>>({});
@@ -129,7 +131,7 @@ export default function SuperAdminDataEntrySettings() {
     queryFn: () => api.get('/superadmin/journey-visualization').then((r) => r.data),
   });
 
-  const { data: shokumuConfigData } = useQuery<{ enabled: boolean; layout: ShokumuLayout; mergeCv: boolean; rolloutMode: ShokumuRolloutMode; rolloutLpkIds: string[] }>({
+  const { data: shokumuConfigData } = useQuery<{ enabled: boolean; layout: ShokumuLayout; mergeCv: boolean; rolloutMode: ShokumuRolloutMode; rolloutLpkIds: string[]; template: ShokumuTemplate }>({
     queryKey: ['shokumu-config'],
     queryFn: () => api.get('/superadmin/shokumu-config').then((r) => r.data),
   });
@@ -194,6 +196,7 @@ export default function SuperAdminDataEntrySettings() {
       setShokumuMergeCv(shokumuConfigData.mergeCv);
       if (shokumuConfigData.rolloutMode) setShokumuRolloutMode(shokumuConfigData.rolloutMode);
       setShokumuRolloutLpkIds(shokumuConfigData.rolloutLpkIds ?? []);
+      if (shokumuConfigData.template) setShokumuTemplate(shokumuConfigData.template);
     }
   }, [shokumuConfigData]);
 
@@ -288,8 +291,8 @@ export default function SuperAdminDataEntrySettings() {
   });
 
   const shokumuMutation = useMutation({
-    mutationFn: ({ enabled, layout, mergeCv, rolloutMode, rolloutLpkIds }: { enabled: boolean; layout: string; mergeCv: boolean; rolloutMode: string; rolloutLpkIds: string[] }) =>
-      api.put('/superadmin/shokumu-config', { enabled, layout, mergeCv, rolloutMode, rolloutLpkIds }).then((r) => r.data),
+    mutationFn: ({ enabled, layout, mergeCv, rolloutMode, rolloutLpkIds, template }: { enabled: boolean; layout: string; mergeCv: boolean; rolloutMode: string; rolloutLpkIds: string[]; template: string }) =>
+      api.put('/superadmin/shokumu-config', { enabled, layout, mergeCv, rolloutMode, rolloutLpkIds, template }).then((r) => r.data),
     onSuccess: () => {
       setShokumuSaveSuccess(true);
       setShokumuSaveError(false);
@@ -848,6 +851,29 @@ export default function SuperAdminDataEntrySettings() {
           <span className="text-sm font-medium text-gray-800">{t('superadmin.dataEntrySettings.shokumuEnable')}</span>
         </label>
 
+        {/* Template selector */}
+        <div>
+          <p className="text-sm font-medium text-gray-700 mb-2">{t('superadmin.dataEntrySettings.shokumuTemplateTitle')}</p>
+          <div className="space-y-2">
+            {(['generic', 'gakken'] as ShokumuTemplate[]).map((tmpl) => (
+              <label key={tmpl} className="flex items-start gap-3 cursor-pointer">
+                <input
+                  type="radio"
+                  name="shokumu_template"
+                  value={tmpl}
+                  checked={shokumuTemplate === tmpl}
+                  onChange={() => setShokumuTemplate(tmpl)}
+                  className="accent-navy-700 mt-0.5"
+                />
+                <div>
+                  <p className="text-sm font-medium text-gray-800">{t(`superadmin.dataEntrySettings.shokumuTemplate_${tmpl}Label`)}</p>
+                  <p className="text-xs text-gray-400 mt-0.5">{t(`superadmin.dataEntrySettings.shokumuTemplate_${tmpl}Desc`)}</p>
+                </div>
+              </label>
+            ))}
+          </div>
+        </div>
+
         {/* Font — shared with CV font setting */}
         <div className="flex items-center justify-between py-1">
           <div>
@@ -966,7 +992,7 @@ export default function SuperAdminDataEntrySettings() {
 
       <div className="flex items-center gap-4">
         <button
-          onClick={() => shokumuMutation.mutate({ enabled: shokumuEnabled, layout: shokumuLayout, mergeCv: shokumuMergeCv, rolloutMode: shokumuRolloutMode, rolloutLpkIds: shokumuRolloutLpkIds })}
+          onClick={() => shokumuMutation.mutate({ enabled: shokumuEnabled, layout: shokumuLayout, mergeCv: shokumuMergeCv, rolloutMode: shokumuRolloutMode, rolloutLpkIds: shokumuRolloutLpkIds, template: shokumuTemplate })}
           disabled={shokumuMutation.isPending}
           className="px-5 py-2 bg-gray-900 text-white text-sm rounded-lg hover:bg-gray-700 transition disabled:opacity-50"
         >
