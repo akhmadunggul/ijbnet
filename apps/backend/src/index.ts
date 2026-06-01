@@ -25,7 +25,24 @@ const app = express();
 app.set('trust proxy', 1);
 
 // ── Security ──────────────────────────────────────────────────────────────────
-app.use(helmet());
+app.use(helmet({
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc:             ["'self'"],
+      scriptSrc:              ["'self'"],
+      styleSrc:               ["'self'"],
+      imgSrc:                 ["'self'", "data:"],
+      connectSrc:             ["'self'"],
+      fontSrc:                ["'self'"],
+      objectSrc:              ["'none'"],
+      frameSrc:               ["'none'"],
+      frameAncestors:         ["'none'"],
+      baseUri:                ["'self'"],
+      formAction:             ["'self'"],
+      upgradeInsecureRequests: [],
+    },
+  },
+}));
 app.use(
   cors({
     origin: config.FRONTEND_URL,
