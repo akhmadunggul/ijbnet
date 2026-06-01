@@ -17,6 +17,12 @@ export interface CandidateCareerAttributes {
   dutiesJa: string | null;
   achievementsId: string | null;
   achievementsJa: string | null;
+  productId: string | null;
+  productJa: string | null;
+  jobTitleId: string | null;
+  jobTitleJa: string | null;
+  memberRoleId: string | null;
+  memberRoleJa: string | null;
   createdAt?: Date;
   updatedAt?: Date;
 }
@@ -39,6 +45,12 @@ export interface CandidateCareerCreationAttributes
     | 'dutiesJa'
     | 'achievementsId'
     | 'achievementsJa'
+    | 'productId'
+    | 'productJa'
+    | 'jobTitleId'
+    | 'jobTitleJa'
+    | 'memberRoleId'
+    | 'memberRoleJa'
   > {}
 
 export class CandidateCareer
@@ -60,6 +72,12 @@ export class CandidateCareer
   declare dutiesJa: string | null;
   declare achievementsId: string | null;
   declare achievementsJa: string | null;
+  declare productId: string | null;
+  declare productJa: string | null;
+  declare jobTitleId: string | null;
+  declare jobTitleJa: string | null;
+  declare memberRoleId: string | null;
+  declare memberRoleJa: string | null;
   declare readonly createdAt: Date;
   declare readonly updatedAt: Date;
 }
@@ -83,6 +101,12 @@ export function initCandidateCareer(sequelize: Sequelize): void {
       dutiesJa: { type: DataTypes.TEXT, allowNull: true },
       achievementsId: { type: DataTypes.TEXT, allowNull: true },
       achievementsJa: { type: DataTypes.TEXT, allowNull: true },
+      productId:      { type: DataTypes.TEXT,          allowNull: true },
+      productJa:      { type: DataTypes.TEXT,          allowNull: true },
+      jobTitleId:     { type: DataTypes.STRING(255),   allowNull: true },
+      jobTitleJa:     { type: DataTypes.STRING(255),   allowNull: true },
+      memberRoleId:   { type: DataTypes.TEXT,          allowNull: true },
+      memberRoleJa:   { type: DataTypes.TEXT,          allowNull: true },
     },
     { sequelize, tableName: 'candidate_careers', timestamps: true },
   );

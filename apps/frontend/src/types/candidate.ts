@@ -36,6 +36,12 @@ export interface CareerEntry {
   dutiesJa?: string | null;
   achievementsId?: string | null;
   achievementsJa?: string | null;
+  productId?: string | null;
+  productJa?: string | null;
+  jobTitleId?: string | null;
+  jobTitleJa?: string | null;
+  memberRoleId?: string | null;
+  memberRoleJa?: string | null;
 }
 
 export interface CertificationEntry {

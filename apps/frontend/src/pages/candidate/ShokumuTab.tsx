@@ -52,6 +52,12 @@ export default function ShokumuTab({ candidate, isLocked }: ShokumuTabProps) {
     dutiesJa: string;
     achievementsId: string;
     achievementsJa: string;
+    productId: string;
+    productJa: string;
+    jobTitleId: string;
+    jobTitleJa: string;
+    memberRoleId: string;
+    memberRoleJa: string;
   };
 
   // Local state for career entry shokumu fields
@@ -68,6 +74,12 @@ export default function ShokumuTab({ candidate, isLocked }: ShokumuTabProps) {
         dutiesJa:       entry.dutiesJa       ?? '',
         achievementsId: entry.achievementsId ?? '',
         achievementsJa: entry.achievementsJa ?? '',
+        productId:      entry.productId      ?? '',
+        productJa:      entry.productJa      ?? '',
+        jobTitleId:     entry.jobTitleId     ?? '',
+        jobTitleJa:     entry.jobTitleJa     ?? '',
+        memberRoleId:   entry.memberRoleId   ?? '',
+        memberRoleJa:   entry.memberRoleJa   ?? '',
       };
     }
     return init;
@@ -100,6 +112,12 @@ export default function ShokumuTab({ candidate, isLocked }: ShokumuTabProps) {
         dutiesJa:       fields.dutiesJa       || null,
         achievementsId: fields.achievementsId || null,
         achievementsJa: fields.achievementsJa || null,
+        productId:      fields.productId      || null,
+        productJa:      fields.productJa      || null,
+        jobTitleId:     fields.jobTitleId     || null,
+        jobTitleJa:     fields.jobTitleJa     || null,
+        memberRoleId:   fields.memberRoleId   || null,
+        memberRoleJa:   fields.memberRoleJa   || null,
       }));
 
       await api.patch('/candidates/me/shokumu', {
@@ -189,6 +207,8 @@ export default function ShokumuTab({ candidate, isLocked }: ShokumuTabProps) {
               companyType: '', employeeCount: '', annualSales: '',
               capitalAmount: '', dutiesId: '', dutiesJa: '',
               achievementsId: '', achievementsJa: '',
+              productId: '', productJa: '', jobTitleId: '', jobTitleJa: '',
+              memberRoleId: '', memberRoleJa: '',
             };
             return (
               <div key={entry.id} className="border border-gray-100 rounded-xl p-4 space-y-4 bg-gray-50">
@@ -256,6 +276,74 @@ export default function ShokumuTab({ candidate, isLocked }: ShokumuTabProps) {
                     className={textareaCls}
                   />
                 </Field>
+
+                {/* ── Gakken-specific fields ── */}
+                {isGakken && (
+                  <>
+                    <Field label={t('shokumu.product')}>
+                      <textarea
+                        value={fields.productId}
+                        onChange={(e) => updateCareerField(entry.id!, 'productId', e.target.value)}
+                        rows={2}
+                        disabled={isLocked}
+                        className={textareaCls}
+                        placeholder={t('shokumu.productPlaceholder', { defaultValue: 'e.g. Suku cadang otomotif (engine mount, karburator)' })}
+                      />
+                    </Field>
+                    <Field label={`${t('shokumu.product')} (日本語)`}>
+                      <textarea
+                        value={fields.productJa}
+                        onChange={(e) => updateCareerField(entry.id!, 'productJa', e.target.value)}
+                        rows={2}
+                        disabled={isLocked}
+                        className={textareaCls}
+                        placeholder={t('shokumu.autoTranslateNote', { defaultValue: 'Auto-translated if left blank.' })}
+                      />
+                    </Field>
+
+                    <Field label={t('shokumu.jobTitle')}>
+                      <input
+                        type="text"
+                        value={fields.jobTitleId}
+                        onChange={(e) => updateCareerField(entry.id!, 'jobTitleId', e.target.value)}
+                        disabled={isLocked}
+                        className={inputCls}
+                        placeholder={t('shokumu.jobTitlePlaceholder', { defaultValue: 'e.g. Operator NC Lathe' })}
+                      />
+                    </Field>
+                    <Field label={`${t('shokumu.jobTitle')} (日本語)`}>
+                      <input
+                        type="text"
+                        value={fields.jobTitleJa}
+                        onChange={(e) => updateCareerField(entry.id!, 'jobTitleJa', e.target.value)}
+                        disabled={isLocked}
+                        className={inputCls}
+                        placeholder={t('shokumu.autoTranslateNote', { defaultValue: 'Auto-translated if left blank.' })}
+                      />
+                    </Field>
+
+                    <Field label={t('shokumu.memberRole')}>
+                      <textarea
+                        value={fields.memberRoleId}
+                        onChange={(e) => updateCareerField(entry.id!, 'memberRoleId', e.target.value)}
+                        rows={2}
+                        disabled={isLocked}
+                        className={textareaCls}
+                        placeholder={t('shokumu.memberRolePlaceholder', { defaultValue: 'e.g. 3 orang, sebagai leader' })}
+                      />
+                    </Field>
+                    <Field label={`${t('shokumu.memberRole')} (日本語)`}>
+                      <textarea
+                        value={fields.memberRoleJa}
+                        onChange={(e) => updateCareerField(entry.id!, 'memberRoleJa', e.target.value)}
+                        rows={2}
+                        disabled={isLocked}
+                        className={textareaCls}
+                        placeholder={t('shokumu.autoTranslateNote', { defaultValue: 'Auto-translated if left blank.' })}
+                      />
+                    </Field>
+                  </>
+                )}
 
                 <p className="text-xs text-gray-400">{t('shokumu.autoTranslateNote', { defaultValue: 'Japanese version will be auto-translated if left blank.' })}</p>
               </div>

@@ -27,11 +27,8 @@ const PRINT_CSS = `
   @page { size: A4; margin: 15mm 15mm 10mm 20mm; }
 `;
 
-const TD: React.CSSProperties = { border: '1px solid #333', padding: '2mm 3mm', verticalAlign: 'top' };
-const TH: React.CSSProperties = {
-  ...TD, background: '#f0f0f0', fontWeight: 'bold',
-  textAlign: 'left', whiteSpace: 'nowrap', width: '22%',
-};
+const TD: React.CSSProperties = { border: '1px solid #333', padding: '2mm 3mm', verticalAlign: 'top', fontSize: '8.5pt' };
+const TH: React.CSSProperties = { ...TD, background: '#f0f0f0', fontWeight: 'bold', textAlign: 'center', whiteSpace: 'nowrap' };
 
 function fb(ja: string | null | undefined, id: string | null | undefined): string {
   return ((ja ?? '').trim()) || ((id ?? '').trim());
@@ -45,15 +42,6 @@ function TextBullets({ text }: { text: string }) {
       {lines.map((l, i) => <li key={i}>{l}</li>)}
     </ul>
   );
-}
-
-function fmtPeriod(entry: { period?: string | null; startDate?: string | null; endDate?: string | null }): string {
-  if (entry.period) return entry.period;
-  const s = entry.startDate?.slice(0, 7) ?? '';
-  const e = entry.endDate  ?.slice(0, 7) ?? '';
-  const start = s ? s.replace('-', '年') + '月' : '';
-  const end   = e ? e.replace('-', '年') + '月' : '現在';
-  return start ? `${start} ～ ${end}` : end;
 }
 
 function SectionHeader({ label }: { label: string }) {
@@ -161,16 +149,14 @@ export default function GakkenCV({ candidate }: { candidate: CandidateData }) {
         }}>
           <style dangerouslySetInnerHTML={{ __html: PRINT_CSS }} />
 
-          {/* ── Title row ── */}
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: '2mm' }}>
-            <div style={{ fontSize: '16pt', fontWeight: 'bold', letterSpacing: '0.5em' }}>
-              職　務　経　歴　書
-            </div>
-            <div style={{ fontSize: '9pt' }}>{today}現在</div>
+          {/* ── Title ── */}
+          <div style={{ textAlign: 'center', fontSize: '16pt', fontWeight: 'bold', letterSpacing: '0.5em', marginBottom: '3mm' }}>
+            職　務　経　歴　書
           </div>
 
-          {/* ── Name row ── */}
-          <div style={{ fontSize: '10pt', marginBottom: '5mm', borderBottom: '1px solid #333', paddingBottom: '3mm' }}>
+          {/* ── Date + Name (right-aligned) ── */}
+          <div style={{ textAlign: 'right', fontSize: '9pt', marginBottom: '1mm' }}>{today}現在</div>
+          <div style={{ textAlign: 'right', fontSize: '10pt', marginBottom: '5mm', borderBottom: '1px solid #333', paddingBottom: '3mm' }}>
             氏名　{c.fullName ?? ''}
             {c.candidateCode && (
               <span style={{ fontSize: '7.5pt', color: '#888', marginLeft: '4mm' }}>{c.candidateCode}</span>
@@ -181,85 +167,44 @@ export default function GakkenCV({ candidate }: { candidate: CandidateData }) {
           {careerSummary && (
             <>
               <SectionHeader label="職務要約" />
-              <div style={{
-                border: '1px solid #333', padding: '3mm 4mm',
-                minHeight: '18mm', whiteSpace: 'pre-wrap',
-              }}>
+              <div style={{ border: '1px solid #333', padding: '3mm 4mm', minHeight: '15mm', whiteSpace: 'pre-wrap' }}>
                 {careerSummary}
               </div>
             </>
           )}
 
-          {/* ── 職務経歴 ── */}
-          {career.length > 0 && (
-            <>
-              <SectionHeader label="職務経歴" />
-              {career.map((entry, idx) => {
-                const duties       = fb(entry.dutiesJa,       entry.dutiesId);
-                const achievements = fb(entry.achievementsJa, entry.achievementsId);
-
-                const companyInfoParts = [
-                  entry.companyType   ? `事業内容：${entry.companyType}` : '',
-                  entry.capitalAmount ? `資本金：${entry.capitalAmount}` : '',
-                  entry.annualSales   ? `売上高：${entry.annualSales}` : '',
-                  entry.employeeCount != null ? `従業員数：${entry.employeeCount}名` : '',
-                ].filter(Boolean);
-
+          {/* ── 職務経歴 (table) ── */}
+          <SectionHeader label="職務経歴" />
+          <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+            <thead>
+              <tr>
+                <th style={{ ...TH, width: '18%' }}>機　関</th>
+                <th style={{ ...TH, width: '18%' }}>担当製品</th>
+                <th style={{ ...TH, width: '15%' }}>業務タイトル</th>
+                <th style={{ ...TH, width: '35%' }}>担当業務</th>
+                <th style={{ ...TH, width: '14%' }}>メンバー・役割</th>
+              </tr>
+            </thead>
+            <tbody>
+              {career.length > 0 ? career.map((entry, idx) => {
+                const product    = fb(entry.productJa,    entry.productId);
+                const jobTitle   = fb(entry.jobTitleJa,   entry.jobTitleId);
+                const duties     = fb(entry.dutiesJa,     entry.dutiesId);
+                const memberRole = fb(entry.memberRoleJa, entry.memberRoleId);
                 return (
-                  <div key={entry.id ?? idx} style={{ marginBottom: '5mm' }}>
-                    {/* Company sub-header */}
-                    <div style={{
-                      fontWeight: 'bold', fontSize: '9.5pt',
-                      borderLeft: '3px solid #111', paddingLeft: '3mm',
-                      marginBottom: '1mm',
-                    }}>
-                      {entry.companyName ?? `経歴 ${idx + 1}`}
-                      {entry.period && (
-                        <span style={{ fontWeight: 'normal', fontSize: '8.5pt', marginLeft: '4mm', color: '#444' }}>
-                          {entry.period}
-                        </span>
-                      )}
-                    </div>
-
-                    {/* Company info line */}
-                    {companyInfoParts.length > 0 && (
-                      <div style={{ fontSize: '8pt', color: '#555', marginBottom: '2mm', paddingLeft: '3mm' }}>
-                        {companyInfoParts.join('　')}
-                      </div>
-                    )}
-
-                    {/* Period / Duties / Achievements table */}
-                    <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-                      <tbody>
-                        <tr>
-                          <th style={TH}>期　間</th>
-                          <td style={TD}>{fmtPeriod(entry)}</td>
-                        </tr>
-                        {entry.division && (
-                          <tr>
-                            <th style={TH}>部　署</th>
-                            <td style={TD}>{entry.division}</td>
-                          </tr>
-                        )}
-                        {duties && (
-                          <tr>
-                            <th style={TH}>担当業務</th>
-                            <td style={TD}><TextBullets text={duties} /></td>
-                          </tr>
-                        )}
-                        {achievements && (
-                          <tr>
-                            <th style={TH}>実績・成果</th>
-                            <td style={TD}><TextBullets text={achievements} /></td>
-                          </tr>
-                        )}
-                      </tbody>
-                    </table>
-                  </div>
+                  <tr key={entry.id ?? idx}>
+                    <td style={TD}>{entry.companyName ?? ''}</td>
+                    <td style={TD}>{product    ? <TextBullets text={product}    /> : ''}</td>
+                    <td style={TD}>{jobTitle}</td>
+                    <td style={TD}>{duties     ? <TextBullets text={duties}     /> : ''}</td>
+                    <td style={TD}>{memberRole ? <TextBullets text={memberRole} /> : ''}</td>
+                  </tr>
                 );
-              })}
-            </>
-          )}
+              }) : (
+                <tr><td colSpan={5} style={{ ...TD, textAlign: 'center', color: '#aaa' }}>なし</td></tr>
+              )}
+            </tbody>
+          </table>
 
           {/* ── 経験・知識・技術 ── */}
           {skillsText && (
@@ -291,19 +236,14 @@ export default function GakkenCV({ candidate }: { candidate: CandidateData }) {
           {selfIntroText && (
             <>
               <SectionHeader label="自己ＰＲ" />
-              <div style={{
-                border: '1px solid #333', padding: '3mm 4mm',
-                minHeight: '22mm', whiteSpace: 'pre-wrap',
-              }}>
+              <div style={{ border: '1px solid #333', padding: '3mm 4mm', minHeight: '22mm', whiteSpace: 'pre-wrap' }}>
                 {selfIntroText}
               </div>
             </>
           )}
 
           {/* ── 以上 ── */}
-          <div style={{ textAlign: 'right', marginTop: '6mm', fontSize: '9pt' }}>
-            以上
-          </div>
+          <div style={{ textAlign: 'right', marginTop: '6mm', fontSize: '9pt' }}>以上</div>
 
         </div>
       </div>

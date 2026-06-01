@@ -31,21 +31,11 @@ function nlToBullets(text: string): string {
   return `<ul style="margin:0;padding-left:1.4em;list-style-type:disc;">${lines.map(l => `<li>${he(l)}</li>`).join('')}</ul>`;
 }
 
-function fmtPeriod(entry: Record<string, unknown>): string {
-  const period = entry['period'] as string | null;
-  if (period) return he(period);
-  const s = (entry['startDate'] as string | null)?.slice(0, 7) ?? '';
-  const e = (entry['endDate']   as string | null)?.slice(0, 7) ?? '';
-  const start = s ? he(s.replace('-', '年') + '月') : '';
-  const end   = e ? he(e.replace('-', '年') + '月') : '現在';
-  return start ? `${start} ～ ${end}` : end;
-}
-
 const SECTION_HEADER = (label: string) =>
   `<div style="font-weight:bold;font-size:10pt;border-bottom:2px solid #111;margin-top:6mm;margin-bottom:2mm;padding-bottom:1mm;letter-spacing:0.06em;">${label}</div>`;
 
-const TD = 'border:1px solid #333;padding:2mm 3mm;vertical-align:top;';
-const TH = `${TD}background:#f0f0f0;font-weight:bold;text-align:left;white-space:nowrap;width:22%;`;
+const TD = 'border:1px solid #333;padding:2mm 3mm;vertical-align:top;font-size:8.5pt;';
+const TH = `${TD}background:#f0f0f0;font-weight:bold;text-align:center;white-space:nowrap;`;
 
 export function buildGakkenHtml(
   candidate: Record<string, unknown>,
@@ -68,49 +58,23 @@ export function buildGakkenHtml(
   const skillsText    = fallback(candidate['selfPrJa'],         candidate['selfPrId']);
   const selfIntroText = fallback(candidate['selfIntroJa'],      candidate['selfIntroId']);
 
-  // ── 職務経歴 blocks ───────────────────────────────────────────────────────────
-  const careerBlocks = rawCareer.map((entry, idx) => {
-    const duties       = fallback(entry['dutiesJa'],       entry['dutiesId']);
-    const achievements = fallback(entry['achievementsJa'], entry['achievementsId']);
-
-    const companyInfoParts = [
-      entry['companyType']   ? `事業内容：${he(entry['companyType'])}` : '',
-      entry['capitalAmount'] ? `資本金：${he(entry['capitalAmount'])}` : '',
-      entry['annualSales']   ? `売上高：${he(entry['annualSales'])}` : '',
-      entry['employeeCount'] != null ? `従業員数：${he(entry['employeeCount'])}名` : '',
-    ].filter(Boolean);
-
-    const companyName = entry['companyName'] ? he(entry['companyName']) : `経歴 ${idx + 1}`;
-    const periodLabel = entry['period']
-      ? ` <span style="font-weight:normal;font-size:8.5pt;margin-left:4mm;color:#444;">${he(entry['period'])}</span>`
-      : '';
-
-    const divisionRow = entry['division']
-      ? `<tr><th style="${TH}">部　署</th><td style="${TD}">${he(entry['division'])}</td></tr>`
-      : '';
-    const dutiesRow = duties
-      ? `<tr><th style="${TH}">担当業務</th><td style="${TD}">${nlToBullets(duties)}</td></tr>`
-      : '';
-    const achievementsRow = achievements
-      ? `<tr><th style="${TH}">実績・成果</th><td style="${TD}">${nlToBullets(achievements)}</td></tr>`
-      : '';
+  // ── 職務経歴 rows ─────────────────────────────────────────────────────────────
+  const careerRows = rawCareer.map(entry => {
+    const institution = he(entry['companyName'] ?? '');
+    const product     = fallback(entry['productJa'],     entry['productId']);
+    const jobTitle    = fallback(entry['jobTitleJa'],    entry['jobTitleId']);
+    const duties      = fallback(entry['dutiesJa'],      entry['dutiesId']);
+    const memberRole  = fallback(entry['memberRoleJa'],  entry['memberRoleId']);
 
     return `
-      <div style="margin-bottom:5mm;">
-        <div style="font-weight:bold;font-size:9.5pt;border-left:3px solid #111;padding-left:3mm;margin-bottom:1mm;">
-          ${companyName}${periodLabel}
-        </div>
-        ${companyInfoParts.length ? `<div style="font-size:8pt;color:#555;margin-bottom:2mm;padding-left:3mm;">${companyInfoParts.join('　')}</div>` : ''}
-        <table style="width:100%;border-collapse:collapse;">
-          <tbody>
-            <tr><th style="${TH}">期　間</th><td style="${TD}">${fmtPeriod(entry)}</td></tr>
-            ${divisionRow}
-            ${dutiesRow}
-            ${achievementsRow}
-          </tbody>
-        </table>
-      </div>`;
-  }).join('');
+      <tr>
+        <td style="${TD}">${institution}</td>
+        <td style="${TD}">${product ? nlToBullets(product) : ''}</td>
+        <td style="${TD}">${he(jobTitle)}</td>
+        <td style="${TD}">${duties ? nlToBullets(duties) : ''}</td>
+        <td style="${TD}">${memberRole ? nlToBullets(memberRole) : ''}</td>
+      </tr>`;
+  }).join('') || `<tr><td colspan="5" style="${TD}text-align:center;color:#aaa;">なし</td></tr>`;
 
   // ── 資格 ─────────────────────────────────────────────────────────────────────
   const certItems = certifications.length
@@ -137,14 +101,14 @@ export function buildGakkenHtml(
 </head>
 <body>
 
-  <!-- ── Title row ── -->
-  <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:2mm;">
-    <div style="font-size:16pt;font-weight:bold;letter-spacing:0.5em;">職　務　経　歴　書</div>
-    <div style="font-size:9pt;">${today}現在</div>
+  <!-- ── Title ── -->
+  <div style="text-align:center;font-size:16pt;font-weight:bold;letter-spacing:0.5em;margin-bottom:3mm;">
+    職　務　経　歴　書
   </div>
 
-  <!-- ── Name row ── -->
-  <div style="font-size:10pt;margin-bottom:5mm;border-bottom:1px solid #333;padding-bottom:3mm;">
+  <!-- ── Date + Name (right-aligned) ── -->
+  <div style="text-align:right;font-size:9pt;margin-bottom:1mm;">${today}現在</div>
+  <div style="text-align:right;font-size:10pt;margin-bottom:5mm;border-bottom:1px solid #333;padding-bottom:3mm;">
     氏名　${fullName}
     ${candidateCode ? `<span style="font-size:7.5pt;color:#888;margin-left:4mm;">${candidateCode}</span>` : ''}
   </div>
@@ -152,14 +116,25 @@ export function buildGakkenHtml(
   <!-- ── 職務要約 ── -->
   ${careerSummary ? `
   ${SECTION_HEADER('職務要約')}
-  <div style="border:1px solid #333;padding:3mm 4mm;min-height:18mm;white-space:pre-wrap;">${he(careerSummary)}</div>
+  <div style="border:1px solid #333;padding:3mm 4mm;min-height:15mm;white-space:pre-wrap;">${he(careerSummary)}</div>
   ` : ''}
 
   <!-- ── 職務経歴 ── -->
-  ${rawCareer.length ? `
   ${SECTION_HEADER('職務経歴')}
-  ${careerBlocks}
-  ` : ''}
+  <table style="width:100%;border-collapse:collapse;">
+    <thead>
+      <tr>
+        <th style="${TH}width:18%;">機　関</th>
+        <th style="${TH}width:18%;">担当製品</th>
+        <th style="${TH}width:15%;">業務タイトル</th>
+        <th style="${TH}width:35%;">担当業務</th>
+        <th style="${TH}width:14%;">メンバー・役割</th>
+      </tr>
+    </thead>
+    <tbody>
+      ${careerRows}
+    </tbody>
+  </table>
 
   <!-- ── 経験・知識・技術 ── -->
   ${skillsText ? `

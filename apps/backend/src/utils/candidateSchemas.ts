@@ -128,8 +128,16 @@ const shokumuCareerEntrySchema = z.object({
   dutiesJa:       longStr(3000).nullable(),
   achievementsId: longStr(3000).nullable(),
   achievementsJa: longStr(3000).nullable(),
+  productId:      longStr(1000).nullable(),
+  productJa:      longStr(1000).nullable(),
+  jobTitleId:     shortStr(255).nullable(),
+  jobTitleJa:     shortStr(255).nullable(),
+  memberRoleId:   longStr(1000).nullable(),
+  memberRoleJa:   longStr(1000).nullable(),
 }).partial({ companyType: true, employeeCount: true, annualSales: true, capitalAmount: true,
-             dutiesId: true, dutiesJa: true, achievementsId: true, achievementsJa: true }).strict();
+             dutiesId: true, dutiesJa: true, achievementsId: true, achievementsJa: true,
+             productId: true, productJa: true, jobTitleId: true, jobTitleJa: true,
+             memberRoleId: true, memberRoleJa: true }).strict();
 
 export const patchShokumuSchema = z.object({
   careerSummaryId: longStr(400).nullable(),

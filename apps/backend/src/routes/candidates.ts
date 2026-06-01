@@ -825,10 +825,19 @@ router.patch('/me/shokumu', authenticate, requireRole('candidate'), async (req: 
         if (entry.dutiesJa       !== undefined) updates['dutiesJa']       = entry.dutiesJa       ?? null;
         if (entry.achievementsId !== undefined) updates['achievementsId'] = entry.achievementsId ?? null;
         if (entry.achievementsJa !== undefined) updates['achievementsJa'] = entry.achievementsJa ?? null;
+        if (entry.productId      !== undefined) updates['productId']      = entry.productId      ?? null;
+        if (entry.productJa      !== undefined) updates['productJa']      = entry.productJa      ?? null;
+        if (entry.jobTitleId     !== undefined) updates['jobTitleId']     = entry.jobTitleId     ?? null;
+        if (entry.jobTitleJa     !== undefined) updates['jobTitleJa']     = entry.jobTitleJa     ?? null;
+        if (entry.memberRoleId   !== undefined) updates['memberRoleId']   = entry.memberRoleId   ?? null;
+        if (entry.memberRoleJa   !== undefined) updates['memberRoleJa']   = entry.memberRoleJa   ?? null;
 
-        // Auto-translate dutiesId → dutiesJa and achievementsId → achievementsJa
+        // Auto-translate ID fields → JA where JA is absent
         if (autoTranslate) {
-          for (const [idKey, jaKey] of [['dutiesId', 'dutiesJa'], ['achievementsId', 'achievementsJa']] as const) {
+          for (const [idKey, jaKey] of [
+            ['dutiesId', 'dutiesJa'], ['achievementsId', 'achievementsJa'],
+            ['productId', 'productJa'], ['jobTitleId', 'jobTitleJa'], ['memberRoleId', 'memberRoleJa'],
+          ] as const) {
             const idText = (updates[idKey] ?? (careerRow as unknown as Record<string, unknown>)[idKey]) as string | null | undefined;
             const jaText = (updates[jaKey] ?? (careerRow as unknown as Record<string, unknown>)[jaKey]) as string | null | undefined;
             if (idText && !jaText) {
@@ -898,7 +907,10 @@ router.get('/me/shokumu-pdf', authenticate, requireRole('candidate'), pdfLimiter
     const career = (cj['career'] as Record<string, unknown>[] | null) ?? [];
     await Promise.all(career.map(async (entry) => {
       const entryUpdates: Record<string, string> = {};
-      for (const [idKey, jaKey] of [['dutiesId', 'dutiesJa'], ['achievementsId', 'achievementsJa']] as const) {
+      for (const [idKey, jaKey] of [
+        ['dutiesId', 'dutiesJa'], ['achievementsId', 'achievementsJa'],
+        ['productId', 'productJa'], ['jobTitleId', 'jobTitleJa'], ['memberRoleId', 'memberRoleJa'],
+      ] as const) {
         const idText = entry[idKey] as string | null;
         const jaText = entry[jaKey] as string | null;
         if (idText && !jaText) {
