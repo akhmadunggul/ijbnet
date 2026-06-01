@@ -1,4 +1,4 @@
-/** Build A4-ready 職務経歴書 HTML — Gakken table-based form format */
+/** Build A4-ready 職務経歴書 HTML — Gakken standard form format */
 
 const FONT_MAP: Record<string, string> = {
   'ms-mincho':     '"Noto Serif CJK JP", "MS Mincho", serif',
@@ -28,16 +28,24 @@ function fallback(ja: unknown, id: unknown): string {
 function nlToBullets(text: string): string {
   const lines = text.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
   if (lines.length <= 1) return `<span>${he(text)}</span>`;
-  return `<ul style="margin:0;padding-left:1.2em;">${lines.map(l => `<li>${he(l)}</li>`).join('')}</ul>`;
+  return `<ul style="margin:0;padding-left:1.4em;list-style-type:disc;">${lines.map(l => `<li>${he(l)}</li>`).join('')}</ul>`;
 }
 
 function fmtPeriod(entry: Record<string, unknown>): string {
   const period = entry['period'] as string | null;
   if (period) return he(period);
-  const start = entry['startDate'] as string | null;
-  if (!start) return '—';
-  return he(start.slice(0, 7).replace('-', '.'));
+  const s = (entry['startDate'] as string | null)?.slice(0, 7) ?? '';
+  const e = (entry['endDate']   as string | null)?.slice(0, 7) ?? '';
+  const start = s ? he(s.replace('-', '年') + '月') : '';
+  const end   = e ? he(e.replace('-', '年') + '月') : '現在';
+  return start ? `${start} ～ ${end}` : end;
 }
+
+const SECTION_HEADER = (label: string) =>
+  `<div style="font-weight:bold;font-size:10pt;border-bottom:2px solid #111;margin-top:6mm;margin-bottom:2mm;padding-bottom:1mm;letter-spacing:0.06em;">${label}</div>`;
+
+const TD = 'border:1px solid #333;padding:2mm 3mm;vertical-align:top;';
+const TH = `${TD}background:#f0f0f0;font-weight:bold;text-align:left;white-space:nowrap;width:22%;`;
 
 export function buildGakkenHtml(
   candidate: Record<string, unknown>,
@@ -50,78 +58,69 @@ export function buildGakkenHtml(
     : '';
 
   const today = new Date().toLocaleDateString('ja-JP', { year: 'numeric', month: 'long', day: 'numeric' });
-  const fullName     = he(candidate['fullName'] ?? '');
+  const fullName      = he(candidate['fullName'] ?? '');
   const candidateCode = he(candidate['candidateCode'] ?? '');
 
-  const rawCareer = (candidate['career'] as Record<string, unknown>[] | null) ?? [];
-  const educationHistory = (candidate['educationHistory'] as Record<string, unknown>[] | null) ?? [];
-  const certifications   = (candidate['certifications']  as Record<string, unknown>[] | null) ?? [];
+  const rawCareer      = (candidate['career']         as Record<string, unknown>[] | null) ?? [];
+  const certifications = (candidate['certifications'] as Record<string, unknown>[] | null) ?? [];
 
-  const selfPrText    = fallback(candidate['selfPrJa'],    candidate['selfPrId']);
-  const selfIntroText = fallback(candidate['selfIntroJa'], candidate['selfIntroId']);
+  const careerSummary = fallback(candidate['careerSummaryJa'], candidate['careerSummaryId']);
+  const skillsText    = fallback(candidate['selfPrJa'],         candidate['selfPrId']);
+  const selfIntroText = fallback(candidate['selfIntroJa'],      candidate['selfIntroId']);
 
-  const closeupUrl = (candidate['closeupUrl'] as string | null) ?? null;
-  const photoCell = settings.includePhoto && closeupUrl
-    ? `<img src="${he(closeupUrl)}" alt="顔写真" style="width:22mm;height:28mm;object-fit:cover;border:1px solid #ccc;" />`
-    : '<div style="width:22mm;height:28mm;border:1px solid #ccc;display:flex;align-items:center;justify-content:center;color:#aaa;font-size:7pt;">写真</div>';
+  // ── 職務経歴 blocks ───────────────────────────────────────────────────────────
+  const careerBlocks = rawCareer.map((entry, idx) => {
+    const duties       = fallback(entry['dutiesJa'],       entry['dutiesId']);
+    const achievements = fallback(entry['achievementsJa'], entry['achievementsId']);
 
-  // ── 職歴 rows ───────────────────────────────────────────────────────────────
-  const careerRows = rawCareer.length
-    ? rawCareer.map(entry => {
-        const duties       = fallback(entry['dutiesJa'],       entry['dutiesId']);
-        const achievements = fallback(entry['achievementsJa'], entry['achievementsId']);
+    const companyInfoParts = [
+      entry['companyType']   ? `事業内容：${he(entry['companyType'])}` : '',
+      entry['capitalAmount'] ? `資本金：${he(entry['capitalAmount'])}` : '',
+      entry['annualSales']   ? `売上高：${he(entry['annualSales'])}` : '',
+      entry['employeeCount'] != null ? `従業員数：${he(entry['employeeCount'])}名` : '',
+    ].filter(Boolean);
 
-        const companyCell = [
-          entry['companyName'] ? `<strong>${he(entry['companyName'])}</strong>` : '',
-          entry['division']    ? he(entry['division']) : '',
-          [
-            entry['companyType']    ? `${he(entry['companyType'])}` : '',
-            entry['employeeCount'] != null ? `${he(entry['employeeCount'])}名` : '',
-            entry['annualSales']   ? `年商 ${he(entry['annualSales'])}` : '',
-          ].filter(Boolean).join('・'),
-        ].filter(Boolean).join('<br/>');
+    const companyName = entry['companyName'] ? he(entry['companyName']) : `経歴 ${idx + 1}`;
+    const periodLabel = entry['period']
+      ? ` <span style="font-weight:normal;font-size:8.5pt;margin-left:4mm;color:#444;">${he(entry['period'])}</span>`
+      : '';
 
-        const dutiesCell = [
-          duties       ? `<div style="margin-bottom:2mm;">${nlToBullets(duties)}</div>` : '',
-          achievements ? `<div style="color:#444;font-size:8pt;">[実績] ${nlToBullets(achievements)}</div>` : '',
-        ].filter(Boolean).join('') || '—';
+    const divisionRow = entry['division']
+      ? `<tr><th style="${TH}">部　署</th><td style="${TD}">${he(entry['division'])}</td></tr>`
+      : '';
+    const dutiesRow = duties
+      ? `<tr><th style="${TH}">担当業務</th><td style="${TD}">${nlToBullets(duties)}</td></tr>`
+      : '';
+    const achievementsRow = achievements
+      ? `<tr><th style="${TH}">実績・成果</th><td style="${TD}">${nlToBullets(achievements)}</td></tr>`
+      : '';
 
-        return `
-          <tr>
-            <td style="width:20%;vertical-align:top;white-space:nowrap;">${fmtPeriod(entry)}</td>
-            <td style="width:32%;vertical-align:top;">${companyCell}</td>
-            <td style="vertical-align:top;">${dutiesCell}</td>
-          </tr>`;
-      }).join('')
-    : `<tr><td colspan="3" style="text-align:center;color:#aaa;padding:4mm;">なし</td></tr>`;
-
-  // ── 学歴 rows ───────────────────────────────────────────────────────────────
-  const eduRows = educationHistory.length
-    ? educationHistory.map(e => {
-        const start = (e['startDate'] as string | null)?.slice(0, 7).replace('-', '.') ?? '';
-        const end   = (e['endDate']   as string | null)?.slice(0, 7).replace('-', '.') ?? '在学中';
-        const period = start ? `${start} – ${end}` : end;
-        return `
-          <tr>
-            <td style="width:20%;white-space:nowrap;">${he(period)}</td>
-            <td style="width:50%;">${he(e['schoolName'] ?? '')}</td>
-            <td>${he(e['major'] ?? '')}</td>
-          </tr>`;
-      }).join('')
-    : `<tr><td colspan="3" style="text-align:center;color:#aaa;padding:4mm;">なし</td></tr>`;
+    return `
+      <div style="margin-bottom:5mm;">
+        <div style="font-weight:bold;font-size:9.5pt;border-left:3px solid #111;padding-left:3mm;margin-bottom:1mm;">
+          ${companyName}${periodLabel}
+        </div>
+        ${companyInfoParts.length ? `<div style="font-size:8pt;color:#555;margin-bottom:2mm;padding-left:3mm;">${companyInfoParts.join('　')}</div>` : ''}
+        <table style="width:100%;border-collapse:collapse;">
+          <tbody>
+            <tr><th style="${TH}">期　間</th><td style="${TD}">${fmtPeriod(entry)}</td></tr>
+            ${divisionRow}
+            ${dutiesRow}
+            ${achievementsRow}
+          </tbody>
+        </table>
+      </div>`;
+  }).join('');
 
   // ── 資格 ─────────────────────────────────────────────────────────────────────
-  const certContent = certifications.length
+  const certItems = certifications.length
     ? certifications.map(c => {
         const name   = he(c['certName'] ?? '');
-        const date   = c['issuedDate'] ? he(c['issuedDate']) : '';
+        const date   = c['issuedDate'] ? `　${he(c['issuedDate'])}` : '';
         const issuer = c['issuedBy']   ? ` (${he(c['issuedBy'])})` : '';
-        return `<li>${name}${date ? `　${date}` : ''}${issuer}</li>`;
+        return `<li>${name}${date}${issuer}</li>`;
       }).join('')
     : '<li style="color:#aaa;">なし</li>';
-
-  const secHeader = (label: string) =>
-    `<div style="background:#2c3e6b;color:#fff;font-weight:bold;padding:2mm 4mm;margin-top:4mm;font-size:9pt;letter-spacing:0.05em;">${label}</div>`;
 
   return `<!DOCTYPE html>
 <html lang="ja">
@@ -130,79 +129,58 @@ export function buildGakkenHtml(
   ${googleFontLink}
   <title>職務経歴書 — ${fullName}</title>
   <style>
-    @page { size: A4; margin: 10mm 15mm 10mm 15mm; }
+    @page { size: A4; margin: 15mm 15mm 10mm 20mm; }
     * { box-sizing: border-box; margin: 0; padding: 0; }
-    body { font-family: ${fontFamily}; font-size: 9pt; line-height: 1.55; color: #111; max-width: 900px; margin: 0 auto; }
-    table { width: 100%; border-collapse: collapse; }
-    td, th { border: 1px solid #888; padding: 2mm 3mm; vertical-align: top; }
-    th { background: #f0f3f8; font-weight: bold; text-align: left; white-space: nowrap; }
-    ul { padding-left: 1.2em; margin: 0; }
+    body { font-family: ${fontFamily}; font-size: 9pt; line-height: 1.6; color: #111; max-width: 900px; margin: 0 auto; }
     @media print { body { margin: 0; } }
   </style>
 </head>
 <body>
 
-  <!-- ── Document header ── -->
-  <table style="margin-bottom:4mm;border:2px solid #2c3e6b;">
-    <tr>
-      <td style="font-size:17pt;font-weight:bold;text-align:center;color:#2c3e6b;padding:4mm;border:none;width:45%;">
-        職務経歴書
-      </td>
-      <td style="padding:3mm 4mm;border:none;">
-        <div style="font-size:8pt;color:#666;">作成日：${today}</div>
-        <div style="font-size:12pt;font-weight:bold;margin-top:1mm;">${fullName}</div>
-        <div style="font-size:7.5pt;color:#aaa;margin-top:0.5mm;">${candidateCode}</div>
-      </td>
-      <td style="width:26mm;text-align:center;vertical-align:middle;padding:2mm;border:none;">
-        ${photoCell}
-      </td>
-    </tr>
-  </table>
+  <!-- ── Title row ── -->
+  <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:2mm;">
+    <div style="font-size:16pt;font-weight:bold;letter-spacing:0.5em;">職　務　経　歴　書</div>
+    <div style="font-size:9pt;">${today}現在</div>
+  </div>
 
-  <!-- ── 職歴 ── -->
-  ${secHeader('職　歴')}
-  <table>
-    <tr>
-      <th style="width:20%;">在籍期間</th>
-      <th style="width:32%;">会社名・部署</th>
-      <th>業務内容・実績</th>
-    </tr>
-    ${careerRows}
-  </table>
+  <!-- ── Name row ── -->
+  <div style="font-size:10pt;margin-bottom:5mm;border-bottom:1px solid #333;padding-bottom:3mm;">
+    氏名　${fullName}
+    ${candidateCode ? `<span style="font-size:7.5pt;color:#888;margin-left:4mm;">${candidateCode}</span>` : ''}
+  </div>
 
-  <!-- ── 学歴 ── -->
-  ${secHeader('学　歴')}
-  <table>
-    <tr>
-      <th style="width:20%;">期間</th>
-      <th style="width:50%;">学校名</th>
-      <th>専攻</th>
-    </tr>
-    ${eduRows}
-  </table>
+  <!-- ── 職務要約 ── -->
+  ${careerSummary ? `
+  ${SECTION_HEADER('職務要約')}
+  <div style="border:1px solid #333;padding:3mm 4mm;min-height:18mm;white-space:pre-wrap;">${he(careerSummary)}</div>
+  ` : ''}
+
+  <!-- ── 職務経歴 ── -->
+  ${rawCareer.length ? `
+  ${SECTION_HEADER('職務経歴')}
+  ${careerBlocks}
+  ` : ''}
+
+  <!-- ── 経験・知識・技術 ── -->
+  ${skillsText ? `
+  ${SECTION_HEADER('経験・知識・技術')}
+  <div style="border:1px solid #333;padding:3mm 4mm;min-height:15mm;">${nlToBullets(skillsText)}</div>
+  ` : ''}
 
   <!-- ── 資格 ── -->
-  ${secHeader('保有資格・免許')}
-  <table>
-    <tr>
-      <td><ul style="list-style:disc;">${certContent}</ul></td>
-    </tr>
-  </table>
-
-  <!-- ── スキル ── -->
-  ${selfPrText ? `
-  ${secHeader('活かせるスキル・知識')}
-  <table><tr><td style="min-height:18mm;white-space:pre-wrap;">${nlToBullets(selfPrText)}</td></tr></table>` : ''}
-
-  <!-- ── 自己PR ── -->
-  ${selfIntroText ? `
-  ${secHeader('自己PR')}
-  <table><tr><td style="min-height:22mm;white-space:pre-wrap;">${he(selfIntroText)}</td></tr></table>` : ''}
-
-  <div style="margin-top:8mm;border-top:1px solid #ccc;padding-top:2mm;font-size:7.5pt;color:#999;display:flex;justify-content:space-between;">
-    <span>IJBNet — 職務経歴書（Gakken形式）</span>
-    <span>${today}</span>
+  ${SECTION_HEADER('資　格')}
+  <div style="border:1px solid #333;padding:3mm 4mm;min-height:10mm;">
+    <ul style="margin:0;padding-left:1.4em;list-style-type:disc;">${certItems}</ul>
   </div>
+
+  <!-- ── 自己ＰＲ ── -->
+  ${selfIntroText ? `
+  ${SECTION_HEADER('自己ＰＲ')}
+  <div style="border:1px solid #333;padding:3mm 4mm;min-height:22mm;white-space:pre-wrap;">${he(selfIntroText)}</div>
+  ` : ''}
+
+  <!-- ── 以上 ── -->
+  <div style="text-align:right;margin-top:6mm;font-size:9pt;">以上</div>
 
 </body>
 </html>`;
