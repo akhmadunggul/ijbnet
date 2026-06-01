@@ -229,6 +229,7 @@ apps/frontend/src/
 - v0.6.14 — Resume preview adopts CV method: new ShokumuCV React component renders 職務経歴書 in-browser (mirrors shokumuTemplate.ts); ShokumuCVPage at /portal/shokumu with back/print/download toolbar; live auto-translate for missing Japanese fields; zoom controls; window.print() support — replaces iframe PDF blob preview
 - v0.6.15 — Align ShokumuCV preview UI exactly with CandidateCV: −/[pct%]/+ zoom controls (right-aligned, 50–200% in 10% steps); print CSS via dangerouslySetInnerHTML inside container; <> fragment wrapper
 - v0.6.16 — Fix ShokumuCV preview: add A4 page border (2px solid #000), white background, print-margin padding, boxSizing to S.doc so the preview accurately shows where the A4 boundary is
+- v0.6.17 — Two resume templates: Generic (existing modern layout) and Gakken Template (standard Japanese table-based form with 職歴/学歴 tables, navy section headers); superadmin template selector; candidate tab shows active template badge and hides 経歴要約 for Gakken; preview and PDF both respect the selected template
 
-Current: v0.6.16
+Current: v0.6.17
 Live at: https://jinzai.jobagus.id
