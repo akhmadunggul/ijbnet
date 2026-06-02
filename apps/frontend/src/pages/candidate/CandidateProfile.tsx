@@ -995,7 +995,6 @@ export default function CandidateProfile() {
   const qc = useQueryClient();
   const [activeTab, setActiveTab] = useState<TabKey>('tab1');
   const [saving, setSaving] = useState(false);
-  const [showJpWarning, setShowJpWarning] = useState(false);
 
   const { data, isLoading } = useQuery<CandidateMe>({
     queryKey: ['my-candidate'],
@@ -1074,13 +1073,7 @@ export default function CandidateProfile() {
         </div>
         {candidate.profileStatus === 'incomplete' && (
           <button
-            onClick={() => {
-              if ((candidate.tests?.length ?? 0) === 0) {
-                setShowJpWarning(true);
-              } else {
-                submitMutation.mutate();
-              }
-            }}
+            onClick={() => submitMutation.mutate()}
             disabled={submitMutation.isPending || pct < 100 || !candidate.consentGiven}
             className="px-4 py-2 bg-green-600 text-white text-sm rounded-lg hover:bg-green-700 transition disabled:opacity-60 disabled:cursor-not-allowed shrink-0"
           >
@@ -1126,24 +1119,6 @@ export default function CandidateProfile() {
         {activeTab === 'tab10' && <ShokumuTab candidate={candidate} isLocked={isLocked} />}
       </div>
 
-      {/* JP test warning dialog */}
-      {showJpWarning && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-          <div className="bg-white rounded-xl shadow-xl p-6 max-w-sm w-full mx-4">
-            <p className="text-sm text-gray-800 leading-relaxed">
-              Anda belum memenuhi kelayakan sertifikasi bahasa Jepang.
-            </p>
-            <div className="mt-5 flex justify-end">
-              <button
-                onClick={() => setShowJpWarning(false)}
-                className="px-5 py-2 bg-navy-700 text-white text-sm rounded-lg hover:bg-navy-900 transition"
-              >
-                OK
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }
