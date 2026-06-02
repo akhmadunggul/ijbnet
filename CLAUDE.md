@@ -233,6 +233,7 @@ apps/frontend/src/
 - v0.6.18 — Fix Gakken template: rewrite to faithfully follow reference document structure — spread title (職　務　経　歴　書) with date right-aligned, name row with bottom border, 職務要約 boxed section, per-company 職務経歴 blocks (company sub-header + 事業内容/資本金/売上高/従業員数 info line + TH/TD table for 期間/部署/担当業務/実績・成果), 経験・知識・技術 section, bordered 資格 and 自己ＰＲ boxes, 以上 footer; remove photo, 学歴, and navy section-bar styling
 - v0.6.19 — Gakken template: 5-column 職務経歴 table (機関/担当製品/業務タイトル/担当業務/メンバー・役割); centered title, right-aligned date and 氏名; add 3 new bilingual career fields (productId/Ja, jobTitleId/Ja, memberRoleId/Ja) with DB migration 000032; ShokumuTab shows new fields only when Gakken template is active; auto-translate extended to all 5 ID→JA field pairs on save and PDF render; i18n keys added to id.json and ja.json
 - v0.6.20 — Security: add Content-Security-Policy header (ZAP pentest finding); Caddy was serving the React SPA without CSP — added to all three Caddyfiles (prod uses @csp_routes matcher to exclude Grafana); policy covers Google Fonts, Google OAuth, YouTube embeds, 'unsafe-inline' styles (required for CV print CSS injection); Helmet CSP made explicit with strict API-only policy
+- v0.6.21 — Security: ZAP findings 2 + 4 — add explicit HTTP→HTTPS permanent redirect block to Caddyfile.prod (plain HTTP was serving content without CSP or redirect); add Cache-Control: no-cache, no-store, must-revalidate for / and *.html across all three Caddyfiles (SPA shell was uncached; hashed static assets retain immutable cache)
 
-Current: v0.6.20
+Current: v0.6.21
 Live at: https://jinzai.jobagus.id
