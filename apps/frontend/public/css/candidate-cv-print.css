@@ -1,0 +1,34 @@
+@media print {
+  body { margin: 0 !important; padding: 0 !important; }
+  .no-print { display: none !important; }
+  aside, header { display: none !important; }
+  main { padding: 0 !important; overflow: visible !important; }
+
+  .cv-con {
+    padding: 6px 10px !important;
+    font-size: 12px !important;
+    border-width: 1px !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
+  }
+
+  .cv-title {
+    font-size: 14px !important;
+    margin-bottom: 8px !important;
+  }
+
+  .cv-tbl { margin-bottom: 4px !important; }
+
+  .cv-con td, .cv-con th {
+    padding: 3px 4px !important;
+    font-size: 12px !important;
+  }
+
+  .cv-row-sm { height: 18px !important; min-height: 0 !important; }
+  .cv-row-md { height: 24px !important; min-height: 0 !important; }
+  .cv-row-lg { height: 32px !important; min-height: 0 !important; }
+
+  .cv-info-wrap { margin-bottom: 4px !important; }
+  .cv-zoom-wrapper { zoom: 1 !important; }
+}
+@page { size: A4 portrait; margin: 5mm; }

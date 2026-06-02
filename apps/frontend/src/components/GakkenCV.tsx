@@ -16,16 +16,6 @@ const GOOGLE_FONT_MAP: Record<string, string> = {
   'noto-sans-jp':  'Noto+Sans+JP:wght@400;700',
 };
 
-const PRINT_CSS = `
-  @media print {
-    body { margin: 0 !important; padding: 0 !important; }
-    .no-print { display: none !important; }
-    aside, header { display: none !important; }
-    main { padding: 0 !important; overflow: visible !important; }
-    .cv-zoom-wrapper { zoom: 1 !important; }
-  }
-  @page { size: A4; margin: 15mm 15mm 10mm 20mm; }
-`;
 
 const TD: React.CSSProperties = { border: '1px solid #333', padding: '2mm 3mm', verticalAlign: 'top', fontSize: '8.5pt' };
 const TH: React.CSSProperties = { ...TD, background: '#f0f0f0', fontWeight: 'bold', textAlign: 'center', whiteSpace: 'nowrap' };
@@ -60,6 +50,14 @@ function SectionHeader({ label }: { label: string }) {
 export default function GakkenCV({ candidate }: { candidate: CandidateData }) {
   const [zoom, setZoom] = useState(1.0);
   const [jaOverride, setJaOverride] = useState<Record<string, string>>({});
+
+  useEffect(() => {
+    const link = document.createElement('link');
+    link.rel = 'stylesheet';
+    link.href = '/css/gakken-print.css';
+    document.head.appendChild(link);
+    return () => { document.head.removeChild(link); };
+  }, []);
 
   const c = candidate ?? ({} as CandidateData);
 
@@ -147,7 +145,6 @@ export default function GakkenCV({ candidate }: { candidate: CandidateData }) {
           fontSize: '9pt', lineHeight: '1.6', color: '#111',
           boxSizing: 'border-box', fontFamily: FONT,
         }}>
-          <style dangerouslySetInnerHTML={{ __html: PRINT_CSS }} />
 
           {/* ── Title ── */}
           <div style={{ textAlign: 'center', fontSize: '16pt', fontWeight: 'bold', letterSpacing: '0.5em', marginBottom: '3mm' }}>

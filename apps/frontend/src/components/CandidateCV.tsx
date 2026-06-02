@@ -92,44 +92,6 @@ const GOOGLE_FONT_MAP: Record<string, string> = {
   'noto-sans-jp':  'Noto+Sans+JP:wght@400;700',
 };
 
-const PRINT_CSS = `
-  @media print {
-    body { margin: 0 !important; padding: 0 !important; }
-    .no-print { display: none !important; }
-
-    /* Hide layout chrome — sidebar, topbar, page padding */
-    aside, header { display: none !important; }
-    main { padding: 0 !important; overflow: visible !important; }
-
-    .cv-con {
-      padding: 6px 10px !important;
-      font-size: 12px !important;
-      border-width: 1px !important;
-      width: 100% !important;
-      box-sizing: border-box !important;
-    }
-
-    .cv-title {
-      font-size: 14px !important;
-      margin-bottom: 8px !important;
-    }
-
-    .cv-tbl { margin-bottom: 4px !important; }
-
-    .cv-con td, .cv-con th {
-      padding: 3px 4px !important;
-      font-size: 12px !important;
-    }
-
-    .cv-row-sm { height: 18px !important; min-height: 0 !important; }
-    .cv-row-md { height: 24px !important; min-height: 0 !important; }
-    .cv-row-lg { height: 32px !important; min-height: 0 !important; }
-
-    .cv-info-wrap { margin-bottom: 4px !important; }
-    .cv-zoom-wrapper { zoom: 1 !important; }
-  }
-  @page { size: A4 portrait; margin: 5mm; }
-`;
 
 const S = {
   container: {
@@ -192,6 +154,14 @@ export default function CandidateCV({
   void lang;
 
   const [zoom, setZoom] = useState(1.0);
+
+  useEffect(() => {
+    const link = document.createElement('link');
+    link.rel = 'stylesheet';
+    link.href = '/css/candidate-cv-print.css';
+    document.head.appendChild(link);
+    return () => { document.head.removeChild(link); };
+  }, []);
 
   const c = candidate ?? {};
 
@@ -369,7 +339,6 @@ export default function CandidateCV({
       </div>
       <div className="cv-zoom-wrapper" style={{ zoom: zoom as unknown as number }}>
     <div className="cv-con" style={{ ...S.container, fontFamily: FONT }}>
-      <style dangerouslySetInnerHTML={{ __html: PRINT_CSS }} />
 
       {/* ── Title ── */}
       <div className="cv-title" style={S.headerTitle}>候補者データ ・ DATA KANDIDAT</div>

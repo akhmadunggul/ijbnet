@@ -18,16 +18,6 @@ const GOOGLE_FONT_MAP: Record<string, string> = {
   'noto-sans-jp':  'Noto+Sans+JP:wght@400;700',
 };
 
-const PRINT_CSS = `
-  @media print {
-    body { margin: 0 !important; padding: 0 !important; }
-    .no-print { display: none !important; }
-    aside, header { display: none !important; }
-    main { padding: 0 !important; overflow: visible !important; }
-    .cv-zoom-wrapper { zoom: 1 !important; }
-  }
-  @page { size: A4; margin: 15mm 15mm 15mm 20mm; }
-`;
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -197,6 +187,14 @@ export default function ShokumuCV({ candidate }: { candidate: CandidateData }) {
   const [zoom, setZoom] = useState(1.0);
   const [jaOverride, setJaOverride] = useState<Record<string, string>>({});
 
+  useEffect(() => {
+    const link = document.createElement('link');
+    link.rel = 'stylesheet';
+    link.href = '/css/shokumu-print.css';
+    document.head.appendChild(link);
+    return () => { document.head.removeChild(link); };
+  }, []);
+
   const c = candidate ?? ({} as CandidateData);
 
   // Settings queries
@@ -292,7 +290,6 @@ export default function ShokumuCV({ candidate }: { candidate: CandidateData }) {
       {/* A4 document */}
       <div className="cv-zoom-wrapper" style={{ zoom: zoom as unknown as number }}>
         <div className="shokumu-doc" style={{ ...S.doc, fontFamily: FONT }}>
-          <style dangerouslySetInnerHTML={{ __html: PRINT_CSS }} />
 
           {/* ── Header ── */}
           <div style={S.header}>
