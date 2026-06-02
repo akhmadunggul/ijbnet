@@ -234,6 +234,7 @@ apps/frontend/src/
 - v0.6.19 — Gakken template: 5-column 職務経歴 table (機関/担当製品/業務タイトル/担当業務/メンバー・役割); centered title, right-aligned date and 氏名; add 3 new bilingual career fields (productId/Ja, jobTitleId/Ja, memberRoleId/Ja) with DB migration 000032; ShokumuTab shows new fields only when Gakken template is active; auto-translate extended to all 5 ID→JA field pairs on save and PDF render; i18n keys added to id.json and ja.json
 - v0.6.20 — Security: add Content-Security-Policy header (ZAP pentest finding); Caddy was serving the React SPA without CSP — added to all three Caddyfiles (prod uses @csp_routes matcher to exclude Grafana); policy covers Google Fonts, Google OAuth, YouTube embeds, 'unsafe-inline' styles (required for CV print CSS injection); Helmet CSP made explicit with strict API-only policy
 - v0.6.21 — Security: ZAP findings 2 + 4 — add explicit HTTP→HTTPS permanent redirect block to Caddyfile.prod (plain HTTP was serving content without CSP or redirect); add Cache-Control: no-cache, no-store, must-revalidate for / and *.html across all three Caddyfiles (SPA shell was uncached; hashed static assets retain immutable cache)
+- v0.6.22 — Security: ZAP findings 3 + 1 — self-host DM Serif Display and Inter WOFF2 fonts (public/fonts/); replace Google Fonts <link> tags in index.html with local fonts.css eliminating SRI gap; extract CV print CSS from dangerouslySetInnerHTML into static files (public/css/candidate-cv-print.css, shokumu-print.css, gakken-print.css) loaded via useEffect <link> injection; drop 'unsafe-inline' from style-src in all Caddyfiles; CSP now allows fonts.googleapis.com/fonts.gstatic.com only for dynamically loaded Noto JP CV fonts
 
-Current: v0.6.21
+Current: v0.6.22
 Live at: https://jinzai.jobagus.id
