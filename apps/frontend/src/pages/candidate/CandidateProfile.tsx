@@ -270,6 +270,7 @@ const RELIGIONS   = ['Islam','Kristen','Katolik','Budha','Hindu','Lainnya'] as c
 function PersonalTab({ candidate, onSave, saving }: { candidate: CandidateData; onSave: (d: PersonalForm) => void; saving: boolean }) {
   const { t } = useTranslation();
   const qc = useQueryClient();
+  const [saveError, setSaveError] = useState(false);
 
   const { data: lpksData } = useQuery<{ lpks: { id: string; name: string; city: string | null }[] }>({
     queryKey: ['candidate-lpks'],
@@ -308,10 +309,18 @@ function PersonalTab({ candidate, onSave, saving }: { candidate: CandidateData; 
   });
 
   async function handlePersonalSubmit(data: PersonalForm) {
-    await onSave(data);
-    reset(data);
-    if (data.nik && data.nik.trim().length === 16) {
-      nikMutation.mutate(data.nik.trim());
+    // email is read-only (tied to user account); nik has its own endpoint.
+    // Neither is in patchMeSchema's allowlist — strip them before patching.
+    const { nik, email: _email, ...patch } = data;
+    setSaveError(false);
+    try {
+      await onSave(patch as PersonalForm);
+      reset(data);
+      if (nik && nik.trim().length === 16) {
+        nikMutation.mutate(nik.trim());
+      }
+    } catch {
+      setSaveError(true);
     }
   }
 
@@ -431,6 +440,7 @@ function PersonalTab({ candidate, onSave, saving }: { candidate: CandidateData; 
           {saving ? t('candidate.profile.saving') : t('candidate.profile.save')}
         </button>
         {isDirty && <span className="text-xs text-amber-600">{t('candidate.profile.unsaved')}</span>}
+        {saveError && <span className="text-xs text-red-500">{t('toastError', { defaultValue: 'Gagal menyimpan. Coba lagi.' })}</span>}
       </div>
     </form>
   );
