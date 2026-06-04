@@ -874,6 +874,24 @@ export default function SuperAdminDataEntrySettings() {
           </div>
         </div>
 
+        {/* Auto-translation status — shown when Gakken template is active */}
+        {shokumuTemplate === 'gakken' && (
+          <div className={`flex items-center gap-3 px-4 py-3 rounded-lg border ${translateEnabled ? 'bg-green-50 border-green-200' : 'bg-gray-50 border-gray-200'}`}>
+            <div className={`w-2.5 h-2.5 rounded-full flex-shrink-0 ${translateEnabled ? 'bg-green-500' : 'bg-gray-400'}`} />
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-medium text-gray-800">Auto-translate Kolom Jepang</p>
+              <p className="text-xs text-gray-500 mt-0.5">
+                {translateEnabled
+                  ? 'Aktif — kolom Jepang pada form Resume Gakken dikunci dan diterjemahkan otomatis saat kandidat menyimpan.'
+                  : 'Tidak aktif — kandidat mengisi kolom Jepang secara manual.'}
+              </p>
+            </div>
+            <span className={`text-xs font-semibold px-2.5 py-1 rounded-full flex-shrink-0 ${translateEnabled ? 'bg-green-100 text-green-700' : 'bg-gray-200 text-gray-600'}`}>
+              {translateEnabled ? 'ON' : 'OFF'}
+            </span>
+          </div>
+        )}
+
         {/* Font — shared with CV font setting */}
         <div className="flex items-center justify-between py-1">
           <div>

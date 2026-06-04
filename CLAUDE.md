@@ -241,6 +241,7 @@ apps/frontend/src/
 - v0.6.26 — chore: bump version; verify career translation logic — no regressions found
 - v0.6.27 — Fix career save silently failing since v0.6.13: defaultValues spread (…c) included id + shokumu fields not in the .strict() schema — every save returned 422, career data was never updated; mutationFn now strips entries to only the 5 expected fields; adds visible onError banner
 - v0.6.28 — Gakken resume redesign: new candidate_gakken_resumes + candidate_gakken_companies DB tables (migrations 000034, 000035); dedicated GET/PATCH /api/candidates/me/gakken-resume routes with auto-translate; Gakken ShokumuTab shows structured form (職務要約, 現在経歴 company info, variable per-company rows, 経験・知識・技術, 自己PR); GakkenCV renders from new tables; gakkenTemplate.ts updated; generic template unchanged
+- v0.6.29 — Fix Gakken form: remove (自己PR) from 職務要約 Japanese field label; Japanese fields greyed and locked when auto-translate is enabled; superadmin shokumu section shows auto-translate status badge when Gakken template is active
 
-Current: v0.6.28
+Current: v0.6.29
 Live at: https://jinzai.jobagus.id

@@ -51,6 +51,13 @@ function GakkenForm({ isLocked }: { isLocked: boolean }) {
     staleTime: 30_000,
   });
 
+  const { data: translateConfig } = useQuery<{ enabled: boolean }>({
+    queryKey: ['translation-config'],
+    queryFn: () => api.get('/superadmin/translation-config').then(r => r.data),
+    staleTime: 5 * 60 * 1000,
+  });
+  const autoTranslate = translateConfig?.enabled === true;
+
   const [resume, setResume] = useState<GakkenResume>(() => ({
     careerSummary: null, careerSummaryJa: null,
     currentCompanyName: null, currentBusinessActivity: null,
@@ -134,7 +141,11 @@ function GakkenForm({ isLocked }: { isLocked: boolean }) {
     return <div className="text-sm text-gray-400 py-4">Loading...</div>;
   }
 
-  const autoNote = t('shokumu.autoTranslateNote', { defaultValue: 'Japanese version will be auto-translated if left blank.' });
+  const jaDisabled = isLocked || autoTranslate;
+  const autoNote = autoTranslate
+    ? 'Akan diterjemahkan otomatis saat menyimpan.'
+    : t('shokumu.autoTranslateNote', { defaultValue: 'Japanese version will be auto-translated if left blank.' });
+  const jaCls = `${textareaCls} ${autoTranslate ? 'bg-gray-100 text-gray-400 cursor-not-allowed' : ''}`;
 
   return (
     <div className="space-y-8">
@@ -154,15 +165,15 @@ function GakkenForm({ isLocked }: { isLocked: boolean }) {
             className={textareaCls}
           />
         </Field>
-        <Field label="日本語（自己ＰＲ）">
+        <Field label="日本語">
           <textarea
             value={resume.careerSummaryJa ?? ''}
             onChange={e => setR('careerSummaryJa', e.target.value)}
             rows={3}
             maxLength={2000}
-            disabled={isLocked}
-            className={textareaCls}
-            placeholder="自動翻訳または手動入力"
+            disabled={jaDisabled}
+            className={jaCls}
+            placeholder={autoTranslate ? '' : '自動翻訳または手動入力'}
           />
           <p className="text-xs text-gray-400 mt-0.5">{autoNote}</p>
         </Field>
@@ -269,9 +280,9 @@ function GakkenForm({ isLocked }: { isLocked: boolean }) {
                 value={company.productJa ?? ''}
                 onChange={e => setC(idx, 'productJa', e.target.value)}
                 rows={2}
-                disabled={isLocked}
-                className={textareaCls}
-                placeholder={autoNote}
+                disabled={jaDisabled}
+                className={jaCls}
+                placeholder={autoTranslate ? '' : autoNote}
               />
             </Field>
             <Field label="Uraian Tugas　担当業務">
@@ -288,9 +299,9 @@ function GakkenForm({ isLocked }: { isLocked: boolean }) {
                 value={company.dutiesJa ?? ''}
                 onChange={e => setC(idx, 'dutiesJa', e.target.value)}
                 rows={3}
-                disabled={isLocked}
-                className={textareaCls}
-                placeholder={autoNote}
+                disabled={jaDisabled}
+                className={jaCls}
+                placeholder={autoTranslate ? '' : autoNote}
               />
             </Field>
             <Field label="Anggota / Peran　メンバー・役割">
@@ -307,9 +318,9 @@ function GakkenForm({ isLocked }: { isLocked: boolean }) {
                 value={company.memberRoleJa ?? ''}
                 onChange={e => setC(idx, 'memberRoleJa', e.target.value)}
                 rows={2}
-                disabled={isLocked}
-                className={textareaCls}
-                placeholder={autoNote}
+                disabled={jaDisabled}
+                className={jaCls}
+                placeholder={autoTranslate ? '' : autoNote}
               />
             </Field>
           </div>
@@ -346,9 +357,9 @@ function GakkenForm({ isLocked }: { isLocked: boolean }) {
             onChange={e => setR('skillsJa', e.target.value)}
             rows={3}
             maxLength={3000}
-            disabled={isLocked}
-            className={textareaCls}
-            placeholder="自動翻訳または手動入力"
+            disabled={jaDisabled}
+            className={jaCls}
+            placeholder={autoTranslate ? '' : '自動翻訳または手動入力'}
           />
           <p className="text-xs text-gray-400 mt-0.5">{autoNote}</p>
         </Field>
@@ -380,9 +391,9 @@ function GakkenForm({ isLocked }: { isLocked: boolean }) {
             onChange={e => setR('selfPrJa', e.target.value)}
             rows={3}
             maxLength={3000}
-            disabled={isLocked}
-            className={textareaCls}
-            placeholder="自動翻訳または手動入力"
+            disabled={jaDisabled}
+            className={jaCls}
+            placeholder={autoTranslate ? '' : '自動翻訳または手動入力'}
           />
           <p className="text-xs text-gray-400 mt-0.5">{autoNote}</p>
         </Field>
