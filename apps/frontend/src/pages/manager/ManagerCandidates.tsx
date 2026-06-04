@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQuery } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
@@ -72,6 +72,10 @@ export default function ManagerCandidates() {
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [batchDownloading, setBatchDownloading] = useState(false);
   const [batchError, setBatchError] = useState<string | null>(null);
+
+  // Clear selection when any filter changes so stale IDs from other filter
+  // views (e.g. K6 test users visible on a different LPK tab) don't bleed in.
+  useEffect(() => { setSelectedIds(new Set()); }, [search, profileStatus, sswKubun, lpkId]);
 
   const buildQuery = useCallback(() => {
     const p = new URLSearchParams();

@@ -245,6 +245,7 @@ apps/frontend/src/
 - v0.6.30 — Fix Gakken resume auto-translate: (1) wrong DB key auto_translate→auto_translate_enabled; (2) stale JA value in payload blocked re-translation — backend now discards client JA values when auto-translate is on and always re-translates ID fields; same fix for per-company entries
 - v0.6.31 — Manager batch CV download: checkboxes on ManagerCandidates table (select-all per page + individual), "Download CV (n)" button POSTs candidateIds to POST /api/export/candidates/batch-cv.pdf; backend concatenates HTML for all selected candidates with page breaks and renders as one PDF; max 50 per batch; audit log per candidate
 - v0.6.32 — Fix batch CV to use formatted CandidateCV style (bilingual, IJBNet logo, photo) instead of data export: new candidateCvHtml.ts mirrors CandidateCV.tsx as pure HTML; logo embedded as base64; closeup photo embedded per candidate; reads cv_layout + cv_font settings
+- v0.6.33 — Fix batch CV issues: (1) logo base64 was corrupted on write — replaced with correct bytes; (2) 2-page overflow fixed by matching print CSS values (TD padding 3px 4px, container width 100%, row heights 18/24/32px, margins 4px, renderPdf 5mm margins); (3) K6 users included — clear selectedIds via useEffect when any filter changes
 
-Current: v0.6.32
+Current: v0.6.33
 Live at: https://jinzai.jobagus.id

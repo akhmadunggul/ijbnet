@@ -287,7 +287,7 @@ router.post('/candidates/batch-cv.pdf', wrap(async (req, res) => {
   }, '') + '\n</body></html>';
 
   try {
-    const pdf = await renderPdf(mergedHtml, { top: '12mm', bottom: '12mm', left: '10mm', right: '10mm' });
+    const pdf = await renderPdf(mergedHtml, { top: '5mm', bottom: '5mm', left: '5mm', right: '5mm' });
 
     await Promise.all(candidates.map((candidate) =>
       AuditLog.create({
