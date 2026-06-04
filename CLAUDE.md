@@ -243,6 +243,7 @@ apps/frontend/src/
 - v0.6.28 — Gakken resume redesign: new candidate_gakken_resumes + candidate_gakken_companies DB tables (migrations 000034, 000035); dedicated GET/PATCH /api/candidates/me/gakken-resume routes with auto-translate; Gakken ShokumuTab shows structured form (職務要約, 現在経歴 company info, variable per-company rows, 経験・知識・技術, 自己PR); GakkenCV renders from new tables; gakkenTemplate.ts updated; generic template unchanged
 - v0.6.29 — Fix Gakken form: remove (自己PR) from 職務要約 Japanese field label; Japanese fields greyed and locked when auto-translate is enabled; superadmin shokumu section shows auto-translate status badge when Gakken template is active
 - v0.6.30 — Fix Gakken resume auto-translate: (1) wrong DB key auto_translate→auto_translate_enabled; (2) stale JA value in payload blocked re-translation — backend now discards client JA values when auto-translate is on and always re-translates ID fields; same fix for per-company entries
+- v0.6.31 — Manager batch CV download: checkboxes on ManagerCandidates table (select-all per page + individual), "Download CV (n)" button POSTs candidateIds to POST /api/export/candidates/batch-cv.pdf; backend concatenates HTML for all selected candidates with page breaks and renders as one PDF; max 50 per batch; audit log per candidate
 
-Current: v0.6.30
+Current: v0.6.31
 Live at: https://jinzai.jobagus.id

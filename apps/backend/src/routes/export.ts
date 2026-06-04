@@ -216,6 +216,83 @@ router.get('/batch/:batchId.xlsx', wrap(async (req, res) => {
   res.end();
 }));
 
+// ── POST /api/export/candidates/batch-cv.pdf ─────────────────────────────────
+router.post('/candidates/batch-cv.pdf', wrap(async (req, res) => {
+  const { candidateIds } = req.body as { candidateIds?: unknown };
+
+  if (!Array.isArray(candidateIds) || candidateIds.length === 0) {
+    res.status(400).json({ error: 'INVALID_IDS', message: 'candidateIds must be a non-empty array.' });
+    return;
+  }
+  if (candidateIds.length > 50) {
+    res.status(400).json({ error: 'TOO_MANY', message: 'Maximum 50 candidates per batch.' });
+    return;
+  }
+  if (!(candidateIds as unknown[]).every((id) => typeof id === 'string' && isUUID(id, 4))) {
+    res.status(422).json({ error: 'INVALID_ID_FORMAT' });
+    return;
+  }
+
+  const candidates = await Candidate.findAll({
+    where: { id: candidateIds as string[] },
+    include: [
+      { model: User,                      as: 'user',             attributes: ['name', 'email'] },
+      { model: Lpk,                       as: 'lpk',              attributes: ['name', 'city']  },
+      { model: CandidateJapaneseTest,     as: 'tests'             },
+      { model: CandidateCareer,           as: 'career',           separate: true, order: [['startDate', 'ASC'] as [string, string]] },
+      { model: CandidateBodyCheck,        as: 'bodyCheck'         },
+      { model: CandidateCertification,    as: 'certifications'    },
+      { model: CandidateEducationHistory, as: 'educationHistory', separate: true, order: [['startDate', 'ASC'] as [string, string]] },
+    ],
+  });
+
+  if (candidates.length === 0) {
+    res.status(404).json({ error: 'NOT_FOUND' });
+    return;
+  }
+
+  // Build one HTML per candidate then concatenate with page breaks
+  const pages = candidates.map((candidate) => {
+    const cj  = candidate.toJSON() as unknown as Record<string, unknown>;
+    const nik = decryptNullable(candidate.nikEncrypted ?? null);
+    return buildCandidatePdfHtml(cj, nik);
+  });
+
+  const mergedHtml = pages.reduce((acc, html, i) => {
+    if (i === 0) return html.replace(/<\/body>\s*<\/html>\s*$/i, '');
+    const bodyContent = html
+      .replace(/^[\s\S]*?<body[^>]*>/i, '')
+      .replace(/<\/body>[\s\S]*$/i, '');
+    return acc + '\n<div style="page-break-before:always"></div>\n' + bodyContent;
+  }, '') + '\n</body></html>';
+
+  try {
+    const pdf = await renderPdf(mergedHtml, { top: '12mm', bottom: '12mm', left: '10mm', right: '10mm' });
+
+    await Promise.all(candidates.map((candidate) =>
+      AuditLog.create({
+        userId: req.user!.sub,
+        action: 'export_candidate_pdf',
+        entityType: 'candidate',
+        entityId: candidate.id,
+        targetCandidateId: candidate.id,
+        ipAddress: req.ip ?? null,
+        userAgent: req.headers['user-agent'] ?? null,
+        payload: { batch: true, total: candidates.length },
+      }),
+    ));
+
+    const timestamp = new Date().toISOString().slice(0, 10);
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `attachment; filename="batch-cv-${timestamp}.pdf"`);
+    res.send(pdf);
+  } catch (err) {
+    if (isPdfError(err, 'CHROME_NOT_FOUND'))  { res.status(503).json({ error: 'PDF_UNAVAILABLE' }); return; }
+    if (isPdfError(err, 'PDF_QUEUE_TIMEOUT')) { res.status(503).json({ error: 'PDF_BUSY', message: 'PDF service is busy. Please try again.' }); return; }
+    throw err;
+  }
+}));
+
 // ── GET /api/export/candidates/:id/profile.pdf ────────────────────────────────
 router.get('/candidates/:id/profile.pdf', wrap(async (req, res) => {
   const { id } = req.params;

@@ -6,6 +6,28 @@ import { api } from '../../lib/api';
 import { useAuthStore } from '../../store/authStore';
 import type { ManagerCandidate } from '../../types/manager';
 
+async function downloadBatchCvPdf(candidateIds: string[], accessToken: string | null) {
+  const resp = await fetch('/api/export/candidates/batch-cv.pdf', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${accessToken ?? ''}`,
+    },
+    body: JSON.stringify({ candidateIds }),
+  });
+  if (!resp.ok) {
+    const err = await resp.json().catch(() => ({})) as Record<string, unknown>;
+    throw new Error((err['message'] as string) ?? `HTTP ${resp.status}`);
+  }
+  const blob = await resp.blob();
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `batch-cv-${new Date().toISOString().slice(0, 10)}.pdf`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
 interface ListResponse {
   candidates: ManagerCandidate[];
   total: number;
@@ -47,6 +69,9 @@ export default function ManagerCandidates() {
   const [sswKubun, setSswKubun] = useState('');
   const [lpkId, setLpkId] = useState('');
   const [page, setPage] = useState(1);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [batchDownloading, setBatchDownloading] = useState(false);
+  const [batchError, setBatchError] = useState<string | null>(null);
 
   const buildQuery = useCallback(() => {
     const p = new URLSearchParams();
@@ -74,6 +99,35 @@ export default function ManagerCandidates() {
     setPage(1);
   }
 
+  function toggleOne(id: string) {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      next.has(id) ? next.delete(id) : next.add(id);
+      return next;
+    });
+  }
+
+  function togglePage(ids: string[], checked: boolean) {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      ids.forEach((id) => (checked ? next.add(id) : next.delete(id)));
+      return next;
+    });
+  }
+
+  async function handleBatchCvDownload() {
+    if (selectedIds.size === 0) return;
+    setBatchDownloading(true);
+    setBatchError(null);
+    try {
+      await downloadBatchCvPdf([...selectedIds], accessToken);
+    } catch (err) {
+      setBatchError(err instanceof Error ? err.message : 'Download gagal.');
+    } finally {
+      setBatchDownloading(false);
+    }
+  }
+
   const handleExcelDownload = () => {
     const params = new URLSearchParams();
     if (profileStatus) params.set('profileStatus', profileStatus);
@@ -94,17 +148,44 @@ export default function ManagerCandidates() {
   const pageSize = data?.pageSize ?? 20;
   const totalPages = Math.ceil(total / pageSize);
   const lpks = lpksData?.lpks ?? [];
+  const pageIds = candidates.map((c) => c.id);
+  const allPageSelected = pageIds.length > 0 && pageIds.every((id) => selectedIds.has(id));
+  const somePageSelected = pageIds.some((id) => selectedIds.has(id));
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between flex-wrap gap-2">
         <h1 className="text-2xl font-semibold text-navy-900">{t('manager.candidates.title')}</h1>
-        <button
-          onClick={handleExcelDownload}
-          className="bg-green-600 text-white text-sm px-4 py-2 rounded-lg hover:bg-green-700 transition"
-        >
-          ↓ {t('export.excel')}
-        </button>
+        <div className="flex items-center gap-2 flex-wrap">
+          {selectedIds.size > 0 && (
+            <div className="flex items-center gap-2">
+              {batchError && <span className="text-xs text-red-500">{batchError}</span>}
+              <button
+                onClick={() => { void handleBatchCvDownload(); }}
+                disabled={batchDownloading}
+                className="bg-navy-700 text-white text-sm px-4 py-2 rounded-lg hover:bg-navy-900 transition disabled:opacity-60 flex items-center gap-1.5"
+              >
+                {batchDownloading ? (
+                  <span>Generating…</span>
+                ) : (
+                  <span>↓ Download CV ({selectedIds.size})</span>
+                )}
+              </button>
+              <button
+                onClick={() => setSelectedIds(new Set())}
+                className="text-xs text-gray-400 hover:text-gray-600 px-2 py-1"
+              >
+                Batal pilih
+              </button>
+            </div>
+          )}
+          <button
+            onClick={handleExcelDownload}
+            className="bg-green-600 text-white text-sm px-4 py-2 rounded-lg hover:bg-green-700 transition"
+          >
+            ↓ {t('export.excel')}
+          </button>
+        </div>
       </div>
 
       {/* Filters */}
@@ -163,6 +244,15 @@ export default function ManagerCandidates() {
             <table className="w-full text-sm">
               <thead className="bg-gray-50 border-b border-gray-100">
                 <tr>
+                  <th className="px-4 py-3 w-10">
+                    <input
+                      type="checkbox"
+                      checked={allPageSelected}
+                      ref={(el) => { if (el) el.indeterminate = somePageSelected && !allPageSelected; }}
+                      onChange={(e) => togglePage(pageIds, e.target.checked)}
+                      className="accent-navy-700 w-4 h-4 cursor-pointer"
+                    />
+                  </th>
                   <th className="text-left px-4 py-3 font-medium text-gray-500">{t('colCode')}</th>
                   <th className="text-left px-4 py-3 font-medium text-gray-500">{t('colName')}</th>
                   <th className="text-left px-4 py-3 font-medium text-gray-500">{t('colLpk')}</th>
@@ -175,7 +265,15 @@ export default function ManagerCandidates() {
               </thead>
               <tbody className="divide-y divide-gray-50">
                 {candidates.map((c) => (
-                  <tr key={c.id} className="hover:bg-gray-50/60 transition">
+                  <tr key={c.id} className={`hover:bg-gray-50/60 transition ${selectedIds.has(c.id) ? 'bg-navy-50/40' : ''}`}>
+                    <td className="px-4 py-3">
+                      <input
+                        type="checkbox"
+                        checked={selectedIds.has(c.id)}
+                        onChange={() => toggleOne(c.id)}
+                        className="accent-navy-700 w-4 h-4 cursor-pointer"
+                      />
+                    </td>
                     <td className="px-4 py-3 font-mono text-xs text-gray-500">{c.candidateCode}</td>
                     <td className="px-4 py-3 font-medium text-navy-900">{c.fullName}</td>
                     <td className="px-4 py-3 text-gray-600">{c.lpk?.name ?? '—'}</td>
