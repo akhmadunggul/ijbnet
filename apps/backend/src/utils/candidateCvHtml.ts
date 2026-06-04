@@ -42,8 +42,21 @@ function getJa(cj: Record<string, unknown>, jaKey: string, idKey: string): strin
   return v(cj[jaKey]) || v(cj[idKey]);
 }
 
-function calculateAge(dateOfBirth: string): number {
-  const dob = new Date(dateOfBirth);
+/** Normalise Sequelize DATEONLY — handles both string "YYYY-MM-DD" and Date objects. */
+function toDateStr(raw: unknown): string {
+  if (!raw) return '';
+  if (raw instanceof Date) {
+    const y = raw.getFullYear();
+    const mo = String(raw.getMonth() + 1).padStart(2, '0');
+    const d  = String(raw.getDate()).padStart(2, '0');
+    return `${y}-${mo}-${d}`;
+  }
+  return String(raw).slice(0, 10); // covers "YYYY-MM-DD" and "YYYY-MM-DD HH:MM:SS"
+}
+
+function calculateAge(raw: unknown): number {
+  const dateStr = toDateStr(raw);
+  const dob = new Date(dateStr);
   const today = new Date();
   let age = today.getFullYear() - dob.getFullYear();
   const m = today.getMonth() - dob.getMonth();
@@ -51,9 +64,10 @@ function calculateAge(dateOfBirth: string): number {
   return age;
 }
 
-function formatDobJa(dateStr: string): string {
-  const [y, m, d] = dateStr.slice(0, 10).split('-').map(Number);
-  if (!y || !m || !d) return dateStr.slice(0, 10);
+function formatDobJa(raw: unknown): string {
+  const dateStr = toDateStr(raw);
+  const [y, m, d] = dateStr.split('-').map(Number);
+  if (!y || isNaN(y) || !m || !d) return dateStr;
   return `${y}年${m}月${d}日`;
 }
 
@@ -105,7 +119,7 @@ export function buildCandidateCvHtml(
   const eduHist  = (cj['educationHistory'] as Record<string, unknown>[] | null) ?? [];
 
   const latestTest = tests.length > 0 ? tests[tests.length - 1] : null;
-  const age = cj['dateOfBirth'] ? calculateAge(String(cj['dateOfBirth'])) : null;
+  const age = cj['dateOfBirth'] ? calculateAge(cj['dateOfBirth']) : null;
 
   const genderLabel =
     cj['gender'] === 'M' ? 'Laki-laki / 男' :
@@ -116,7 +130,7 @@ export function buildCandidateCvHtml(
     divorced: 'Cerai / 離婚', widowed: 'Janda / Duda',
   };
 
-  const dobStr = cj['dateOfBirth'] ? formatDobJa(String(cj['dateOfBirth'])) : '';
+  const dobStr = cj['dateOfBirth'] ? formatDobJa(cj['dateOfBirth']) : '';
   const birthDisplay = he([v(cj['birthPlace']), dobStr].filter(Boolean).join('  '));
 
   const addressRaw = cj['address'];

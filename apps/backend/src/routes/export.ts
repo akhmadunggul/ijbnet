@@ -23,6 +23,7 @@ import { decryptNullable } from '../utils/crypto';
 import { calcCompleteness } from '../utils/completeness';
 import { buildCandidatePdfHtml } from '../utils/candidatePdf';
 import { buildCandidateCvHtml } from '../utils/candidateCvHtml';
+import { translateId2Ja } from '../utils/translate';
 import path from 'path';
 import fs from 'fs';
 import { config } from '../config';
@@ -255,19 +256,61 @@ router.post('/candidates/batch-cv.pdf', wrap(async (req, res) => {
     return;
   }
 
-  // Fetch layout + font settings once for the whole batch
-  const [layoutRow, fontRow] = await Promise.all([
+  // Fetch layout + font + translate settings once for the whole batch
+  const [layoutRow, fontRow, translateRow] = await Promise.all([
     GlobalSettings.findOne({ where: { key: 'cv_layout' } }),
     GlobalSettings.findOne({ where: { key: 'cv_font'   } }),
+    GlobalSettings.findOne({ where: { key: 'auto_translate_enabled' } }),
   ]);
-  const cvLayout = layoutRow ? String((layoutRow.toJSON() as unknown as Record<string, unknown>)['value'] ?? 'layout1') : 'layout1';
-  const cvFont   = fontRow   ? String((fontRow.toJSON()   as unknown as Record<string, unknown>)['value'] ?? 'ms-mincho') : 'ms-mincho';
+  const cvLayout     = layoutRow    ? String((layoutRow.toJSON()    as unknown as Record<string, unknown>)['value'] ?? 'layout1')   : 'layout1';
+  const cvFont       = fontRow      ? String((fontRow.toJSON()      as unknown as Record<string, unknown>)['value'] ?? 'ms-mincho') : 'ms-mincho';
+  const autoTranslate = translateRow ? (translateRow.toJSON() as unknown as Record<string, unknown>)['value'] !== false : true;
 
-  // Build one HTML per candidate then concatenate with page breaks
-  const pages = await Promise.all(candidates.map(async (candidate) => {
+  // For each candidate: translate missing Ja fields, embed photo, build HTML.
+  // All in one pass so the same mutated cj object is used for HTML generation.
+  // Promise.allSettled ensures one failure never aborts the whole batch.
+  // Translations are saved to DB so subsequent downloads skip the API call.
+  const pageResults = await Promise.allSettled(candidates.map(async (candidate) => {
     const cj = candidate.toJSON() as unknown as Record<string, unknown>;
 
-    // Embed closeup photo as base64
+    // ── Auto-translate candidate-level text fields ────────────────────────────
+    if (autoTranslate) {
+      const candUpdates: Record<string, string> = {};
+      for (const [idKey, jaKey] of [
+        ['selfPrId', 'selfPrJa'], ['motivationId', 'motivationJa'], ['selfIntroId', 'selfIntroJa'],
+      ] as const) {
+        const idText = cj[idKey] as string | null;
+        const jaText = cj[jaKey] as string | null;
+        if (idText && !jaText) {
+          const t = await translateId2Ja(idText, { userId: req.user!.sub, context: 'batch-cv' }).catch(() => null);
+          if (t) { candUpdates[jaKey] = t; cj[jaKey] = t; }
+        }
+      }
+      if (Object.keys(candUpdates).length > 0) await candidate.update(candUpdates).catch(() => null);
+
+      // ── Auto-translate career-level fields (divisionJa, skillGroupJa) ────────
+      const career = (cj['career'] as Record<string, unknown>[] | null) ?? [];
+      for (const entry of career) {
+        const careerUpdates: Record<string, string> = {};
+        for (const [idKey, jaKey] of [
+          ['division', 'divisionJa'], ['skillGroup', 'skillGroupJa'],
+        ] as const) {
+          const idText = entry[idKey] as string | null;
+          const jaText = entry[jaKey] as string | null;
+          if (idText && !jaText) {
+            const t = await translateId2Ja(idText, { userId: req.user!.sub, context: 'batch-cv' }).catch(() => null);
+            if (t) { careerUpdates[jaKey] = t; entry[jaKey] = t; }
+          }
+        }
+        if (Object.keys(careerUpdates).length > 0 && entry['id']) {
+          await CandidateCareer.update(careerUpdates, {
+            where: { id: entry['id'] as string, candidateId: candidate.id },
+          }).catch(() => null);
+        }
+      }
+    }
+
+    // ── Embed closeup photo ───────────────────────────────────────────────────
     let photoBase64: string | null = null;
     try {
       const photoPath = path.join(config.UPLOADS_DIR, 'candidates', candidate.id, 'closeup.webp');
@@ -277,6 +320,13 @@ router.post('/candidates/batch-cv.pdf', wrap(async (req, res) => {
 
     return buildCandidateCvHtml(cj, { font: cvFont, layout: cvLayout, photoBase64 });
   }));
+
+  // Extract successful pages; skip failed candidates rather than aborting
+  const pages = pageResults
+    .filter((r): r is PromiseFulfilledResult<string> => r.status === 'fulfilled')
+    .map((r) => r.value);
+
+  if (pages.length === 0) { res.status(422).json({ error: 'NO_PAGES', message: 'All candidates failed to render.' }); return; }
 
   const mergedHtml = pages.reduce((acc, html, i) => {
     if (i === 0) return html.replace(/<\/body>\s*<\/html>\s*$/i, '');
