@@ -18,10 +18,14 @@ import {
   CandidateEducationHistory,
 } from '../db/models/index';
 import { serializeCandidate } from '../serializers/candidate';
-import { AuditLog } from '../db/models/index';
+import { AuditLog, GlobalSettings } from '../db/models/index';
 import { decryptNullable } from '../utils/crypto';
 import { calcCompleteness } from '../utils/completeness';
 import { buildCandidatePdfHtml } from '../utils/candidatePdf';
+import { buildCandidateCvHtml } from '../utils/candidateCvHtml';
+import path from 'path';
+import fs from 'fs';
+import { config } from '../config';
 
 
 function wrap(fn: (req: Request, res: Response) => Promise<void>) {
@@ -251,12 +255,28 @@ router.post('/candidates/batch-cv.pdf', wrap(async (req, res) => {
     return;
   }
 
+  // Fetch layout + font settings once for the whole batch
+  const [layoutRow, fontRow] = await Promise.all([
+    GlobalSettings.findOne({ where: { key: 'cv_layout' } }),
+    GlobalSettings.findOne({ where: { key: 'cv_font'   } }),
+  ]);
+  const cvLayout = layoutRow ? String((layoutRow.toJSON() as unknown as Record<string, unknown>)['value'] ?? 'layout1') : 'layout1';
+  const cvFont   = fontRow   ? String((fontRow.toJSON()   as unknown as Record<string, unknown>)['value'] ?? 'ms-mincho') : 'ms-mincho';
+
   // Build one HTML per candidate then concatenate with page breaks
-  const pages = candidates.map((candidate) => {
-    const cj  = candidate.toJSON() as unknown as Record<string, unknown>;
-    const nik = decryptNullable(candidate.nikEncrypted ?? null);
-    return buildCandidatePdfHtml(cj, nik);
-  });
+  const pages = await Promise.all(candidates.map(async (candidate) => {
+    const cj = candidate.toJSON() as unknown as Record<string, unknown>;
+
+    // Embed closeup photo as base64
+    let photoBase64: string | null = null;
+    try {
+      const photoPath = path.join(config.UPLOADS_DIR, 'candidates', candidate.id, 'closeup.webp');
+      const photoData = await fs.promises.readFile(photoPath);
+      photoBase64 = `data:image/webp;base64,${photoData.toString('base64')}`;
+    } catch { /* no photo */ }
+
+    return buildCandidateCvHtml(cj, { font: cvFont, layout: cvLayout, photoBase64 });
+  }));
 
   const mergedHtml = pages.reduce((acc, html, i) => {
     if (i === 0) return html.replace(/<\/body>\s*<\/html>\s*$/i, '');
