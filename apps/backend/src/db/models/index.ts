@@ -24,6 +24,8 @@ import { SswSectorField, initSswSectorField } from './SswSectorField';
 import { CandidateTimeline, initCandidateTimeline } from './CandidateTimeline';
 import { RecruitmentRequest, initRecruitmentRequest } from './RecruitmentRequest';
 import { GlobalSettings, initGlobalSettings } from './GlobalSettings';
+import { CandidateGakkenResume, initCandidateGakkenResume } from './CandidateGakkenResume';
+import { CandidateGakkenCompany, initCandidateGakkenCompany } from './CandidateGakkenCompany';
 
 // Initialize all models
 initCompany(sequelize);
@@ -50,6 +52,8 @@ initSswSectorField(sequelize);
 initCandidateTimeline(sequelize);
 initRecruitmentRequest(sequelize);
 initGlobalSettings(sequelize);
+initCandidateGakkenResume(sequelize);
+initCandidateGakkenCompany(sequelize);
 
 // ── Associations ─────────────────────────────────────────────────────────────
 
@@ -176,6 +180,21 @@ RecruitmentRequest.belongsTo(Company, { foreignKey: 'companyId', as: 'company' }
 RecruitmentRequest.belongsTo(User, { foreignKey: 'requestedBy', as: 'requester' });
 RecruitmentRequest.belongsTo(Batch, { foreignKey: 'batchId', as: 'batch' });
 
+// Candidate Gakken Resume / Companies
+Candidate.hasOne(CandidateGakkenResume, {
+  foreignKey: 'candidateId',
+  as: 'gakkenResume',
+  onDelete: 'CASCADE',
+});
+CandidateGakkenResume.belongsTo(Candidate, { foreignKey: 'candidateId', as: 'candidate' });
+
+Candidate.hasMany(CandidateGakkenCompany, {
+  foreignKey: 'candidateId',
+  as: 'gakkenCompanies',
+  onDelete: 'CASCADE',
+});
+CandidateGakkenCompany.belongsTo(Candidate, { foreignKey: 'candidateId', as: 'candidate' });
+
 // Candidate certifications & education history
 Candidate.hasMany(CandidateCertification, {
   foreignKey: 'candidateId',
@@ -217,4 +236,6 @@ export {
   CandidateTimeline,
   RecruitmentRequest,
   GlobalSettings,
+  CandidateGakkenResume,
+  CandidateGakkenCompany,
 };

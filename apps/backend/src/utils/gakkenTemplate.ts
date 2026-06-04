@@ -39,6 +39,8 @@ const TH = `${TD}background:#f0f0f0;font-weight:bold;text-align:center;white-spa
 
 export function buildGakkenHtml(
   candidate: Record<string, unknown>,
+  gakkenResume: Record<string, unknown> | null,
+  gakkenCompanies: Record<string, unknown>[],
   settings: { font: string; includePhoto: boolean },
 ): string {
   const fontFamily = FONT_MAP[settings.font] ?? FONT_MAP['ms-mincho']!;
@@ -51,30 +53,61 @@ export function buildGakkenHtml(
   const fullName      = he(candidate['fullName'] ?? '');
   const candidateCode = he(candidate['candidateCode'] ?? '');
 
-  const rawCareer      = (candidate['career']         as Record<string, unknown>[] | null) ?? [];
+  const gr = gakkenResume ?? {};
   const certifications = (candidate['certifications'] as Record<string, unknown>[] | null) ?? [];
 
-  const careerSummary = fallback(candidate['careerSummaryJa'], candidate['careerSummaryId']);
-  const skillsText    = fallback(candidate['selfPrJa'],         candidate['selfPrId']);
-  const selfIntroText = fallback(candidate['selfIntroJa'],      candidate['selfIntroId']);
+  const careerSummary = fallback(gr['careerSummaryJa'], gr['careerSummary']);
+  const skillsText    = fallback(gr['skillsJa'],        gr['skills']);
+  const selfPrText    = fallback(gr['selfPrJa'],         gr['selfPr']);
+
+  // ── 現在経歴 block ─────────────────────────────────────────────────────────────
+  const currentCompanyName     = he(gr['currentCompanyName'] ?? '');
+  const currentBusinessActivity = he(gr['currentBusinessActivity'] ?? '');
+  const currentCapital          = he(gr['currentCapital'] ?? '');
+  const currentRevenue          = he(gr['currentRevenue'] ?? '');
+  const currentEmployeeCount    = gr['currentEmployeeCount'] != null ? he(String(gr['currentEmployeeCount'])) : '';
+
+  const currentCompanyBlock = (currentCompanyName || currentBusinessActivity || currentCapital || currentRevenue || currentEmployeeCount) ? `
+  ${SECTION_HEADER('現在経歴')}
+  <table style="width:100%;border-collapse:collapse;margin-bottom:2mm;">
+    <tbody>
+      <tr>
+        <td style="${TH}width:22%;">会社名</td>
+        <td style="${TD}width:78%;" colspan="3">${currentCompanyName}</td>
+      </tr>
+      <tr>
+        <td style="${TH}">事業内容</td>
+        <td style="${TD}" colspan="3">${currentBusinessActivity}</td>
+      </tr>
+      <tr>
+        <td style="${TH}">資本金</td>
+        <td style="${TD}">${currentCapital ? `${currentCapital}万円` : ''}</td>
+        <td style="${TH}">売上高</td>
+        <td style="${TD}">${currentRevenue ? `${currentRevenue}万円` : ''}</td>
+      </tr>
+      <tr>
+        <td style="${TH}">従業員数</td>
+        <td style="${TD}" colspan="3">${currentEmployeeCount ? `${currentEmployeeCount}名` : ''}</td>
+      </tr>
+    </tbody>
+  </table>
+  ` : '';
 
   // ── 職務経歴 rows ─────────────────────────────────────────────────────────────
-  const careerRows = rawCareer.map(entry => {
-    const institution = he(entry['companyName'] ?? '');
-    const product     = fallback(entry['productJa'],     entry['productId']);
-    const jobTitle    = fallback(entry['jobTitleJa'],    entry['jobTitleId']);
-    const duties      = fallback(entry['dutiesJa'],      entry['dutiesId']);
-    const memberRole  = fallback(entry['memberRoleJa'],  entry['memberRoleId']);
+  const companyRows = gakkenCompanies.map(entry => {
+    const period     = he(entry['period'] ?? '');
+    const product    = fallback(entry['productJa'],    entry['productId']);
+    const duties     = fallback(entry['dutiesJa'],     entry['dutiesId']);
+    const memberRole = fallback(entry['memberRoleJa'], entry['memberRoleId']);
 
     return `
       <tr>
-        <td style="${TD}">${institution}</td>
-        <td style="${TD}">${product ? nlToBullets(product) : ''}</td>
-        <td style="${TD}">${he(jobTitle)}</td>
-        <td style="${TD}">${duties ? nlToBullets(duties) : ''}</td>
-        <td style="${TD}">${memberRole ? nlToBullets(memberRole) : ''}</td>
+        <td style="${TD}width:18%;">${period}</td>
+        <td style="${TD}width:20%;">${product ? nlToBullets(product) : ''}</td>
+        <td style="${TD}width:47%;">${duties ? nlToBullets(duties) : ''}</td>
+        <td style="${TD}width:15%;">${memberRole ? nlToBullets(memberRole) : ''}</td>
       </tr>`;
-  }).join('') || `<tr><td colspan="5" style="${TD}text-align:center;color:#aaa;">なし</td></tr>`;
+  }).join('') || `<tr><td colspan="4" style="${TD}text-align:center;color:#aaa;">なし</td></tr>`;
 
   // ── 資格 ─────────────────────────────────────────────────────────────────────
   const certItems = certifications.length
@@ -119,20 +152,22 @@ export function buildGakkenHtml(
   <div style="border:1px solid #333;padding:3mm 4mm;min-height:15mm;white-space:pre-wrap;">${he(careerSummary)}</div>
   ` : ''}
 
+  <!-- ── 現在経歴 ── -->
+  ${currentCompanyBlock}
+
   <!-- ── 職務経歴 ── -->
   ${SECTION_HEADER('職務経歴')}
   <table style="width:100%;border-collapse:collapse;">
     <thead>
       <tr>
-        <th style="${TH}width:18%;">機　関</th>
-        <th style="${TH}width:18%;">担当製品</th>
-        <th style="${TH}width:15%;">業務タイトル</th>
-        <th style="${TH}width:35%;">担当業務</th>
-        <th style="${TH}width:14%;">メンバー・役割</th>
+        <th style="${TH}width:18%;">期　間</th>
+        <th style="${TH}width:20%;">担当製品</th>
+        <th style="${TH}width:47%;">担当業務</th>
+        <th style="${TH}width:15%;">メンバー・役割</th>
       </tr>
     </thead>
     <tbody>
-      ${careerRows}
+      ${companyRows}
     </tbody>
   </table>
 
@@ -149,9 +184,9 @@ export function buildGakkenHtml(
   </div>
 
   <!-- ── 自己ＰＲ ── -->
-  ${selfIntroText ? `
+  ${selfPrText ? `
   ${SECTION_HEADER('自己ＰＲ')}
-  <div style="border:1px solid #333;padding:3mm 4mm;min-height:22mm;white-space:pre-wrap;">${he(selfIntroText)}</div>
+  <div style="border:1px solid #333;padding:3mm 4mm;min-height:22mm;white-space:pre-wrap;">${he(selfPrText)}</div>
   ` : ''}
 
   <!-- ── 以上 ── -->

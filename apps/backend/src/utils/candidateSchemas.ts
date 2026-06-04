@@ -147,6 +147,33 @@ export const patchShokumuSchema = z.object({
   career:          z.array(shokumuCareerEntrySchema).max(50),
 }).partial().strict();
 
+// ── PATCH /candidates/me/gakken-resume ────────────────────────────────────────
+const gakkenCompanyEntrySchema = z.object({
+  period:       shortStr(50).nullable(),
+  productId:    longStr(1000).nullable(),
+  productJa:    longStr(1000).nullable(),
+  dutiesId:     longStr(3000).nullable(),
+  dutiesJa:     longStr(3000).nullable(),
+  memberRoleId: longStr(1000).nullable(),
+  memberRoleJa: longStr(1000).nullable(),
+  sortOrder:    z.number().int().min(0).max(9999),
+}).partial().strict();
+
+export const patchGakkenResumeSchema = z.object({
+  careerSummary:           longStr(2000).nullable(),
+  careerSummaryJa:         longStr(2000).nullable(),
+  currentCompanyName:      shortStr(255).nullable(),
+  currentBusinessActivity: longStr(2000).nullable(),
+  currentCapital:          shortStr(100).nullable(),
+  currentRevenue:          shortStr(100).nullable(),
+  currentEmployeeCount:    z.number().int().min(0).max(9_999_999).nullable(),
+  skills:                  longStr(3000).nullable(),
+  skillsJa:                longStr(3000).nullable(),
+  selfPr:                  longStr(3000).nullable(),
+  selfPrJa:                longStr(3000).nullable(),
+  companies:               z.array(gakkenCompanyEntrySchema).max(20),
+}).partial().strict();
+
 // ── Validation helper ─────────────────────────────────────────────────────────
 /**
  * Parse `body` against `schema`. On failure, writes a 422 response and returns null.

@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { api } from '../lib/api';
-import type { CandidateData, CertificationEntry } from '../types/candidate';
+import type { CandidateData, CertificationEntry, GakkenResume, GakkenCompanyEntry } from '../types/candidate';
 
 const FONT_MAP: Record<string, string> = {
   'ms-mincho':     '"Noto Serif CJK JP", "MS Mincho", serif',
@@ -15,7 +15,6 @@ const GOOGLE_FONT_MAP: Record<string, string> = {
   'noto-serif-jp': 'Noto+Serif+JP:wght@400;700',
   'noto-sans-jp':  'Noto+Sans+JP:wght@400;700',
 };
-
 
 const TD: React.CSSProperties = { border: '1px solid #333', padding: '2mm 3mm', verticalAlign: 'top', fontSize: '8.5pt' };
 const TH: React.CSSProperties = { ...TD, background: '#f0f0f0', fontWeight: 'bold', textAlign: 'center', whiteSpace: 'nowrap' };
@@ -47,9 +46,13 @@ function SectionHeader({ label }: { label: string }) {
   );
 }
 
+interface GakkenResumeResponse {
+  resume: GakkenResume | null;
+  companies: GakkenCompanyEntry[];
+}
+
 export default function GakkenCV({ candidate }: { candidate: CandidateData }) {
   const [zoom, setZoom] = useState(1.0);
-  const [jaOverride, setJaOverride] = useState<Record<string, string>>({});
 
   useEffect(() => {
     const link = document.createElement('link');
@@ -58,15 +61,6 @@ export default function GakkenCV({ candidate }: { candidate: CandidateData }) {
     document.head.appendChild(link);
     return () => { document.head.removeChild(link); };
   }, []);
-
-  const c = candidate ?? ({} as CandidateData);
-
-  const { data: translateConfig } = useQuery<{ enabled: boolean }>({
-    queryKey: ['translation-config'],
-    queryFn: () => api.get('/superadmin/translation-config').then(r => r.data),
-    staleTime: 5 * 60 * 1000,
-  });
-  const autoTranslateEnabled = translateConfig?.enabled === true;
 
   const { data: fontConfig } = useQuery<{ fontKey: string }>({
     queryKey: ['cv-font'],
@@ -87,38 +81,21 @@ export default function GakkenCV({ candidate }: { candidate: CandidateData }) {
     document.head.appendChild(link);
   }, [fontKey]);
 
-  useEffect(() => {
-    if (!autoTranslateEnabled) { setJaOverride({}); return; }
-    const fields = [
-      { jaKey: 'careerSummaryJa', idKey: 'careerSummaryId' },
-      { jaKey: 'selfPrJa',        idKey: 'selfPrId'        },
-      { jaKey: 'selfIntroJa',     idKey: 'selfIntroId'     },
-    ].filter(f => !(c as unknown as Record<string, unknown>)[f.jaKey] &&
-                   (c as unknown as Record<string, unknown>)[f.idKey]);
-    if (!fields.length) return;
-    Promise.all(fields.map(f =>
-      api.post<{ translated: string }>('/translate', {
-        text: (c as unknown as Record<string, unknown>)[f.idKey], source: 'id', target: 'ja',
-      }).then(r => ({ key: f.jaKey, value: r.data.translated })).catch(() => null),
-    )).then(results => {
-      const updates: Record<string, string> = {};
-      results.forEach(r => { if (r) updates[r.key] = r.value; });
-      if (Object.keys(updates).length) setJaOverride(updates);
-    });
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [autoTranslateEnabled, c.careerSummaryId, c.careerSummaryJa, c.selfPrId, c.selfPrJa, c.selfIntroId, c.selfIntroJa]);
-
-  const getJa = (jaKey: keyof CandidateData, idKey: keyof CandidateData): string =>
-    fb(c[jaKey] as string, (autoTranslateEnabled ? jaOverride[jaKey as string] : '') || c[idKey] as string);
+  const { data: gakkenData } = useQuery<GakkenResumeResponse>({
+    queryKey: ['gakken-resume'],
+    queryFn: () => api.get('/candidates/me/gakken-resume').then(r => r.data),
+    staleTime: 30_000,
+  });
 
   const today = new Date().toLocaleDateString('ja-JP', { year: 'numeric', month: 'long', day: 'numeric' });
+  const certs = (candidate.certifications ?? []) as CertificationEntry[];
 
-  const career  = c.career ?? [];
-  const certs   = (c.certifications ?? []) as CertificationEntry[];
+  const gr = gakkenData?.resume ?? null;
+  const companies = gakkenData?.companies ?? [];
 
-  const careerSummary = getJa('careerSummaryJa', 'careerSummaryId');
-  const skillsText    = getJa('selfPrJa',         'selfPrId');
-  const selfIntroText = getJa('selfIntroJa',       'selfIntroId');
+  const careerSummary = fb(gr?.careerSummaryJa, gr?.careerSummary);
+  const skillsText    = fb(gr?.skillsJa,        gr?.skills);
+  const selfPrText    = fb(gr?.selfPrJa,         gr?.selfPr);
 
   return (
     <>
@@ -154,9 +131,9 @@ export default function GakkenCV({ candidate }: { candidate: CandidateData }) {
           {/* ── Date + Name (right-aligned) ── */}
           <div style={{ textAlign: 'right', fontSize: '9pt', marginBottom: '1mm' }}>{today}現在</div>
           <div style={{ textAlign: 'right', fontSize: '10pt', marginBottom: '5mm', borderBottom: '1px solid #333', paddingBottom: '3mm' }}>
-            氏名　{c.fullName ?? ''}
-            {c.candidateCode && (
-              <span style={{ fontSize: '7.5pt', color: '#888', marginLeft: '4mm' }}>{c.candidateCode}</span>
+            氏名　{candidate.fullName ?? ''}
+            {candidate.candidateCode && (
+              <span style={{ fontSize: '7.5pt', color: '#888', marginLeft: '4mm' }}>{candidate.candidateCode}</span>
             )}
           </div>
 
@@ -170,35 +147,61 @@ export default function GakkenCV({ candidate }: { candidate: CandidateData }) {
             </>
           )}
 
-          {/* ── 職務経歴 (table) ── */}
+          {/* ── 現在経歴 ── */}
+          {gr?.currentCompanyName && (
+            <>
+              <SectionHeader label="現在経歴" />
+              <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: '2mm' }}>
+                <tbody>
+                  <tr>
+                    <td style={{ ...TH, width: '22%' }}>会社名</td>
+                    <td style={{ ...TD, width: '78%' }} colSpan={3}>{gr.currentCompanyName ?? ''}</td>
+                  </tr>
+                  <tr>
+                    <td style={TH}>事業内容</td>
+                    <td style={TD} colSpan={3}>{gr.currentBusinessActivity ?? ''}</td>
+                  </tr>
+                  <tr>
+                    <td style={TH}>資本金</td>
+                    <td style={TD}>{gr.currentCapital ? `${gr.currentCapital}万円` : ''}</td>
+                    <td style={TH}>売上高</td>
+                    <td style={TD}>{gr.currentRevenue ? `${gr.currentRevenue}万円` : ''}</td>
+                  </tr>
+                  <tr>
+                    <td style={TH}>従業員数</td>
+                    <td style={TD} colSpan={3}>{gr.currentEmployeeCount != null ? `${gr.currentEmployeeCount}名` : ''}</td>
+                  </tr>
+                </tbody>
+              </table>
+            </>
+          )}
+
+          {/* ── 職務経歴 ── */}
           <SectionHeader label="職務経歴" />
           <table style={{ width: '100%', borderCollapse: 'collapse' }}>
             <thead>
               <tr>
-                <th style={{ ...TH, width: '18%' }}>機　関</th>
-                <th style={{ ...TH, width: '18%' }}>担当製品</th>
-                <th style={{ ...TH, width: '15%' }}>業務タイトル</th>
-                <th style={{ ...TH, width: '35%' }}>担当業務</th>
-                <th style={{ ...TH, width: '14%' }}>メンバー・役割</th>
+                <th style={{ ...TH, width: '18%' }}>期　間</th>
+                <th style={{ ...TH, width: '20%' }}>担当製品</th>
+                <th style={{ ...TH, width: '47%' }}>担当業務</th>
+                <th style={{ ...TH, width: '15%' }}>メンバー・役割</th>
               </tr>
             </thead>
             <tbody>
-              {career.length > 0 ? career.map((entry, idx) => {
+              {companies.length > 0 ? companies.map((entry, idx) => {
                 const product    = fb(entry.productJa,    entry.productId);
-                const jobTitle   = fb(entry.jobTitleJa,   entry.jobTitleId);
                 const duties     = fb(entry.dutiesJa,     entry.dutiesId);
                 const memberRole = fb(entry.memberRoleJa, entry.memberRoleId);
                 return (
-                  <tr key={entry.id ?? idx}>
-                    <td style={TD}>{entry.companyName ?? ''}</td>
+                  <tr key={idx}>
+                    <td style={TD}>{entry.period ?? ''}</td>
                     <td style={TD}>{product    ? <TextBullets text={product}    /> : ''}</td>
-                    <td style={TD}>{jobTitle}</td>
                     <td style={TD}>{duties     ? <TextBullets text={duties}     /> : ''}</td>
                     <td style={TD}>{memberRole ? <TextBullets text={memberRole} /> : ''}</td>
                   </tr>
                 );
               }) : (
-                <tr><td colSpan={5} style={{ ...TD, textAlign: 'center', color: '#aaa' }}>なし</td></tr>
+                <tr><td colSpan={4} style={{ ...TD, textAlign: 'center', color: '#aaa' }}>なし</td></tr>
               )}
             </tbody>
           </table>
@@ -230,11 +233,11 @@ export default function GakkenCV({ candidate }: { candidate: CandidateData }) {
           </div>
 
           {/* ── 自己ＰＲ ── */}
-          {selfIntroText && (
+          {selfPrText && (
             <>
               <SectionHeader label="自己ＰＲ" />
               <div style={{ border: '1px solid #333', padding: '3mm 4mm', minHeight: '22mm', whiteSpace: 'pre-wrap' }}>
-                {selfIntroText}
+                {selfPrText}
               </div>
             </>
           )}

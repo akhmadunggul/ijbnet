@@ -20,6 +20,7 @@ import {
   putEduSchema,
   putTestSchema,
   patchShokumuSchema,
+  patchGakkenResumeSchema,
 } from '../utils/candidateSchemas';
 import {
   Candidate,
@@ -41,6 +42,8 @@ import {
   BatchCandidate,
   InterviewProposal,
   GlobalSettings,
+  CandidateGakkenResume,
+  CandidateGakkenCompany,
 } from '../db/models/index';
 import { recordTimelineEvent, currentAgeHours } from '../utils/timeline';
 import { notifyUser } from '../utils/notify';
@@ -878,6 +881,114 @@ router.patch('/me/shokumu', authenticate, requireRole('candidate'), async (req: 
   res.json({ message: 'Shokumu data saved.' });
 });
 
+// ── GET /api/candidates/me/gakken-resume ─────────────────────────────────────
+router.get('/me/gakken-resume', authenticate, requireRole('candidate'), async (req: Request, res: Response): Promise<void> => {
+  const candidate = await Candidate.findOne({ where: { userId: req.user!.sub } });
+  if (!candidate) { res.status(404).json({ error: 'NOT_FOUND' }); return; }
+
+  const [resume, companies] = await Promise.all([
+    CandidateGakkenResume.findOne({ where: { candidateId: candidate.id } }),
+    CandidateGakkenCompany.findAll({ where: { candidateId: candidate.id }, order: [['sortOrder', 'ASC']] }),
+  ]);
+
+  res.json({
+    resume: resume ? resume.toJSON() : null,
+    companies: companies.map((c) => c.toJSON()),
+  });
+});
+
+// ── PATCH /api/candidates/me/gakken-resume ───────────────────────────────────
+router.patch('/me/gakken-resume', authenticate, requireRole('candidate'), async (req: Request, res: Response): Promise<void> => {
+  const candidate = await Candidate.findOne({ where: { userId: req.user!.sub } });
+  if (!candidate) { res.status(404).json({ error: 'NOT_FOUND' }); return; }
+  if (candidate.isLocked) { res.status(403).json({ error: 'PROFILE_LOCKED' }); return; }
+
+  const body = parseBody(patchGakkenResumeSchema, req.body, res);
+  if (body === null) return;
+
+  const translateSetting = await GlobalSettings.findOne({ where: { key: 'auto_translate' } });
+  const autoTranslate = translateSetting
+    ? (translateSetting.toJSON() as unknown as Record<string, unknown>)['value'] !== false
+    : true;
+
+  // Build resume upsert payload
+  const resumeData: Record<string, unknown> = { candidateId: candidate.id };
+  const resumeFields = [
+    'careerSummary', 'careerSummaryJa',
+    'currentCompanyName', 'currentBusinessActivity',
+    'currentCapital', 'currentRevenue', 'currentEmployeeCount',
+    'skills', 'skillsJa', 'selfPr', 'selfPrJa',
+  ] as const;
+  for (const field of resumeFields) {
+    if (body[field] !== undefined) resumeData[field] = body[field] ?? null;
+  }
+
+  // Auto-translate ID→JA for resume-level text fields
+  if (autoTranslate) {
+    for (const [idKey, jaKey] of [
+      ['careerSummary', 'careerSummaryJa'],
+      ['skills', 'skillsJa'],
+      ['selfPr', 'selfPrJa'],
+    ] as const) {
+      const idText = resumeData[idKey] as string | null | undefined;
+      const jaText = resumeData[jaKey] as string | null | undefined;
+      if (idText && !jaText) {
+        const translated = await translateId2Ja(idText, { userId: req.user!.sub, context: 'gakken-save' });
+        if (translated) resumeData[jaKey] = translated;
+      }
+    }
+  }
+
+  // Upsert resume row
+  const existing = await CandidateGakkenResume.findOne({ where: { candidateId: candidate.id } });
+  if (existing) {
+    await existing.update(resumeData);
+  } else {
+    await CandidateGakkenResume.create(resumeData as Parameters<typeof CandidateGakkenResume.create>[0]);
+  }
+
+  // Destroy + recreate company entries
+  if (Array.isArray(body.companies)) {
+    await CandidateGakkenCompany.destroy({ where: { candidateId: candidate.id } });
+    if (body.companies.length > 0) {
+      const companyRows = await Promise.all(
+        body.companies.map(async (entry, i) => {
+          let productJa    = entry.productJa    ?? null;
+          let dutiesJa     = entry.dutiesJa     ?? null;
+          let memberRoleJa = entry.memberRoleJa ?? null;
+          if (autoTranslate) {
+            if (entry.productId    && !productJa)    { const t = await translateId2Ja(entry.productId,    { userId: req.user!.sub, context: 'gakken-save' }); if (t) productJa    = t; }
+            if (entry.dutiesId     && !dutiesJa)     { const t = await translateId2Ja(entry.dutiesId,     { userId: req.user!.sub, context: 'gakken-save' }); if (t) dutiesJa     = t; }
+            if (entry.memberRoleId && !memberRoleJa) { const t = await translateId2Ja(entry.memberRoleId, { userId: req.user!.sub, context: 'gakken-save' }); if (t) memberRoleJa = t; }
+          }
+          return {
+            candidateId:  candidate.id,
+            period:       entry.period       ?? null,
+            productId:    entry.productId    ?? null,
+            productJa,
+            dutiesId:     entry.dutiesId     ?? null,
+            dutiesJa,
+            memberRoleId: entry.memberRoleId ?? null,
+            memberRoleJa,
+            sortOrder:    entry.sortOrder    ?? i,
+          };
+        }),
+      );
+      await CandidateGakkenCompany.bulkCreate(companyRows);
+    }
+  }
+
+  const [updatedResume, updatedCompanies] = await Promise.all([
+    CandidateGakkenResume.findOne({ where: { candidateId: candidate.id } }),
+    CandidateGakkenCompany.findAll({ where: { candidateId: candidate.id }, order: [['sortOrder', 'ASC']] }),
+  ]);
+
+  res.json({
+    resume: updatedResume ? updatedResume.toJSON() : null,
+    companies: updatedCompanies.map((c) => c.toJSON()),
+  });
+});
+
 // ── GET /api/candidates/me/shokumu-pdf ────────────────────────────────────────
 router.get('/me/shokumu-pdf', authenticate, requireRole('candidate'), pdfLimiter, async (req: Request, res: Response): Promise<void> => {
   const candidate = await Candidate.findOne({
@@ -953,9 +1064,52 @@ router.get('/me/shokumu-pdf', authenticate, requireRole('candidate'), pdfLimiter
     cj['closeupUrl'] = `data:image/webp;base64,${photoData.toString('base64')}`;
   } catch { /* photo not present on disk, skip */ }
 
-  const html = template === 'gakken'
-    ? buildGakkenHtml(cj, { font, includePhoto: true })
-    : buildShokumuHtml(cj, { layout, font, includePhoto: true });
+  let html: string;
+  if (template === 'gakken') {
+    const [gakkenResume, gakkenCompanies] = await Promise.all([
+      CandidateGakkenResume.findOne({ where: { candidateId: candidate.id } }),
+      CandidateGakkenCompany.findAll({ where: { candidateId: candidate.id }, order: [['sortOrder', 'ASC']] }),
+    ]);
+    const gr = gakkenResume ? (gakkenResume.toJSON() as unknown as Record<string, unknown>) : null;
+    const gc = gakkenCompanies.map((c) => c.toJSON() as unknown as Record<string, unknown>);
+
+    // Auto-translate gakken resume fields
+    if (autoTranslate && gr) {
+      const grUpdates: Record<string, string> = {};
+      for (const [idKey, jaKey] of [
+        ['careerSummary', 'careerSummaryJa'], ['skills', 'skillsJa'], ['selfPr', 'selfPrJa'],
+      ] as const) {
+        const idText = gr[idKey] as string | null;
+        const jaText = gr[jaKey] as string | null;
+        if (idText && !jaText) {
+          const translated = await translateId2Ja(idText, { userId: req.user!.sub, context: 'pdf-render' });
+          if (translated) { gr[jaKey] = translated; grUpdates[jaKey] = translated; }
+        }
+      }
+      if (Object.keys(grUpdates).length > 0 && gakkenResume) await gakkenResume.update(grUpdates);
+
+      await Promise.all(gc.map(async (entry, idx) => {
+        const entryUpdates: Record<string, string> = {};
+        for (const [idKey, jaKey] of [
+          ['productId', 'productJa'], ['dutiesId', 'dutiesJa'], ['memberRoleId', 'memberRoleJa'],
+        ] as const) {
+          const idText = entry[idKey] as string | null;
+          const jaText = entry[jaKey] as string | null;
+          if (idText && !jaText) {
+            const translated = await translateId2Ja(idText, { userId: req.user!.sub, context: 'pdf-render' });
+            if (translated) { entry[jaKey] = translated; entryUpdates[jaKey] = translated; }
+          }
+        }
+        if (Object.keys(entryUpdates).length > 0) {
+          await CandidateGakkenCompany.update(entryUpdates, { where: { id: gakkenCompanies[idx]!.id, candidateId: candidate.id } });
+        }
+      }));
+    }
+
+    html = buildGakkenHtml(cj, gr, gc, { font, includePhoto: true });
+  } else {
+    html = buildShokumuHtml(cj, { layout, font, includePhoto: true });
+  }
 
   try {
     const pdf = await renderPdf(html, { top: '15mm', bottom: '15mm', left: '20mm', right: '15mm' });
@@ -1019,9 +1173,21 @@ router.get('/me/merged-pdf', authenticate, requireRole('candidate'), pdfLimiter,
 
   // Build CV html, strip closing tags, then append shokumu body content
   const cvHtml = buildCandidatePdfHtml(cj, nik);
-  const shokumuHtml = template === 'gakken'
-    ? buildGakkenHtml(cj, { font, includePhoto: false })
-    : buildShokumuHtml(cj, { layout, font, includePhoto: false });
+  let shokumuHtml: string;
+  if (template === 'gakken') {
+    const [gakkenResume, gakkenCompanies] = await Promise.all([
+      CandidateGakkenResume.findOne({ where: { candidateId: candidate.id } }),
+      CandidateGakkenCompany.findAll({ where: { candidateId: candidate.id }, order: [['sortOrder', 'ASC']] }),
+    ]);
+    shokumuHtml = buildGakkenHtml(
+      cj,
+      gakkenResume ? (gakkenResume.toJSON() as unknown as Record<string, unknown>) : null,
+      gakkenCompanies.map((c) => c.toJSON() as unknown as Record<string, unknown>),
+      { font, includePhoto: false },
+    );
+  } else {
+    shokumuHtml = buildShokumuHtml(cj, { layout, font, includePhoto: false });
+  }
 
   // Extract inner body from shokumu HTML (strip html/head/body wrappers)
   const shokumuBody = shokumuHtml

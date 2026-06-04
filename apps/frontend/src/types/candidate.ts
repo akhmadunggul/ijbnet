@@ -46,6 +46,33 @@ export interface CareerEntry {
   memberRoleJa?: string | null;
 }
 
+export interface GakkenResume {
+  id?: string;
+  candidateId?: string;
+  careerSummary: string | null;
+  careerSummaryJa: string | null;
+  currentCompanyName: string | null;
+  currentBusinessActivity: string | null;
+  currentCapital: string | null;
+  currentRevenue: string | null;
+  currentEmployeeCount: number | null;
+  skills: string | null;
+  skillsJa: string | null;
+  selfPr: string | null;
+  selfPrJa: string | null;
+}
+
+export interface GakkenCompanyEntry {
+  period: string | null;
+  productId: string | null;
+  productJa: string | null;
+  dutiesId: string | null;
+  dutiesJa: string | null;
+  memberRoleId: string | null;
+  memberRoleJa: string | null;
+  sortOrder: number;
+}
+
 export interface CertificationEntry {
   id?: string;
   certName: string;
