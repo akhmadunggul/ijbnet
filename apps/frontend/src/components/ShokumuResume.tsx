@@ -183,7 +183,7 @@ const S = {
 
 // ── Component ─────────────────────────────────────────────────────────────────
 
-export default function ShokumuCV({ candidate }: { candidate: CandidateData }) {
+export default function ShokumuResume({ candidate }: { candidate: CandidateData }) {
   const [zoom, setZoom] = useState(1.0);
   const [jaOverride, setJaOverride] = useState<Record<string, string>>({});
 

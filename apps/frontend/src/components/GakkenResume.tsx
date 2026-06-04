@@ -51,7 +51,7 @@ interface GakkenResumeResponse {
   companies: GakkenCompanyEntry[];
 }
 
-export default function GakkenCV({ candidate }: { candidate: CandidateData }) {
+export default function GakkenResume({ candidate }: { candidate: CandidateData }) {
   const [zoom, setZoom] = useState(1.0);
 
   useEffect(() => {

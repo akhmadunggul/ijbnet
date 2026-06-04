@@ -3,10 +3,10 @@ import { useTranslation } from 'react-i18next';
 import { useQuery } from '@tanstack/react-query';
 import { api } from '../../lib/api';
 import type { CandidateMe } from '../../types/candidate';
-import ShokumuCV from '../../components/ShokumuCV';
-import GakkenCV from '../../components/GakkenCV';
+import ShokumuResume from '../../components/ShokumuResume';
+import GakkenResume from '../../components/GakkenResume';
 
-export default function ShokumuCVPage() {
+export default function ShokumuResumePage() {
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
   const lang = i18n.language === 'ja' ? 'ja' : 'id';
@@ -88,8 +88,8 @@ export default function ShokumuCVPage() {
       </div>
 
       {template === 'gakken'
-        ? <GakkenCV candidate={data.candidate} />
-        : <ShokumuCV candidate={data.candidate} />
+        ? <GakkenResume candidate={data.candidate} />
+        : <ShokumuResume candidate={data.candidate} />
       }
     </div>
   );
