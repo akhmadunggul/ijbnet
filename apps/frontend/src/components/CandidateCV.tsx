@@ -478,7 +478,7 @@ export default function CandidateCV({
                 <td style={{ ...TD, height: '40px' }}>{v((row as any).period)}</td>
                 <td style={TD}>{v((row as any).companyName)}</td>
                 <td style={TD}>
-                  {v((row as any).division) || v((row as any).skillGroup)}
+                  {v((row as any).divisionJa) || v((row as any).skillGroupJa) || v((row as any).division) || v((row as any).skillGroup)}
                 </td>
               </tr>
             ) : (

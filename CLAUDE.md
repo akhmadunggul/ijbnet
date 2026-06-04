@@ -237,6 +237,7 @@ apps/frontend/src/
 - v0.6.22 — Security: ZAP findings 3 + 1 — self-host DM Serif Display and Inter WOFF2 fonts (public/fonts/); replace Google Fonts <link> tags in index.html with local fonts.css eliminating SRI gap; extract CV print CSS from dangerouslySetInnerHTML into static files (public/css/candidate-cv-print.css, shokumu-print.css, gakken-print.css) loaded via useEffect <link> injection; drop 'unsafe-inline' from style-src in all Caddyfiles; CSP now allows fonts.googleapis.com/fonts.gstatic.com only for dynamically loaded Noto JP CV fonts
 - v0.6.23 — Fix Data Utama Simpan button always staying dirty: personalSchema included email and nik but patchMeSchema's .strict() (v0.6.13) rejects unknown keys — every save silently returned 422, reset(data) was never reached, isDirty stayed true; fix strips email+nik before calling onSave (nik uses /me/nik separately; email is not patchable); adds visible error on save failure; also resolves marital status update failure for LPK Humaira candidates
 - v0.6.24 — Fix stale JP certification gate on profile submit: submit button checked candidate.tests.length === 0 and showed "belum memenuhi kelayakan sertifikasi bahasa Jepang" warning instead of submitting — blocking candidates who fulfilled all 21 fields; Japanese tests were removed from completeness requirements so this gate was obsolete; removed check, showJpWarning state, and dialog entirely
+- v0.6.25 — Auto-translate Uraian Pekerjaan (division/skillGroup) in Pengalaman Kerja to Japanese on career save; divisionJa + skillGroupJa stored in DB (migration 000033); CandidateCV renders Japanese text with Indonesian fallback; candidatePdf.ts uses Japanese text for career columns
 
-Current: v0.6.24
+Current: v0.6.25
 Live at: https://jinzai.jobagus.id

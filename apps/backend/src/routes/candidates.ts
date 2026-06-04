@@ -393,21 +393,43 @@ router.put('/me/career', async (req: Request, res: Response): Promise<void> => {
   if (body === null) return;
   const { entries } = body;
 
+  const translateSetting = await GlobalSettings.findOne({ where: { key: 'auto_translate' } });
+  const autoTranslate = translateSetting
+    ? (translateSetting.toJSON() as unknown as Record<string, unknown>)['value'] !== false
+    : true;
+
   await CandidateCareer.destroy({ where: { candidateId: candidate.id } });
 
   if (entries?.length) {
-    await CandidateCareer.bulkCreate(
-      entries.map((e, i) => ({
-        id: uuidv4(),
-        candidateId: candidate.id,
-        companyName: e.companyName ?? null,
-        division: e.division ?? null,
-        skillGroup: e.skillGroup ?? null,
-        period: e.period ?? null,
-        startDate: e.startDate ?? null,
-        sortOrder: e.sortOrder ?? i,
-      })),
+    const rows = await Promise.all(
+      entries.map(async (e, i) => {
+        let divisionJa = e.divisionJa ?? null;
+        let skillGroupJa = e.skillGroupJa ?? null;
+        if (autoTranslate) {
+          if (e.division && !divisionJa) {
+            const t = await translateId2Ja(e.division, { userId: req.user!.sub, context: 'career-save' });
+            if (t) divisionJa = t;
+          }
+          if (e.skillGroup && !skillGroupJa) {
+            const t = await translateId2Ja(e.skillGroup, { userId: req.user!.sub, context: 'career-save' });
+            if (t) skillGroupJa = t;
+          }
+        }
+        return {
+          id: uuidv4(),
+          candidateId: candidate.id,
+          companyName: e.companyName ?? null,
+          division: e.division ?? null,
+          divisionJa,
+          skillGroup: e.skillGroup ?? null,
+          skillGroupJa,
+          period: e.period ?? null,
+          startDate: e.startDate ?? null,
+          sortOrder: e.sortOrder ?? i,
+        };
+      }),
     );
+    await CandidateCareer.bulkCreate(rows);
   }
 
   invalidateMe(req.user!.sub);

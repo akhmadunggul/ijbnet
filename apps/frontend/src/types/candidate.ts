@@ -24,7 +24,9 @@ export interface CareerEntry {
   id?: string;
   companyName: string | null;
   division: string | null;
+  divisionJa?: string | null;
   skillGroup: string | null;
+  skillGroupJa?: string | null;
   period: string | null;
   startDate: string | null;
   sortOrder: number;

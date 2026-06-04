@@ -83,9 +83,9 @@ export function buildCandidatePdfHtml(
   const careerRows = career.length
     ? career.map((c) => `<tr>
         <td>${he(c['companyName'])}</td>
-        <td>${he(c['division'])}</td>
+        <td>${he((c['divisionJa'] as string | null) || c['division'])}</td>
         <td>${he(c['period'])}</td>
-        <td>${he(c['skillGroup'])}</td>
+        <td>${he((c['skillGroupJa'] as string | null) || c['skillGroup'])}</td>
       </tr>`).join('')
     : `<tr><td colspan="4" class="empty">—</td></tr>`;
 

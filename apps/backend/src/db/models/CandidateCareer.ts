@@ -5,7 +5,9 @@ export interface CandidateCareerAttributes {
   candidateId: string;
   companyName: string | null;
   division: string | null;
+  divisionJa: string | null;
   skillGroup: string | null;
+  skillGroupJa: string | null;
   period: string | null;
   startDate: string | null;
   sortOrder: number;
@@ -33,7 +35,9 @@ export interface CandidateCareerCreationAttributes
     | 'id'
     | 'companyName'
     | 'division'
+    | 'divisionJa'
     | 'skillGroup'
+    | 'skillGroupJa'
     | 'period'
     | 'startDate'
     | 'sortOrder'
@@ -60,7 +64,9 @@ export class CandidateCareer
   declare candidateId: string;
   declare companyName: string | null;
   declare division: string | null;
+  declare divisionJa: string | null;
   declare skillGroup: string | null;
+  declare skillGroupJa: string | null;
   declare period: string | null;
   declare startDate: string | null;
   declare sortOrder: number;
@@ -89,7 +95,9 @@ export function initCandidateCareer(sequelize: Sequelize): void {
       candidateId: { type: DataTypes.UUID, allowNull: false },
       companyName: { type: DataTypes.STRING(255), allowNull: true },
       division: { type: DataTypes.STRING(100), allowNull: true },
+      divisionJa: { type: DataTypes.STRING(200), allowNull: true },
       skillGroup: { type: DataTypes.STRING(100), allowNull: true },
+      skillGroupJa: { type: DataTypes.STRING(200), allowNull: true },
       period: { type: DataTypes.STRING(50), allowNull: true },
       startDate: { type: DataTypes.DATEONLY, allowNull: true },
       sortOrder: { type: DataTypes.INTEGER, defaultValue: 0, allowNull: false },
