@@ -911,17 +911,21 @@ router.patch('/me/gakken-resume', authenticate, requireRole('candidate'), async 
     ? (translateSetting.toJSON() as unknown as Record<string, unknown>)['value'] !== false
     : true;
 
-  // Build resume upsert payload
-  const resumeData: Record<string, unknown> = { candidateId: candidate.id };
-  const resumeFields = [
-    'careerSummary', 'careerSummaryJa',
-    'currentCompanyName', 'currentBusinessActivity',
-    'currentCapital', 'currentRevenue', 'currentEmployeeCount',
-    'skills', 'skillsJa', 'selfPr', 'selfPrJa',
-  ] as const;
-  for (const field of resumeFields) {
-    if (body[field] !== undefined) resumeData[field] = body[field] ?? null;
-  }
+  // Build typed resume payload
+  const rp = {
+    candidateId:             candidate.id,
+    careerSummary:           body.careerSummary           ?? null,
+    careerSummaryJa:         body.careerSummaryJa         ?? null,
+    currentCompanyName:      body.currentCompanyName      ?? null,
+    currentBusinessActivity: body.currentBusinessActivity ?? null,
+    currentCapital:          body.currentCapital          ?? null,
+    currentRevenue:          body.currentRevenue          ?? null,
+    currentEmployeeCount:    body.currentEmployeeCount    ?? null,
+    skills:                  body.skills                  ?? null,
+    skillsJa:                body.skillsJa                ?? null,
+    selfPr:                  body.selfPr                  ?? null,
+    selfPrJa:                body.selfPrJa                ?? null,
+  };
 
   // Auto-translate ID→JA for resume-level text fields
   if (autoTranslate) {
@@ -930,11 +934,11 @@ router.patch('/me/gakken-resume', authenticate, requireRole('candidate'), async 
       ['skills', 'skillsJa'],
       ['selfPr', 'selfPrJa'],
     ] as const) {
-      const idText = resumeData[idKey] as string | null | undefined;
-      const jaText = resumeData[jaKey] as string | null | undefined;
+      const idText = rp[idKey] as string | null;
+      const jaText = rp[jaKey] as string | null;
       if (idText && !jaText) {
         const translated = await translateId2Ja(idText, { userId: req.user!.sub, context: 'gakken-save' });
-        if (translated) resumeData[jaKey] = translated;
+        if (translated) (rp as Record<string, unknown>)[jaKey] = translated;
       }
     }
   }
@@ -942,9 +946,9 @@ router.patch('/me/gakken-resume', authenticate, requireRole('candidate'), async 
   // Upsert resume row
   const existing = await CandidateGakkenResume.findOne({ where: { candidateId: candidate.id } });
   if (existing) {
-    await existing.update(resumeData);
+    await existing.update(rp);
   } else {
-    await CandidateGakkenResume.create(resumeData as Parameters<typeof CandidateGakkenResume.create>[0]);
+    await CandidateGakkenResume.create(rp);
   }
 
   // Destroy + recreate company entries
