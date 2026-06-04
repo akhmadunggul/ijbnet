@@ -650,12 +650,27 @@ function CareerTab({ candidate, saving }: { candidate: CandidateData; saving: bo
   });
   const { fields, append, remove, move } = useFieldArray({ control, name: 'entries' });
 
+  const [careerSaveError, setCareerSaveError] = useState(false);
   const careerMutation = useMutation({
-    mutationFn: (data: CareerForm) => api.put('/candidates/me/career', data).then((r) => r.data),
+    mutationFn: (data: CareerForm) => {
+      const payload = {
+        entries: data.entries.map((e, i) => ({
+          companyName: e.companyName ?? null,
+          division:    e.division    ?? null,
+          skillGroup:  e.skillGroup  ?? null,
+          period:      e.period      ?? null,
+          startDate:   e.startDate   ?? null,
+          sortOrder:   e.sortOrder   ?? i,
+        })),
+      };
+      return api.put('/candidates/me/career', payload).then((r) => r.data);
+    },
     onSuccess: (_data, variables) => {
+      setCareerSaveError(false);
       qc.invalidateQueries({ queryKey: ['my-candidate'] });
       reset(variables);
     },
+    onError: () => setCareerSaveError(true),
   });
 
   return (
@@ -687,6 +702,7 @@ function CareerTab({ candidate, saving }: { candidate: CandidateData; saving: bo
           {careerMutation.isPending ? t('candidate.profile.saving') : t('candidate.profile.save')}
         </button>
         {isDirty && <span className="text-xs text-amber-600">{t('candidate.profile.unsaved')}</span>}
+        {careerSaveError && <span className="text-xs text-red-500">{t('toastError', { defaultValue: 'Gagal menyimpan. Coba lagi.' })}</span>}
       </div>
     </form>
   );

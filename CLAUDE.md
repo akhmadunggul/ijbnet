@@ -239,6 +239,7 @@ apps/frontend/src/
 - v0.6.24 — Fix stale JP certification gate on profile submit: submit button checked candidate.tests.length === 0 and showed "belum memenuhi kelayakan sertifikasi bahasa Jepang" warning instead of submitting — blocking candidates who fulfilled all 21 fields; Japanese tests were removed from completeness requirements so this gate was obsolete; removed check, showJpWarning state, and dialog entirely
 - v0.6.25 — Auto-translate Uraian Pekerjaan (division/skillGroup) in Pengalaman Kerja to Japanese on career save; divisionJa + skillGroupJa stored in DB (migration 000033); CandidateCV renders Japanese text with Indonesian fallback; candidatePdf.ts uses Japanese text for career columns
 - v0.6.26 — chore: bump version; verify career translation logic — no regressions found
+- v0.6.27 — Fix career save silently failing since v0.6.13: defaultValues spread (…c) included id + shokumu fields not in the .strict() schema — every save returned 422, career data was never updated; mutationFn now strips entries to only the 5 expected fields; adds visible onError banner
 
-Current: v0.6.26
+Current: v0.6.27
 Live at: https://jinzai.jobagus.id
