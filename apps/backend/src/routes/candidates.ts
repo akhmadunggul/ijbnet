@@ -906,28 +906,28 @@ router.patch('/me/gakken-resume', authenticate, requireRole('candidate'), async 
   const body = parseBody(patchGakkenResumeSchema, req.body, res);
   if (body === null) return;
 
-  const translateSetting = await GlobalSettings.findOne({ where: { key: 'auto_translate' } });
+  const translateSetting = await GlobalSettings.findOne({ where: { key: 'auto_translate_enabled' } });
   const autoTranslate = translateSetting
     ? (translateSetting.toJSON() as unknown as Record<string, unknown>)['value'] !== false
     : true;
 
-  // Build typed resume payload
+  // When auto-translate is on, ignore any JA values from the client — backend owns them.
   const rp = {
     candidateId:             candidate.id,
     careerSummary:           body.careerSummary           ?? null,
-    careerSummaryJa:         body.careerSummaryJa         ?? null,
+    careerSummaryJa:         autoTranslate ? null : (body.careerSummaryJa ?? null),
     currentCompanyName:      body.currentCompanyName      ?? null,
     currentBusinessActivity: body.currentBusinessActivity ?? null,
     currentCapital:          body.currentCapital          ?? null,
     currentRevenue:          body.currentRevenue          ?? null,
     currentEmployeeCount:    body.currentEmployeeCount    ?? null,
     skills:                  body.skills                  ?? null,
-    skillsJa:                body.skillsJa                ?? null,
+    skillsJa:                autoTranslate ? null : (body.skillsJa  ?? null),
     selfPr:                  body.selfPr                  ?? null,
-    selfPrJa:                body.selfPrJa                ?? null,
+    selfPrJa:                autoTranslate ? null : (body.selfPrJa  ?? null),
   };
 
-  // Auto-translate ID→JA for resume-level text fields
+  // Auto-translate resume-level ID fields → JA (always overwrite when auto-translate is on)
   if (autoTranslate) {
     for (const [idKey, jaKey] of [
       ['careerSummary', 'careerSummaryJa'],
@@ -935,8 +935,7 @@ router.patch('/me/gakken-resume', authenticate, requireRole('candidate'), async 
       ['selfPr', 'selfPrJa'],
     ] as const) {
       const idText = rp[idKey] as string | null;
-      const jaText = rp[jaKey] as string | null;
-      if (idText && !jaText) {
+      if (idText) {
         const translated = await translateId2Ja(idText, { userId: req.user!.sub, context: 'gakken-save' });
         if (translated) (rp as Record<string, unknown>)[jaKey] = translated;
       }
@@ -957,13 +956,13 @@ router.patch('/me/gakken-resume', authenticate, requireRole('candidate'), async 
     if (body.companies.length > 0) {
       const companyRows = await Promise.all(
         body.companies.map(async (entry, i) => {
-          let productJa    = entry.productJa    ?? null;
-          let dutiesJa     = entry.dutiesJa     ?? null;
-          let memberRoleJa = entry.memberRoleJa ?? null;
+          let productJa:    string | null = autoTranslate ? null : (entry.productJa    ?? null);
+          let dutiesJa:     string | null = autoTranslate ? null : (entry.dutiesJa     ?? null);
+          let memberRoleJa: string | null = autoTranslate ? null : (entry.memberRoleJa ?? null);
           if (autoTranslate) {
-            if (entry.productId    && !productJa)    { const t = await translateId2Ja(entry.productId,    { userId: req.user!.sub, context: 'gakken-save' }); if (t) productJa    = t; }
-            if (entry.dutiesId     && !dutiesJa)     { const t = await translateId2Ja(entry.dutiesId,     { userId: req.user!.sub, context: 'gakken-save' }); if (t) dutiesJa     = t; }
-            if (entry.memberRoleId && !memberRoleJa) { const t = await translateId2Ja(entry.memberRoleId, { userId: req.user!.sub, context: 'gakken-save' }); if (t) memberRoleJa = t; }
+            if (entry.productId)    { const t = await translateId2Ja(entry.productId,    { userId: req.user!.sub, context: 'gakken-save' }); if (t) productJa    = t; }
+            if (entry.dutiesId)     { const t = await translateId2Ja(entry.dutiesId,     { userId: req.user!.sub, context: 'gakken-save' }); if (t) dutiesJa     = t; }
+            if (entry.memberRoleId) { const t = await translateId2Ja(entry.memberRoleId, { userId: req.user!.sub, context: 'gakken-save' }); if (t) memberRoleJa = t; }
           }
           return {
             candidateId:  candidate.id,
