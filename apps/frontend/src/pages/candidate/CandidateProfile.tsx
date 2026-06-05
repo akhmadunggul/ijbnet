@@ -44,7 +44,6 @@ const sswSchema = z.object({
 
 const educationHistorySchema = z.object({
   entries: z.array(z.object({
-    id:         z.string().optional(),
     schoolName: z.string().min(1),
     major:      z.string().nullable().optional(),
     startDate:  z.string().nullable().optional(),
@@ -574,10 +573,11 @@ function EducationTab({ candidate }: { candidate: CandidateData }) {
   const historyForm = useForm<EducationHistoryForm>({
     defaultValues: {
       entries: (candidate.educationHistory ?? []).map((e, i) => ({
-        ...e,
-        startDate: e.startDate ? e.startDate.slice(0, 10) : '',
-        endDate: e.endDate ? e.endDate.slice(0, 10) : '',
-        sortOrder: e.sortOrder ?? i,
+        schoolName: e.schoolName,
+        major:      e.major ?? null,
+        startDate:  e.startDate ? e.startDate.slice(0, 10) : '',
+        endDate:    e.endDate ? e.endDate.slice(0, 10) : '',
+        sortOrder:  e.sortOrder ?? i,
       })),
     },
   });
