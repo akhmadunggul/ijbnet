@@ -23,6 +23,8 @@ export interface WeeklyTest {
 export interface CareerEntry {
   id?: string;
   companyName: string | null;
+  companyBusinessActivity?: string | null;
+  companyBusinessActivityJa?: string | null;
   division: string | null;
   divisionJa?: string | null;
   skillGroup: string | null;

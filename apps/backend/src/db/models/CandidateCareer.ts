@@ -5,6 +5,7 @@ export interface CandidateCareerAttributes {
   candidateId: string;
   companyName: string | null;
   companyBusinessActivity: string | null;
+  companyBusinessActivityJa: string | null;
   division: string | null;
   divisionJa: string | null;
   skillGroup: string | null;
@@ -36,6 +37,7 @@ export interface CandidateCareerCreationAttributes
     | 'id'
     | 'companyName'
     | 'companyBusinessActivity'
+    | 'companyBusinessActivityJa'
     | 'division'
     | 'divisionJa'
     | 'skillGroup'
@@ -66,6 +68,7 @@ export class CandidateCareer
   declare candidateId: string;
   declare companyName: string | null;
   declare companyBusinessActivity: string | null;
+  declare companyBusinessActivityJa: string | null;
   declare division: string | null;
   declare divisionJa: string | null;
   declare skillGroup: string | null;
@@ -97,7 +100,8 @@ export function initCandidateCareer(sequelize: Sequelize): void {
       id: { type: DataTypes.UUID, defaultValue: DataTypes.UUIDV4, primaryKey: true },
       candidateId: { type: DataTypes.UUID, allowNull: false },
       companyName: { type: DataTypes.STRING(255), allowNull: true },
-      companyBusinessActivity: { type: DataTypes.TEXT, allowNull: true },
+      companyBusinessActivity:   { type: DataTypes.TEXT, allowNull: true },
+      companyBusinessActivityJa: { type: DataTypes.TEXT, allowNull: true },
       division: { type: DataTypes.STRING(100), allowNull: true },
       divisionJa: { type: DataTypes.STRING(200), allowNull: true },
       skillGroup: { type: DataTypes.STRING(100), allowNull: true },

@@ -216,14 +216,11 @@ export function buildCandidateCvHtml(
   ).join('');
 
   // ── Career rows ───────────────────────────────────────────────────────────────
-  const careerRowsHtml = careerRows.map((row) => {
-    if (!row) return `<tr class="cv-row-md"><td style="${TD}height:40px;"></td><td style="${TD}"></td><td style="${TD}"></td></tr>`;
-    const bizActivity = v(row['companyBusinessActivity'] as unknown);
-    const bizRow = bizActivity
-      ? `<tr><td style="${TD}font-size:11px;color:#555;">Keg. Usaha ・ 事業内容</td><td style="${TD}font-size:11px;" colspan="2">${he(bizActivity)}</td></tr>`
-      : '';
-    return `<tr class="cv-row-md"><td style="${TD}height:40px;">${he(v(row['period']))}</td><td style="${TD}">${he(v(row['companyName']))}</td><td style="${TD}">${he(v(row['divisionJa'] as unknown) || v(row['skillGroupJa'] as unknown) || v(row['division'] as unknown) || v(row['skillGroup'] as unknown))}</td></tr>${bizRow}`;
-  }).join('');
+  const careerRowsHtml = careerRows.map((row) =>
+    row
+      ? `<tr class="cv-row-md"><td style="${TD}height:40px;">${he(v(row['period']))}</td><td style="${TD}">${he(v(row['companyName']))}</td><td style="${TD}">${he(v(row['companyBusinessActivityJa'] as unknown) || v(row['companyBusinessActivity'] as unknown))}</td></tr>`
+      : `<tr class="cv-row-md"><td style="${TD}height:40px;"></td><td style="${TD}"></td><td style="${TD}"></td></tr>`,
+  ).join('');
 
   // ── Cert rows ─────────────────────────────────────────────────────────────────
   const certRowsHtml = certRows.map((row) =>
@@ -344,7 +341,7 @@ export function buildCandidateCvHtml(
       <tr style="text-align:center;">
         <td style="${TD}width:30%;">Periode ・ 期間</td>
         <td style="${TD}width:30%;">Nama Perusahaan ・ 会社名</td>
-        <td style="${TD}width:40%;">Uraian Pekerjaan ・ 業務内容</td>
+        <td style="${TD}width:40%;">Keg. Usaha ・ 事業内容</td>
       </tr>
       ${careerRowsHtml}
     </tbody>

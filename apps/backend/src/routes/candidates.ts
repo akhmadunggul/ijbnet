@@ -400,6 +400,7 @@ router.put('/me/career', async (req: Request, res: Response): Promise<void> => {
       entries.map(async (e, i) => {
         let divisionJa = e.divisionJa ?? null;
         let skillGroupJa = e.skillGroupJa ?? null;
+        let companyBusinessActivityJa = e.companyBusinessActivityJa ?? null;
         if (autoTranslate) {
           if (e.division && !divisionJa) {
             const t = await translateId2Ja(e.division, { userId: req.user!.sub, context: 'career-save' });
@@ -409,12 +410,17 @@ router.put('/me/career', async (req: Request, res: Response): Promise<void> => {
             const t = await translateId2Ja(e.skillGroup, { userId: req.user!.sub, context: 'career-save' });
             if (t) skillGroupJa = t;
           }
+          if (e.companyBusinessActivity && !companyBusinessActivityJa) {
+            const t = await translateId2Ja(e.companyBusinessActivity, { userId: req.user!.sub, context: 'career-save' });
+            if (t) companyBusinessActivityJa = t;
+          }
         }
         return {
           id: uuidv4(),
           candidateId: candidate.id,
           companyName: e.companyName ?? null,
           companyBusinessActivity: e.companyBusinessActivity ?? null,
+          companyBusinessActivityJa,
           division: e.division ?? null,
           divisionJa,
           skillGroup: e.skillGroup ?? null,

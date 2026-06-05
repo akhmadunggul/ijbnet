@@ -510,29 +510,21 @@ export default function CandidateCV({
           <tr style={{ textAlign: 'center' }}>
             <td style={{ ...TD, width: '30%' }}>{L('Periode', '期間')}</td>
             <td style={{ ...TD, width: '30%' }}>{L('Nama Perusahaan', '会社名')}</td>
-            <td style={{ ...TD, width: '40%' }}>{L('Uraian Pekerjaan', '業務内容')}</td>
+            <td style={{ ...TD, width: '40%' }}>{L('Keg. Usaha', '事業内容')}</td>
           </tr>
           {careerRows.map((row, i) =>
             row ? (
-              <React.Fragment key={(row as any).id ?? i}>
-                <tr className="cv-row-md">
-                  <td style={{ ...TD, height: '40px' }}>
-                    {isJaMode
-                      ? (formatPeriodJa((row as any).startDate, (row as any).endDate) || v((row as any).period))
-                      : v((row as any).period)}
-                  </td>
-                  <td style={TD}>{v((row as any).companyName)}</td>
-                  <td style={TD}>
-                    {v((row as any).divisionJa) || v((row as any).skillGroupJa) || v((row as any).division) || v((row as any).skillGroup)}
-                  </td>
-                </tr>
-                {(row as any).companyBusinessActivity && (
-                  <tr>
-                    <td style={{ ...TD, fontSize: '11px', color: '#555' }}>{L('Keg. Usaha', '事業内容')}</td>
-                    <td style={{ ...TD, fontSize: '11px' }} colSpan={2}>{v((row as any).companyBusinessActivity)}</td>
-                  </tr>
-                )}
-              </React.Fragment>
+              <tr className="cv-row-md" key={(row as any).id ?? i}>
+                <td style={{ ...TD, height: '40px' }}>
+                  {isJaMode
+                    ? (formatPeriodJa((row as any).startDate, (row as any).endDate) || v((row as any).period))
+                    : v((row as any).period)}
+                </td>
+                <td style={TD}>{v((row as any).companyName)}</td>
+                <td style={TD}>
+                  {v((row as any).companyBusinessActivityJa) || v((row as any).companyBusinessActivity)}
+                </td>
+              </tr>
             ) : (
               <tr className="cv-row-md" key={`career-${i}`}>
                 <td style={{ ...TD, height: '40px' }} />
