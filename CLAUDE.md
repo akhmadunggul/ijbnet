@@ -249,6 +249,7 @@ apps/frontend/src/
 - v0.6.34 — Fix batch CV date of birth (Sequelize DATEONLY returns Date object on some rows — toDateStr() normalises both Date objects and strings); auto-translate selfPrJa/motivationJa/selfIntroJa/divisionJa/skillGroupJa for all candidates in batch before rendering — Promise.allSettled ensures single failure never aborts batch; translations saved to DB for caching; combined translate+render in single per-candidate loop so mutated fields are used in HTML
 - v0.7.0 — Fix completeness score mismatch: superadmin list and manager batch detail computed calcCompleteness() on candidate data missing educationHistory/career/tests associations → always showed 95% (20/21 in CV mode) while candidate portal correctly showed 100%; extract shared candidateIncludes() utility (utils/candidateIncludes.ts) used by all four routes so association set is guaranteed identical
 - v0.7.1 — Superadmin toggle to enable/disable Resume (職務経歴書) download for recruiters (shokumu_recruiter_enabled); new GET /api/recruiter/candidates/:id/shokumu-pdf endpoint (batch-RBAC + feature gate + audit log); gold Resume button on recruiter CV page shown only when enabled; recruiter.ts migrated to shared candidateIncludes()
+- v0.7.2 — Recruiter Resume in-browser display (mirrors CV viewer): RecruiterShokumuPage at /recruiter/candidates/:id/shokumu; GET /api/recruiter/candidates/:id/gakken-resume endpoint (batch-RBAC); fix ShokumuResume internal query (was calling candidate-only /me/shokumu → 403 for recruiters, now uses public /superadmin/shokumu-config); GakkenResume accepts optional gakkenEndpoint prop; Resume button navigates to display page instead of triggering PDF download
 
-Current: v0.7.1
+Current: v0.7.2
 Live at: https://jinzai.jobagus.id
