@@ -361,9 +361,9 @@ export function buildCandidateCvHtml(
     <tbody>
       <tr><td style="${ST}" colspan="3">Pengalaman Kerja ・ 職歴</td></tr>
       <tr style="text-align:center;">
-        <td style="${TD}width:30%;">Periode ・ 期間</td>
+        <td style="${TD}width:25%;">Periode ・ 期間</td>
         <td style="${TD}width:30%;">Nama Perusahaan ・ 会社名</td>
-        <td style="${TD}width:40%;">Keg. Usaha ・ 事業内容</td>
+        <td style="${TD}width:45%;">Keg. Usaha ・ 事業内容</td>
       </tr>
       ${careerRowsHtml}
     </tbody>
@@ -374,9 +374,9 @@ export function buildCandidateCvHtml(
     <tbody>
       <tr><td style="${ST}" colspan="3">Sertifikasi ・ 資格・公的認定</td></tr>
       <tr style="text-align:center;">
-        <td style="${TD}width:20%;">Tgl Penerbitan ・ 発行日</td>
+        <td style="${TD}width:25%;">Tgl Penerbitan ・ 発行日</td>
         <td style="${TD}width:40%;">Nama Sertifikat ・ 名称</td>
-        <td style="${TD}width:40%;">Level, Keterangan ・ レベルや詳細</td>
+        <td style="${TD}width:35%;">Level, Keterangan ・ レベルや詳細</td>
       </tr>
       ${certRowsHtml}
     </tbody>

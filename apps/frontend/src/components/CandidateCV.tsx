@@ -526,9 +526,9 @@ export default function CandidateCV({
             <td style={ST} colSpan={3}>{L('Pengalaman Kerja', '職歴')}</td>
           </tr>
           <tr style={{ textAlign: 'center' }}>
-            <td style={{ ...TD, width: '30%' }}>{L('Periode', '期間')}</td>
+            <td style={{ ...TD, width: '25%' }}>{L('Periode', '期間')}</td>
             <td style={{ ...TD, width: '30%' }}>{L('Nama Perusahaan', '会社名')}</td>
-            <td style={{ ...TD, width: '40%' }}>{L('Keg. Usaha', '事業内容')}</td>
+            <td style={{ ...TD, width: '45%' }}>{L('Keg. Usaha', '事業内容')}</td>
           </tr>
           {careerRows.map((row, i) =>
             row ? (
@@ -559,9 +559,9 @@ export default function CandidateCV({
             <td style={ST} colSpan={3}>{L('Sertifikasi', '資格・公的認定')}</td>
           </tr>
           <tr style={{ textAlign: 'center' }}>
-            <td style={{ ...TD, width: '20%' }}>{L('Tgl Penerbitan', '発行日')}</td>
+            <td style={{ ...TD, width: '25%' }}>{L('Tgl Penerbitan', '発行日')}</td>
             <td style={{ ...TD, width: '40%' }}>{L('Nama Sertifikat', '名称')}</td>
-            <td style={{ ...TD, width: '40%' }}>{L('Level, Keterangan', 'レベルや詳細')}</td>
+            <td style={{ ...TD, width: '35%' }}>{L('Level, Keterangan', 'レベルや詳細')}</td>
           </tr>
           {certRows.map((row, i) =>
             row ? (
