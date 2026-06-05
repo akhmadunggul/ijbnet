@@ -253,6 +253,19 @@ router.get('/shokumu-config', wrap(async (_req, res) => {
   res.json({ enabled, layout, mergeCv, rolloutMode, rolloutLpkIds, template, recruiterEnabled });
 }));
 
+// ── GET /api/superadmin/cv-lang-config — PUBLIC ───────────────────────────────
+router.get('/cv-lang-config', wrap(async (_req, res) => {
+  const [modeRow, lpkIdsRow] = await Promise.all([
+    GlobalSettings.findOne({ where: { key: 'cv_lang_mode' } }),
+    GlobalSettings.findOne({ where: { key: 'cv_lang_ja_lpk_ids' } }),
+  ]);
+  const mode = modeRow ? String((modeRow.toJSON() as unknown as Record<string, unknown>)['value'] ?? 'bilingual') : 'bilingual';
+  const jaLpkIds = lpkIdsRow
+    ? ((lpkIdsRow.toJSON() as unknown as Record<string, unknown>)['value'] as string[] | null) ?? []
+    : [];
+  res.json({ mode, jaLpkIds });
+}));
+
 router.use(authenticate, requireRole('super_admin'));
 
 // ── System Stats ──────────────────────────────────────────────────────────────
@@ -502,6 +515,26 @@ router.put('/cv-layout', wrap(async (req, res) => {
 
   await cacheDel('gs:cv_layout');
   res.json({ layout });
+}));
+
+// ── PUT /api/superadmin/cv-lang-config ───────────────────────────────────────
+router.put('/cv-lang-config', wrap(async (req, res) => {
+  const body = req.body as Record<string, unknown>;
+  const mode = body['mode'] === 'lpk' ? 'lpk' : 'bilingual';
+  const rawLpkIds = Array.isArray(body['jaLpkIds']) ? body['jaLpkIds'] : [];
+  const jaLpkIds = (rawLpkIds as unknown[]).filter((id): id is string => typeof id === 'string' && isUUID(id));
+
+  const upsert = async (key: string, value: unknown) => {
+    const [row, created] = await GlobalSettings.findOrCreate({ where: { key }, defaults: { key, value } });
+    if (!created) await row.update({ value });
+  };
+
+  await Promise.all([
+    upsert('cv_lang_mode', mode),
+    upsert('cv_lang_ja_lpk_ids', jaLpkIds),
+  ]);
+
+  res.json({ mode, jaLpkIds });
 }));
 
 // ── PUT /api/superadmin/photo-bg-color ───────────────────────────────────────

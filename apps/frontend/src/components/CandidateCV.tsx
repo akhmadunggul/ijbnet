@@ -66,6 +66,29 @@ function formatDobJa(dateStr: string): string {
   return `${y}年${m}月${d}日`;
 }
 
+function formatPeriodJa(start?: string | null, end?: string | null): string {
+  const fmt = (d: string) => {
+    const [y, m] = d.slice(0, 7).split('-').map(Number);
+    return `${y}年${m}月`;
+  };
+  const s = start ? fmt(start) : null;
+  const e = end ? fmt(end) : null;
+  if (s && e) return `${s} ー ${e}`;
+  if (s) return `${s} ー 現在`;
+  if (e) return `ー ${e}`;
+  return '';
+}
+
+function formatDateJa(dateStr: string): string {
+  if (!dateStr) return '';
+  const parts = dateStr.slice(0, 10).split('-').map(Number);
+  const [y, m, d] = parts;
+  if (!y) return dateStr;
+  if (d) return `${y}年${m}月${d}日`;
+  if (m) return `${y}年${m}月`;
+  return `${y}年`;
+}
+
 function trunc(text: string, max: number): string {
   if (text.length <= max) return text;
   return text.slice(0, max).trimEnd() + '…';
@@ -151,7 +174,6 @@ export default function CandidateCV({
   lang = 'id',
 }: CandidateCVProps) {
   void showSensitiveData;
-  void lang;
 
   const [zoom, setZoom] = useState(1.0);
 
@@ -170,8 +192,6 @@ export default function CandidateCV({
     queryFn: () => api.get('/superadmin/translation-config').then(r => r.data),
     staleTime: 5 * 60 * 1000,
   });
-  // Default to false while the config is loading so we never fire a live
-  // translation call before we know the setting value.
   const autoTranslateEnabled = translateConfig?.enabled === true;
 
   const { data: layoutConfig } = useQuery<{ layout: string }>({
@@ -188,6 +208,18 @@ export default function CandidateCV({
   });
   const fontKey = fontConfig?.fontKey ?? 'ms-mincho';
   const FONT = FONT_MAP[fontKey] ?? FONT_MAP['ms-mincho'];
+
+  const { data: cvLangConfig } = useQuery<{ mode: string; jaLpkIds: string[] }>({
+    queryKey: ['cv-lang-config'],
+    queryFn: () => api.get('/superadmin/cv-lang-config').then(r => r.data),
+    staleTime: 5 * 60 * 1000,
+  });
+
+  // Determine if this candidate's LPK is configured for Japanese-only CV.
+  // The `lang` prop from the parent can override this (e.g. for PDF generation).
+  const lpkId = v(c.lpkId);
+  const isJaMode: boolean = lang === 'ja'
+    || (cvLangConfig?.mode === 'lpk' && lpkId !== '' && (cvLangConfig.jaLpkIds ?? []).includes(lpkId));
 
   // Inject Google Fonts link if needed
   useEffect(() => {
@@ -206,7 +238,6 @@ export default function CandidateCV({
 
   useEffect(() => {
     if (!autoTranslateEnabled) {
-      // Clear any stale live-translated overrides so Indonesian fallback shows.
       setJaOverride({});
       return;
     }
@@ -233,10 +264,12 @@ export default function CandidateCV({
     });
   }, [autoTranslateEnabled, c.selfIntroId, c.selfIntroJa, c.motivationId, c.motivationJa, c.selfPrId, c.selfPrJa, c.hobbies]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Returns the Japanese value when available, or Indonesian as fallback.
-  // jaOverride (live translation) is only consulted when auto-translate is on.
   const getJa = (jaKey: string, idKey: string): string =>
     v(c[jaKey]) || (autoTranslateEnabled ? v(jaOverride[jaKey]) : '') || v(c[idKey]);
+
+  // ── Label helper — returns Japanese-only label in ja mode ─────────────────
+  const L = (idLabel: string, jaLabel: string) =>
+    isJaMode ? jaLabel : `${idLabel} ・ ${jaLabel}`;
 
   const age = c.dateOfBirth ? calculateAge(c.dateOfBirth) : null;
 
@@ -245,16 +278,13 @@ export default function CandidateCV({
       ? c.tests[c.tests.length - 1]
       : null;
 
-  const genderLabel =
-    c.gender === 'M' ? 'Laki-laki / 男' :
-    c.gender === 'F' ? 'Perempuan / 女' : '';
+  const genderLabel = isJaMode
+    ? (c.gender === 'M' ? '男性' : c.gender === 'F' ? '女性' : '')
+    : (c.gender === 'M' ? 'Laki-laki / 男' : c.gender === 'F' ? 'Perempuan / 女' : '');
 
-  const maritalLabel: Record<string, string> = {
-    single:   'Belum Menikah / 未婚',
-    married:  'Menikah / 既婚',
-    divorced: 'Cerai / 離婚',
-    widowed:  'Janda / Duda',
-  };
+  const maritalLabelMap: Record<string, string> = isJaMode
+    ? { single: '未婚', married: '既婚', divorced: '離婚', widowed: '死別' }
+    : { single: 'Belum Menikah / 未婚', married: 'Menikah / 既婚', divorced: 'Cerai / 離婚', widowed: 'Janda / Duda' };
 
   const addressMasked = (c.address as any)?.masked === true;
   const addressDisplay = addressMasked ? '🔒' : v(c.address);
@@ -273,18 +303,17 @@ export default function CandidateCV({
     ? `${v(latestTest.testName)}${latestTest.score != null ? ` / ${latestTest.score}` : ''}`
     : '';
 
-  const japanDisplay =
-    c.hasVisitedJapan === true  ? 'Ada（有）' :
-    c.hasVisitedJapan === false ? 'Belum（無）' : '';
+  const japanDisplay = isJaMode
+    ? (c.hasVisitedJapan === true ? '有' : c.hasVisitedJapan === false ? '無' : '')
+    : (c.hasVisitedJapan === true ? 'Ada（有）' : c.hasVisitedJapan === false ? 'Belum（無）' : '');
 
-  const passportDisplay =
-    c.hasPassport === true  ? 'Ada（有）' :
-    c.hasPassport === false ? 'Tidak（無）' : '';
+  const passportDisplay = isJaMode
+    ? (c.hasPassport === true ? '有' : c.hasPassport === false ? '無' : '')
+    : (c.hasPassport === true ? 'Ada（有）' : c.hasPassport === false ? 'Tidak（無）' : '');
 
   const dobStr = c.dateOfBirth ? formatDobJa(c.dateOfBirth) : '';
   const birthDisplay = [v(c.birthPlace), dobStr].filter(Boolean).join('  ');
 
-  // Merge certifications + tests into one list
   const combinedCerts = [
     ...(Array.isArray(c.certifications) ? c.certifications : []).map((cert: any) => ({
       issuedDate: cert.issuedDate ? v(cert.issuedDate).slice(0, 10) : '',
@@ -322,6 +351,13 @@ export default function CandidateCV({
   const TD = S.td;
   const ST = S.sectionTitle;
 
+  const containerStyle: React.CSSProperties = {
+    ...S.container,
+    fontFamily: FONT,
+    // Japanese CVs don't force-uppercase: proper nouns and dates must render as-is
+    textTransform: isJaMode ? 'none' : 'uppercase',
+  };
+
   return (
     <>
       <div className="print:hidden flex items-center gap-2 justify-end mb-3">
@@ -338,12 +374,14 @@ export default function CandidateCV({
         >+</button>
       </div>
       <div className="cv-zoom-wrapper" style={{ zoom: zoom as unknown as number }}>
-    <div className="cv-con" style={{ ...S.container, fontFamily: FONT }}>
+    <div className="cv-con" style={containerStyle}>
 
       {/* ── Title ── */}
-      <div className="cv-title" style={S.headerTitle}>候補者データ ・ DATA KANDIDAT</div>
+      <div className="cv-title" style={S.headerTitle}>
+        {isJaMode ? '候補者データ' : '候補者データ ・ DATA KANDIDAT'}
+      </div>
 
-      {/* ── Photo (float right) + basic info table (float left) ── */}
+      {/* ── Photo (float right) + basic info table ── */}
       <div className="cv-info-wrap" style={{ overflow: 'hidden', marginBottom: '15px' }}>
         <div style={layout === 'layout2' ? { ...S.photoBox, height: '150px', overflow: 'hidden' } : S.photoBox}>
           {c.closeupUrl ? (
@@ -366,7 +404,7 @@ export default function CandidateCV({
         <table className="cv-tbl" style={{ ...S.table, width: 'calc(100% - 140px)', float: 'left', marginBottom: 0 }}>
           <tbody>
             <tr>
-              <td style={{ ...TD, width: '20%' }}>Nama ・ 氏名</td>
+              <td style={{ ...TD, width: '20%' }}>{L('Nama', '氏名')}</td>
               <td style={TD} colSpan={3}>
                 <div>{v(c.fullName)}</div>
                 {c.nameKatakana && (
@@ -377,33 +415,33 @@ export default function CandidateCV({
               </td>
             </tr>
             <tr>
-              <td style={{ ...TD, width: '20%' }}>Tempat, Tgl Lahir ・ 出身地 生年月日</td>
+              <td style={{ ...TD, width: '20%' }}>{L('Tempat, Tgl Lahir', '出身地・生年月日')}</td>
               <td style={{ ...TD, width: '30%' }}>{birthDisplay}</td>
-              <td style={{ ...TD, width: '20%' }}>Jenis Kelamin ・ 性別</td>
+              <td style={{ ...TD, width: '20%' }}>{L('Jenis Kelamin', '性別')}</td>
               <td style={TD}>{genderLabel}</td>
             </tr>
             <tr>
-              <td style={TD}>Usia ・ 年齢</td>
+              <td style={TD}>{L('Usia', '年齢')}</td>
               <td style={TD}>{age !== null ? `${age}歳` : ''}</td>
-              <td style={TD}>Agama ・ 宗教</td>
+              <td style={TD}>{L('Agama', '宗教')}</td>
               <td style={TD}>{v(c.religion)}</td>
             </tr>
             <tr>
-              <td style={TD}>Gol. Darah ・ 血液型</td>
+              <td style={TD}>{L('Gol. Darah', '血液型')}</td>
               <td style={TD}>{v(c.bloodType)}</td>
-              <td style={TD}>Status Nikah ・ 結婚歴</td>
+              <td style={TD}>{L('Status Nikah', '婚姻歴')}</td>
               <td style={TD}>
-                {c.maritalStatus ? (maritalLabel[c.maritalStatus] ?? v(c.maritalStatus)) : ''}
+                {c.maritalStatus ? (maritalLabelMap[c.maritalStatus] ?? v(c.maritalStatus)) : ''}
               </td>
             </tr>
             <tr>
-              <td style={TD}>Tinggi ・ 身長</td>
+              <td style={TD}>{L('Tinggi', '身長')}</td>
               <td style={TD}>{heightDisplay}</td>
-              <td style={TD}>Berat ・ 体重</td>
+              <td style={TD}>{L('Berat', '体重')}</td>
               <td style={TD}>{weightDisplay}</td>
             </tr>
             <tr>
-              <td style={TD}>Level JP ・ 日本語レベル</td>
+              <td style={TD}>{L('Level JP', '日本語レベル')}</td>
               <td style={TD} colSpan={3}>{jpLevelDisplay}</td>
             </tr>
           </tbody>
@@ -414,17 +452,17 @@ export default function CandidateCV({
       <table className="cv-tbl" style={S.table}>
         <tbody>
           <tr>
-            <td style={{ ...TD, width: '25%' }}>Pernah ke Jepang ・ 日本滞在経験</td>
+            <td style={{ ...TD, width: '25%' }}>{L('Pernah ke Jepang', '日本滞在経験')}</td>
             <td style={{ ...TD, width: '25%' }}>{japanDisplay}</td>
-            <td style={{ ...TD, width: '25%' }}>Paspor / Visa ・ パスポート／ビザ</td>
+            <td style={{ ...TD, width: '25%' }}>{L('Paspor / Visa', 'パスポート／ビザ')}</td>
             <td style={{ ...TD, width: '25%' }}>{passportDisplay}</td>
           </tr>
           <tr>
-            <td style={TD}>Alamat ・ 現住所</td>
+            <td style={TD}>{L('Alamat', '現住所')}</td>
             <td style={TD} colSpan={3}>{addressDisplay}</td>
           </tr>
           <tr>
-            <td style={TD}>Hobi ・ 趣味</td>
+            <td style={TD}>{L('Hobi', '趣味')}</td>
             <td style={TD} colSpan={3}>{getJa('hobbiesJa', 'hobbies')}</td>
           </tr>
         </tbody>
@@ -434,18 +472,20 @@ export default function CandidateCV({
       <table className="cv-tbl" style={S.table}>
         <tbody>
           <tr>
-            <td style={ST} colSpan={3}>Pendidikan ・ 学歴</td>
+            <td style={ST} colSpan={3}>{L('Pendidikan', '学歴')}</td>
           </tr>
           <tr style={{ textAlign: 'center' }}>
-            <td style={{ ...TD, width: '30%' }}>Periode ・ 期間</td>
-            <td style={{ ...TD, width: '40%' }}>Nama Sekolah ・ 学校名</td>
-            <td style={{ ...TD, width: '30%' }}>Jurusan ・ 専攻</td>
+            <td style={{ ...TD, width: '30%' }}>{L('Periode', '期間')}</td>
+            <td style={{ ...TD, width: '40%' }}>{L('Nama Sekolah', '学校名')}</td>
+            <td style={{ ...TD, width: '30%' }}>{L('Jurusan', '専攻')}</td>
           </tr>
           {eduRows.map((row, i) =>
             row ? (
               <tr className="cv-row-sm" key={(row as any).id ?? i}>
                 <td style={{ ...TD, height: '25px' }}>
-                  {formatPeriod((row as any).startDate, (row as any).endDate)}
+                  {isJaMode
+                    ? formatPeriodJa((row as any).startDate, (row as any).endDate)
+                    : formatPeriod((row as any).startDate, (row as any).endDate)}
                 </td>
                 <td style={TD}>{v((row as any).schoolName)}</td>
                 <td style={TD}>{v((row as any).major)}</td>
@@ -465,17 +505,21 @@ export default function CandidateCV({
       <table className="cv-tbl" style={S.table}>
         <tbody>
           <tr>
-            <td style={ST} colSpan={3}>Pengalaman Kerja ・ 職歴</td>
+            <td style={ST} colSpan={3}>{L('Pengalaman Kerja', '職歴')}</td>
           </tr>
           <tr style={{ textAlign: 'center' }}>
-            <td style={{ ...TD, width: '30%' }}>Periode ・ 期間</td>
-            <td style={{ ...TD, width: '30%' }}>Nama Perusahaan ・ 会社名</td>
-            <td style={{ ...TD, width: '40%' }}>Uraian Pekerjaan ・ 業務内容</td>
+            <td style={{ ...TD, width: '30%' }}>{L('Periode', '期間')}</td>
+            <td style={{ ...TD, width: '30%' }}>{L('Nama Perusahaan', '会社名')}</td>
+            <td style={{ ...TD, width: '40%' }}>{L('Uraian Pekerjaan', '業務内容')}</td>
           </tr>
           {careerRows.map((row, i) =>
             row ? (
               <tr className="cv-row-md" key={(row as any).id ?? i}>
-                <td style={{ ...TD, height: '40px' }}>{v((row as any).period)}</td>
+                <td style={{ ...TD, height: '40px' }}>
+                  {isJaMode
+                    ? (formatPeriodJa((row as any).startDate, (row as any).endDate) || v((row as any).period))
+                    : v((row as any).period)}
+                </td>
                 <td style={TD}>{v((row as any).companyName)}</td>
                 <td style={TD}>
                   {v((row as any).divisionJa) || v((row as any).skillGroupJa) || v((row as any).division) || v((row as any).skillGroup)}
@@ -496,17 +540,19 @@ export default function CandidateCV({
       <table className="cv-tbl" style={S.table}>
         <tbody>
           <tr>
-            <td style={ST} colSpan={3}>Sertifikasi ・ 資格・公的認定</td>
+            <td style={ST} colSpan={3}>{L('Sertifikasi', '資格・公的認定')}</td>
           </tr>
           <tr style={{ textAlign: 'center' }}>
-            <td style={{ ...TD, width: '20%' }}>Tgl Penerbitan ・ 発行日</td>
-            <td style={{ ...TD, width: '40%' }}>Nama Sertifikat ・ 名称</td>
-            <td style={{ ...TD, width: '40%' }}>Level, Keterangan ・ レベルや詳細</td>
+            <td style={{ ...TD, width: '20%' }}>{L('Tgl Penerbitan', '発行日')}</td>
+            <td style={{ ...TD, width: '40%' }}>{L('Nama Sertifikat', '名称')}</td>
+            <td style={{ ...TD, width: '40%' }}>{L('Level, Keterangan', 'レベルや詳細')}</td>
           </tr>
           {certRows.map((row, i) =>
             row ? (
               <tr key={i}>
-                <td style={{ ...TD, height: '25px' }}>{(row as any).issuedDate}</td>
+                <td style={{ ...TD, height: '25px' }}>
+                  {isJaMode ? formatDateJa((row as any).issuedDate) : (row as any).issuedDate}
+                </td>
                 <td style={TD}>{(row as any).name}</td>
                 <td style={TD}>{(row as any).info}</td>
               </tr>
@@ -526,10 +572,14 @@ export default function CandidateCV({
         <tbody>
           <tr>
             <td style={ST}>
-              Skill ・ 技能
-              <span style={{ fontWeight: 'normal', fontSize: '11px' }}>
-                {' '}(Keahlian yang berhubungan dengan bidang yang dilamar)
-              </span>
+              {isJaMode ? '技能' : (
+                <>
+                  Skill ・ 技能
+                  <span style={{ fontWeight: 'normal', fontSize: '11px' }}>
+                    {' '}(Keahlian yang berhubungan dengan bidang yang dilamar)
+                  </span>
+                </>
+              )}
             </td>
           </tr>
           <tr className="cv-row-md">
@@ -544,7 +594,7 @@ export default function CandidateCV({
       <table className="cv-tbl" style={S.table}>
         <tbody>
           <tr>
-            <td style={ST}>Motivasi ingin bekerja di Jepang ・ 志望理由</td>
+            <td style={ST}>{L('Motivasi ingin bekerja di Jepang', '志望理由')}</td>
           </tr>
           <tr className="cv-row-lg">
             <td style={{ ...TD, height: '50px', whiteSpace: 'pre-wrap' }}>
@@ -558,7 +608,7 @@ export default function CandidateCV({
       <table className="cv-tbl" style={{ ...S.table, marginBottom: 0 }}>
         <tbody>
           <tr>
-            <td style={ST}>Promosi Diri ・ 自己PR</td>
+            <td style={ST}>{L('Promosi Diri', '自己PR')}</td>
             {layout === 'layout2' && (
               <td style={{ ...TD, width: '100px', border: '1px solid #000', textAlign: 'center', verticalAlign: 'middle', padding: '6px 10px' }} rowSpan={2}>
                 <img src={ijbnetLogo} alt="IJBNet" style={{ width: '100%', height: 'auto', display: 'block' }} />

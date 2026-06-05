@@ -80,6 +80,10 @@ export default function SuperAdminDataEntrySettings() {
   const [journeyVizMode, setJourneyVizMode] = useState<JourneyVizMode>('graphical');
   const [journeyVizSaveSuccess, setJourneyVizSaveSuccess] = useState(false);
   const [journeyVizSaveError, setJourneyVizSaveError] = useState(false);
+  const [cvLangMode, setCvLangMode] = useState<'bilingual' | 'lpk'>('bilingual');
+  const [cvLangJaLpkIds, setCvLangJaLpkIds] = useState<string[]>([]);
+  const [cvLangSaveSuccess, setCvLangSaveSuccess] = useState(false);
+  const [cvLangSaveError, setCvLangSaveError] = useState(false);
   const [shokumuEnabled, setShokumuEnabled] = useState(false);
   const [shokumuLayout, setShokumuLayout] = useState<ShokumuLayout>('reverse');
   const [shokumuMergeCv, setShokumuMergeCv] = useState(false);
@@ -130,6 +134,11 @@ export default function SuperAdminDataEntrySettings() {
   const { data: journeyVizData } = useQuery<{ mode: JourneyVizMode }>({
     queryKey: ['journey-visualization'],
     queryFn: () => api.get('/superadmin/journey-visualization').then((r) => r.data),
+  });
+
+  const { data: cvLangConfigData } = useQuery<{ mode: string; jaLpkIds: string[] }>({
+    queryKey: ['cv-lang-config'],
+    queryFn: () => api.get('/superadmin/cv-lang-config').then((r) => r.data),
   });
 
   const { data: shokumuConfigData } = useQuery<{ enabled: boolean; layout: ShokumuLayout; mergeCv: boolean; rolloutMode: ShokumuRolloutMode; rolloutLpkIds: string[]; template: ShokumuTemplate; recruiterEnabled: boolean }>({
@@ -191,6 +200,14 @@ export default function SuperAdminDataEntrySettings() {
   }, [journeyVizData]);
 
   useEffect(() => {
+    if (cvLangConfigData !== undefined) {
+      if (cvLangConfigData.mode === 'lpk') setCvLangMode('lpk');
+      else setCvLangMode('bilingual');
+      setCvLangJaLpkIds(cvLangConfigData.jaLpkIds ?? []);
+    }
+  }, [cvLangConfigData]);
+
+  useEffect(() => {
     if (shokumuConfigData !== undefined) {
       setShokumuEnabled(shokumuConfigData.enabled);
       if (shokumuConfigData.layout) setShokumuLayout(shokumuConfigData.layout);
@@ -244,6 +261,21 @@ export default function SuperAdminDataEntrySettings() {
     onError: () => {
       setLayoutSaveError(true);
       setLayoutSaveSuccess(false);
+    },
+  });
+
+  const cvLangMutation = useMutation({
+    mutationFn: ({ mode, jaLpkIds }: { mode: string; jaLpkIds: string[] }) =>
+      api.put('/superadmin/cv-lang-config', { mode, jaLpkIds }).then((r) => r.data),
+    onSuccess: () => {
+      setCvLangSaveSuccess(true);
+      setCvLangSaveError(false);
+      void qc.invalidateQueries({ queryKey: ['cv-lang-config'] });
+      setTimeout(() => setCvLangSaveSuccess(false), 3000);
+    },
+    onError: () => {
+      setCvLangSaveError(true);
+      setCvLangSaveSuccess(false);
     },
   });
 
@@ -703,6 +735,80 @@ export default function SuperAdminDataEntrySettings() {
           <span className="text-sm text-green-600">✓ {t('superadmin.dataEntrySettings.saved')}</span>
         )}
         {layoutSaveError && (
+          <span className="text-sm text-red-600">{t('superadmin.dataEntrySettings.errorSave')}</span>
+        )}
+      </div>
+
+      {/* CV Language Format */}
+      <div>
+        <h2 className="text-base font-semibold text-gray-900 mb-1">{t('superadmin.dataEntrySettings.cvLangTitle')}</h2>
+        <p className="text-sm text-gray-500 mb-4">{t('superadmin.dataEntrySettings.cvLangDesc')}</p>
+      </div>
+
+      <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-5 space-y-4">
+        <div className="space-y-2">
+          <label className="flex items-center gap-3 cursor-pointer">
+            <input
+              type="radio"
+              name="cv_lang_mode"
+              value="bilingual"
+              checked={cvLangMode === 'bilingual'}
+              onChange={() => setCvLangMode('bilingual')}
+              className="accent-navy-700"
+            />
+            <span className="text-sm text-gray-800">{t('superadmin.dataEntrySettings.cvLangBilingual')}</span>
+          </label>
+          <label className="flex items-center gap-3 cursor-pointer">
+            <input
+              type="radio"
+              name="cv_lang_mode"
+              value="lpk"
+              checked={cvLangMode === 'lpk'}
+              onChange={() => setCvLangMode('lpk')}
+              className="accent-navy-700"
+            />
+            <span className="text-sm text-gray-800">{t('superadmin.dataEntrySettings.cvLangPerLpk')}</span>
+          </label>
+        </div>
+
+        {cvLangMode === 'lpk' && (
+          <div className="ml-7 border border-gray-100 rounded-lg p-3 bg-gray-50 max-h-48 overflow-y-auto space-y-1.5">
+            {(lpkListData?.lpks ?? []).length === 0 && (
+              <p className="text-xs text-gray-400">No LPKs found.</p>
+            )}
+            {(lpkListData?.lpks ?? []).map((lpk) => (
+              <label key={lpk.id} className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={cvLangJaLpkIds.includes(lpk.id)}
+                  onChange={(e) =>
+                    setCvLangJaLpkIds((prev) =>
+                      e.target.checked ? [...prev, lpk.id] : prev.filter((id) => id !== lpk.id),
+                    )
+                  }
+                  className="accent-navy-700 w-4 h-4"
+                />
+                <span className="text-sm text-gray-800">{lpk.name}</span>
+                {lpk.city && <span className="text-xs text-gray-400">{lpk.city}</span>}
+                <span className="ml-auto text-xs text-gold-600 font-medium">{t('superadmin.dataEntrySettings.cvLangJaLabel')}</span>
+              </label>
+            ))}
+          </div>
+        )}
+      </div>
+
+      <div className="flex items-center gap-4">
+        <button
+          onClick={() => cvLangMutation.mutate({ mode: cvLangMode, jaLpkIds: cvLangJaLpkIds })}
+          disabled={cvLangMutation.isPending}
+          className="px-5 py-2 bg-gray-900 text-white text-sm rounded-lg hover:bg-gray-700 transition disabled:opacity-50"
+        >
+          {cvLangMutation.isPending ? '…' : t('superadmin.dataEntrySettings.saveBtn')}
+        </button>
+        {cvLangSaveSuccess && (
+          <span className="text-sm text-green-600">✓ {t('superadmin.dataEntrySettings.saved')}</span>
+        )}
+        {cvLangSaveError && (
           <span className="text-sm text-red-600">{t('superadmin.dataEntrySettings.errorSave')}</span>
         )}
       </div>
