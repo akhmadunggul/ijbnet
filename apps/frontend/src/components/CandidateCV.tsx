@@ -448,7 +448,7 @@ export default function CandidateCV({
         </table>
       </div>
 
-      {/* ── Japan / Passport / Address / Hobi ── */}
+      {/* ── Japan / Passport / Address ── */}
       <table className="cv-tbl" style={S.table}>
         <tbody>
           <tr>
@@ -460,10 +460,6 @@ export default function CandidateCV({
           <tr>
             <td style={TD}>{L('Alamat', '現住所')}</td>
             <td style={TD} colSpan={3}>{addressDisplay}</td>
-          </tr>
-          <tr>
-            <td style={TD}>{L('Hobi', '趣味')}</td>
-            <td style={TD} colSpan={3}>{getJa('hobbiesJa', 'hobbies')}</td>
           </tr>
         </tbody>
       </table>
@@ -583,22 +579,8 @@ export default function CandidateCV({
             </td>
           </tr>
           <tr className="cv-row-md">
-            <td style={{ ...TD, height: '40px', whiteSpace: 'pre-wrap' }}>
-              {trunc(getJa('selfPrJa', 'selfPrId'), 200)}
-            </td>
-          </tr>
-        </tbody>
-      </table>
-
-      {/* ── Motivasi ── */}
-      <table className="cv-tbl" style={S.table}>
-        <tbody>
-          <tr>
-            <td style={ST}>{L('Motivasi ingin bekerja di Jepang', '志望理由')}</td>
-          </tr>
-          <tr className="cv-row-lg">
-            <td style={{ ...TD, height: '50px', whiteSpace: 'pre-wrap' }}>
-              {trunc(getJa('motivationJa', 'motivationId'), 300)}
+            <td style={{ ...TD, height: '60px', whiteSpace: 'pre-wrap' }}>
+              {trunc(getJa('selfPrJa', 'selfPrId'), 300)}
             </td>
           </tr>
         </tbody>
@@ -616,8 +598,8 @@ export default function CandidateCV({
             )}
           </tr>
           <tr className="cv-row-lg">
-            <td style={{ ...TD, height: '60px', whiteSpace: 'pre-wrap' }}>
-              {trunc(getJa('selfIntroJa', 'selfIntroId'), 300)}
+            <td style={{ ...TD, height: '100px', whiteSpace: 'pre-wrap' }}>
+              {trunc(getJa('selfIntroJa', 'selfIntroId'), 400)}
             </td>
           </tr>
         </tbody>

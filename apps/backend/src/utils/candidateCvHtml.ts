@@ -300,7 +300,7 @@ export function buildCandidateCvHtml(
     </table>
   </div>
 
-  <!-- Japan / Passport / Address / Hobi -->
+  <!-- Japan / Passport / Address -->
   <table>
     <tbody>
       <tr>
@@ -312,10 +312,6 @@ export function buildCandidateCvHtml(
       <tr>
         <td style="${TD}">Alamat ・ 現住所</td>
         <td style="${TD}" colspan="3">${addressDisplay}</td>
-      </tr>
-      <tr>
-        <td style="${TD}">Hobi ・ 趣味</td>
-        <td style="${TD}" colspan="3">${he(trunc(getJa(cj, 'hobbiesJa', 'hobbies'), 200))}</td>
       </tr>
     </tbody>
   </table>
@@ -366,17 +362,7 @@ export function buildCandidateCvHtml(
         <td style="${ST}">Skill ・ 技能 <span style="font-weight:normal;font-size:11px;">(Keahlian yang berhubungan dengan bidang yang dilamar)</span></td>
       </tr>
       <tr class="cv-row-md">
-        <td style="${TD}height:40px;white-space:pre-wrap;">${he(trunc(getJa(cj, 'selfPrJa', 'selfPrId'), 200))}</td>
-      </tr>
-    </tbody>
-  </table>
-
-  <!-- Motivasi -->
-  <table>
-    <tbody>
-      <tr><td style="${ST}">Motivasi ingin bekerja di Jepang ・ 志望理由</td></tr>
-      <tr class="cv-row-lg">
-        <td style="${TD}height:50px;white-space:pre-wrap;">${he(trunc(getJa(cj, 'motivationJa', 'motivationId'), 300))}</td>
+        <td style="${TD}height:60px;white-space:pre-wrap;">${he(trunc(getJa(cj, 'selfPrJa', 'selfPrId'), 300))}</td>
       </tr>
     </tbody>
   </table>
@@ -389,7 +375,7 @@ export function buildCandidateCvHtml(
         ${promosiExtra}
       </tr>
       <tr class="cv-row-lg">
-        <td style="${TD}height:60px;white-space:pre-wrap;">${he(trunc(getJa(cj, 'selfIntroJa', 'selfIntroId'), 300))}</td>
+        <td style="${TD}height:100px;white-space:pre-wrap;">${he(trunc(getJa(cj, 'selfIntroJa', 'selfIntroId'), 400))}</td>
       </tr>
     </tbody>
   </table>
