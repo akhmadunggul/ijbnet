@@ -1,6 +1,7 @@
 import crypto from 'crypto';
-import { GlobalSettings, CandidateCareer } from '../db/models/index';
+import { GlobalSettings, CandidateCareer, Candidate } from '../db/models/index';
 import { decryptNullable } from './crypto';
+import { cacheDel } from './redis';
 import { Op } from 'sequelize';
 
 interface DeepSeekResponse {
@@ -140,6 +141,7 @@ export async function backfillCareerJa(candidateId: string): Promise<void> {
         companyBusinessActivityJa: { [Op.is]: null as any },
       },
     });
+    if (!entries.length) return;
 
     await Promise.allSettled(
       entries.map(async (entry) => {
@@ -147,6 +149,10 @@ export async function backfillCareerJa(candidateId: string): Promise<void> {
         if (t) await entry.update({ companyBusinessActivityJa: t });
       }),
     );
+
+    // Invalidate the candidate's cached GET /me so next fetch returns translated data
+    const cand = await Candidate.findByPk(candidateId, { attributes: ['userId'] });
+    if (cand?.userId) await cacheDel(`cand:me:${cand.userId}`).catch(() => null);
   } catch { /* never fail the parent request */ }
 }
 
