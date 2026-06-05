@@ -232,23 +232,25 @@ router.get('/journey-visualization', wrap(async (_req, res) => {
 
 // ── GET /api/superadmin/shokumu-config — PUBLIC ──────────────────────────────
 router.get('/shokumu-config', wrap(async (_req, res) => {
-  const [enabledRow, layoutRow, mergeRow, rolloutModeRow, rolloutLpkRow, templateRow] = await Promise.all([
+  const [enabledRow, layoutRow, mergeRow, rolloutModeRow, rolloutLpkRow, templateRow, recruiterRow] = await Promise.all([
     GlobalSettings.findOne({ where: { key: 'shokumu_enabled' } }),
     GlobalSettings.findOne({ where: { key: 'shokumu_layout' } }),
     GlobalSettings.findOne({ where: { key: 'shokumu_merge_cv' } }),
     GlobalSettings.findOne({ where: { key: 'shokumu_rollout_mode' } }),
     GlobalSettings.findOne({ where: { key: 'shokumu_rollout_lpk_ids' } }),
     GlobalSettings.findOne({ where: { key: 'shokumu_template' } }),
+    GlobalSettings.findOne({ where: { key: 'shokumu_recruiter_enabled' } }),
   ]);
-  const enabled       = enabledRow      ? (enabledRow.toJSON()      as unknown as Record<string, unknown>)['value'] === true  : false;
-  const layout        = layoutRow       ? String((layoutRow.toJSON() as unknown as Record<string, unknown>)['value'] ?? 'reverse') : 'reverse';
-  const mergeCv       = mergeRow        ? (mergeRow.toJSON()        as unknown as Record<string, unknown>)['value'] === true  : false;
-  const rolloutMode   = rolloutModeRow  ? String((rolloutModeRow.toJSON()  as unknown as Record<string, unknown>)['value'] ?? 'all') : 'all';
-  const rolloutLpkIds = rolloutLpkRow
+  const enabled          = enabledRow      ? (enabledRow.toJSON()      as unknown as Record<string, unknown>)['value'] === true  : false;
+  const layout           = layoutRow       ? String((layoutRow.toJSON() as unknown as Record<string, unknown>)['value'] ?? 'reverse') : 'reverse';
+  const mergeCv          = mergeRow        ? (mergeRow.toJSON()        as unknown as Record<string, unknown>)['value'] === true  : false;
+  const rolloutMode      = rolloutModeRow  ? String((rolloutModeRow.toJSON()  as unknown as Record<string, unknown>)['value'] ?? 'all') : 'all';
+  const rolloutLpkIds    = rolloutLpkRow
     ? ((rolloutLpkRow.toJSON() as unknown as Record<string, unknown>)['value'] as string[] | null) ?? []
     : [];
-  const template = templateRow ? String((templateRow.toJSON() as unknown as Record<string, unknown>)['value'] ?? 'generic') : 'generic';
-  res.json({ enabled, layout, mergeCv, rolloutMode, rolloutLpkIds, template });
+  const template         = templateRow  ? String((templateRow.toJSON()  as unknown as Record<string, unknown>)['value'] ?? 'generic') : 'generic';
+  const recruiterEnabled = recruiterRow ? (recruiterRow.toJSON() as unknown as Record<string, unknown>)['value'] === true : false;
+  res.json({ enabled, layout, mergeCv, rolloutMode, rolloutLpkIds, template, recruiterEnabled });
 }));
 
 router.use(authenticate, requireRole('super_admin'));
@@ -565,6 +567,7 @@ router.put('/shokumu-config', wrap(async (req, res) => {
   const rawLpkIds = Array.isArray(body['rolloutLpkIds']) ? body['rolloutLpkIds'] : [];
   const rolloutLpkIds = (rawLpkIds as unknown[]).filter((id): id is string => typeof id === 'string' && isUUID(id));
   const template = body['template'] === 'gakken' ? 'gakken' : 'generic';
+  const recruiterEnabled = body['recruiterEnabled'] === true;
 
   const upsert = async (key: string, value: unknown) => {
     const [row, created] = await GlobalSettings.findOrCreate({ where: { key }, defaults: { key, value } });
@@ -578,9 +581,10 @@ router.put('/shokumu-config', wrap(async (req, res) => {
     upsert('shokumu_rollout_mode', rolloutMode),
     upsert('shokumu_rollout_lpk_ids', rolloutLpkIds),
     upsert('shokumu_template', template),
+    upsert('shokumu_recruiter_enabled', recruiterEnabled),
   ]);
 
-  res.json({ enabled, layout, mergeCv, rolloutMode, rolloutLpkIds, template });
+  res.json({ enabled, layout, mergeCv, rolloutMode, rolloutLpkIds, template, recruiterEnabled });
 }));
 
 // ── PUT /api/superadmin/candidate-tab-config ──────────────────────────────────

@@ -86,6 +86,7 @@ export default function SuperAdminDataEntrySettings() {
   const [shokumuRolloutMode, setShokumuRolloutMode] = useState<ShokumuRolloutMode>('all');
   const [shokumuRolloutLpkIds, setShokumuRolloutLpkIds] = useState<string[]>([]);
   const [shokumuTemplate, setShokumuTemplate] = useState<ShokumuTemplate>('generic');
+  const [shokumuRecruiterEnabled, setShokumuRecruiterEnabled] = useState(false);
   const [shokumuSaveSuccess, setShokumuSaveSuccess] = useState(false);
   const [shokumuSaveError, setShokumuSaveError] = useState(false);
   const [serviceTestStatus, setServiceTestStatus] = useState<Record<string, ServiceTestStatus>>({});
@@ -131,7 +132,7 @@ export default function SuperAdminDataEntrySettings() {
     queryFn: () => api.get('/superadmin/journey-visualization').then((r) => r.data),
   });
 
-  const { data: shokumuConfigData } = useQuery<{ enabled: boolean; layout: ShokumuLayout; mergeCv: boolean; rolloutMode: ShokumuRolloutMode; rolloutLpkIds: string[]; template: ShokumuTemplate }>({
+  const { data: shokumuConfigData } = useQuery<{ enabled: boolean; layout: ShokumuLayout; mergeCv: boolean; rolloutMode: ShokumuRolloutMode; rolloutLpkIds: string[]; template: ShokumuTemplate; recruiterEnabled: boolean }>({
     queryKey: ['shokumu-config'],
     queryFn: () => api.get('/superadmin/shokumu-config').then((r) => r.data),
   });
@@ -197,6 +198,7 @@ export default function SuperAdminDataEntrySettings() {
       if (shokumuConfigData.rolloutMode) setShokumuRolloutMode(shokumuConfigData.rolloutMode);
       setShokumuRolloutLpkIds(shokumuConfigData.rolloutLpkIds ?? []);
       if (shokumuConfigData.template) setShokumuTemplate(shokumuConfigData.template);
+      setShokumuRecruiterEnabled(shokumuConfigData.recruiterEnabled ?? false);
     }
   }, [shokumuConfigData]);
 
@@ -291,8 +293,8 @@ export default function SuperAdminDataEntrySettings() {
   });
 
   const shokumuMutation = useMutation({
-    mutationFn: ({ enabled, layout, mergeCv, rolloutMode, rolloutLpkIds, template }: { enabled: boolean; layout: string; mergeCv: boolean; rolloutMode: string; rolloutLpkIds: string[]; template: string }) =>
-      api.put('/superadmin/shokumu-config', { enabled, layout, mergeCv, rolloutMode, rolloutLpkIds, template }).then((r) => r.data),
+    mutationFn: ({ enabled, layout, mergeCv, rolloutMode, rolloutLpkIds, template, recruiterEnabled }: { enabled: boolean; layout: string; mergeCv: boolean; rolloutMode: string; rolloutLpkIds: string[]; template: string; recruiterEnabled: boolean }) =>
+      api.put('/superadmin/shokumu-config', { enabled, layout, mergeCv, rolloutMode, rolloutLpkIds, template, recruiterEnabled }).then((r) => r.data),
     onSuccess: () => {
       setShokumuSaveSuccess(true);
       setShokumuSaveError(false);
@@ -840,7 +842,7 @@ export default function SuperAdminDataEntrySettings() {
       </div>
 
       <div className="bg-white rounded-xl border border-gray-100 shadow-sm px-5 py-4 space-y-4">
-        {/* Enable toggle */}
+        {/* Enable toggle — candidate */}
         <label className="flex items-center gap-3 cursor-pointer">
           <input
             type="checkbox"
@@ -849,6 +851,17 @@ export default function SuperAdminDataEntrySettings() {
             className="accent-navy-700 w-4 h-4"
           />
           <span className="text-sm font-medium text-gray-800">{t('superadmin.dataEntrySettings.shokumuEnable')}</span>
+        </label>
+
+        {/* Enable toggle — recruiter */}
+        <label className="flex items-center gap-3 cursor-pointer">
+          <input
+            type="checkbox"
+            checked={shokumuRecruiterEnabled}
+            onChange={(e) => setShokumuRecruiterEnabled(e.target.checked)}
+            className="accent-navy-700 w-4 h-4"
+          />
+          <span className="text-sm font-medium text-gray-800">{t('superadmin.dataEntrySettings.shokumuRecruiterEnable')}</span>
         </label>
 
         {/* Template selector */}
@@ -1010,7 +1023,7 @@ export default function SuperAdminDataEntrySettings() {
 
       <div className="flex items-center gap-4">
         <button
-          onClick={() => shokumuMutation.mutate({ enabled: shokumuEnabled, layout: shokumuLayout, mergeCv: shokumuMergeCv, rolloutMode: shokumuRolloutMode, rolloutLpkIds: shokumuRolloutLpkIds, template: shokumuTemplate })}
+          onClick={() => shokumuMutation.mutate({ enabled: shokumuEnabled, layout: shokumuLayout, mergeCv: shokumuMergeCv, rolloutMode: shokumuRolloutMode, rolloutLpkIds: shokumuRolloutLpkIds, template: shokumuTemplate, recruiterEnabled: shokumuRecruiterEnabled })}
           disabled={shokumuMutation.isPending}
           className="px-5 py-2 bg-gray-900 text-white text-sm rounded-lg hover:bg-gray-700 transition disabled:opacity-50"
         >

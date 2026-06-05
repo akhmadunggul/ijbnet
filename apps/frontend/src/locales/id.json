@@ -663,6 +663,7 @@
       "shokumuTitle": "Kontrol Resume / 職務経歴書設定",
       "shokumuDesc": "Kelola tab Resume pada profil kandidat dan output PDF.",
       "shokumuEnable": "Aktifkan tab Resume pada profil kandidat",
+      "shokumuRecruiterEnable": "Aktifkan tombol unduh Resume untuk Rekruter",
       "shokumuTemplateTitle": "Template Resume",
       "shokumuTemplate_genericLabel": "Generic",
       "shokumuTemplate_genericDesc": "Format modern dengan ringkasan karier, tabel rinci per perusahaan, dan bagian narasi.",

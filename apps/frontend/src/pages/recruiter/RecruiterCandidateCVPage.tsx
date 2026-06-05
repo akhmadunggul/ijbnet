@@ -1,11 +1,17 @@
+import { useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
+import { useTranslation } from 'react-i18next';
 import { api } from '../../lib/api';
+import { useAuthStore } from '../../store/authStore';
 import CandidateCV from '../../components/CandidateCV';
 
 export default function RecruiterCandidateCVPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const { t } = useTranslation();
+  const accessToken = useAuthStore((s) => s.accessToken);
+  const [resumeLoading, setResumeLoading] = useState(false);
 
   const { data, isLoading, error } = useQuery({
     queryKey: ['recruiter-candidate-cv', id],
@@ -13,6 +19,32 @@ export default function RecruiterCandidateCVPage() {
     enabled: !!id,
     retry: false,
   });
+
+  const { data: shokumuConfig } = useQuery<{ recruiterEnabled: boolean }>({
+    queryKey: ['shokumu-config'],
+    queryFn: () => api.get('/superadmin/shokumu-config').then((r) => r.data),
+  });
+  const recruiterResumeEnabled = shokumuConfig?.recruiterEnabled === true;
+
+  async function downloadResumePdf() {
+    if (!id) return;
+    setResumeLoading(true);
+    try {
+      const resp = await fetch(`/api/recruiter/candidates/${id}/shokumu-pdf`, {
+        headers: { Authorization: `Bearer ${accessToken ?? ''}` },
+      });
+      if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+      const blob = await resp.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${data?.candidate?.candidateCode ?? id}-resume.pdf`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } finally {
+      setResumeLoading(false);
+    }
+  }
 
   if (isLoading) {
     return (
@@ -59,6 +91,15 @@ export default function RecruiterCandidateCVPage() {
           >
             ← Kembali
           </button>
+          {recruiterResumeEnabled && (
+            <button
+              onClick={downloadResumePdf}
+              disabled={resumeLoading}
+              className="text-sm px-4 py-2 bg-gold-600 text-white rounded-lg hover:bg-gold-700 transition disabled:opacity-50"
+            >
+              {resumeLoading ? '…' : t('recruiter.cv.downloadResume', { defaultValue: 'Resume / 職務経歴書' })}
+            </button>
+          )}
           <button
             onClick={() => window.print()}
             className="text-sm px-4 py-2 bg-navy-700 text-white rounded-lg hover:bg-navy-900 transition"

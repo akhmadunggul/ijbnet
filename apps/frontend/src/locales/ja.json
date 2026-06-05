@@ -662,6 +662,7 @@
       "shokumuTitle": "Kontrol Resume / 職務経歴書設定",
       "shokumuDesc": "候補者プロフィールの職務経歴書タブとPDF出力を管理します。",
       "shokumuEnable": "候補者プロフィールにResumeタブを有効にする",
+      "shokumuRecruiterEnable": "リクルーターに職務経歴書ダウンロードボタンを表示する",
       "shokumuTemplateTitle": "職務経歴書テンプレート",
       "shokumuTemplate_genericLabel": "Generic（汎用）",
       "shokumuTemplate_genericDesc": "モダンなレイアウト：経歴要約・会社別詳細テーブル・ナラティブセクションを含む形式。",

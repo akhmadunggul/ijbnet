@@ -1,3 +1,5 @@
+import fs from 'fs';
+import path from 'path';
 import { Router, Request, Response, NextFunction } from 'express';
 import { Op } from 'sequelize';
 import { authenticate, requireRole } from '../middleware/auth';
@@ -11,6 +13,8 @@ import {
   ToolsDictionary,
   CandidateCertification,
   CandidateEducationHistory,
+  CandidateGakkenResume,
+  CandidateGakkenCompany,
   AuditLog,
   User,
   Batch,
@@ -18,14 +22,20 @@ import {
   InterviewProposal,
   Company,
   RecruitmentRequest,
+  GlobalSettings,
 } from '../db/models/index';
 import { serializeCandidate } from '../serializers/candidate';
 import { calcCompleteness } from '../utils/completeness';
 import { notifyByRole, notifyUser } from '../utils/notify';
 import { recordTimelineEvent, currentAgeHours } from '../utils/timeline';
 import { CandidateTimeline } from '../db/models/CandidateTimeline';
+import { renderPdf, isPdfError } from '../utils/browserPool';
+import { buildShokumuHtml } from '../utils/shokumuTemplate';
+import { buildGakkenHtml } from '../utils/gakkenTemplate';
+import { config } from '../config';
 import { isUUID } from 'validator';
 import { v4 as uuidv4 } from 'uuid';
+import { candidateIncludes } from '../utils/candidateIncludes';
 
 const router = Router();
 
@@ -51,19 +61,6 @@ async function getActiveBatch(companyId: string) {
     include: [{ model: Company, as: 'company', attributes: ['id', 'name', 'nameJa'] }],
     order: [['createdAt', 'DESC']],
   });
-}
-
-function candidateIncludes() {
-  return [
-    { model: CandidateJapaneseTest, as: 'tests', required: false },
-    { model: CandidateCareer, as: 'career', required: false, separate: true, order: [['startDate', 'ASC'] as [string, string]] },
-    { model: CandidateBodyCheck, as: 'bodyCheck', required: false },
-    { model: CandidateWeeklyTest, as: 'weeklyTests', required: false },
-    { model: CandidateIntroVideo, as: 'videos', required: false },
-    { model: ToolsDictionary, as: 'tools', required: false },
-    { model: CandidateCertification, as: 'certifications', required: false },
-    { model: CandidateEducationHistory, as: 'educationHistory', required: false, separate: true, order: [['startDate', 'ASC'] as [string, string]] },
-  ];
 }
 
 function serializeBatchCandidate(bcJson: Record<string, unknown>): Record<string, unknown> {
@@ -701,6 +698,87 @@ router.get('/requests/:id', wrap(async (req: Request, res: Response): Promise<vo
 
   if (!request) { res.status(404).json({ error: 'NOT_FOUND' }); return; }
   res.json({ request: request.toJSON() });
+}));
+
+// ── GET /api/recruiter/candidates/:id/shokumu-pdf ─────────────────────────────
+router.get('/candidates/:id/shokumu-pdf', wrap(async (req: Request, res: Response): Promise<void> => {
+  const { id } = req.params as { id: string };
+  if (!isUUID(id)) { res.status(400).json({ error: 'BAD_REQUEST' }); return; }
+
+  const recruiterRow = await GlobalSettings.findOne({ where: { key: 'shokumu_recruiter_enabled' } });
+  const recruiterEnabled = recruiterRow
+    ? (recruiterRow.toJSON() as unknown as Record<string, unknown>)['value'] === true
+    : false;
+  if (!recruiterEnabled) { res.status(403).json({ error: 'FORBIDDEN', message: 'Resume access is not enabled for recruiters.' }); return; }
+
+  const companyId = await getRecruiterCompanyId(req.user!.sub);
+  if (!companyId) { res.status(403).json({ error: 'FORBIDDEN' }); return; }
+
+  const batch = await getActiveBatch(companyId);
+  if (!batch) { res.status(403).json({ error: 'FORBIDDEN', message: 'No active batch for your company.' }); return; }
+
+  const allocation = await BatchCandidate.findOne({ where: { batchId: batch.id, candidateId: id } });
+  if (!allocation) { res.status(403).json({ error: 'FORBIDDEN', message: 'Candidate is not in your batch.' }); return; }
+
+  const candidate = await Candidate.findByPk(id, { include: candidateIncludes() });
+  if (!candidate) { res.status(404).json({ error: 'NOT_FOUND' }); return; }
+
+  const [layoutRow, fontRow, templateRow] = await Promise.all([
+    GlobalSettings.findOne({ where: { key: 'shokumu_layout' } }),
+    GlobalSettings.findOne({ where: { key: 'cv_font' } }),
+    GlobalSettings.findOne({ where: { key: 'shokumu_template' } }),
+  ]);
+  const layout   = layoutRow   ? String((layoutRow.toJSON()   as unknown as Record<string, unknown>)['value'] ?? 'reverse')   : 'reverse';
+  const font     = fontRow     ? String((fontRow.toJSON()     as unknown as Record<string, unknown>)['value'] ?? 'ms-mincho') : 'ms-mincho';
+  const template = templateRow ? String((templateRow.toJSON() as unknown as Record<string, unknown>)['value'] ?? 'generic')  : 'generic';
+
+  const cj = candidate.toJSON() as unknown as Record<string, unknown>;
+
+  // Embed closeup photo as base64 so Puppeteer can render it without auth
+  const photoFilePath = path.join(config.UPLOADS_DIR, 'candidates', candidate.id, 'closeup.webp');
+  try {
+    const photoData = await fs.promises.readFile(photoFilePath);
+    cj['closeupUrl'] = `data:image/webp;base64,${photoData.toString('base64')}`;
+  } catch { /* photo absent on disk */ }
+
+  let html: string;
+  if (template === 'gakken') {
+    const [gakkenResume, gakkenCompanies] = await Promise.all([
+      CandidateGakkenResume.findOne({ where: { candidateId: candidate.id } }),
+      CandidateGakkenCompany.findAll({ where: { candidateId: candidate.id }, order: [['sortOrder', 'ASC']] }),
+    ]);
+    html = buildGakkenHtml(
+      cj,
+      gakkenResume ? (gakkenResume.toJSON() as unknown as Record<string, unknown>) : null,
+      gakkenCompanies.map((c) => c.toJSON() as unknown as Record<string, unknown>),
+      { font, includePhoto: true },
+    );
+  } else {
+    html = buildShokumuHtml(cj, { layout, font, includePhoto: true });
+  }
+
+  try {
+    const pdf = await renderPdf(html, { top: '15mm', bottom: '15mm', left: '20mm', right: '15mm' });
+
+    await AuditLog.create({
+      userId: req.user!.sub,
+      action: 'VIEW_RESUME',
+      entityType: 'candidate',
+      entityId: id,
+      targetCandidateId: id,
+      ipAddress: req.ip ?? null,
+      userAgent: req.headers['user-agent'] ?? null,
+      payload: null,
+    });
+
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `attachment; filename="${candidate.candidateCode}-resume.pdf"`);
+    res.send(pdf);
+  } catch (err) {
+    if (isPdfError(err, 'CHROME_NOT_FOUND')) { res.status(503).json({ error: 'PDF_UNAVAILABLE' }); return; }
+    if (isPdfError(err, 'PDF_QUEUE_TIMEOUT')) { res.status(503).json({ error: 'PDF_BUSY' }); return; }
+    throw err;
+  }
 }));
 
 export default router;
