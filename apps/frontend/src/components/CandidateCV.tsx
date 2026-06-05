@@ -472,16 +472,15 @@ export default function CandidateCV({
       <table className="cv-tbl" style={S.table}>
         <tbody>
           <tr>
-            <td style={ST} colSpan={4}>{L('Pendidikan', '学歴')}</td>
+            <td style={ST} colSpan={3}>{L('Pendidikan', '学歴')}</td>
           </tr>
           <tr style={{ textAlign: 'center' }}>
             <td style={{ ...TD, width: '25%' }}>{L('Periode', '期間')}</td>
-            <td style={{ ...TD, width: '35%' }}>{L('Nama Sekolah', '学校名')}</td>
-            <td style={{ ...TD, width: '15%' }}>{L('Status', '在学状況')}</td>
+            <td style={{ ...TD, width: '50%' }}>{L('Nama Sekolah', '学校名')}</td>
             <td style={{ ...TD, width: '25%' }}>{L('Jurusan', '専攻')}</td>
           </tr>
           {(() => {
-            const eduStatusLabel = (s: string | null | undefined) => {
+            const eduStatusLabel = (s: string | null | undefined): string => {
               if (!s) return '';
               const m: Record<string, { id: string; ja: string }> = {
                 'Lulus':         { id: 'Lulus',         ja: '卒業' },
@@ -498,14 +497,19 @@ export default function CandidateCV({
                   <td style={{ ...TD, height: '25px' }}>
                     {formatPeriodJa((row as any).startDate, (row as any).endDate)}
                   </td>
-                  <td style={TD}>{v((row as any).schoolName)}</td>
-                  <td style={TD}>{eduStatusLabel((row as any).status)}</td>
+                  <td style={TD}>
+                    <div>{v((row as any).schoolName)}</div>
+                    {(row as any).status && (
+                      <div style={{ fontSize: '10px', color: '#555', marginTop: '2px' }}>
+                        {eduStatusLabel((row as any).status)}
+                      </div>
+                    )}
+                  </td>
                   <td style={TD}>{v((row as any).major)}</td>
                 </tr>
               ) : (
                 <tr className="cv-row-sm" key={`edu-${i}`}>
                   <td style={{ ...TD, height: '25px' }} />
-                  <td style={TD} />
                   <td style={TD} />
                   <td style={TD} />
                 </tr>

@@ -227,11 +227,13 @@ export function buildCandidateCvHtml(
     'Drop Out':      'Drop Out ・ 中退',
     'Masih Belajar': 'Masih Belajar ・ 在学中',
   };
-  const eduRowsHtml = eduRows.map((row) =>
-    row
-      ? `<tr class="cv-row-sm"><td style="${TD}height:25px;">${he(formatPeriodJa(toDateStr(row['startDate']), toDateStr(row['endDate'])))}</td><td style="${TD}">${he(v(row['schoolName']))}</td><td style="${TD}">${he(row['status'] ? (eduStatusMap[String(row['status'])] ?? v(row['status'])) : '')}</td><td style="${TD}">${he(v(row['major']))}</td></tr>`
-      : `<tr class="cv-row-sm"><td style="${TD}height:25px;"></td><td style="${TD}"></td><td style="${TD}"></td><td style="${TD}"></td></tr>`,
-  ).join('');
+  const eduRowsHtml = eduRows.map((row) => {
+    if (!row) return `<tr class="cv-row-sm"><td style="${TD}height:25px;"></td><td style="${TD}"></td><td style="${TD}"></td></tr>`;
+    const statusHtml = row['status']
+      ? `<div style="font-size:10px;color:#555;margin-top:2px;">${he(eduStatusMap[String(row['status'])] ?? v(row['status']))}</div>`
+      : '';
+    return `<tr class="cv-row-sm"><td style="${TD}height:25px;">${he(formatPeriodJa(toDateStr(row['startDate']), toDateStr(row['endDate'])))}</td><td style="${TD}">${he(v(row['schoolName']))}${statusHtml}</td><td style="${TD}">${he(v(row['major']))}</td></tr>`;
+  }).join('');
 
   // ── Career rows ───────────────────────────────────────────────────────────────
   const careerRowsHtml = careerRows.map((row) =>
@@ -342,11 +344,10 @@ export function buildCandidateCvHtml(
   <!-- Pendidikan -->
   <table>
     <tbody>
-      <tr><td style="${ST}" colspan="4">Pendidikan ・ 学歴</td></tr>
+      <tr><td style="${ST}" colspan="3">Pendidikan ・ 学歴</td></tr>
       <tr style="text-align:center;">
         <td style="${TD}width:25%;">Periode ・ 期間</td>
-        <td style="${TD}width:35%;">Nama Sekolah ・ 学校名</td>
-        <td style="${TD}width:15%;">Status ・ 在学状況</td>
+        <td style="${TD}width:50%;">Nama Sekolah ・ 学校名</td>
         <td style="${TD}width:25%;">Jurusan ・ 専攻</td>
       </tr>
       ${eduRowsHtml}
