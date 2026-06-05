@@ -237,6 +237,7 @@
       "career": {
         "addEntry": "職歴を追加",
         "company": "会社名",
+        "companyBusinessActivity": "会社の事業内容",
         "division": "部署",
         "skillGroup": "スキルグループ",
         "period": "期間",

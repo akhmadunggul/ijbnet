@@ -414,6 +414,7 @@ router.put('/me/career', async (req: Request, res: Response): Promise<void> => {
           id: uuidv4(),
           candidateId: candidate.id,
           companyName: e.companyName ?? null,
+          companyBusinessActivity: e.companyBusinessActivity ?? null,
           division: e.division ?? null,
           divisionJa,
           skillGroup: e.skillGroup ?? null,

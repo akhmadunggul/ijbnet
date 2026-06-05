@@ -54,13 +54,14 @@ const educationHistorySchema = z.object({
 
 const careerSchema = z.object({
   entries: z.array(z.object({
-    id:          z.string().optional(),
-    companyName: z.string().nullable().optional(),
-    division:    z.string().nullable().optional(),
-    skillGroup:  z.string().nullable().optional(),
-    period:      z.string().nullable().optional(),
-    startDate:   z.string().nullable().optional(),
-    sortOrder:   z.number().optional(),
+    id:                      z.string().optional(),
+    companyName:             z.string().nullable().optional(),
+    companyBusinessActivity: z.string().nullable().optional(),
+    division:                z.string().nullable().optional(),
+    skillGroup:              z.string().nullable().optional(),
+    period:                  z.string().nullable().optional(),
+    startDate:               z.string().nullable().optional(),
+    sortOrder:               z.number().optional(),
   })),
 });
 
@@ -653,12 +654,13 @@ function CareerTab({ candidate, saving }: { candidate: CandidateData; saving: bo
     mutationFn: (data: CareerForm) => {
       const payload = {
         entries: data.entries.map((e, i) => ({
-          companyName: e.companyName ?? null,
-          division:    e.division    ?? null,
-          skillGroup:  e.skillGroup  ?? null,
-          period:      e.period      ?? null,
-          startDate:   e.startDate   ?? null,
-          sortOrder:   e.sortOrder   ?? i,
+          companyName:             e.companyName             ?? null,
+          companyBusinessActivity: e.companyBusinessActivity ?? null,
+          division:                e.division                ?? null,
+          skillGroup:              e.skillGroup              ?? null,
+          period:                  e.period                  ?? null,
+          startDate:               e.startDate               ?? null,
+          sortOrder:               e.sortOrder               ?? i,
         })),
       };
       return api.put('/candidates/me/career', payload).then((r) => r.data);
@@ -690,6 +692,9 @@ function CareerTab({ candidate, saving }: { candidate: CandidateData; saving: bo
             <Field label={t('candidate.profile.career.period')}><input {...register(`entries.${i}.period`)} className={inputCls} placeholder="Jan 2022 – Mar 2024" /></Field>
             <Field label={t('candidate.profile.career.startDate')}><input type="date" {...register(`entries.${i}.startDate`)} className={inputCls} /></Field>
           </div>
+          <Field label={t('candidate.profile.career.companyBusinessActivity')}>
+            <textarea {...register(`entries.${i}.companyBusinessActivity`)} rows={2} maxLength={2000} className={inputCls} />
+          </Field>
         </div>
       ))}
       <button type="button" onClick={() => append({ companyName: '', division: '', skillGroup: '', period: '', sortOrder: fields.length })} className="text-sm text-navy-600 hover:underline">

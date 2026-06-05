@@ -68,8 +68,9 @@ export type PatchMeBody = z.infer<typeof patchMeSchema>;
 
 // ── PUT /candidates/me/career ─────────────────────────────────────────────────
 const careerEntrySchema = z.object({
-  companyName:  shortStr(200).nullable(),
-  division:     shortStr(200).nullable(),
+  companyName:             shortStr(200).nullable(),
+  companyBusinessActivity: longStr(2000).nullable(),
+  division:                shortStr(200).nullable(),
   divisionJa:   shortStr(200).nullable(),
   skillGroup:   shortStr(200).nullable(),
   skillGroupJa: shortStr(200).nullable(),

@@ -238,6 +238,7 @@
       "career": {
         "addEntry": "Tambah Riwayat",
         "company": "Nama Perusahaan",
+        "companyBusinessActivity": "Kegiatan Usaha Perusahaan　会社の事業内容",
         "division": "Divisi",
         "skillGroup": "Kelompok Keahlian",
         "period": "Periode",
