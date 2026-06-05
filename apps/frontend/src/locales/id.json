@@ -233,7 +233,8 @@
         "addEntry": "Tambah Riwayat Pendidikan",
         "schoolName": "Nama Sekolah/Kampus",
         "startDate": "Mulai",
-        "endDate": "Selesai"
+        "endDate": "Selesai",
+        "status": "Status"
       },
       "career": {
         "addEntry": "Tambah Riwayat",

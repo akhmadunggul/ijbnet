@@ -472,32 +472,46 @@ export default function CandidateCV({
       <table className="cv-tbl" style={S.table}>
         <tbody>
           <tr>
-            <td style={ST} colSpan={3}>{L('Pendidikan', '学歴')}</td>
+            <td style={ST} colSpan={4}>{L('Pendidikan', '学歴')}</td>
           </tr>
           <tr style={{ textAlign: 'center' }}>
-            <td style={{ ...TD, width: '30%' }}>{L('Periode', '期間')}</td>
-            <td style={{ ...TD, width: '40%' }}>{L('Nama Sekolah', '学校名')}</td>
-            <td style={{ ...TD, width: '30%' }}>{L('Jurusan', '専攻')}</td>
+            <td style={{ ...TD, width: '25%' }}>{L('Periode', '期間')}</td>
+            <td style={{ ...TD, width: '35%' }}>{L('Nama Sekolah', '学校名')}</td>
+            <td style={{ ...TD, width: '15%' }}>{L('Status', '在学状況')}</td>
+            <td style={{ ...TD, width: '25%' }}>{L('Jurusan', '専攻')}</td>
           </tr>
-          {eduRows.map((row, i) =>
-            row ? (
-              <tr className="cv-row-sm" key={(row as any).id ?? i}>
-                <td style={{ ...TD, height: '25px' }}>
-                  {isJaMode
-                    ? formatPeriodJa((row as any).startDate, (row as any).endDate)
-                    : formatPeriod((row as any).startDate, (row as any).endDate)}
-                </td>
-                <td style={TD}>{v((row as any).schoolName)}</td>
-                <td style={TD}>{v((row as any).major)}</td>
-              </tr>
-            ) : (
-              <tr className="cv-row-sm" key={`edu-${i}`}>
-                <td style={{ ...TD, height: '25px' }} />
-                <td style={TD} />
-                <td style={TD} />
-              </tr>
-            )
-          )}
+          {(() => {
+            const eduStatusLabel = (s: string | null | undefined) => {
+              if (!s) return '';
+              const m: Record<string, { id: string; ja: string }> = {
+                'Lulus':         { id: 'Lulus',         ja: '卒業' },
+                'Drop Out':      { id: 'Drop Out',      ja: '中退' },
+                'Masih Belajar': { id: 'Masih Belajar', ja: '在学中' },
+              };
+              const entry = m[s];
+              if (!entry) return v(s);
+              return L(entry.id, entry.ja);
+            };
+            return eduRows.map((row, i) =>
+              row ? (
+                <tr className="cv-row-sm" key={(row as any).id ?? i}>
+                  <td style={{ ...TD, height: '25px' }}>
+                    {formatPeriodJa((row as any).startDate, (row as any).endDate)}
+                  </td>
+                  <td style={TD}>{v((row as any).schoolName)}</td>
+                  <td style={TD}>{eduStatusLabel((row as any).status)}</td>
+                  <td style={TD}>{v((row as any).major)}</td>
+                </tr>
+              ) : (
+                <tr className="cv-row-sm" key={`edu-${i}`}>
+                  <td style={{ ...TD, height: '25px' }} />
+                  <td style={TD} />
+                  <td style={TD} />
+                  <td style={TD} />
+                </tr>
+              )
+            );
+          })()}
         </tbody>
       </table>
 

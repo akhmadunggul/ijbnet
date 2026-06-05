@@ -44,11 +44,14 @@ const sswSchema = z.object({
 
 const educationHistorySchema = z.object({
   entries: z.array(z.object({
-    schoolName: z.string().min(1),
-    major:      z.string().nullable().optional(),
-    startDate:  z.string().nullable().optional(),
-    endDate:    z.string().nullable().optional(),
-    sortOrder:  z.number().optional(),
+    schoolName:  z.string().min(1),
+    startMonth:  z.string().optional(),
+    startYear:   z.string().optional(),
+    endMonth:    z.string().optional(),
+    endYear:     z.string().optional(),
+    status:      z.string().optional(),
+    major:       z.string().nullable().optional(),
+    sortOrder:   z.number().optional(),
   })),
 });
 
@@ -565,63 +568,137 @@ function SswTab({ candidate, onSave, saving }: { candidate: CandidateData; onSav
 }
 
 // ── Tab 3 — Education ─────────────────────────────────────────────────────────
+const EDU_MONTHS = ['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt','Nov','Des'];
+const EDU_YEARS  = Array.from({ length: 51 }, (_, i) => String(2000 + i));
+
 function EducationTab({ candidate }: { candidate: CandidateData }) {
   const { t } = useTranslation();
   const qc = useQueryClient();
 
+  const parseYM = (d: string | null | undefined) => {
+    if (!d) return { month: '', year: '' };
+    const [y, m] = d.slice(0, 7).split('-');
+    return { month: m ? String(parseInt(m, 10)) : '', year: y ?? '' };
+  };
+
   const historyForm = useForm<EducationHistoryForm>({
     defaultValues: {
-      entries: (candidate.educationHistory ?? []).map((e, i) => ({
-        schoolName: e.schoolName,
-        major:      e.major ?? null,
-        startDate:  e.startDate ? e.startDate.slice(0, 10) : '',
-        endDate:    e.endDate ? e.endDate.slice(0, 10) : '',
-        sortOrder:  e.sortOrder ?? i,
-      })),
+      entries: (candidate.educationHistory ?? []).map((e, i) => {
+        const sd = parseYM(e.startDate);
+        const ed = parseYM(e.endDate);
+        return {
+          schoolName: e.schoolName,
+          startMonth: sd.month,
+          startYear:  sd.year,
+          endMonth:   ed.month,
+          endYear:    ed.year,
+          status:     (e as any).status ?? '',
+          major:      e.major ?? null,
+          sortOrder:  e.sortOrder ?? i,
+        };
+      }),
     },
   });
   const { fields, append, remove, move } = useFieldArray({ control: historyForm.control, name: 'entries' });
 
+  const [saveError, setSaveError] = useState(false);
   const historyMutation = useMutation({
-    mutationFn: (data: EducationHistoryForm) =>
-      api.put('/candidates/me/education-history', data).then((r) => r.data),
+    mutationFn: (data: EducationHistoryForm) => {
+      const toDate = (year: string, month: string) => {
+        if (!year || !month) return null;
+        return `${year}-${String(month).padStart(2, '0')}-01`;
+      };
+      const payload = {
+        entries: data.entries.map((e, i) => ({
+          schoolName: e.schoolName,
+          major:      e.major ?? null,
+          startDate:  toDate(e.startYear ?? '', e.startMonth ?? ''),
+          endDate:    e.endYear === 'now' ? null : toDate(e.endYear ?? '', e.endMonth ?? ''),
+          status:     e.status || null,
+          sortOrder:  e.sortOrder ?? i,
+        })),
+      };
+      return api.put('/candidates/me/education-history', payload).then((r) => r.data);
+    },
     onSuccess: (_data, variables) => {
+      setSaveError(false);
       qc.invalidateQueries({ queryKey: ['my-candidate'] });
       historyForm.reset(variables);
     },
+    onError: () => setSaveError(true),
   });
 
   return (
     <div className="space-y-8">
-      {/* Full education history */}
       <div>
         <p className="text-sm font-semibold text-gray-700 mb-4">{t('candidate.profile.education.historyTitle')}</p>
         <form onSubmit={historyForm.handleSubmit((d) => historyMutation.mutate(d))} className="space-y-4">
-          {fields.map((field, i) => (
-            <div key={field.id} className="border border-gray-100 rounded-xl p-4 space-y-3 bg-gray-50">
-              <div className="flex items-center justify-between">
-                <p className="text-xs font-medium text-gray-500">#{i + 1}</p>
-                <div className="flex gap-1">
-                  <button type="button" disabled={i === 0} onClick={() => move(i, i - 1)} className="text-xs px-2 py-1 border rounded hover:bg-white disabled:opacity-30">▲</button>
-                  <button type="button" disabled={i === fields.length - 1} onClick={() => move(i, i + 1)} className="text-xs px-2 py-1 border rounded hover:bg-white disabled:opacity-30">▼</button>
-                  <button type="button" onClick={() => remove(i)} className="text-xs px-2 py-1 border border-red-200 text-red-500 rounded hover:bg-red-50">✕</button>
+          {fields.map((field, i) => {
+            const endYearVal = historyForm.watch(`entries.${i}.endYear`);
+            return (
+              <div key={field.id} className="border border-gray-100 rounded-xl p-4 space-y-3 bg-gray-50">
+                <div className="flex items-center justify-between">
+                  <p className="text-xs font-medium text-gray-500">#{i + 1}</p>
+                  <div className="flex gap-1">
+                    <button type="button" disabled={i === 0} onClick={() => move(i, i - 1)} className="text-xs px-2 py-1 border rounded hover:bg-white disabled:opacity-30">▲</button>
+                    <button type="button" disabled={i === fields.length - 1} onClick={() => move(i, i + 1)} className="text-xs px-2 py-1 border rounded hover:bg-white disabled:opacity-30">▼</button>
+                    <button type="button" onClick={() => remove(i)} className="text-xs px-2 py-1 border border-red-200 text-red-500 rounded hover:bg-red-50">✕</button>
+                  </div>
                 </div>
+                <Field label={t('candidate.profile.education.schoolName')}>
+                  <input {...historyForm.register(`entries.${i}.schoolName`)} className={inputCls} />
+                </Field>
+                <div>
+                  <p className="text-xs font-medium text-gray-600 mb-1">Periode</p>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <p className="text-xs text-gray-400 mb-1">{t('candidate.profile.education.startDate')}</p>
+                      <div className="flex gap-1">
+                        <select {...historyForm.register(`entries.${i}.startMonth`)} className={`${inputCls} flex-1`}>
+                          <option value="">--</option>
+                          {EDU_MONTHS.map((m, mi) => <option key={mi} value={String(mi + 1)}>{m}</option>)}
+                        </select>
+                        <select {...historyForm.register(`entries.${i}.startYear`)} className={`${inputCls} flex-1`}>
+                          <option value="">----</option>
+                          {EDU_YEARS.map((y) => <option key={y} value={y}>{y}</option>)}
+                        </select>
+                      </div>
+                    </div>
+                    <div>
+                      <p className="text-xs text-gray-400 mb-1">{t('candidate.profile.education.endDate')}</p>
+                      <div className="flex gap-1">
+                        {endYearVal !== 'now' && (
+                          <select {...historyForm.register(`entries.${i}.endMonth`)} className={`${inputCls} flex-1`}>
+                            <option value="">--</option>
+                            {EDU_MONTHS.map((m, mi) => <option key={mi} value={String(mi + 1)}>{m}</option>)}
+                          </select>
+                        )}
+                        <select {...historyForm.register(`entries.${i}.endYear`)} className={`${inputCls} ${endYearVal === 'now' ? 'w-full' : 'flex-1'}`}>
+                          <option value="">----</option>
+                          <option value="now">Sekarang (現在)</option>
+                          {EDU_YEARS.map((y) => <option key={y} value={y}>{y}</option>)}
+                        </select>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <Field label={t('candidate.profile.education.status')}>
+                  <select {...historyForm.register(`entries.${i}.status`)} className={inputCls}>
+                    <option value="">--</option>
+                    <option value="Lulus">Lulus</option>
+                    <option value="Drop Out">Drop Out</option>
+                    <option value="Masih Belajar">Masih Belajar</option>
+                  </select>
+                </Field>
+                <Field label={t('candidate.profile.education.major')}>
+                  <input {...historyForm.register(`entries.${i}.major`)} className={inputCls} />
+                </Field>
               </div>
-              <Field label={t('candidate.profile.education.schoolName')}>
-                <input {...historyForm.register(`entries.${i}.schoolName`)} className={inputCls} />
-              </Field>
-              <Field label={t('candidate.profile.education.major')}>
-                <input {...historyForm.register(`entries.${i}.major`)} className={inputCls} />
-              </Field>
-              <div className="grid grid-cols-2 gap-3">
-                <Field label={t('candidate.profile.education.startDate')}><input type="date" {...historyForm.register(`entries.${i}.startDate`)} className={inputCls} /></Field>
-                <Field label={t('candidate.profile.education.endDate')}><input type="date" {...historyForm.register(`entries.${i}.endDate`)} className={inputCls} /></Field>
-              </div>
-            </div>
-          ))}
+            );
+          })}
           <button
             type="button"
-            onClick={() => append({ schoolName: '', major: '', startDate: '', endDate: '', sortOrder: fields.length })}
+            onClick={() => append({ schoolName: '', startMonth: '', startYear: '', endMonth: '', endYear: '', status: '', major: '', sortOrder: fields.length })}
             className="text-sm text-navy-600 hover:underline"
           >
             + {t('candidate.profile.education.addEntry')}
@@ -631,6 +708,7 @@ function EducationTab({ candidate }: { candidate: CandidateData }) {
               {historyMutation.isPending ? t('candidate.profile.saving') : t('candidate.profile.save')}
             </button>
             {historyForm.formState.isDirty && <span className="text-xs text-amber-600">{t('candidate.profile.unsaved')}</span>}
+            {saveError && <span className="text-xs text-red-500">{t('toastError', { defaultValue: 'Gagal menyimpan. Coba lagi.' })}</span>}
           </div>
         </form>
       </div>

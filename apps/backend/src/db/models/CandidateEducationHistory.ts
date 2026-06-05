@@ -7,6 +7,7 @@ export interface CandidateEducationHistoryAttributes {
   major: string | null;
   startDate: string | null;
   endDate: string | null;
+  status: string | null;
   sortOrder: number;
   createdAt?: Date;
   updatedAt?: Date;
@@ -15,7 +16,7 @@ export interface CandidateEducationHistoryAttributes {
 export interface CandidateEducationHistoryCreationAttributes
   extends Optional<
     CandidateEducationHistoryAttributes,
-    'id' | 'major' | 'startDate' | 'endDate' | 'sortOrder'
+    'id' | 'major' | 'startDate' | 'endDate' | 'status' | 'sortOrder'
   > {}
 
 export class CandidateEducationHistory
@@ -27,6 +28,7 @@ export class CandidateEducationHistory
   declare major: string | null;
   declare startDate: string | null;
   declare endDate: string | null;
+  declare status: string | null;
   declare sortOrder: number;
   declare readonly createdAt: Date;
   declare readonly updatedAt: Date;
@@ -41,6 +43,7 @@ export function initCandidateEducationHistory(sequelize: Sequelize): void {
       major: { type: DataTypes.STRING(255), allowNull: true },
       startDate: { type: DataTypes.DATEONLY, allowNull: true },
       endDate: { type: DataTypes.DATEONLY, allowNull: true },
+      status: { type: DataTypes.STRING(50), allowNull: true },
       sortOrder: { type: DataTypes.INTEGER, allowNull: false, defaultValue: 0 },
     },
     { sequelize, tableName: 'candidate_education_history', timestamps: true },

@@ -102,8 +102,9 @@ const eduEntrySchema = z.object({
   major:      shortStr(200).nullable(),
   startDate:  isoDate.nullable(),
   endDate:    isoDate.nullable(),
+  status:     shortStr(50).nullable(),
   sortOrder:  z.number().int().min(0).max(9999),
-}).partial({ major: true, startDate: true, endDate: true, sortOrder: true }).strict();
+}).partial({ major: true, startDate: true, endDate: true, status: true, sortOrder: true }).strict();
 
 export const putEduSchema = z.object({
   entries: z.array(eduEntrySchema).max(50),

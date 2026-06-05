@@ -506,6 +506,7 @@ router.put('/me/education-history', async (req: Request, res: Response): Promise
         major: e.major ?? null,
         startDate: e.startDate ?? null,
         endDate: e.endDate ?? null,
+        status: e.status ?? null,
         sortOrder: e.sortOrder ?? i,
       })),
     );

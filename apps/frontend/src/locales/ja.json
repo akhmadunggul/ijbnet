@@ -232,7 +232,8 @@
         "addEntry": "学歴を追加",
         "schoolName": "学校名・大学名",
         "startDate": "開始",
-        "endDate": "終了"
+        "endDate": "終了",
+        "status": "在学状況"
       },
       "career": {
         "addEntry": "職歴を追加",

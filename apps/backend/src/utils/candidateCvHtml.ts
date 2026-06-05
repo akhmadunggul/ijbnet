@@ -81,6 +81,19 @@ function formatPeriod(start?: string | null, end?: string | null): string {
   return '';
 }
 
+function formatPeriodJa(start?: string | null, end?: string | null): string {
+  const fmt = (d: string) => {
+    const [y, m] = d.slice(0, 7).split('-').map(Number);
+    return `${y}年${m}月`;
+  };
+  const s = start ? fmt(start) : null;
+  const e = end ? fmt(end) : null;
+  if (s && e) return `${s} ー ${e}`;
+  if (s) return `${s} ー 現在`;
+  if (e) return `ー ${e}`;
+  return '';
+}
+
 const ID_MONTHS: Record<string, string> = {
   januari: '01', februari: '02', maret: '03', april: '04',
   mei: '05', juni: '06', juli: '07', agustus: '08',
@@ -209,10 +222,15 @@ export function buildCandidateCvHtml(
     : 'width:120px;border:1px solid #000;text-align:center;float:right;flex-shrink:0;';
 
   // ── Education rows ────────────────────────────────────────────────────────────
+  const eduStatusMap: Record<string, string> = {
+    'Lulus':         'Lulus ・ 卒業',
+    'Drop Out':      'Drop Out ・ 中退',
+    'Masih Belajar': 'Masih Belajar ・ 在学中',
+  };
   const eduRowsHtml = eduRows.map((row) =>
     row
-      ? `<tr class="cv-row-sm"><td style="${TD}height:25px;">${he(formatPeriod(String(row['startDate'] ?? ''), String(row['endDate'] ?? '')))}</td><td style="${TD}">${he(v(row['schoolName']))}</td><td style="${TD}">${he(v(row['major']))}</td></tr>`
-      : `<tr class="cv-row-sm"><td style="${TD}height:25px;"></td><td style="${TD}"></td><td style="${TD}"></td></tr>`,
+      ? `<tr class="cv-row-sm"><td style="${TD}height:25px;">${he(formatPeriodJa(toDateStr(row['startDate']), toDateStr(row['endDate'])))}</td><td style="${TD}">${he(v(row['schoolName']))}</td><td style="${TD}">${he(row['status'] ? (eduStatusMap[String(row['status'])] ?? v(row['status'])) : '')}</td><td style="${TD}">${he(v(row['major']))}</td></tr>`
+      : `<tr class="cv-row-sm"><td style="${TD}height:25px;"></td><td style="${TD}"></td><td style="${TD}"></td><td style="${TD}"></td></tr>`,
   ).join('');
 
   // ── Career rows ───────────────────────────────────────────────────────────────
@@ -324,11 +342,12 @@ export function buildCandidateCvHtml(
   <!-- Pendidikan -->
   <table>
     <tbody>
-      <tr><td style="${ST}" colspan="3">Pendidikan ・ 学歴</td></tr>
+      <tr><td style="${ST}" colspan="4">Pendidikan ・ 学歴</td></tr>
       <tr style="text-align:center;">
-        <td style="${TD}width:30%;">Periode ・ 期間</td>
-        <td style="${TD}width:40%;">Nama Sekolah ・ 学校名</td>
-        <td style="${TD}width:30%;">Jurusan ・ 専攻</td>
+        <td style="${TD}width:25%;">Periode ・ 期間</td>
+        <td style="${TD}width:35%;">Nama Sekolah ・ 学校名</td>
+        <td style="${TD}width:15%;">Status ・ 在学状況</td>
+        <td style="${TD}width:25%;">Jurusan ・ 専攻</td>
       </tr>
       ${eduRowsHtml}
     </tbody>
