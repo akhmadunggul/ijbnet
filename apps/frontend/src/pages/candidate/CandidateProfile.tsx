@@ -66,7 +66,6 @@ const careerSchema = z.object({
 
 const testSchema = z.object({
   entries: z.array(z.object({
-    id:       z.string().optional(),
     testName: z.string().nullable().optional(),
     score:    z.coerce.number().nullable().optional(),
     pass:     z.boolean().nullable().optional(),
@@ -85,7 +84,6 @@ const workplanSchema = z.object({
 
 const certificationSchema = z.object({
   entries: z.array(z.object({
-    id:          z.string().optional(),
     certName:    z.string().min(1),
     certLevel:   z.string().nullable().optional(),
     issuedDate:  z.string().nullable().optional(),
@@ -716,7 +714,12 @@ function JapaneseTab({ candidate }: { candidate: CandidateData }) {
   const qc = useQueryClient();
   const { control, register, handleSubmit, reset, formState: { isDirty } } = useForm<TestForm>({
     defaultValues: {
-      entries: (candidate.tests ?? []).map((tst) => ({ ...tst, testDate: tst.testDate ? tst.testDate.slice(0, 10) : '' })),
+      entries: (candidate.tests ?? []).map((tst) => ({
+        testName: tst.testName ?? null,
+        score:    tst.score    ?? null,
+        pass:     tst.pass     ?? null,
+        testDate: tst.testDate ? tst.testDate.slice(0, 10) : '',
+      })),
     },
   });
   const { fields, append, remove } = useFieldArray({ control, name: 'entries' });
@@ -866,8 +869,10 @@ function CertificationsTab({ candidate }: { candidate: CandidateData }) {
   const { control, register, handleSubmit, reset, formState: { isDirty } } = useForm<CertificationForm>({
     defaultValues: {
       entries: (candidate.certifications ?? []).map((c) => ({
-        ...c,
+        certName:   c.certName,
+        certLevel:  c.certLevel  ?? null,
         issuedDate: c.issuedDate ? c.issuedDate.slice(0, 10) : '',
+        issuedBy:   c.issuedBy   ?? null,
       })),
     },
   });
