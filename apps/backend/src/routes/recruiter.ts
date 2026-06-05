@@ -700,6 +700,31 @@ router.get('/requests/:id', wrap(async (req: Request, res: Response): Promise<vo
   res.json({ request: request.toJSON() });
 }));
 
+// ── GET /api/recruiter/candidates/:id/gakken-resume ──────────────────────────
+router.get('/candidates/:id/gakken-resume', wrap(async (req: Request, res: Response): Promise<void> => {
+  const { id } = req.params as { id: string };
+  if (!isUUID(id)) { res.status(400).json({ error: 'BAD_REQUEST' }); return; }
+
+  const companyId = await getRecruiterCompanyId(req.user!.sub);
+  if (!companyId) { res.status(403).json({ error: 'FORBIDDEN' }); return; }
+
+  const batch = await getActiveBatch(companyId);
+  if (!batch) { res.status(403).json({ error: 'FORBIDDEN', message: 'No active batch for your company.' }); return; }
+
+  const allocation = await BatchCandidate.findOne({ where: { batchId: batch.id, candidateId: id } });
+  if (!allocation) { res.status(403).json({ error: 'FORBIDDEN', message: 'Candidate is not in your batch.' }); return; }
+
+  const [resume, companies] = await Promise.all([
+    CandidateGakkenResume.findOne({ where: { candidateId: id } }),
+    CandidateGakkenCompany.findAll({ where: { candidateId: id }, order: [['sortOrder', 'ASC']] }),
+  ]);
+
+  res.json({
+    resume: resume ? resume.toJSON() : null,
+    companies: companies.map((c) => c.toJSON()),
+  });
+}));
+
 // ── GET /api/recruiter/candidates/:id/shokumu-pdf ─────────────────────────────
 router.get('/candidates/:id/shokumu-pdf', wrap(async (req: Request, res: Response): Promise<void> => {
   const { id } = req.params as { id: string };

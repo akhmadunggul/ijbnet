@@ -1,31 +1,30 @@
 import { useNavigate, useParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { useTranslation } from 'react-i18next';
 import { api } from '../../lib/api';
-import CandidateCV from '../../components/CandidateCV';
+import type { CandidateMe } from '../../types/candidate';
+import ShokumuResume from '../../components/ShokumuResume';
+import GakkenResume from '../../components/GakkenResume';
 
-export default function RecruiterCandidateCVPage() {
+export default function RecruiterShokumuPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { t } = useTranslation();
 
-  const { data, isLoading, error } = useQuery({
+  const { data, isLoading, error } = useQuery<CandidateMe>({
     queryKey: ['recruiter-candidate-cv', id],
     queryFn: () => api.get(`/recruiter/candidates/${id}`).then((r) => r.data),
     enabled: !!id,
     retry: false,
   });
 
-  const { data: shokumuConfig } = useQuery<{ recruiterEnabled: boolean }>({
+  const { data: shokumuConfig } = useQuery<{ recruiterEnabled: boolean; template: string }>({
     queryKey: ['shokumu-config'],
     queryFn: () => api.get('/superadmin/shokumu-config').then((r) => r.data),
   });
-  const recruiterResumeEnabled = shokumuConfig?.recruiterEnabled === true;
 
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-64 text-sm text-gray-400">
-        Memuat CV...
+        Memuat Resume...
       </div>
     );
   }
@@ -40,24 +39,34 @@ export default function RecruiterCandidateCVPage() {
         : 'Gagal memuat data';
     return (
       <div className="max-w-4xl mx-auto space-y-4">
-        <button
-          onClick={() => navigate(-1)}
-          className="text-sm text-gray-400 hover:text-gray-600"
-        >
+        <button onClick={() => navigate(-1)} className="text-sm text-gray-400 hover:text-gray-600">
           ← Kembali
         </button>
-        <div className="flex items-center justify-center h-64 text-sm text-red-500">
-          {msg}
+        <div className="flex items-center justify-center h-64 text-sm text-red-500">{msg}</div>
+      </div>
+    );
+  }
+
+  if (shokumuConfig?.recruiterEnabled === false) {
+    return (
+      <div className="max-w-4xl mx-auto space-y-4">
+        <button onClick={() => navigate(-1)} className="text-sm text-gray-400 hover:text-gray-600">
+          ← Kembali
+        </button>
+        <div className="flex items-center justify-center h-64 text-sm text-gray-500">
+          Akses Resume tidak diaktifkan oleh administrator.
         </div>
       </div>
     );
   }
 
+  const template = shokumuConfig?.template ?? 'generic';
+
   return (
     <div className="max-w-4xl mx-auto space-y-4">
-      <div className="flex items-center justify-between no-print">
+      <div className="flex items-center justify-between print:hidden">
         <div>
-          <h1 className="text-xl font-semibold text-navy-900">CV Kandidat</h1>
+          <h1 className="text-xl font-semibold text-navy-900">Resume / 職務経歴書</h1>
           <p className="text-xs text-gray-400 mt-0.5">{data.candidate.candidateCode}</p>
         </div>
         <div className="flex gap-3">
@@ -67,14 +76,6 @@ export default function RecruiterCandidateCVPage() {
           >
             ← Kembali
           </button>
-          {recruiterResumeEnabled && (
-            <button
-              onClick={() => navigate(`/recruiter/candidates/${id}/shokumu`)}
-              className="text-sm px-4 py-2 bg-gold-600 text-white rounded-lg hover:bg-gold-700 transition"
-            >
-              {t('recruiter.cv.downloadResume', { defaultValue: 'Resume / 職務経歴書' })}
-            </button>
-          )}
           <button
             onClick={() => window.print()}
             className="text-sm px-4 py-2 bg-navy-700 text-white rounded-lg hover:bg-navy-900 transition"
@@ -84,7 +85,10 @@ export default function RecruiterCandidateCVPage() {
         </div>
       </div>
 
-      <CandidateCV candidate={data.candidate} showSensitiveData={false} />
+      {template === 'gakken'
+        ? <GakkenResume candidate={data.candidate} gakkenEndpoint={`/recruiter/candidates/${id}/gakken-resume`} />
+        : <ShokumuResume candidate={data.candidate} />
+      }
     </div>
   );
 }

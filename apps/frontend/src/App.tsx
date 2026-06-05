@@ -19,6 +19,7 @@ import AdminNotifications from './pages/admin/AdminNotifications';
 import RecruiterLayout from './pages/recruiter/RecruiterLayout';
 import RecruiterSelection from './pages/recruiter/RecruiterSelection';
 import RecruiterCandidateCVPage from './pages/recruiter/RecruiterCandidateCVPage';
+import RecruiterShokumuPage from './pages/recruiter/RecruiterShokumuPage';
 import RecruiterConfirmed from './pages/recruiter/RecruiterConfirmed';
 import RecruiterInterviews from './pages/recruiter/RecruiterInterviews';
 import RecruiterNotifications from './pages/recruiter/RecruiterNotifications';
@@ -168,6 +169,7 @@ export default function App() {
           <Route path="requests" element={<RecruiterRequests />} />
           <Route path="selection" element={<RecruiterSelection />} />
           <Route path="candidates/:id/cv" element={<RecruiterCandidateCVPage />} />
+          <Route path="candidates/:id/shokumu" element={<RecruiterShokumuPage />} />
           <Route path="confirmed" element={<RecruiterConfirmed />} />
           <Route path="interviews" element={<RecruiterInterviews />} />
           <Route path="notifications" element={<RecruiterNotifications />} />

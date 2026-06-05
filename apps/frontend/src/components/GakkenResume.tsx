@@ -51,7 +51,7 @@ interface GakkenResumeResponse {
   companies: GakkenCompanyEntry[];
 }
 
-export default function GakkenResume({ candidate }: { candidate: CandidateData }) {
+export default function GakkenResume({ candidate, gakkenEndpoint }: { candidate: CandidateData; gakkenEndpoint?: string }) {
   const [zoom, setZoom] = useState(1.0);
 
   useEffect(() => {
@@ -81,9 +81,10 @@ export default function GakkenResume({ candidate }: { candidate: CandidateData }
     document.head.appendChild(link);
   }, [fontKey]);
 
+  const endpoint = gakkenEndpoint ?? '/candidates/me/gakken-resume';
   const { data: gakkenData } = useQuery<GakkenResumeResponse>({
-    queryKey: ['gakken-resume'],
-    queryFn: () => api.get('/candidates/me/gakken-resume').then(r => r.data),
+    queryKey: ['gakken-resume', endpoint],
+    queryFn: () => api.get(endpoint).then(r => r.data),
     staleTime: 30_000,
   });
 

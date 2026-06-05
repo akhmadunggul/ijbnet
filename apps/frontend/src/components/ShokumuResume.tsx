@@ -215,7 +215,7 @@ export default function ShokumuResume({ candidate }: { candidate: CandidateData 
 
   const { data: shokumuConfig } = useQuery<{ layout: string }>({
     queryKey: ['shokumu-config'],
-    queryFn: () => api.get('/candidates/me/shokumu').then(r => r.data),
+    queryFn: () => api.get('/superadmin/shokumu-config').then(r => r.data),
     staleTime: 5 * 60 * 1000,
   });
   const layout = shokumuConfig?.layout ?? 'reverse';
