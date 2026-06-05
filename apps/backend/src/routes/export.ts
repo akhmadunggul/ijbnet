@@ -294,6 +294,7 @@ router.post('/candidates/batch-cv.pdf', wrap(async (req, res) => {
         const careerUpdates: Record<string, string> = {};
         for (const [idKey, jaKey] of [
           ['division', 'divisionJa'], ['skillGroup', 'skillGroupJa'],
+          ['companyBusinessActivity', 'companyBusinessActivityJa'],
         ] as const) {
           const idText = entry[idKey] as string | null;
           const jaText = entry[jaKey] as string | null;
