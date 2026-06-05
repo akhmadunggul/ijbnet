@@ -130,6 +130,11 @@ export function buildCandidateCvHtml(
     divorced: 'Cerai / 離婚', widowed: 'Janda / Duda',
   };
 
+  const religionMap: Record<string, string> = {
+    Islam: 'イスラム教', Kristen: 'キリスト教（プロテスタント）', Katolik: 'キリスト教（カトリック）',
+    Budha: '仏教', Hindu: 'ヒンドゥー教', Lainnya: 'その他',
+  };
+
   const dobStr = cj['dateOfBirth'] ? formatDobJa(cj['dateOfBirth']) : '';
   const birthDisplay = he([v(cj['birthPlace']), dobStr].filter(Boolean).join('  '));
 
@@ -278,7 +283,7 @@ export function buildCandidateCvHtml(
           <td style="${TD}">Usia ・ 年齢</td>
           <td style="${TD}">${age !== null ? `${age}歳` : ''}</td>
           <td style="${TD}">Agama ・ 宗教</td>
-          <td style="${TD}">${he(v(cj['religion']))}</td>
+          <td style="${TD}">${he(cj['religion'] ? (religionMap[String(cj['religion'])] ?? v(cj['religion'])) : '')}</td>
         </tr>
         <tr>
           <td style="${TD}">Gol. Darah ・ 血液型</td>

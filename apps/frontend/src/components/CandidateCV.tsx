@@ -286,6 +286,10 @@ export default function CandidateCV({
     ? { single: '未婚', married: '既婚', divorced: '離婚', widowed: '死別' }
     : { single: 'Belum Menikah / 未婚', married: 'Menikah / 既婚', divorced: 'Cerai / 離婚', widowed: 'Janda / Duda' };
 
+  const religionLabelMap: Record<string, string> = isJaMode
+    ? { Islam: 'イスラム教', Kristen: 'キリスト教（プロテスタント）', Katolik: 'キリスト教（カトリック）', Budha: '仏教', Hindu: 'ヒンドゥー教', Lainnya: 'その他' }
+    : { Islam: 'Islam', Kristen: 'Kristen', Katolik: 'Katolik', Budha: 'Budha', Hindu: 'Hindu', Lainnya: 'Lainnya' };
+
   const addressMasked = (c.address as any)?.masked === true;
   const addressDisplay = addressMasked ? '🔒' : v(c.address);
 
@@ -424,7 +428,7 @@ export default function CandidateCV({
               <td style={TD}>{L('Usia', '年齢')}</td>
               <td style={TD}>{age !== null ? `${age}歳` : ''}</td>
               <td style={TD}>{L('Agama', '宗教')}</td>
-              <td style={TD}>{v(c.religion)}</td>
+              <td style={TD}>{c.religion ? (religionLabelMap[c.religion] ?? v(c.religion)) : ''}</td>
             </tr>
             <tr>
               <td style={TD}>{L('Gol. Darah', '血液型')}</td>
