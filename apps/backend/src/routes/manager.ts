@@ -37,6 +37,7 @@ import {
 } from '../emails/interviewResult';
 import { recordTimelineEvent, currentAgeHours } from '../utils/timeline';
 import { CandidateTimeline } from '../db/models/CandidateTimeline';
+import { candidateIncludes } from '../utils/candidateIncludes';
 import { isUUID } from 'validator';
 import { v4 as uuidv4 } from 'uuid';
 import { config } from '../config';
@@ -72,19 +73,6 @@ async function audit(
   });
 }
 
-// ── Full candidate includes (fresh each call to avoid circular ref) ───────────
-function candidateIncludes() {
-  return [
-    { model: CandidateJapaneseTest, as: 'tests', required: false },
-    { model: CandidateCareer, as: 'career', required: false, separate: true, order: [['startDate', 'ASC'] as [string, string]] },
-    { model: CandidateBodyCheck, as: 'bodyCheck', required: false },
-    { model: CandidateWeeklyTest, as: 'weeklyTests', required: false },
-    { model: CandidateIntroVideo, as: 'videos', required: false },
-    { model: ToolsDictionary, as: 'tools', required: false },
-    { model: CandidateCertification, as: 'certifications', required: false },
-    { model: CandidateEducationHistory, as: 'educationHistory', required: false, separate: true, order: [['startDate', 'ASC'] as [string, string]] },
-  ];
-}
 
 // ── GET /api/manager/stats ───────────────────────────────────────────────────
 router.get('/stats', wrap(async (_req: Request, res: Response): Promise<void> => {
@@ -154,7 +142,7 @@ router.get('/candidates', wrap(async (req: Request, res: Response): Promise<void
   const { count, rows } = await Candidate.findAndCountAll({
     where,
     include: [
-      { model: CandidateBodyCheck, as: 'bodyCheck', required: false },
+      ...candidateIncludes(),
       { model: Lpk, as: 'lpk', attributes: ['id', 'name'], required: false },
     ],
     limit,
@@ -325,7 +313,7 @@ router.get('/batches/:id', wrap(async (req: Request, res: Response): Promise<voi
             as: 'candidate',
             required: false,
             include: [
-              { model: CandidateBodyCheck, as: 'bodyCheck', required: false },
+              ...candidateIncludes(),
               { model: Lpk, as: 'lpk', attributes: ['id', 'name'], required: false },
             ],
           },

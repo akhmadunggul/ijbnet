@@ -247,6 +247,7 @@ apps/frontend/src/
 - v0.6.32 — Fix batch CV to use formatted CandidateCV style (bilingual, IJBNet logo, photo) instead of data export: new candidateCvHtml.ts mirrors CandidateCV.tsx as pure HTML; logo embedded as base64; closeup photo embedded per candidate; reads cv_layout + cv_font settings
 - v0.6.33 — Fix batch CV issues: (1) logo base64 was corrupted on write — replaced with correct bytes; (2) 2-page overflow fixed by matching print CSS values (TD padding 3px 4px, container width 100%, row heights 18/24/32px, margins 4px, renderPdf 5mm margins); (3) K6 users included — clear selectedIds via useEffect when any filter changes
 - v0.6.34 — Fix batch CV date of birth (Sequelize DATEONLY returns Date object on some rows — toDateStr() normalises both Date objects and strings); auto-translate selfPrJa/motivationJa/selfIntroJa/divisionJa/skillGroupJa for all candidates in batch before rendering — Promise.allSettled ensures single failure never aborts batch; translations saved to DB for caching; combined translate+render in single per-candidate loop so mutated fields are used in HTML
+- v0.7.0 — Fix completeness score mismatch: superadmin list and manager batch detail computed calcCompleteness() on candidate data missing educationHistory/career/tests associations → always showed 95% (20/21 in CV mode) while candidate portal correctly showed 100%; extract shared candidateIncludes() utility (utils/candidateIncludes.ts) used by all four routes so association set is guaranteed identical
 
-Current: v0.6.34
+Current: v0.7.0
 Live at: https://jinzai.jobagus.id

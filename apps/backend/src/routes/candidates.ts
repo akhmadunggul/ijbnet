@@ -49,6 +49,7 @@ import { recordTimelineEvent, currentAgeHours } from '../utils/timeline';
 import { notifyUser } from '../utils/notify';
 import { serializeCandidate } from '../serializers/candidate';
 import { calcCompleteness } from '../utils/completeness';
+import { candidateIncludes } from '../utils/candidateIncludes';
 import { validateImageBuffer, savePhoto } from '../utils/storage';
 import type { PhotoSlot } from '../utils/storage';
 import { encrypt } from '../utils/crypto';
@@ -110,16 +111,7 @@ router.use(authenticate, requireRole('candidate'));
 async function findMyCandidate(userId: string) {
   return Candidate.findOne({
     where: { userId },
-    include: [
-      { model: CandidateJapaneseTest, as: 'tests', required: false },
-      { model: CandidateCareer, as: 'career', required: false, separate: true, order: [['startDate', 'ASC'] as [string, string]] },
-      { model: CandidateBodyCheck, as: 'bodyCheck', required: false },
-      { model: CandidateWeeklyTest, as: 'weeklyTests', required: false },
-      { model: CandidateIntroVideo, as: 'videos', required: false },
-      { model: ToolsDictionary, as: 'tools', required: false },
-      { model: CandidateCertification, as: 'certifications', required: false },
-      { model: CandidateEducationHistory, as: 'educationHistory', required: false, separate: true, order: [['startDate', 'ASC'] as [string, string]] },
-    ],
+    include: candidateIncludes(),
   });
 }
 

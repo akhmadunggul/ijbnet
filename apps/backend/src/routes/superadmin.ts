@@ -18,6 +18,9 @@ import {
   Lpk,
   Candidate,
   CandidateBodyCheck,
+  CandidateJapaneseTest,
+  CandidateCareer,
+  CandidateEducationHistory,
   Batch,
   BatchCandidate,
   InterviewProposal,
@@ -26,6 +29,7 @@ import {
   GlobalSettings,
 } from '../db/models/index';
 import { serializeCandidate, serializeUser } from '../serializers/candidate';
+import { candidateIncludes } from '../utils/candidateIncludes';
 import { calcCompleteness, setCompletenessMode, type CompletenessMode } from '../utils/completeness';
 import { deleteCandidatePhotos } from '../utils/storage';
 import { decryptNullable, encrypt } from '../utils/crypto';
@@ -870,7 +874,7 @@ router.get('/candidates', wrap(async (req, res) => {
   const { count, rows } = await Candidate.findAndCountAll({
     where,
     include: [
-      { model: CandidateBodyCheck, as: 'bodyCheck', required: false },
+      ...candidateIncludes(),
       { model: Lpk, as: 'lpk', attributes: ['id', 'name'], required: false },
     ],
     order: [['createdAt', 'DESC']],

@@ -22,6 +22,7 @@ import { notifyUser, notifyByRole } from '../utils/notify';
 import { extractYoutubeId } from '../utils/youtube';
 import { recordTimelineEvent, currentAgeHours } from '../utils/timeline';
 import { CandidateTimeline } from '../db/models/CandidateTimeline';
+import { candidateIncludes } from '../utils/candidateIncludes';
 import { isUUID } from 'validator';
 import { v4 as uuidv4 } from 'uuid';
 
@@ -40,16 +41,7 @@ async function findScopedCandidate(candidateId: string, lpkId: string) {
   if (!isUUID(candidateId)) return null;
   return Candidate.findOne({
     where: { id: candidateId, lpkId },
-    include: [
-      { model: CandidateJapaneseTest, as: 'tests', required: false },
-      { model: CandidateCareer, as: 'career', required: false, separate: true, order: [['startDate', 'ASC'] as [string, string]] },
-      { model: CandidateBodyCheck, as: 'bodyCheck', required: false },
-      { model: CandidateWeeklyTest, as: 'weeklyTests', required: false },
-      { model: CandidateIntroVideo, as: 'videos', required: false },
-      { model: ToolsDictionary, as: 'tools', required: false },
-      { model: CandidateCertification, as: 'certifications', required: false },
-      { model: CandidateEducationHistory, as: 'educationHistory', required: false, separate: true, order: [['startDate', 'ASC'] as [string, string]] },
-    ],
+    include: candidateIncludes(),
   });
 }
 
@@ -97,10 +89,7 @@ router.get('/candidates', async (req: Request, res: Response): Promise<void> => 
 
   const { count, rows } = await Candidate.findAndCountAll({
     where,
-    include: [
-      { model: CandidateBodyCheck, as: 'bodyCheck', required: false },
-      { model: CandidateIntroVideo, as: 'videos', required: false },
-    ],
+    include: candidateIncludes(),
     limit,
     offset,
     order: [['createdAt', 'DESC']],
