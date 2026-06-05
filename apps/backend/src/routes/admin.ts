@@ -23,6 +23,7 @@ import { extractYoutubeId } from '../utils/youtube';
 import { recordTimelineEvent, currentAgeHours } from '../utils/timeline';
 import { CandidateTimeline } from '../db/models/CandidateTimeline';
 import { candidateIncludes } from '../utils/candidateIncludes';
+import { backfillCareerJa } from '../utils/translate';
 import { isUUID } from 'validator';
 import { v4 as uuidv4 } from 'uuid';
 
@@ -126,6 +127,7 @@ router.get('/candidates/:id', async (req: Request, res: Response): Promise<void>
   const completeness = calcCompleteness(data);
 
   res.json({ candidate: { ...serializeCandidate(data, 'admin'), completeness } });
+  backfillCareerJa(candidate.id).catch(() => null);
 });
 
 // ── PATCH /api/admin/candidates/:id ──────────────────────────────────────────

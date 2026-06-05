@@ -1,6 +1,7 @@
 import crypto from 'crypto';
-import { GlobalSettings } from '../db/models/index';
+import { GlobalSettings, CandidateCareer } from '../db/models/index';
 import { decryptNullable } from './crypto';
+import { Op } from 'sequelize';
 
 interface DeepSeekResponse {
   choices: Array<{ message: { content: string } }>;
@@ -117,6 +118,36 @@ export async function translateId2Ja(text: string, options: TranslateOptions = {
   if (!apiKey || !text.trim()) return null;
   const { text: result } = await callDeepSeek(text, apiKey, options);
   return result;
+}
+
+/**
+ * Fire-and-forget: translate all career entries for a candidate that have
+ * companyBusinessActivity but no companyBusinessActivityJa, then save back.
+ * Never throws.
+ */
+export async function backfillCareerJa(candidateId: string): Promise<void> {
+  try {
+    const autoTranslateSetting = await GlobalSettings.findOne({ where: { key: 'auto_translate' } });
+    const autoTranslate = autoTranslateSetting
+      ? (autoTranslateSetting.toJSON() as unknown as Record<string, unknown>)['value'] !== false
+      : true;
+    if (!autoTranslate) return;
+
+    const entries = await CandidateCareer.findAll({
+      where: {
+        candidateId,
+        companyBusinessActivity: { [Op.not]: null },
+        companyBusinessActivityJa: { [Op.is]: null as any },
+      },
+    });
+
+    await Promise.allSettled(
+      entries.map(async (entry) => {
+        const t = await translateId2Ja(entry.companyBusinessActivity!, { context: 'career-backfill' });
+        if (t) await entry.update({ companyBusinessActivityJa: t });
+      }),
+    );
+  } catch { /* never fail the parent request */ }
 }
 
 /**

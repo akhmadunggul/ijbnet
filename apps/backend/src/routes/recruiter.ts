@@ -36,6 +36,7 @@ import { config } from '../config';
 import { isUUID } from 'validator';
 import { v4 as uuidv4 } from 'uuid';
 import { candidateIncludes } from '../utils/candidateIncludes';
+import { backfillCareerJa } from '../utils/translate';
 
 const router = Router();
 
@@ -338,6 +339,7 @@ router.get('/candidates/:id', wrap(async (req: Request, res: Response): Promise<
   const data = candidate.toJSON() as unknown as Record<string, unknown>;
   const completeness = calcCompleteness(data);
   res.json({ candidate: { ...serializeCandidate(data, 'recruiter'), completeness } });
+  backfillCareerJa(candidate.id).catch(() => null);
 }));
 
 // ── POST /api/recruiter/interviews/:batchCandidateId/propose ─────────────────

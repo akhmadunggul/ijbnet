@@ -38,6 +38,7 @@ import {
 import { recordTimelineEvent, currentAgeHours } from '../utils/timeline';
 import { CandidateTimeline } from '../db/models/CandidateTimeline';
 import { candidateIncludes } from '../utils/candidateIncludes';
+import { backfillCareerJa } from '../utils/translate';
 import { isUUID } from 'validator';
 import { v4 as uuidv4 } from 'uuid';
 import { config } from '../config';
@@ -188,6 +189,7 @@ router.get('/candidates/:id', wrap(async (req: Request, res: Response): Promise<
   const data = candidate.toJSON() as unknown as Record<string, unknown>;
   const completeness = calcCompleteness(data);
   res.json({ candidate: { ...serializeCandidate(data, 'manager'), completeness } });
+  backfillCareerJa(candidate.id).catch(() => null);
 }));
 
 // ── PATCH /api/manager/candidates/:id ─────────────────────────────────────────

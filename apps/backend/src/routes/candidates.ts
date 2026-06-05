@@ -10,7 +10,7 @@ import { buildCandidatePdfHtml } from '../utils/candidatePdf';
 import { buildShokumuHtml } from '../utils/shokumuTemplate';
 import { buildGakkenHtml } from '../utils/gakkenTemplate';
 import { config } from '../config';
-import { translateId2Ja } from '../utils/translate';
+import { translateId2Ja, backfillCareerJa } from '../utils/translate';
 import { renderPdf, isPdfError } from '../utils/browserPool';
 import {
   parseBody,
@@ -159,6 +159,7 @@ router.get('/me', async (req: Request, res: Response): Promise<void> => {
   };
   await cacheSet(cacheKey, JSON.stringify(payload), 10);
   res.json(payload);
+  backfillCareerJa(candidate.id).catch(() => null);
 });
 
 // ── PATCH /api/candidates/me ──────────────────────────────────────────────────
