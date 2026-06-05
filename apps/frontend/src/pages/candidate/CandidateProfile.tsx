@@ -568,7 +568,7 @@ function SswTab({ candidate, onSave, saving }: { candidate: CandidateData; onSav
 }
 
 // ── Tab 3 — Education ─────────────────────────────────────────────────────────
-const EDU_MONTHS = ['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt','Nov','Des'];
+const EDU_MONTHS = ['JAN','FEB','MAR','APR','MEI','JUN','JUL','AGU','SEP','OKT','NOV','DES'];
 const EDU_YEARS  = Array.from({ length: 51 }, (_, i) => String(2000 + i));
 
 function EducationTab({ candidate }: { candidate: CandidateData }) {
@@ -675,7 +675,7 @@ function EducationTab({ candidate }: { candidate: CandidateData }) {
                         )}
                         <select {...historyForm.register(`entries.${i}.endYear`)} className={`${inputCls} ${endYearVal === 'now' ? 'w-full' : 'flex-1'}`}>
                           <option value="">----</option>
-                          <option value="now">Sekarang (現在)</option>
+                          <option value="now">SEKARANG (現在)</option>
                           {EDU_YEARS.map((y) => <option key={y} value={y}>{y}</option>)}
                         </select>
                       </div>
@@ -685,9 +685,9 @@ function EducationTab({ candidate }: { candidate: CandidateData }) {
                 <Field label={t('candidate.profile.education.status')}>
                   <select {...historyForm.register(`entries.${i}.status`)} className={inputCls}>
                     <option value="">--</option>
-                    <option value="Lulus">Lulus</option>
-                    <option value="Drop Out">Drop Out</option>
-                    <option value="Masih Belajar">Masih Belajar</option>
+                    <option value="Lulus">LULUS</option>
+                    <option value="Drop Out">DROP OUT</option>
+                    <option value="Masih Belajar">MASIH BELAJAR</option>
                   </select>
                 </Field>
                 <Field label={t('candidate.profile.education.major')}>
