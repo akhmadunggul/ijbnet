@@ -243,7 +243,8 @@
         "division": "Divisi",
         "skillGroup": "Kelompok Keahlian",
         "period": "Periode",
-        "startDate": "Tanggal Mulai (untuk urutan)"
+        "startDate": "Mulai",
+        "endDate": "Selesai"
       },
       "japanese": {
         "addTest": "Tambah Tes",

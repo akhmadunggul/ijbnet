@@ -428,6 +428,7 @@ router.put('/me/career', async (req: Request, res: Response): Promise<void> => {
           skillGroupJa,
           period: e.period ?? null,
           startDate: e.startDate ?? null,
+          endDate: e.endDate ?? null,
           sortOrder: e.sortOrder ?? i,
         };
       }),

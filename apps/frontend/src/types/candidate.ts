@@ -31,6 +31,7 @@ export interface CareerEntry {
   skillGroupJa?: string | null;
   period: string | null;
   startDate: string | null;
+  endDate?: string | null;
   sortOrder: number;
   companyType?: string | null;
   employeeCount?: number | null;

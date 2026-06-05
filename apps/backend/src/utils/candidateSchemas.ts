@@ -77,6 +77,7 @@ const careerEntrySchema = z.object({
   skillGroupJa: shortStr(200).nullable(),
   period:       shortStr(50).nullable(),
   startDate:    isoDate.nullable(),
+  endDate:      isoDate.nullable(),
   sortOrder:    z.number().int().min(0).max(9999),
 }).partial().strict();
 

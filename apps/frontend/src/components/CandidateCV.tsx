@@ -534,9 +534,7 @@ export default function CandidateCV({
             row ? (
               <tr className="cv-row-md" key={(row as any).id ?? i}>
                 <td style={{ ...TD, height: '40px' }}>
-                  {isJaMode
-                    ? (formatPeriodJa((row as any).startDate, (row as any).endDate) || v((row as any).period))
-                    : v((row as any).period)}
+                  {formatPeriodJa((row as any).startDate, (row as any).endDate) || v((row as any).period)}
                 </td>
                 <td style={TD}>{v((row as any).companyName)}</td>
                 <td style={TD}>

@@ -57,13 +57,14 @@ const educationHistorySchema = z.object({
 
 const careerSchema = z.object({
   entries: z.array(z.object({
-    id:                      z.string().optional(),
     companyName:             z.string().nullable().optional(),
     companyBusinessActivity: z.string().nullable().optional(),
     division:                z.string().nullable().optional(),
     skillGroup:              z.string().nullable().optional(),
-    period:                  z.string().nullable().optional(),
-    startDate:               z.string().nullable().optional(),
+    startMonth:              z.string().optional(),
+    startYear:               z.string().optional(),
+    endMonth:                z.string().optional(),
+    endYear:                 z.string().optional(),
     sortOrder:               z.number().optional(),
   })),
 });
@@ -718,11 +719,33 @@ function EducationTab({ candidate }: { candidate: CandidateData }) {
 
 // ── Tab 4 — Career ────────────────────────────────────────────────────────────
 function CareerTab({ candidate, saving }: { candidate: CandidateData; saving: boolean }) {
+  void saving;
   const { t } = useTranslation();
   const qc = useQueryClient();
-  const { control, register, handleSubmit, reset, formState: { isDirty } } = useForm<CareerForm>({
+
+  const parseYM = (d: string | null | undefined) => {
+    if (!d) return { month: '', year: '' };
+    const [y, m] = d.slice(0, 7).split('-');
+    return { month: m ? String(parseInt(m, 10)) : '', year: y ?? '' };
+  };
+
+  const { control, register, handleSubmit, reset, watch, formState: { isDirty } } = useForm<CareerForm>({
     defaultValues: {
-      entries: (candidate.career ?? []).map((c, i) => ({ ...c, sortOrder: c.sortOrder ?? i })),
+      entries: (candidate.career ?? []).map((c, i) => {
+        const sd = parseYM(c.startDate);
+        const ed = parseYM((c as any).endDate ?? null);
+        return {
+          companyName:             c.companyName,
+          companyBusinessActivity: c.companyBusinessActivity,
+          division:                c.division,
+          skillGroup:              c.skillGroup,
+          startMonth:              sd.month,
+          startYear:               sd.year,
+          endMonth:                ed.month,
+          endYear:                 ed.year,
+          sortOrder:               c.sortOrder ?? i,
+        };
+      }),
     },
   });
   const { fields, append, remove, move } = useFieldArray({ control, name: 'entries' });
@@ -730,14 +753,18 @@ function CareerTab({ candidate, saving }: { candidate: CandidateData; saving: bo
   const [careerSaveError, setCareerSaveError] = useState(false);
   const careerMutation = useMutation({
     mutationFn: (data: CareerForm) => {
+      const toDate = (year: string, month: string) => {
+        if (!year || !month) return null;
+        return `${year}-${String(month).padStart(2, '0')}-01`;
+      };
       const payload = {
         entries: data.entries.map((e, i) => ({
           companyName:             e.companyName             ?? null,
           companyBusinessActivity: e.companyBusinessActivity ?? null,
           division:                e.division                ?? null,
           skillGroup:              e.skillGroup              ?? null,
-          period:                  e.period                  ?? null,
-          startDate:               e.startDate               ?? null,
+          startDate:               toDate(e.startYear ?? '', e.startMonth ?? ''),
+          endDate:                 e.endYear === 'now' ? null : toDate(e.endYear ?? '', e.endMonth ?? ''),
           sortOrder:               e.sortOrder               ?? i,
         })),
       };
@@ -753,29 +780,64 @@ function CareerTab({ candidate, saving }: { candidate: CandidateData; saving: bo
 
   return (
     <form onSubmit={handleSubmit((d) => careerMutation.mutate(d))} className="space-y-4">
-      {fields.map((field, i) => (
-        <div key={field.id} className="border border-gray-100 rounded-xl p-4 space-y-3 bg-gray-50">
-          <div className="flex items-center justify-between">
-            <p className="text-xs font-medium text-gray-500">Entry #{i + 1}</p>
-            <div className="flex gap-1">
-              <button type="button" disabled={i === 0} onClick={() => move(i, i - 1)} className="text-xs px-2 py-1 border rounded hover:bg-white disabled:opacity-30">▲</button>
-              <button type="button" disabled={i === fields.length - 1} onClick={() => move(i, i + 1)} className="text-xs px-2 py-1 border rounded hover:bg-white disabled:opacity-30">▼</button>
-              <button type="button" onClick={() => remove(i)} className="text-xs px-2 py-1 border border-red-200 text-red-500 rounded hover:bg-red-50">✕</button>
+      {fields.map((field, i) => {
+        const endYearVal = watch(`entries.${i}.endYear`);
+        return (
+          <div key={field.id} className="border border-gray-100 rounded-xl p-4 space-y-3 bg-gray-50">
+            <div className="flex items-center justify-between">
+              <p className="text-xs font-medium text-gray-500">Entry #{i + 1}</p>
+              <div className="flex gap-1">
+                <button type="button" disabled={i === 0} onClick={() => move(i, i - 1)} className="text-xs px-2 py-1 border rounded hover:bg-white disabled:opacity-30">▲</button>
+                <button type="button" disabled={i === fields.length - 1} onClick={() => move(i, i + 1)} className="text-xs px-2 py-1 border rounded hover:bg-white disabled:opacity-30">▼</button>
+                <button type="button" onClick={() => remove(i)} className="text-xs px-2 py-1 border border-red-200 text-red-500 rounded hover:bg-red-50">✕</button>
+              </div>
             </div>
+            <div className="grid grid-cols-2 gap-3">
+              <Field label={t('candidate.profile.career.company')}><input {...register(`entries.${i}.companyName`)} className={inputCls} /></Field>
+              <Field label={t('candidate.profile.career.division')}><input {...register(`entries.${i}.division`)} className={inputCls} /></Field>
+              <Field label={t('candidate.profile.career.skillGroup')}><input {...register(`entries.${i}.skillGroup`)} className={inputCls} /></Field>
+            </div>
+            <div>
+              <p className="text-xs font-medium text-gray-600 mb-1">{t('candidate.profile.career.period')}</p>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <p className="text-xs text-gray-400 mb-1">{t('candidate.profile.career.startDate')}</p>
+                  <div className="flex gap-1">
+                    <select {...register(`entries.${i}.startMonth`)} className={`${inputCls} flex-1`}>
+                      <option value="">--</option>
+                      {EDU_MONTHS.map((m, mi) => <option key={mi} value={String(mi + 1)}>{m}</option>)}
+                    </select>
+                    <select {...register(`entries.${i}.startYear`)} className={`${inputCls} flex-1`}>
+                      <option value="">----</option>
+                      {EDU_YEARS.map((y) => <option key={y} value={y}>{y}</option>)}
+                    </select>
+                  </div>
+                </div>
+                <div>
+                  <p className="text-xs text-gray-400 mb-1">{t('candidate.profile.career.endDate')}</p>
+                  <div className="flex gap-1">
+                    {endYearVal !== 'now' && (
+                      <select {...register(`entries.${i}.endMonth`)} className={`${inputCls} flex-1`}>
+                        <option value="">--</option>
+                        {EDU_MONTHS.map((m, mi) => <option key={mi} value={String(mi + 1)}>{m}</option>)}
+                      </select>
+                    )}
+                    <select {...register(`entries.${i}.endYear`)} className={`${inputCls} ${endYearVal === 'now' ? 'w-full' : 'flex-1'}`}>
+                      <option value="">----</option>
+                      <option value="now">SEKARANG (現在)</option>
+                      {EDU_YEARS.map((y) => <option key={y} value={y}>{y}</option>)}
+                    </select>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <Field label={t('candidate.profile.career.companyBusinessActivity')}>
+              <textarea {...register(`entries.${i}.companyBusinessActivity`)} rows={2} maxLength={2000} className={inputCls} />
+            </Field>
           </div>
-          <div className="grid grid-cols-2 gap-3">
-            <Field label={t('candidate.profile.career.company')}><input {...register(`entries.${i}.companyName`)} className={inputCls} /></Field>
-            <Field label={t('candidate.profile.career.division')}><input {...register(`entries.${i}.division`)} className={inputCls} /></Field>
-            <Field label={t('candidate.profile.career.skillGroup')}><input {...register(`entries.${i}.skillGroup`)} className={inputCls} /></Field>
-            <Field label={t('candidate.profile.career.period')}><input {...register(`entries.${i}.period`)} className={inputCls} placeholder="Jan 2022 – Mar 2024" /></Field>
-            <Field label={t('candidate.profile.career.startDate')}><input type="date" {...register(`entries.${i}.startDate`)} className={inputCls} /></Field>
-          </div>
-          <Field label={t('candidate.profile.career.companyBusinessActivity')}>
-            <textarea {...register(`entries.${i}.companyBusinessActivity`)} rows={2} maxLength={2000} className={inputCls} />
-          </Field>
-        </div>
-      ))}
-      <button type="button" onClick={() => append({ companyName: '', division: '', skillGroup: '', period: '', sortOrder: fields.length })} className="text-sm text-navy-600 hover:underline">
+        );
+      })}
+      <button type="button" onClick={() => append({ companyName: '', division: '', skillGroup: '', startMonth: '', startYear: '', endMonth: '', endYear: '', sortOrder: fields.length })} className="text-sm text-navy-600 hover:underline">
         + {t('candidate.profile.career.addEntry')}
       </button>
       <div className="flex items-center gap-3 pt-2">

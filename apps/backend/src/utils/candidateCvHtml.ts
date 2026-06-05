@@ -236,11 +236,13 @@ export function buildCandidateCvHtml(
   }).join('');
 
   // ── Career rows ───────────────────────────────────────────────────────────────
-  const careerRowsHtml = careerRows.map((row) =>
-    row
-      ? `<tr class="cv-row-md"><td style="${TD}height:40px;">${he(v(row['period']))}</td><td style="${TD}">${he(v(row['companyName']))}</td><td style="${TD}">${he(v(row['companyBusinessActivityJa'] as unknown) || v(row['companyBusinessActivity'] as unknown))}</td></tr>`
-      : `<tr class="cv-row-md"><td style="${TD}height:40px;"></td><td style="${TD}"></td><td style="${TD}"></td></tr>`,
-  ).join('');
+  const careerRowsHtml = careerRows.map((row) => {
+    if (!row) return `<tr class="cv-row-md"><td style="${TD}height:40px;"></td><td style="${TD}"></td><td style="${TD}"></td></tr>`;
+    const period = row['startDate']
+      ? formatPeriodJa(toDateStr(row['startDate']), toDateStr(row['endDate']))
+      : v(row['period']);
+    return `<tr class="cv-row-md"><td style="${TD}height:40px;">${he(period)}</td><td style="${TD}">${he(v(row['companyName']))}</td><td style="${TD}">${he(v(row['companyBusinessActivityJa'] as unknown) || v(row['companyBusinessActivity'] as unknown))}</td></tr>`;
+  }).join('');
 
   // ── Cert rows ─────────────────────────────────────────────────────────────────
   const certRowsHtml = certRows.map((row) =>

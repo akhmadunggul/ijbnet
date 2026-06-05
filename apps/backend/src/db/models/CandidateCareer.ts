@@ -12,6 +12,7 @@ export interface CandidateCareerAttributes {
   skillGroupJa: string | null;
   period: string | null;
   startDate: string | null;
+  endDate: string | null;
   sortOrder: number;
   companyType: string | null;
   employeeCount: number | null;
@@ -44,6 +45,7 @@ export interface CandidateCareerCreationAttributes
     | 'skillGroupJa'
     | 'period'
     | 'startDate'
+    | 'endDate'
     | 'sortOrder'
     | 'companyType'
     | 'employeeCount'
@@ -75,6 +77,7 @@ export class CandidateCareer
   declare skillGroupJa: string | null;
   declare period: string | null;
   declare startDate: string | null;
+  declare endDate: string | null;
   declare sortOrder: number;
   declare companyType: string | null;
   declare employeeCount: number | null;
@@ -108,6 +111,7 @@ export function initCandidateCareer(sequelize: Sequelize): void {
       skillGroupJa: { type: DataTypes.STRING(200), allowNull: true },
       period: { type: DataTypes.STRING(50), allowNull: true },
       startDate: { type: DataTypes.DATEONLY, allowNull: true },
+      endDate: { type: DataTypes.DATEONLY, allowNull: true },
       sortOrder: { type: DataTypes.INTEGER, defaultValue: 0, allowNull: false },
       companyType: { type: DataTypes.STRING(100), allowNull: true },
       employeeCount: { type: DataTypes.INTEGER, allowNull: true },
