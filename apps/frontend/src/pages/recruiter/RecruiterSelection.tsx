@@ -659,7 +659,15 @@ export default function RecruiterSelection() {
     staleTime: 5 * 60 * 1000,
   });
   const cols: Record<ColKey, boolean> = { ...DEFAULT_COLS, ...(colConfigData?.config ?? {}) };
-  const visibleColCount = 1 + (Object.values(cols) as boolean[]).filter(Boolean).length;
+
+  const { data: shokumuConfig } = useQuery<{ recruiterEnabled: boolean }>({
+    queryKey: ['shokumu-config'],
+    queryFn: () => api.get('/superadmin/shokumu-config').then((r) => r.data),
+    staleTime: 5 * 60 * 1000,
+  });
+  const recruiterResumeEnabled = shokumuConfig?.recruiterEnabled === true;
+
+  const visibleColCount = 1 + (Object.values(cols) as boolean[]).filter(Boolean).length + (recruiterResumeEnabled ? 1 : 0);
 
   // Initialize selection store from batch data
   useEffect(() => {
@@ -890,6 +898,7 @@ export default function RecruiterSelection() {
                 {cols.fotoBadan && <th className="px-3 py-3 text-center text-xs font-medium text-gray-400">{lang === 'ja' ? '全身写真' : 'Foto Badan'}</th>}
                 {cols.video && <th className="px-3 py-3 text-center text-xs font-medium text-gray-400">{lang === 'ja' ? '動画' : 'Video'}</th>}
                 {cols.profil && <th className="px-3 py-3 text-center text-xs font-medium text-gray-400">{lang === 'ja' ? 'プロフィール' : 'Profil'}</th>}
+                {recruiterResumeEnabled && <th className="px-3 py-3 text-center text-xs font-medium text-gray-400">{lang === 'ja' ? '経歴書' : 'Resume'}</th>}
                 {cols.pilih && <th className="px-3 py-3 text-center text-xs font-medium text-gray-400">{lang === 'ja' ? '選択' : 'Pilih'}</th>}
               </tr>
             </thead>
@@ -1011,6 +1020,16 @@ export default function RecruiterSelection() {
                           className="text-xs text-navy-600 hover:underline"
                         >
                           CV
+                        </button>
+                      </td>
+                    )}
+                    {recruiterResumeEnabled && (
+                      <td className="px-3 py-3 text-center">
+                        <button
+                          onClick={() => navigate(`/recruiter/candidates/${bc.candidateId}/shokumu`)}
+                          className="text-xs text-gold-600 hover:underline"
+                        >
+                          {lang === 'ja' ? '経歴書' : 'Resume'}
                         </button>
                       </td>
                     )}
