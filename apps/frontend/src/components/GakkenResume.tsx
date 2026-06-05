@@ -159,7 +159,7 @@ export default function GakkenResume({ candidate, gakkenEndpoint }: { candidate:
                     <td style={{ ...TD, width: '78%' }} colSpan={3}>{gr.currentCompanyName ?? ''}</td>
                   </tr>
                   <tr>
-                    <td style={TH}>事業内容</td>
+                    <td style={TH}>企業の事業内容</td>
                     <td style={TD} colSpan={3}>{gr.currentBusinessActivity ?? ''}</td>
                   </tr>
                   <tr>

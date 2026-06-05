@@ -76,7 +76,7 @@ export function buildGakkenHtml(
         <td style="${TD}width:78%;" colspan="3">${currentCompanyName}</td>
       </tr>
       <tr>
-        <td style="${TH}">事業内容</td>
+        <td style="${TH}">企業の事業内容</td>
         <td style="${TD}" colspan="3">${currentBusinessActivity}</td>
       </tr>
       <tr>

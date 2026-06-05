@@ -227,7 +227,7 @@ function GakkenForm({ isLocked }: { isLocked: boolean }) {
             />
           </Field>
         </div>
-        <Field label="Kegiatan Usaha　事業内容">
+        <Field label="Kegiatan Usaha　企業の事業内容">
           <textarea
             value={resume.currentBusinessActivity ?? ''}
             onChange={e => setR('currentBusinessActivity', e.target.value)}
