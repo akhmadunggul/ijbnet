@@ -257,6 +257,7 @@ apps/frontend/src/
 - v0.7.7 — Superadmin Data Entry Settings rebuilt as 6-tab navigation (Profil/CV/Resume/Foto/Terjemahan/Sistem); fix tab labels showing raw i18n keys (locale file changes from prior session were never committed)
 - v0.7.8 — A/B testing engine: DB migrations (ab_experiments, ab_assignments, ab_events), models, deterministic FNV-1a 32-bit bucketing (same user always gets same variant), REST API (/api/ab/assignments, /api/ab/event, /api/ab/admin/experiments CRUD), Zustand abStore, useExperiment hook, AbInitializer in App.tsx, SuperAdminExperiments management page with full bilingual CRUD + results panel
 - v0.7.9 — CV v2 rirekisho layout + A/B dispatcher: CandidateCVv2 / candidateCvHtmlV2 replace Pendidikan and Pengalaman Kerja tables with 2-row-per-entry Japanese rirekisho format (入学/卒業, 入社/退社); CandidateCV.tsx dispatcher uses useExperiment('cv-layout') to route v1 vs v2; candidateCvHtml.ts dispatcher accepts optional variant; batch export route looks up requester's AB assignment; cvLogoBase64.ts shared logo constant
+- v0.7.10 — A/B per-LPK variant assignment: AbTargeting gains lpkVariants (lpkId→variantKey map); lpkVariantFor() util skips hash-bucketing when explicit mapping is set; SuperAdminExperiments LPK scope shows all LPKs with per-LPK variant dropdown (fetched from /superadmin/lpks); unselected LPKs excluded from experiment
 
-Current: v0.7.9
+Current: v0.7.10
 Live at: https://jinzai.jobagus.id
