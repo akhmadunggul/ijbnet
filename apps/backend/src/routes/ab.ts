@@ -2,7 +2,7 @@ import { Router } from 'express';
 import { fn, col, Op } from 'sequelize';
 import { v4 as uuidv4 } from 'uuid';
 import { authenticate, requireRole } from '../middleware/auth';
-import { AbExperiment, AbAssignment, AbEvent, User } from '../db/models';
+import { AbExperiment, AbAssignment, AbEvent, User, Candidate } from '../db/models';
 import type { AbTargeting } from '../db/models/AbExperiment';
 import { isEligible, pickVariant, lpkVariantFor } from '../utils/ab';
 
@@ -34,6 +34,11 @@ router.get('/assignments', async (req, res) => {
   if (needsLpk) {
     const dbUser = await User.findByPk(userId, { attributes: ['lpkId'] });
     lpkId = dbUser?.lpkId ?? null;
+    // Candidate-role users store their LPK in the Candidate table, not User
+    if (!lpkId && jwt.role === 'candidate') {
+      const candidate = await Candidate.findOne({ where: { userId }, attributes: ['lpkId'] });
+      lpkId = candidate?.lpkId ?? null;
+    }
   }
 
   const result: Record<string, string> = {};

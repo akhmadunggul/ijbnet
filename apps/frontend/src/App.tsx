@@ -86,10 +86,21 @@ function ProtectedRoute({
 function AbInitializer() {
   const user = useAuthStore(s => s.user);
   const { fetchAssignments, clearAssignments } = useAbStore();
+
+  // Fetch (or refresh if stale) whenever the user changes
   useEffect(() => {
     if (user) { void fetchAssignments(); }
     else { clearAssignments(); }
   }, [user?.id]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Re-check when the tab regains focus — picks up experiments activated after login
+  useEffect(() => {
+    if (!user) return;
+    const onFocus = () => { void fetchAssignments(); };
+    window.addEventListener('focus', onFocus);
+    return () => window.removeEventListener('focus', onFocus);
+  }, [user?.id]); // eslint-disable-line react-hooks/exhaustive-deps
+
   return null;
 }
 
