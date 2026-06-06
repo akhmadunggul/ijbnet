@@ -23,6 +23,10 @@ import { decryptNullable } from '../utils/crypto';
 import { calcCompleteness } from '../utils/completeness';
 import { buildCandidatePdfHtml } from '../utils/candidatePdf';
 import { buildCandidateCvHtml } from '../utils/candidateCvHtml';
+import { AbExperiment, AbAssignment } from '../db/models/index';
+import { pickVariant } from '../utils/ab';
+import { v4 as uuidv4 } from 'uuid';
+import { Op } from 'sequelize';
 import { translateId2Ja } from '../utils/translate';
 import path from 'path';
 import fs from 'fs';
@@ -266,6 +270,29 @@ router.post('/candidates/batch-cv.pdf', wrap(async (req, res) => {
   const cvFont       = fontRow      ? String((fontRow.toJSON()      as unknown as Record<string, unknown>)['value'] ?? 'ms-mincho') : 'ms-mincho';
   const autoTranslate = translateRow ? (translateRow.toJSON() as unknown as Record<string, unknown>)['value'] !== false : true;
 
+  // Look up the requester's cv-layout A/B variant (if any active experiment exists)
+  const now = new Date();
+  const userId = req.user!.sub;
+  const cvExperiment = await AbExperiment.findOne({
+    where: {
+      name: 'cv-layout', status: 'active',
+      [Op.and]: [
+        { [Op.or]: [{ startDate: null }, { startDate: { [Op.lte]: now } }] },
+        { [Op.or]: [{ endDate:   null }, { endDate:   { [Op.gte]: now } }] },
+      ],
+    },
+  });
+  let cvVariant: string | undefined;
+  if (cvExperiment) {
+    let assignment = await AbAssignment.findOne({ where: { experimentId: cvExperiment.id, userId } });
+    if (!assignment) {
+      const expJson = cvExperiment.toJSON() as unknown as Record<string, unknown>;
+      const variantKey = pickVariant(userId, cvExperiment.id, expJson['variants'] as Parameters<typeof pickVariant>[2]);
+      assignment = await AbAssignment.create({ id: uuidv4(), experimentId: cvExperiment.id, userId, variantKey });
+    }
+    cvVariant = assignment.variantKey;
+  }
+
   // For each candidate: translate missing Ja fields, embed photo, build HTML.
   // All in one pass so the same mutated cj object is used for HTML generation.
   // Promise.allSettled ensures one failure never aborts the whole batch.
@@ -319,7 +346,7 @@ router.post('/candidates/batch-cv.pdf', wrap(async (req, res) => {
       photoBase64 = `data:image/webp;base64,${photoData.toString('base64')}`;
     } catch { /* no photo */ }
 
-    return buildCandidateCvHtml(cj, { font: cvFont, layout: cvLayout, photoBase64 });
+    return buildCandidateCvHtml(cj, { font: cvFont, layout: cvLayout, photoBase64, variant: cvVariant });
   }));
 
   // Extract successful pages; skip failed candidates rather than aborting

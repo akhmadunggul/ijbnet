@@ -412,3 +412,5 @@ export function buildCandidateCvHtml(
 </body>
 </html>`;
 }
+
+export { buildCandidateCvHtml as buildCandidateCvHtmlV1 };
