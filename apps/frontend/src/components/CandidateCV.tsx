@@ -476,8 +476,8 @@ export default function CandidateCV({
           </tr>
           <tr style={{ textAlign: 'center' }}>
             <td style={{ ...TD, width: '25%' }}>{L('Periode', '期間')}</td>
-            <td style={{ ...TD, width: '50%' }}>{L('Nama Sekolah', '学校名')}</td>
-            <td style={{ ...TD, width: '25%' }}>{L('Jurusan', '専攻')}</td>
+            <td style={{ ...TD, width: '40%' }}>{L('Nama Sekolah', '学校名')}</td>
+            <td style={{ ...TD, width: '35%' }}>{L('Jurusan', '専攻')}</td>
           </tr>
           {(() => {
             const eduStatusLabel = (s: string | null | undefined): string => {
@@ -527,8 +527,8 @@ export default function CandidateCV({
           </tr>
           <tr style={{ textAlign: 'center' }}>
             <td style={{ ...TD, width: '25%' }}>{L('Periode', '期間')}</td>
-            <td style={{ ...TD, width: '30%' }}>{L('Nama Perusahaan', '会社名')}</td>
-            <td style={{ ...TD, width: '45%' }}>{L('Keg. Usaha', '事業内容')}</td>
+            <td style={{ ...TD, width: '40%' }}>{L('Nama Perusahaan', '会社名')}</td>
+            <td style={{ ...TD, width: '35%' }}>{L('Keg. Usaha', '事業内容')}</td>
           </tr>
           {careerRows.map((row, i) =>
             row ? (

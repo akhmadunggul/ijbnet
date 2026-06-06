@@ -349,8 +349,8 @@ export function buildCandidateCvHtml(
       <tr><td style="${ST}" colspan="3">Pendidikan ・ 学歴</td></tr>
       <tr style="text-align:center;">
         <td style="${TD}width:25%;">Periode ・ 期間</td>
-        <td style="${TD}width:50%;">Nama Sekolah ・ 学校名</td>
-        <td style="${TD}width:25%;">Jurusan ・ 専攻</td>
+        <td style="${TD}width:40%;">Nama Sekolah ・ 学校名</td>
+        <td style="${TD}width:35%;">Jurusan ・ 専攻</td>
       </tr>
       ${eduRowsHtml}
     </tbody>
@@ -362,8 +362,8 @@ export function buildCandidateCvHtml(
       <tr><td style="${ST}" colspan="3">Pengalaman Kerja ・ 職歴</td></tr>
       <tr style="text-align:center;">
         <td style="${TD}width:25%;">Periode ・ 期間</td>
-        <td style="${TD}width:30%;">Nama Perusahaan ・ 会社名</td>
-        <td style="${TD}width:45%;">Keg. Usaha ・ 事業内容</td>
+        <td style="${TD}width:40%;">Nama Perusahaan ・ 会社名</td>
+        <td style="${TD}width:35%;">Keg. Usaha ・ 事業内容</td>
       </tr>
       ${careerRowsHtml}
     </tbody>
