@@ -320,569 +320,581 @@ export default function SuperAdminDataEntrySettings() {
   }
 
   // ── Render helpers ────────────────────────────────────────────────────────
+  type TabNav = 'tabProfil'|'cv'|'resume'|'foto'|'terjemahan'|'sistem';
+  const [activeTab, setActiveTab] = useState<TabNav>('tabProfil');
+
+  const TAB_NAV: { key: TabNav; labelKey: string }[] = [
+    { key: 'tabProfil',  labelKey: 'tabNav_tabProfil' },
+    { key: 'cv',         labelKey: 'tabNav_cv' },
+    { key: 'resume',     labelKey: 'tabNav_resume' },
+    { key: 'foto',       labelKey: 'tabNav_foto' },
+    { key: 'terjemahan', labelKey: 'tabNav_terjemahan' },
+    { key: 'sistem',     labelKey: 'tabNav_sistem' },
+  ];
+
   const badge = (key: string) => {
     if (savedFlash[key]) return <span className="text-xs text-green-600 shrink-0">✓ {t('superadmin.dataEntrySettings.saved')}</span>;
     if (errorFlash[key]) return <span className="text-xs text-red-500 shrink-0">{t('superadmin.dataEntrySettings.errorSave')}</span>;
     return null;
   };
 
-  const sectionHead = (title: string, desc: string, key: string) => (
-    <div className="flex items-start justify-between mb-3">
-      <div>
-        <h2 className="text-base font-semibold text-gray-900">{title}</h2>
-        <p className="text-sm text-gray-500 mt-0.5">{desc}</p>
-      </div>
-      <div className="mt-0.5 ml-4">{badge(key)}</div>
+  const panelHead = (desc: string, badgeKey: string) => (
+    <div className="flex items-start justify-between mb-4">
+      <p className="text-sm text-gray-500">{desc}</p>
+      <div className="ml-4 shrink-0">{badge(badgeKey)}</div>
+    </div>
+  );
+
+  const subHead = (title: string, badgeKey: string) => (
+    <div className="flex items-center justify-between mb-3">
+      <p className="text-sm font-semibold text-gray-800">{title}</p>
+      {badge(badgeKey)}
     </div>
   );
 
   if (isLoading) return <div className="text-sm text-gray-400">{t('loading')}</div>;
 
+  // ── Translation service panel (reused in Terjemahan tab) ────────────────
+  const translationServicePanel = (
+    <div className="bg-white rounded-xl border border-gray-100 shadow-sm divide-y divide-gray-100">
+      <div className="px-5 py-4 flex items-center justify-between">
+        <div>
+          <p className="text-sm font-medium text-gray-800">{t('superadmin.dataEntrySettings.translateLabel')}</p>
+          <p className="text-xs text-gray-500 mt-0.5">{t('superadmin.dataEntrySettings.translateHint')}</p>
+        </div>
+        <Toggle
+          checked={translateEnabled}
+          onChange={v => { setTranslateEnabled(v); translateMutation.mutate(v); }}
+        />
+      </div>
+      {(translationStatusData?.services ?? []).length === 0 ? (
+        <p className="px-5 py-4 text-sm text-gray-400">{t('superadmin.dataEntrySettings.svcNone')}</p>
+      ) : (
+        <>
+          <div className="px-5 py-2 bg-gray-50">
+            <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">{t('superadmin.dataEntrySettings.translateServicesTitle')}</p>
+          </div>
+          {(translationStatusData?.services ?? []).map(svc => {
+            const testStatus = serviceTestStatus[svc.id] ?? 'idle';
+            const latency    = serviceTestLatency[svc.id];
+            const testDetail = serviceTestDetail[svc.id] ?? null;
+            const statusDot =
+              testStatus === 'online'         ? 'bg-green-500' :
+              testStatus === 'offline'        ? 'bg-red-500'   :
+              testStatus === 'error'          ? 'bg-orange-400':
+              testStatus === 'not_configured' ? 'bg-gray-300'  :
+              testStatus === 'testing'        ? 'bg-yellow-400 animate-pulse' :
+              'bg-gray-200';
+            const statusLabel =
+              testStatus === 'online'         ? t('superadmin.dataEntrySettings.svcOnline')         :
+              testStatus === 'offline'        ? t('superadmin.dataEntrySettings.svcOffline')        :
+              testStatus === 'error'          ? t('superadmin.dataEntrySettings.svcError')          :
+              testStatus === 'not_configured' ? t('superadmin.dataEntrySettings.svcNotConfigured')  :
+              testStatus === 'testing'        ? t('superadmin.dataEntrySettings.svcTesting')        :
+              null;
+            const keySource  = translationApiConfig?.keySource ?? 'none';
+            const keyMasked  = translationApiConfig?.keyMasked ?? null;
+            const sourceBadge =
+              keySource === 'db'  ? <span className="text-xs bg-blue-50 text-blue-700 border border-blue-200 rounded-full px-2 py-0.5">{t('superadmin.dataEntrySettings.svcKeyDb')}</span> :
+              keySource === 'env' ? <span className="text-xs bg-amber-50 text-amber-700 border border-amber-200 rounded-full px-2 py-0.5">{t('superadmin.dataEntrySettings.svcKeyEnv')}</span> :
+                                    <span className="text-xs bg-red-50 text-red-600 border border-red-200 rounded-full px-2 py-0.5">{t('superadmin.dataEntrySettings.svcKeyMissing')}</span>;
+            return (
+              <div key={svc.id} className="divide-y divide-gray-50">
+                <div className="flex items-center justify-between px-5 py-4 gap-4">
+                  <div className="flex items-center gap-3 min-w-0">
+                    <span className={`w-2.5 h-2.5 rounded-full shrink-0 ${statusDot}`} />
+                    <div className="min-w-0">
+                      <p className="text-sm font-medium text-gray-800">{svc.name}</p>
+                      <p className="text-xs text-gray-400 mt-0.5">{svc.model} · {svc.endpoint}</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-3 shrink-0">
+                    {sourceBadge}
+                    {statusLabel && (
+                      <span className={`text-xs ${testStatus === 'error' || testStatus === 'offline' ? 'text-red-500' : 'text-gray-500'}`}>
+                        {statusLabel}{latency != null ? ` (${latency}ms)` : ''}
+                      </span>
+                    )}
+                    <button
+                      onClick={() => { void testService(svc.id); }}
+                      disabled={testStatus === 'testing'}
+                      className="px-3 py-1.5 text-xs bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition disabled:opacity-50"
+                    >
+                      {testStatus === 'testing' ? '…' : t('superadmin.dataEntrySettings.svcTest')}
+                    </button>
+                  </div>
+                </div>
+                <div className="px-5 py-3 bg-gray-50 space-y-2">
+                  <p className="text-xs font-medium text-gray-600">{t('superadmin.dataEntrySettings.svcApiKeyTitle')}</p>
+                  {keyMasked && (
+                    <p className="text-xs text-gray-500 font-mono">
+                      {t('superadmin.dataEntrySettings.svcCurrentKey')}: <span className="text-gray-700">{keyMasked}</span>
+                      {keySource === 'env' && <span className="ml-2 text-amber-600">({t('superadmin.dataEntrySettings.svcKeyEnvReadOnly')})</span>}
+                    </p>
+                  )}
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="password"
+                      value={apiKeyInput[svc.id] ?? ''}
+                      onChange={e => setApiKeyInput(p => ({ ...p, [svc.id]: e.target.value }))}
+                      placeholder={t('superadmin.dataEntrySettings.svcApiKeyPlaceholder')}
+                      className="flex-1 border border-gray-200 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-navy-500 font-mono"
+                      autoComplete="off"
+                    />
+                    <button
+                      onClick={() => { void saveApiKey(svc.id); }}
+                      disabled={!apiKeyInput[svc.id]?.trim() || apiKeySaving[svc.id]}
+                      className="px-3 py-1.5 text-xs bg-navy-700 text-white rounded-lg hover:bg-navy-900 transition disabled:opacity-40"
+                    >
+                      {apiKeySaving[svc.id] ? '…' : t('superadmin.dataEntrySettings.svcApiKeySave')}
+                    </button>
+                    {keySource === 'db' && (
+                      <button
+                        onClick={() => { void clearApiKey(svc.id); }}
+                        disabled={apiKeySaving[svc.id]}
+                        className="px-3 py-1.5 text-xs bg-red-50 text-red-600 border border-red-200 rounded-lg hover:bg-red-100 transition disabled:opacity-40"
+                      >
+                        {t('superadmin.dataEntrySettings.svcApiKeyClear')}
+                      </button>
+                    )}
+                  </div>
+                  {apiKeySaved[svc.id] && <p className="text-xs text-green-600">✓ {t('superadmin.dataEntrySettings.saved')}</p>}
+                  {apiKeyError[svc.id] && (
+                    <div className="space-y-1">
+                      <p className="text-xs text-red-500">
+                        {t('superadmin.dataEntrySettings.errorSave')}
+                        {serviceTestDetail[svc.id] && <span className="ml-1 font-mono">— {serviceTestDetail[svc.id]}</span>}
+                      </p>
+                      {apiKeyInput[svc.id]?.trim() && (
+                        <button
+                          onClick={() => { void saveApiKey(svc.id, true); }}
+                          disabled={apiKeySaving[svc.id]}
+                          className="text-xs text-gray-500 underline hover:text-gray-700 disabled:opacity-50"
+                        >
+                          {t('superadmin.dataEntrySettings.svcApiKeySaveForce')}
+                        </button>
+                      )}
+                    </div>
+                  )}
+                  {testDetail && !apiKeyError[svc.id] && (
+                    <p className="text-xs text-red-400 font-mono mt-1">{testDetail}</p>
+                  )}
+                </div>
+              </div>
+            );
+          })}
+        </>
+      )}
+    </div>
+  );
+
   return (
-    <div className="space-y-8 max-w-2xl">
+    <div className="max-w-2xl space-y-5">
 
       {/* Page header */}
       <div>
         <h1 className="text-xl font-bold text-gray-900">{t('superadmin.dataEntrySettings.title')}</h1>
-        <p className="text-sm text-gray-500 mt-1">{t('superadmin.dataEntrySettings.description')}</p>
+        <p className="text-sm text-gray-500 mt-1">{t('superadmin.dataEntrySettings.descriptionFull')}</p>
       </div>
 
-      {/* ── 1. Candidate Portal Tabs ──────────────────────────────────────── */}
-      <section>
-        {sectionHead(
-          t('superadmin.dataEntrySettings.title'),
-          t('superadmin.dataEntrySettings.description'),
-          'tabs',
-        )}
-        <div className="bg-white rounded-xl border border-gray-100 shadow-sm divide-y divide-gray-50">
-          {ALL_TABS.map(tab => (
-            <div key={tab} className="flex items-center justify-between px-5 py-3">
-              <span className="text-sm font-medium text-gray-800">{t(`candidate.profile.${tab}`)}</span>
-              <Toggle
-                checked={config[tab] !== false}
-                onChange={v => handleTabToggle(tab, v)}
-              />
-            </div>
-          ))}
-        </div>
-      </section>
+      {/* ── Tab bar ───────────────────────────────────────────────────────── */}
+      <div className="flex border-b border-gray-200">
+        {TAB_NAV.map(tab => (
+          <button
+            key={tab.key}
+            onClick={() => setActiveTab(tab.key)}
+            className={`px-4 py-2.5 text-sm font-medium whitespace-nowrap transition-colors relative ${
+              activeTab === tab.key
+                ? 'text-navy-700 after:absolute after:bottom-[-1px] after:left-0 after:right-0 after:h-0.5 after:bg-navy-700'
+                : 'text-gray-500 hover:text-gray-700'
+            }`}
+          >
+            {t(`superadmin.dataEntrySettings.${tab.labelKey}`)}
+          </button>
+        ))}
+      </div>
 
-      {/* ── 2. CV Settings (font + layout + language — grouped) ───────────── */}
-      <section>
-        {sectionHead(
-          t('superadmin.dataEntrySettings.cvSettingsTitle'),
-          t('superadmin.dataEntrySettings.cvSettingsDesc'),
-          '__cv__',
-        )}
-        <div className="bg-white rounded-xl border border-gray-100 shadow-sm divide-y divide-gray-100">
+      {/* ── Tab panels ────────────────────────────────────────────────────── */}
 
-          {/* Font */}
-          <div className="px-5 py-4">
-            <div className="flex items-center justify-between mb-3">
-              <div>
-                <p className="text-sm font-semibold text-gray-800">{t('superadmin.dataEntrySettings.cvFontTitle')}</p>
-                <p className="text-xs text-gray-500 mt-0.5">{t('superadmin.dataEntrySettings.cvFontDesc')}</p>
+      {/* ── Tab: Tab Profil ────────────────────────────────────────────────── */}
+      {activeTab === 'tabProfil' && (
+        <div className="space-y-2">
+          {panelHead(t('superadmin.dataEntrySettings.description'), 'tabs')}
+          <div className="bg-white rounded-xl border border-gray-100 shadow-sm divide-y divide-gray-50">
+            {ALL_TABS.map(tab => (
+              <div key={tab} className="flex items-center justify-between px-5 py-3">
+                <span className="text-sm font-medium text-gray-800">{t(`candidate.profile.${tab}`)}</span>
+                <Toggle
+                  checked={config[tab] !== false}
+                  onChange={v => handleTabToggle(tab, v)}
+                />
               </div>
-              {badge('font')}
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* ── Tab: CV ────────────────────────────────────────────────────────── */}
+      {activeTab === 'cv' && (
+        <div className="space-y-2">
+          {panelHead(t('superadmin.dataEntrySettings.cvSettingsDesc'), '__cv__')}
+          <div className="bg-white rounded-xl border border-gray-100 shadow-sm divide-y divide-gray-100">
+
+            {/* Font */}
+            <div className="px-5 py-4">
+              {subHead(t('superadmin.dataEntrySettings.cvFontTitle'), 'font')}
+              <p className="text-xs text-gray-500 mb-3">{t('superadmin.dataEntrySettings.cvFontDesc')}</p>
+              <div className="divide-y divide-gray-50 rounded-lg border border-gray-100 overflow-hidden">
+                {FONT_OPTIONS.map(opt => (
+                  <label key={opt.key} className="flex items-center justify-between px-4 py-3 cursor-pointer hover:bg-gray-50 transition">
+                    <div className="flex items-center gap-3">
+                      <input
+                        type="radio"
+                        name="cv_font"
+                        value={opt.key}
+                        checked={fontKey === opt.key}
+                        onChange={() => { setFontKey(opt.key); fontMutation.mutate(opt.key); }}
+                        className="accent-navy-700"
+                      />
+                      <div>
+                        <p className="text-sm font-medium text-gray-800">{opt.label}</p>
+                        <p className="text-xs text-gray-400">{opt.sublabel}</p>
+                        {opt.googleFont && <p className="text-[10px] text-amber-500 mt-0.5">※ インターネット接続が必要</p>}
+                      </div>
+                    </div>
+                    <span style={{ fontFamily: opt.value }} className="text-base text-gray-700 select-none">日本語のサンプル</span>
+                  </label>
+                ))}
+              </div>
             </div>
-            <div className="divide-y divide-gray-50 rounded-lg border border-gray-100 overflow-hidden">
-              {FONT_OPTIONS.map(opt => (
-                <label key={opt.key} className="flex items-center justify-between px-4 py-3 cursor-pointer hover:bg-gray-50 transition">
-                  <div className="flex items-center gap-3">
+
+            {/* Layout */}
+            <div className="px-5 py-4">
+              {subHead(t('superadmin.dataEntrySettings.cvLayoutTitle'), 'layout')}
+              <p className="text-xs text-gray-500 mb-3">{t('superadmin.dataEntrySettings.cvLayoutDesc')}</p>
+              <div className="space-y-3">
+                {(['layout1', 'layout2'] as LayoutKey[]).map(key => (
+                  <label key={key} className="flex items-start gap-3 cursor-pointer">
                     <input
                       type="radio"
-                      name="cv_font"
-                      value={opt.key}
-                      checked={fontKey === opt.key}
-                      onChange={() => { setFontKey(opt.key); fontMutation.mutate(opt.key); }}
-                      className="accent-navy-700"
+                      name="cv_layout"
+                      value={key}
+                      checked={layoutKey === key}
+                      onChange={() => { setLayoutKey(key); layoutMutation.mutate(key); }}
+                      className="accent-navy-700 mt-0.5"
                     />
                     <div>
-                      <p className="text-sm font-medium text-gray-800">{opt.label}</p>
-                      <p className="text-xs text-gray-400">{opt.sublabel}</p>
-                      {opt.googleFont && <p className="text-[10px] text-amber-500 mt-0.5">※ インターネット接続が必要</p>}
+                      <p className="text-sm font-medium text-gray-800">{t(`superadmin.dataEntrySettings.${key}Label`)}</p>
+                      <p className="text-xs text-gray-400">{t(`superadmin.dataEntrySettings.${key}Desc`)}</p>
                     </div>
-                  </div>
-                  <span style={{ fontFamily: opt.value }} className="text-base text-gray-700 select-none">日本語のサンプル</span>
+                  </label>
+                ))}
+              </div>
+            </div>
+
+            {/* Language format */}
+            <div className="px-5 py-4">
+              {subHead(t('superadmin.dataEntrySettings.cvLangTitle'), 'cvlang')}
+              <p className="text-xs text-gray-500 mb-3">{t('superadmin.dataEntrySettings.cvLangDesc')}</p>
+              <div className="space-y-2">
+                <label className="flex items-center gap-3 cursor-pointer">
+                  <input
+                    type="radio" name="cv_lang_mode" value="bilingual"
+                    checked={cvLangMode === 'bilingual'}
+                    onChange={() => { setCvLangMode('bilingual'); cvLangMutation.mutate({ mode: 'bilingual', jaLpkIds: cvLangJaLpkIds }); }}
+                    className="accent-navy-700"
+                  />
+                  <span className="text-sm text-gray-800">{t('superadmin.dataEntrySettings.cvLangBilingual')}</span>
                 </label>
-              ))}
+                <label className="flex items-center gap-3 cursor-pointer">
+                  <input
+                    type="radio" name="cv_lang_mode" value="lpk"
+                    checked={cvLangMode === 'lpk'}
+                    onChange={() => { setCvLangMode('lpk'); cvLangMutation.mutate({ mode: 'lpk', jaLpkIds: cvLangJaLpkIds }); }}
+                    className="accent-navy-700"
+                  />
+                  <span className="text-sm text-gray-800">{t('superadmin.dataEntrySettings.cvLangPerLpk')}</span>
+                </label>
+              </div>
+              {cvLangMode === 'lpk' && (
+                <div className="mt-3 ml-6 border border-gray-100 rounded-lg p-3 bg-gray-50 max-h-48 overflow-y-auto space-y-1.5">
+                  {(lpkListData?.lpks ?? []).length === 0 && <p className="text-xs text-gray-400">No LPKs found.</p>}
+                  {(lpkListData?.lpks ?? []).map(lpk => {
+                    const newIds = (checked: boolean) =>
+                      checked ? [...cvLangJaLpkIds, lpk.id] : cvLangJaLpkIds.filter(id => id !== lpk.id);
+                    return (
+                      <label key={lpk.id} className="flex items-center gap-2 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={cvLangJaLpkIds.includes(lpk.id)}
+                          onChange={e => {
+                            const ids = newIds(e.target.checked);
+                            setCvLangJaLpkIds(ids);
+                            cvLangMutation.mutate({ mode: 'lpk', jaLpkIds: ids });
+                          }}
+                          className="accent-navy-700 w-4 h-4"
+                        />
+                        <span className="text-sm text-gray-800">{lpk.name}</span>
+                        {lpk.city && <span className="text-xs text-gray-400">{lpk.city}</span>}
+                        <span className="ml-auto text-xs text-gold-600 font-medium">{t('superadmin.dataEntrySettings.cvLangJaLabel')}</span>
+                      </label>
+                    );
+                  })}
+                </div>
+              )}
             </div>
           </div>
+        </div>
+      )}
 
-          {/* Layout */}
-          <div className="px-5 py-4">
-            <div className="flex items-center justify-between mb-3">
-              <div>
-                <p className="text-sm font-semibold text-gray-800">{t('superadmin.dataEntrySettings.cvLayoutTitle')}</p>
-                <p className="text-xs text-gray-500 mt-0.5">{t('superadmin.dataEntrySettings.cvLayoutDesc')}</p>
+      {/* ── Tab: Resume ───────────────────────────────────────────────────── */}
+      {activeTab === 'resume' && (
+        <div className="space-y-2">
+          {panelHead(t('superadmin.dataEntrySettings.shokumuDesc'), 'shokumu')}
+          <div className="bg-white rounded-xl border border-gray-100 shadow-sm divide-y divide-gray-100">
+
+            {/* Enable toggles */}
+            <div className="px-5 py-4 space-y-3">
+              <div className="flex items-center justify-between">
+                <span className="text-sm font-medium text-gray-800">{t('superadmin.dataEntrySettings.shokumuEnable')}</span>
+                <Toggle
+                  checked={shokumuEnabled}
+                  onChange={v => { setShokumuEnabled(v); saveShokumu({ enabled: v }); }}
+                />
               </div>
-              {badge('layout')}
+              <div className={`flex items-center justify-between transition-opacity ${!shokumuEnabled ? 'opacity-40' : ''}`}>
+                <span className="text-sm font-medium text-gray-800">{t('superadmin.dataEntrySettings.shokumuRecruiterEnable')}</span>
+                <Toggle
+                  checked={shokumuRecruiterEnabled}
+                  disabled={!shokumuEnabled}
+                  onChange={v => { setShokumuRecruiterEnabled(v); saveShokumu({ recruiterEnabled: v }); }}
+                />
+              </div>
             </div>
-            <div className="space-y-3">
-              {(['layout1', 'layout2'] as LayoutKey[]).map(key => (
-                <label key={key} className="flex items-start gap-3 cursor-pointer">
+
+            {/* Template */}
+            <div className={`px-5 py-4 space-y-3 transition-opacity ${!shokumuEnabled ? 'opacity-40 pointer-events-none' : ''}`}>
+              <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">{t('superadmin.dataEntrySettings.shokumuTemplateTitle')}</p>
+              {(['generic', 'gakken'] as ShokumuTemplate[]).map(tmpl => (
+                <label key={tmpl} className="flex items-start gap-3 cursor-pointer">
                   <input
-                    type="radio"
-                    name="cv_layout"
-                    value={key}
-                    checked={layoutKey === key}
-                    onChange={() => { setLayoutKey(key); layoutMutation.mutate(key); }}
+                    type="radio" name="shokumu_template" value={tmpl}
+                    checked={shokumuTemplate === tmpl}
+                    onChange={() => { setShokumuTemplate(tmpl); saveShokumu({ template: tmpl }); }}
                     className="accent-navy-700 mt-0.5"
                   />
                   <div>
-                    <p className="text-sm font-medium text-gray-800">{t(`superadmin.dataEntrySettings.${key}Label`)}</p>
-                    <p className="text-xs text-gray-400">{t(`superadmin.dataEntrySettings.${key}Desc`)}</p>
+                    <p className="text-sm font-medium text-gray-800">{t(`superadmin.dataEntrySettings.shokumuTemplate_${tmpl}Label`)}</p>
+                    <p className="text-xs text-gray-400 mt-0.5">{t(`superadmin.dataEntrySettings.shokumuTemplate_${tmpl}Desc`)}</p>
                   </div>
                 </label>
               ))}
+              {shokumuTemplate === 'gakken' && (
+                <div className={`flex items-center gap-3 px-4 py-3 rounded-lg border ${translateEnabled ? 'bg-green-50 border-green-200' : 'bg-gray-50 border-gray-200'}`}>
+                  <div className={`w-2.5 h-2.5 rounded-full shrink-0 ${translateEnabled ? 'bg-green-500' : 'bg-gray-400'}`} />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-gray-800">{t('superadmin.dataEntrySettings.gakkenAutoTranslateTitle')}</p>
+                    <p className="text-xs text-gray-500 mt-0.5">
+                      {translateEnabled
+                        ? t('superadmin.dataEntrySettings.gakkenAutoTranslateActiveDesc')
+                        : t('superadmin.dataEntrySettings.gakkenAutoTranslateInactiveDesc')}
+                    </p>
+                  </div>
+                  <span className={`text-xs font-semibold px-2.5 py-1 rounded-full shrink-0 ${translateEnabled ? 'bg-green-100 text-green-700' : 'bg-gray-200 text-gray-600'}`}>
+                    {translateEnabled ? 'ON' : 'OFF'}
+                  </span>
+                </div>
+              )}
             </div>
-          </div>
 
-          {/* Language format */}
-          <div className="px-5 py-4">
-            <div className="flex items-center justify-between mb-3">
+            {/* Font (read-only) */}
+            <div className={`px-5 py-3 flex items-center justify-between transition-opacity ${!shokumuEnabled ? 'opacity-40' : ''}`}>
               <div>
-                <p className="text-sm font-semibold text-gray-800">{t('superadmin.dataEntrySettings.cvLangTitle')}</p>
-                <p className="text-xs text-gray-500 mt-0.5">{t('superadmin.dataEntrySettings.cvLangDesc')}</p>
+                <p className="text-sm font-medium text-gray-700">{t('superadmin.dataEntrySettings.shokumuFontLabel')}</p>
+                <p className="text-xs text-gray-400 mt-0.5">{t('superadmin.dataEntrySettings.shokumuFontNote')}</p>
               </div>
-              {badge('cvlang')}
+              <span className="text-xs bg-gray-100 text-gray-700 rounded-full px-3 py-1 font-medium">
+                {FONT_OPTIONS.find(o => o.key === fontKey)?.label ?? fontKey}
+              </span>
             </div>
-            <div className="space-y-2">
+
+            {/* Layout / sort order */}
+            <div className={`px-5 py-4 space-y-2 transition-opacity ${!shokumuEnabled ? 'opacity-40 pointer-events-none' : ''}`}>
+              <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">{t('superadmin.dataEntrySettings.shokumuLayoutTitle')}</p>
+              {(['reverse', 'chronological', 'career'] as ShokumuLayout[]).map(mode => (
+                <label key={mode} className="flex items-center gap-3 cursor-pointer">
+                  <input
+                    type="radio" name="shokumu_layout" value={mode}
+                    checked={shokumuLayout === mode}
+                    onChange={() => { setShokumuLayout(mode); saveShokumu({ layout: mode }); }}
+                    className="accent-navy-700"
+                  />
+                  <span className="text-sm text-gray-800">{t(`superadmin.dataEntrySettings.shokumuLayout_${mode}Label`)}</span>
+                </label>
+              ))}
+            </div>
+
+            {/* Output mode */}
+            <div className={`px-5 py-4 space-y-2 transition-opacity ${!shokumuEnabled ? 'opacity-40 pointer-events-none' : ''}`}>
+              <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">{t('superadmin.dataEntrySettings.shokumuOutputTitle')}</p>
+              {[
+                { value: false, label: t('superadmin.dataEntrySettings.shokumuOutputSeparate') },
+                { value: true,  label: t('superadmin.dataEntrySettings.shokumuOutputMerged') },
+              ].map(opt => (
+                <label key={String(opt.value)} className="flex items-center gap-3 cursor-pointer">
+                  <input
+                    type="radio" name="shokumu_merge" value={String(opt.value)}
+                    checked={shokumuMergeCv === opt.value}
+                    onChange={() => { setShokumuMergeCv(opt.value); saveShokumu({ mergeCv: opt.value }); }}
+                    className="accent-navy-700"
+                  />
+                  <span className="text-sm text-gray-800">{opt.label}</span>
+                </label>
+              ))}
+            </div>
+
+            {/* Rollout */}
+            <div className={`px-5 py-4 space-y-2 transition-opacity ${!shokumuEnabled ? 'opacity-40 pointer-events-none' : ''}`}>
+              <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">{t('superadmin.dataEntrySettings.shokumuRolloutTitle')}</p>
               <label className="flex items-center gap-3 cursor-pointer">
                 <input
-                  type="radio" name="cv_lang_mode" value="bilingual"
-                  checked={cvLangMode === 'bilingual'}
-                  onChange={() => { setCvLangMode('bilingual'); cvLangMutation.mutate({ mode: 'bilingual', jaLpkIds: cvLangJaLpkIds }); }}
+                  type="radio" name="shokumu_rollout" value="all"
+                  checked={shokumuRolloutMode === 'all'}
+                  onChange={() => { setShokumuRolloutMode('all'); saveShokumu({ rolloutMode: 'all' }); }}
                   className="accent-navy-700"
                 />
-                <span className="text-sm text-gray-800">{t('superadmin.dataEntrySettings.cvLangBilingual')}</span>
+                <span className="text-sm text-gray-800">{t('superadmin.dataEntrySettings.shokumuRolloutAll')}</span>
               </label>
               <label className="flex items-center gap-3 cursor-pointer">
                 <input
-                  type="radio" name="cv_lang_mode" value="lpk"
-                  checked={cvLangMode === 'lpk'}
-                  onChange={() => { setCvLangMode('lpk'); cvLangMutation.mutate({ mode: 'lpk', jaLpkIds: cvLangJaLpkIds }); }}
+                  type="radio" name="shokumu_rollout" value="lpk"
+                  checked={shokumuRolloutMode === 'lpk'}
+                  onChange={() => { setShokumuRolloutMode('lpk'); saveShokumu({ rolloutMode: 'lpk' }); }}
                   className="accent-navy-700"
                 />
-                <span className="text-sm text-gray-800">{t('superadmin.dataEntrySettings.cvLangPerLpk')}</span>
+                <span className="text-sm text-gray-800">{t('superadmin.dataEntrySettings.shokumuRolloutLpk')}</span>
               </label>
-            </div>
-            {cvLangMode === 'lpk' && (
-              <div className="mt-3 ml-6 border border-gray-100 rounded-lg p-3 bg-gray-50 max-h-48 overflow-y-auto space-y-1.5">
-                {(lpkListData?.lpks ?? []).length === 0 && <p className="text-xs text-gray-400">No LPKs found.</p>}
-                {(lpkListData?.lpks ?? []).map(lpk => {
-                  const newIds = (checked: boolean) =>
-                    checked ? [...cvLangJaLpkIds, lpk.id] : cvLangJaLpkIds.filter(id => id !== lpk.id);
-                  return (
+              {shokumuRolloutMode === 'lpk' && (
+                <div className="mt-2 ml-6 border border-gray-100 rounded-lg p-3 bg-gray-50 max-h-48 overflow-y-auto space-y-1.5">
+                  {(lpkListData?.lpks ?? []).length === 0 && <p className="text-xs text-gray-400">No LPKs found.</p>}
+                  {(lpkListData?.lpks ?? []).map(lpk => (
                     <label key={lpk.id} className="flex items-center gap-2 cursor-pointer">
                       <input
                         type="checkbox"
-                        checked={cvLangJaLpkIds.includes(lpk.id)}
+                        checked={shokumuRolloutLpkIds.includes(lpk.id)}
                         onChange={e => {
-                          const ids = newIds(e.target.checked);
-                          setCvLangJaLpkIds(ids);
-                          cvLangMutation.mutate({ mode: 'lpk', jaLpkIds: ids });
+                          const ids = e.target.checked
+                            ? [...shokumuRolloutLpkIds, lpk.id]
+                            : shokumuRolloutLpkIds.filter(id => id !== lpk.id);
+                          setShokumuRolloutLpkIds(ids);
+                          saveShokumu({ rolloutLpkIds: ids });
                         }}
                         className="accent-navy-700 w-4 h-4"
                       />
                       <span className="text-sm text-gray-800">{lpk.name}</span>
                       {lpk.city && <span className="text-xs text-gray-400">{lpk.city}</span>}
-                      <span className="ml-auto text-xs text-gold-600 font-medium">{t('superadmin.dataEntrySettings.cvLangJaLabel')}</span>
                     </label>
-                  );
-                })}
-              </div>
-            )}
-          </div>
-        </div>
-      </section>
-
-      {/* ── 3. Photo Processing ───────────────────────────────────────────── */}
-      <section>
-        {sectionHead(
-          t('superadmin.dataEntrySettings.photoBgTitle'),
-          t('superadmin.dataEntrySettings.photoBgDesc'),
-          'photobg',
-        )}
-        <div className="bg-white rounded-xl border border-gray-100 shadow-sm px-5 py-4 space-y-4">
-          <div className="flex items-center justify-between">
-            <span className="text-sm font-medium text-gray-800">{t('superadmin.dataEntrySettings.photoBgEnable')}</span>
-            <Toggle
-              checked={photoBgEnabled}
-              onChange={v => { setPhotoBgEnabled(v); photoBgMutation.mutate({ enabled: v, color: photoBgColor }); }}
-            />
-          </div>
-          {photoBgEnabled && (
-            <div className="flex items-center gap-4">
-              <label className="text-sm text-gray-700">{t('superadmin.dataEntrySettings.photoBgColorLabel')}</label>
-              <input
-                type="color"
-                value={photoBgColor}
-                onChange={e => {
-                  const color = e.target.value;
-                  setPhotoBgColor(color);
-                  if (colorDebounceRef.current) clearTimeout(colorDebounceRef.current);
-                  colorDebounceRef.current = setTimeout(() => {
-                    photoBgMutation.mutate({ enabled: photoBgEnabled, color });
-                  }, 600);
-                }}
-                className="w-10 h-10 rounded cursor-pointer border border-gray-200"
-              />
-              <span className="text-sm text-gray-400 font-mono">{photoBgColor.toUpperCase()}</span>
+                  ))}
+                </div>
+              )}
             </div>
-          )}
+          </div>
         </div>
-      </section>
+      )}
 
-      {/* ── 4. Completeness Mode ──────────────────────────────────────────── */}
-      <section>
-        {sectionHead(
-          t('superadmin.dataEntrySettings.completenessTitle'),
-          t('superadmin.dataEntrySettings.completenessDesc'),
-          'completeness',
-        )}
-        <div className="bg-white rounded-xl border border-gray-100 shadow-sm divide-y divide-gray-50">
-          {(['legacy', 'cv'] as CompletenessMode[]).map(mode => (
-            <label key={mode} className="flex items-start gap-4 px-5 py-4 cursor-pointer hover:bg-gray-50 transition">
-              <input
-                type="radio" name="completeness_mode" value={mode}
-                checked={completenessMode === mode}
-                onChange={() => { setCompletenessMode(mode); completenessMutation.mutate(mode); }}
-                className="accent-navy-700 mt-0.5"
-              />
-              <div>
-                <p className="text-sm font-medium text-gray-800">{t(`superadmin.dataEntrySettings.completeness_${mode}Label`)}</p>
-                <p className="text-xs text-gray-400">{t(`superadmin.dataEntrySettings.completeness_${mode}Desc`)}</p>
-              </div>
-            </label>
-          ))}
-        </div>
-      </section>
-
-      {/* ── 5. Journey Visualization ──────────────────────────────────────── */}
-      <section>
-        {sectionHead(
-          t('superadmin.dataEntrySettings.journeyVizTitle'),
-          t('superadmin.dataEntrySettings.journeyVizDesc'),
-          'journeyviz',
-        )}
-        <div className="bg-white rounded-xl border border-gray-100 shadow-sm divide-y divide-gray-50">
-          {(['text', 'graphical'] as JourneyVizMode[]).map(mode => (
-            <label key={mode} className="flex items-start gap-4 px-5 py-4 cursor-pointer hover:bg-gray-50 transition">
-              <input
-                type="radio" name="journey_visualization" value={mode}
-                checked={journeyVizMode === mode}
-                onChange={() => { setJourneyVizMode(mode); journeyVizMutation.mutate(mode); }}
-                className="accent-navy-700 mt-0.5"
-              />
-              <div>
-                <p className="text-sm font-medium text-gray-800">{t(`superadmin.dataEntrySettings.journeyViz_${mode}Label`)}</p>
-                <p className="text-xs text-gray-400">{t(`superadmin.dataEntrySettings.journeyViz_${mode}Desc`)}</p>
-              </div>
-            </label>
-          ))}
-        </div>
-      </section>
-
-      {/* ── 6. Resume / 職務経歴書 ────────────────────────────────────────── */}
-      <section>
-        {sectionHead(
-          t('superadmin.dataEntrySettings.shokumuTitle'),
-          t('superadmin.dataEntrySettings.shokumuDesc'),
-          'shokumu',
-        )}
-        <div className="bg-white rounded-xl border border-gray-100 shadow-sm divide-y divide-gray-100">
-
-          {/* Enable toggles */}
-          <div className="px-5 py-4 space-y-3">
+      {/* ── Tab: Foto ──────────────────────────────────────────────────────── */}
+      {activeTab === 'foto' && (
+        <div className="space-y-2">
+          {panelHead(t('superadmin.dataEntrySettings.photoBgDesc'), 'photobg')}
+          <div className="bg-white rounded-xl border border-gray-100 shadow-sm px-5 py-4 space-y-4">
             <div className="flex items-center justify-between">
-              <span className="text-sm font-medium text-gray-800">{t('superadmin.dataEntrySettings.shokumuEnable')}</span>
+              <span className="text-sm font-medium text-gray-800">{t('superadmin.dataEntrySettings.photoBgEnable')}</span>
               <Toggle
-                checked={shokumuEnabled}
-                onChange={v => { setShokumuEnabled(v); saveShokumu({ enabled: v }); }}
+                checked={photoBgEnabled}
+                onChange={v => { setPhotoBgEnabled(v); photoBgMutation.mutate({ enabled: v, color: photoBgColor }); }}
               />
             </div>
-            <div className={`flex items-center justify-between transition-opacity ${!shokumuEnabled ? 'opacity-40' : ''}`}>
-              <span className="text-sm font-medium text-gray-800">{t('superadmin.dataEntrySettings.shokumuRecruiterEnable')}</span>
-              <Toggle
-                checked={shokumuRecruiterEnabled}
-                disabled={!shokumuEnabled}
-                onChange={v => { setShokumuRecruiterEnabled(v); saveShokumu({ recruiterEnabled: v }); }}
-              />
-            </div>
-          </div>
-
-          {/* Template */}
-          <div className={`px-5 py-4 space-y-3 transition-opacity ${!shokumuEnabled ? 'opacity-40 pointer-events-none' : ''}`}>
-            <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">{t('superadmin.dataEntrySettings.shokumuTemplateTitle')}</p>
-            {(['generic', 'gakken'] as ShokumuTemplate[]).map(tmpl => (
-              <label key={tmpl} className="flex items-start gap-3 cursor-pointer">
+            {photoBgEnabled && (
+              <div className="flex items-center gap-4">
+                <label className="text-sm text-gray-700">{t('superadmin.dataEntrySettings.photoBgColorLabel')}</label>
                 <input
-                  type="radio" name="shokumu_template" value={tmpl}
-                  checked={shokumuTemplate === tmpl}
-                  onChange={() => { setShokumuTemplate(tmpl); saveShokumu({ template: tmpl }); }}
-                  className="accent-navy-700 mt-0.5"
+                  type="color"
+                  value={photoBgColor}
+                  onChange={e => {
+                    const color = e.target.value;
+                    setPhotoBgColor(color);
+                    if (colorDebounceRef.current) clearTimeout(colorDebounceRef.current);
+                    colorDebounceRef.current = setTimeout(() => {
+                      photoBgMutation.mutate({ enabled: photoBgEnabled, color });
+                    }, 600);
+                  }}
+                  className="w-10 h-10 rounded cursor-pointer border border-gray-200"
                 />
-                <div>
-                  <p className="text-sm font-medium text-gray-800">{t(`superadmin.dataEntrySettings.shokumuTemplate_${tmpl}Label`)}</p>
-                  <p className="text-xs text-gray-400 mt-0.5">{t(`superadmin.dataEntrySettings.shokumuTemplate_${tmpl}Desc`)}</p>
-                </div>
-              </label>
-            ))}
-            {shokumuTemplate === 'gakken' && (
-              <div className={`flex items-center gap-3 px-4 py-3 rounded-lg border ${translateEnabled ? 'bg-green-50 border-green-200' : 'bg-gray-50 border-gray-200'}`}>
-                <div className={`w-2.5 h-2.5 rounded-full shrink-0 ${translateEnabled ? 'bg-green-500' : 'bg-gray-400'}`} />
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-gray-800">{t('superadmin.dataEntrySettings.gakkenAutoTranslateTitle')}</p>
-                  <p className="text-xs text-gray-500 mt-0.5">
-                    {translateEnabled
-                      ? t('superadmin.dataEntrySettings.gakkenAutoTranslateActiveDesc')
-                      : t('superadmin.dataEntrySettings.gakkenAutoTranslateInactiveDesc')}
-                  </p>
-                </div>
-                <span className={`text-xs font-semibold px-2.5 py-1 rounded-full shrink-0 ${translateEnabled ? 'bg-green-100 text-green-700' : 'bg-gray-200 text-gray-600'}`}>
-                  {translateEnabled ? 'ON' : 'OFF'}
-                </span>
-              </div>
-            )}
-          </div>
-
-          {/* Font (read-only — points to CV Settings above) */}
-          <div className={`px-5 py-3 flex items-center justify-between transition-opacity ${!shokumuEnabled ? 'opacity-40' : ''}`}>
-            <div>
-              <p className="text-sm font-medium text-gray-700">{t('superadmin.dataEntrySettings.shokumuFontLabel')}</p>
-              <p className="text-xs text-gray-400 mt-0.5">{t('superadmin.dataEntrySettings.shokumuFontNote')}</p>
-            </div>
-            <span className="text-xs bg-gray-100 text-gray-700 rounded-full px-3 py-1 font-medium">
-              {FONT_OPTIONS.find(o => o.key === fontKey)?.label ?? fontKey}
-            </span>
-          </div>
-
-          {/* Layout / sort order */}
-          <div className={`px-5 py-4 space-y-2 transition-opacity ${!shokumuEnabled ? 'opacity-40 pointer-events-none' : ''}`}>
-            <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">{t('superadmin.dataEntrySettings.shokumuLayoutTitle')}</p>
-            {(['reverse', 'chronological', 'career'] as ShokumuLayout[]).map(mode => (
-              <label key={mode} className="flex items-center gap-3 cursor-pointer">
-                <input
-                  type="radio" name="shokumu_layout" value={mode}
-                  checked={shokumuLayout === mode}
-                  onChange={() => { setShokumuLayout(mode); saveShokumu({ layout: mode }); }}
-                  className="accent-navy-700"
-                />
-                <span className="text-sm text-gray-800">{t(`superadmin.dataEntrySettings.shokumuLayout_${mode}Label`)}</span>
-              </label>
-            ))}
-          </div>
-
-          {/* Output mode */}
-          <div className={`px-5 py-4 space-y-2 transition-opacity ${!shokumuEnabled ? 'opacity-40 pointer-events-none' : ''}`}>
-            <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">{t('superadmin.dataEntrySettings.shokumuOutputTitle')}</p>
-            {[
-              { value: false, label: t('superadmin.dataEntrySettings.shokumuOutputSeparate') },
-              { value: true,  label: t('superadmin.dataEntrySettings.shokumuOutputMerged') },
-            ].map(opt => (
-              <label key={String(opt.value)} className="flex items-center gap-3 cursor-pointer">
-                <input
-                  type="radio" name="shokumu_merge" value={String(opt.value)}
-                  checked={shokumuMergeCv === opt.value}
-                  onChange={() => { setShokumuMergeCv(opt.value); saveShokumu({ mergeCv: opt.value }); }}
-                  className="accent-navy-700"
-                />
-                <span className="text-sm text-gray-800">{opt.label}</span>
-              </label>
-            ))}
-          </div>
-
-          {/* Rollout */}
-          <div className={`px-5 py-4 space-y-2 transition-opacity ${!shokumuEnabled ? 'opacity-40 pointer-events-none' : ''}`}>
-            <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">{t('superadmin.dataEntrySettings.shokumuRolloutTitle')}</p>
-            <label className="flex items-center gap-3 cursor-pointer">
-              <input
-                type="radio" name="shokumu_rollout" value="all"
-                checked={shokumuRolloutMode === 'all'}
-                onChange={() => { setShokumuRolloutMode('all'); saveShokumu({ rolloutMode: 'all' }); }}
-                className="accent-navy-700"
-              />
-              <span className="text-sm text-gray-800">{t('superadmin.dataEntrySettings.shokumuRolloutAll')}</span>
-            </label>
-            <label className="flex items-center gap-3 cursor-pointer">
-              <input
-                type="radio" name="shokumu_rollout" value="lpk"
-                checked={shokumuRolloutMode === 'lpk'}
-                onChange={() => { setShokumuRolloutMode('lpk'); saveShokumu({ rolloutMode: 'lpk' }); }}
-                className="accent-navy-700"
-              />
-              <span className="text-sm text-gray-800">{t('superadmin.dataEntrySettings.shokumuRolloutLpk')}</span>
-            </label>
-            {shokumuRolloutMode === 'lpk' && (
-              <div className="mt-2 ml-6 border border-gray-100 rounded-lg p-3 bg-gray-50 max-h-48 overflow-y-auto space-y-1.5">
-                {(lpkListData?.lpks ?? []).length === 0 && <p className="text-xs text-gray-400">No LPKs found.</p>}
-                {(lpkListData?.lpks ?? []).map(lpk => (
-                  <label key={lpk.id} className="flex items-center gap-2 cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={shokumuRolloutLpkIds.includes(lpk.id)}
-                      onChange={e => {
-                        const ids = e.target.checked
-                          ? [...shokumuRolloutLpkIds, lpk.id]
-                          : shokumuRolloutLpkIds.filter(id => id !== lpk.id);
-                        setShokumuRolloutLpkIds(ids);
-                        saveShokumu({ rolloutLpkIds: ids });
-                      }}
-                      className="accent-navy-700 w-4 h-4"
-                    />
-                    <span className="text-sm text-gray-800">{lpk.name}</span>
-                    {lpk.city && <span className="text-xs text-gray-400">{lpk.city}</span>}
-                  </label>
-                ))}
+                <span className="text-sm text-gray-400 font-mono">{photoBgColor.toUpperCase()}</span>
               </div>
             )}
           </div>
         </div>
-      </section>
+      )}
 
-      {/* ── 7. Auto-Translation (merged: enable + API key + status) ──────── */}
-      <section>
-        {sectionHead(
-          t('superadmin.dataEntrySettings.translateTitle'),
-          t('superadmin.dataEntrySettings.translateDesc'),
-          'translate',
-        )}
-        <div className="bg-white rounded-xl border border-gray-100 shadow-sm divide-y divide-gray-100">
+      {/* ── Tab: Terjemahan ────────────────────────────────────────────────── */}
+      {activeTab === 'terjemahan' && (
+        <div className="space-y-2">
+          {panelHead(t('superadmin.dataEntrySettings.translateDesc'), 'translate')}
+          {translationServicePanel}
+        </div>
+      )}
 
-          {/* Enable toggle */}
-          <div className="px-5 py-4 flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-gray-800">{t('superadmin.dataEntrySettings.translateLabel')}</p>
-              <p className="text-xs text-gray-500 mt-0.5">{t('superadmin.dataEntrySettings.translateHint')}</p>
-            </div>
-            <Toggle
-              checked={translateEnabled}
-              onChange={v => { setTranslateEnabled(v); translateMutation.mutate(v); }}
-            />
-          </div>
+      {/* ── Tab: Sistem ────────────────────────────────────────────────────── */}
+      {activeTab === 'sistem' && (
+        <div className="space-y-6">
 
-          {/* Service list */}
-          {(translationStatusData?.services ?? []).length === 0 ? (
-            <p className="px-5 py-4 text-sm text-gray-400">{t('superadmin.dataEntrySettings.svcNone')}</p>
-          ) : (
-            <>
-              <div className="px-5 py-2 bg-gray-50">
-                <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">{t('superadmin.dataEntrySettings.translateServicesTitle')}</p>
-              </div>
-              {(translationStatusData?.services ?? []).map(svc => {
-                const testStatus = serviceTestStatus[svc.id] ?? 'idle';
-                const latency    = serviceTestLatency[svc.id];
-                const testDetail = serviceTestDetail[svc.id] ?? null;
-                const statusDot =
-                  testStatus === 'online'         ? 'bg-green-500' :
-                  testStatus === 'offline'        ? 'bg-red-500'   :
-                  testStatus === 'error'          ? 'bg-orange-400':
-                  testStatus === 'not_configured' ? 'bg-gray-300'  :
-                  testStatus === 'testing'        ? 'bg-yellow-400 animate-pulse' :
-                  'bg-gray-200';
-                const statusLabel =
-                  testStatus === 'online'         ? t('superadmin.dataEntrySettings.svcOnline')         :
-                  testStatus === 'offline'        ? t('superadmin.dataEntrySettings.svcOffline')        :
-                  testStatus === 'error'          ? t('superadmin.dataEntrySettings.svcError')          :
-                  testStatus === 'not_configured' ? t('superadmin.dataEntrySettings.svcNotConfigured')  :
-                  testStatus === 'testing'        ? t('superadmin.dataEntrySettings.svcTesting')        :
-                  null;
-                const keySource  = translationApiConfig?.keySource ?? 'none';
-                const keyMasked  = translationApiConfig?.keyMasked ?? null;
-                const sourceBadge =
-                  keySource === 'db'  ? <span className="text-xs bg-blue-50 text-blue-700 border border-blue-200 rounded-full px-2 py-0.5">{t('superadmin.dataEntrySettings.svcKeyDb')}</span> :
-                  keySource === 'env' ? <span className="text-xs bg-amber-50 text-amber-700 border border-amber-200 rounded-full px-2 py-0.5">{t('superadmin.dataEntrySettings.svcKeyEnv')}</span> :
-                                        <span className="text-xs bg-red-50 text-red-600 border border-red-200 rounded-full px-2 py-0.5">{t('superadmin.dataEntrySettings.svcKeyMissing')}</span>;
-                return (
-                  <div key={svc.id} className="divide-y divide-gray-50">
-                    <div className="flex items-center justify-between px-5 py-4 gap-4">
-                      <div className="flex items-center gap-3 min-w-0">
-                        <span className={`w-2.5 h-2.5 rounded-full shrink-0 ${statusDot}`} />
-                        <div className="min-w-0">
-                          <p className="text-sm font-medium text-gray-800">{svc.name}</p>
-                          <p className="text-xs text-gray-400 mt-0.5">{svc.model} · {svc.endpoint}</p>
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-3 shrink-0">
-                        {sourceBadge}
-                        {statusLabel && (
-                          <span className={`text-xs ${testStatus === 'error' || testStatus === 'offline' ? 'text-red-500' : 'text-gray-500'}`}>
-                            {statusLabel}{latency != null ? ` (${latency}ms)` : ''}
-                          </span>
-                        )}
-                        <button
-                          onClick={() => { void testService(svc.id); }}
-                          disabled={testStatus === 'testing'}
-                          className="px-3 py-1.5 text-xs bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition disabled:opacity-50"
-                        >
-                          {testStatus === 'testing' ? '…' : t('superadmin.dataEntrySettings.svcTest')}
-                        </button>
-                      </div>
-                    </div>
-                    <div className="px-5 py-3 bg-gray-50 space-y-2">
-                      <p className="text-xs font-medium text-gray-600">{t('superadmin.dataEntrySettings.svcApiKeyTitle')}</p>
-                      {keyMasked && (
-                        <p className="text-xs text-gray-500 font-mono">
-                          {t('superadmin.dataEntrySettings.svcCurrentKey')}: <span className="text-gray-700">{keyMasked}</span>
-                          {keySource === 'env' && <span className="ml-2 text-amber-600">({t('superadmin.dataEntrySettings.svcKeyEnvReadOnly')})</span>}
-                        </p>
-                      )}
-                      <div className="flex items-center gap-2">
-                        <input
-                          type="password"
-                          value={apiKeyInput[svc.id] ?? ''}
-                          onChange={e => setApiKeyInput(p => ({ ...p, [svc.id]: e.target.value }))}
-                          placeholder={t('superadmin.dataEntrySettings.svcApiKeyPlaceholder')}
-                          className="flex-1 border border-gray-200 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-navy-500 font-mono"
-                          autoComplete="off"
-                        />
-                        <button
-                          onClick={() => { void saveApiKey(svc.id); }}
-                          disabled={!apiKeyInput[svc.id]?.trim() || apiKeySaving[svc.id]}
-                          className="px-3 py-1.5 text-xs bg-navy-700 text-white rounded-lg hover:bg-navy-900 transition disabled:opacity-40"
-                        >
-                          {apiKeySaving[svc.id] ? '…' : t('superadmin.dataEntrySettings.svcApiKeySave')}
-                        </button>
-                        {keySource === 'db' && (
-                          <button
-                            onClick={() => { void clearApiKey(svc.id); }}
-                            disabled={apiKeySaving[svc.id]}
-                            className="px-3 py-1.5 text-xs bg-red-50 text-red-600 border border-red-200 rounded-lg hover:bg-red-100 transition disabled:opacity-40"
-                          >
-                            {t('superadmin.dataEntrySettings.svcApiKeyClear')}
-                          </button>
-                        )}
-                      </div>
-                      {apiKeySaved[svc.id] && <p className="text-xs text-green-600">✓ {t('superadmin.dataEntrySettings.saved')}</p>}
-                      {apiKeyError[svc.id] && (
-                        <div className="space-y-1">
-                          <p className="text-xs text-red-500">
-                            {t('superadmin.dataEntrySettings.errorSave')}
-                            {serviceTestDetail[svc.id] && <span className="ml-1 font-mono">— {serviceTestDetail[svc.id]}</span>}
-                          </p>
-                          {apiKeyInput[svc.id]?.trim() && (
-                            <button
-                              onClick={() => { void saveApiKey(svc.id, true); }}
-                              disabled={apiKeySaving[svc.id]}
-                              className="text-xs text-gray-500 underline hover:text-gray-700 disabled:opacity-50"
-                            >
-                              {t('superadmin.dataEntrySettings.svcApiKeySaveForce')}
-                            </button>
-                          )}
-                        </div>
-                      )}
-                      {testDetail && !apiKeyError[svc.id] && (
-                        <p className="text-xs text-red-400 font-mono mt-1">{testDetail}</p>
-                      )}
-                    </div>
+          {/* Completeness Mode */}
+          <div>
+            {subHead(t('superadmin.dataEntrySettings.completenessTitle'), 'completeness')}
+            <p className="text-xs text-gray-500 mb-3">{t('superadmin.dataEntrySettings.completenessDesc')}</p>
+            <div className="bg-white rounded-xl border border-gray-100 shadow-sm divide-y divide-gray-50">
+              {(['legacy', 'cv'] as CompletenessMode[]).map(mode => (
+                <label key={mode} className="flex items-start gap-4 px-5 py-4 cursor-pointer hover:bg-gray-50 transition">
+                  <input
+                    type="radio" name="completeness_mode" value={mode}
+                    checked={completenessMode === mode}
+                    onChange={() => { setCompletenessMode(mode); completenessMutation.mutate(mode); }}
+                    className="accent-navy-700 mt-0.5"
+                  />
+                  <div>
+                    <p className="text-sm font-medium text-gray-800">{t(`superadmin.dataEntrySettings.completeness_${mode}Label`)}</p>
+                    <p className="text-xs text-gray-400">{t(`superadmin.dataEntrySettings.completeness_${mode}Desc`)}</p>
                   </div>
-                );
-              })}
-            </>
-          )}
+                </label>
+              ))}
+            </div>
+          </div>
+
+          {/* Journey Visualization */}
+          <div>
+            {subHead(t('superadmin.dataEntrySettings.journeyVizTitle'), 'journeyviz')}
+            <p className="text-xs text-gray-500 mb-3">{t('superadmin.dataEntrySettings.journeyVizDesc')}</p>
+            <div className="bg-white rounded-xl border border-gray-100 shadow-sm divide-y divide-gray-50">
+              {(['text', 'graphical'] as JourneyVizMode[]).map(mode => (
+                <label key={mode} className="flex items-start gap-4 px-5 py-4 cursor-pointer hover:bg-gray-50 transition">
+                  <input
+                    type="radio" name="journey_visualization" value={mode}
+                    checked={journeyVizMode === mode}
+                    onChange={() => { setJourneyVizMode(mode); journeyVizMutation.mutate(mode); }}
+                    className="accent-navy-700 mt-0.5"
+                  />
+                  <div>
+                    <p className="text-sm font-medium text-gray-800">{t(`superadmin.dataEntrySettings.journeyViz_${mode}Label`)}</p>
+                    <p className="text-xs text-gray-400">{t(`superadmin.dataEntrySettings.journeyViz_${mode}Desc`)}</p>
+                  </div>
+                </label>
+              ))}
+            </div>
+          </div>
+
         </div>
-      </section>
+      )}
 
     </div>
   );
