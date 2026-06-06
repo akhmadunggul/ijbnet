@@ -498,12 +498,14 @@ export default function CandidateCV({
                     {formatPeriodJa((row as any).startDate, (row as any).endDate)}
                   </td>
                   <td style={TD}>
-                    <span>{v((row as any).schoolName)}</span>
-                    {(row as any).status && (
-                      <span style={{ fontSize: '10px', color: '#555', marginLeft: '4px' }}>
-                        {eduStatusLabel((row as any).status)}
-                      </span>
-                    )}
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <span>{v((row as any).schoolName)}</span>
+                      {(row as any).status && (
+                        <span style={{ fontSize: '10px', color: '#555', flexShrink: 0, marginLeft: '6px' }}>
+                          {eduStatusLabel((row as any).status)}
+                        </span>
+                      )}
+                    </div>
                   </td>
                   <td style={TD}>{v((row as any).major)}</td>
                 </tr>
