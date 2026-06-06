@@ -9,7 +9,10 @@ export interface AbVariant {
 export interface AbTargeting {
   scope: 'all' | 'role' | 'lpk' | 'percentage';
   roles?: string[];
+  /** Hash-based LPK pool: eligible LPK IDs for FNV-1a bucketing */
   lpkIds?: string[];
+  /** Explicit per-LPK variant assignment: { [lpkId]: variantKey } — takes precedence over lpkIds */
+  lpkVariants?: Record<string, string>;
   percentage?: number;
 }
 

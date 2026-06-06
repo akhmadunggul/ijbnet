@@ -34,8 +34,21 @@ export function isEligible(
   switch (targeting.scope) {
     case 'all':        return true;
     case 'role':       return !!(targeting.roles?.includes(user.role));
-    case 'lpk':        return !!(user.lpkId && targeting.lpkIds?.includes(user.lpkId));
+    case 'lpk':
+      if (!user.lpkId) return false;
+      // Explicit per-LPK mapping takes precedence over pool-based lpkIds
+      if (targeting.lpkVariants) return user.lpkId in targeting.lpkVariants;
+      return !!(targeting.lpkIds?.includes(user.lpkId));
     case 'percentage': return (fnv1a(`${user.id}:eligibility`) % 100) < (targeting.percentage ?? 100);
     default:           return false;
   }
+}
+
+/**
+ * Returns the explicit per-LPK variant key when lpkVariants is configured,
+ * or null when hash-based bucketing should be used instead.
+ */
+export function lpkVariantFor(lpkId: string | null | undefined, targeting: AbTargeting): string | null {
+  if (targeting.scope !== 'lpk' || !targeting.lpkVariants || !lpkId) return null;
+  return targeting.lpkVariants[lpkId] ?? null;
 }

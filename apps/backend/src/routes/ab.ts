@@ -4,7 +4,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { authenticate, requireRole } from '../middleware/auth';
 import { AbExperiment, AbAssignment, AbEvent, User } from '../db/models';
 import type { AbTargeting } from '../db/models/AbExperiment';
-import { isEligible, pickVariant } from '../utils/ab';
+import { isEligible, pickVariant, lpkVariantFor } from '../utils/ab';
 
 const router = Router();
 router.use(authenticate);
@@ -47,7 +47,10 @@ router.get('/assignments', async (req, res) => {
     });
 
     if (!assignment) {
-      const variantKey = pickVariant(userId, expJson.id, expJson.variants);
+      // For explicit per-LPK mapping use the configured variant; otherwise hash-bucket
+      const variantKey =
+        lpkVariantFor(lpkId, expJson.targeting) ??
+        pickVariant(userId, expJson.id, expJson.variants);
       assignment = await AbAssignment.create({
         id: uuidv4(),
         experimentId: expJson.id,

@@ -8,7 +8,15 @@ import { api } from '../../lib/api';
 interface AbVariant { key: string; name: string; weight: number; }
 
 type Scope = 'all' | 'role' | 'lpk' | 'percentage';
-interface AbTargeting { scope: Scope; roles?: string[]; lpkIds?: string[]; percentage?: number; }
+interface AbTargeting {
+  scope: Scope;
+  roles?: string[];
+  /** Explicit per-LPK variant assignment: { [lpkId]: variantKey } */
+  lpkVariants?: Record<string, string>;
+  percentage?: number;
+}
+
+interface LpkOption { id: string; name: string; city: string | null; }
 
 type Status = 'draft' | 'active' | 'paused' | 'concluded';
 
@@ -156,6 +164,13 @@ function ExperimentForm({
   const { t } = useTranslation();
   const [form, setForm] = useState<FormState>(initial);
 
+  const { data: lpkData } = useQuery<{ lpks: LpkOption[] }>({
+    queryKey: ['ab-lpk-list'],
+    queryFn: () => api.get('/superadmin/lpks').then(r => r.data),
+    staleTime: 60_000,
+  });
+  const allLpks = lpkData?.lpks ?? [];
+
   const totalWeight = form.variants.reduce((s, v) => s + v.weight, 0);
   const weightOk = totalWeight === 100;
 
@@ -256,13 +271,18 @@ function ExperimentForm({
               <input
                 type="radio" name="scope" value={scope}
                 checked={form.targeting.scope === scope}
-                onChange={() => updateTargeting('scope', scope)}
+                onChange={() => setForm(p => ({
+                  ...p,
+                  targeting: { scope },  // reset scope-specific fields on switch
+                }))}
                 className="accent-navy-700"
               />
               {t(`superadmin.experiments.scope_${scope}`)}
             </label>
           ))}
         </div>
+
+        {/* Role scope */}
         {form.targeting.scope === 'role' && (
           <div className="flex flex-wrap gap-2 mt-1">
             {ALL_ROLES.map(role => (
@@ -283,6 +303,46 @@ function ExperimentForm({
             ))}
           </div>
         )}
+
+        {/* LPK scope — explicit per-LPK variant mapping */}
+        {form.targeting.scope === 'lpk' && (
+          <div className="mt-2 space-y-1.5">
+            <p className="text-xs text-gray-500 mb-2">
+              {t('superadmin.experiments.lpkVariantsHint')}
+            </p>
+            {allLpks.length === 0 && (
+              <p className="text-xs text-gray-400 italic">{t('superadmin.experiments.lpkLoading')}</p>
+            )}
+            {allLpks.map(lpk => {
+              const assigned = form.targeting.lpkVariants?.[lpk.id] ?? '';
+              return (
+                <div key={lpk.id} className="flex items-center gap-3">
+                  <span className="text-sm text-gray-700 w-48 truncate" title={lpk.name}>
+                    {lpk.name}
+                    {lpk.city && <span className="text-gray-400 text-xs ml-1">({lpk.city})</span>}
+                  </span>
+                  <select
+                    className="border border-gray-200 rounded-lg px-2 py-1 text-sm bg-white"
+                    value={assigned}
+                    onChange={e => {
+                      const val = e.target.value;
+                      const next = { ...(form.targeting.lpkVariants ?? {}) };
+                      if (val) { next[lpk.id] = val; } else { delete next[lpk.id]; }
+                      updateTargeting('lpkVariants', Object.keys(next).length ? next : undefined);
+                    }}
+                  >
+                    <option value="">— {t('superadmin.experiments.lpkNotInExperiment')} —</option>
+                    {form.variants.map(v => (
+                      <option key={v.key} value={v.key}>{v.key} — {v.name}</option>
+                    ))}
+                  </select>
+                </div>
+              );
+            })}
+          </div>
+        )}
+
+        {/* Percentage scope */}
         {form.targeting.scope === 'percentage' && (
           <div className="flex items-center gap-2 mt-1">
             <input
