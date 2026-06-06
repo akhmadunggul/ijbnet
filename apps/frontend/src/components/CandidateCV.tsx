@@ -122,7 +122,7 @@ const S = {
     margin: '0 auto',
     border: '2px solid #000',
     padding: '20px',
-    fontSize: '12px',
+    fontSize: '13px',
     color: '#000',
     boxSizing: 'border-box' as const,
     textTransform: 'uppercase',

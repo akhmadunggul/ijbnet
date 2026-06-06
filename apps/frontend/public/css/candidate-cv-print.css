@@ -6,7 +6,7 @@
 
   .cv-con {
     padding: 6px 10px !important;
-    font-size: 12px !important;
+    font-size: 13px !important;
     border-width: 1px !important;
     width: 100% !important;
     box-sizing: border-box !important;
@@ -21,7 +21,7 @@
 
   .cv-con td, .cv-con th {
     padding: 3px 4px !important;
-    font-size: 12px !important;
+    font-size: 13px !important;
   }
 
   .cv-row-sm { height: 18px !important; min-height: 0 !important; }

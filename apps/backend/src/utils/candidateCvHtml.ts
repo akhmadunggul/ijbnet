@@ -204,7 +204,7 @@ export function buildCandidateCvHtml(
   const certRows = padRows(combinedCerts, 1);
 
   // ── Inline styles — match candidate-cv-print.css values ─────────────────────
-  const TD  = 'border:1px solid #000;padding:3px 4px;vertical-align:top;font-size:12px;';
+  const TD  = 'border:1px solid #000;padding:3px 4px;vertical-align:top;font-size:13px;';
   const ST  = `${TD}background:#f2f2f2;font-weight:bold;`;
 
   // ── Photo block ───────────────────────────────────────────────────────────────
@@ -265,16 +265,16 @@ export function buildCandidateCvHtml(
   <style>
     @page { size: A4 portrait; margin: 5mm; }
     * { box-sizing: border-box; margin: 0; padding: 0; }
-    body { font-family: ${fontFamily}; font-size: 12px; color: #000; text-transform: uppercase; }
+    body { font-family: ${fontFamily}; font-size: 13px; color: #000; text-transform: uppercase; }
     table { width: 100%; border-collapse: collapse; margin-bottom: 4px; }
-    td, th { padding: 3px 4px; font-size: 12px; }
+    td, th { padding: 3px 4px; font-size: 13px; }
     .cv-row-sm { height: 18px; }
     .cv-row-md { height: 24px; }
     .cv-row-lg { height: 32px; }
   </style>
 </head>
 <body>
-<div style="width:100%;border:1px solid #000;padding:6px 10px;font-size:12px;color:#000;box-sizing:border-box;text-transform:uppercase;">
+<div style="width:100%;border:1px solid #000;padding:6px 10px;font-size:13px;color:#000;box-sizing:border-box;text-transform:uppercase;">
 
   <!-- Title -->
   <div style="text-align:center;font-size:18px;font-weight:bold;margin-bottom:20px;text-decoration:underline;">
