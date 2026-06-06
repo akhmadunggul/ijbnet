@@ -230,7 +230,7 @@ export function buildCandidateCvHtml(
   const eduRowsHtml = eduRows.map((row) => {
     if (!row) return `<tr class="cv-row-sm"><td style="${TD}height:25px;"></td><td style="${TD}"></td><td style="${TD}"></td></tr>`;
     const statusHtml = row['status']
-      ? `<div style="font-size:10px;color:#555;margin-top:2px;">${he(eduStatusMap[String(row['status'])] ?? v(row['status']))}</div>`
+      ? `<span style="font-size:10px;color:#555;margin-left:4px;">${he(eduStatusMap[String(row['status'])] ?? v(row['status']))}</span>`
       : '';
     return `<tr class="cv-row-sm"><td style="${TD}height:25px;">${he(formatPeriodJa(toDateStr(row['startDate']), toDateStr(row['endDate'])))}</td><td style="${TD}">${he(v(row['schoolName']))}${statusHtml}</td><td style="${TD}">${he(v(row['major']))}</td></tr>`;
   }).join('');
