@@ -688,7 +688,12 @@
       "shokumuOutputMerged": "Digabung dengan CV / CVと結合",
       "shokumuRolloutTitle": "Target Pengguna (A/B Rollout)",
       "shokumuRolloutAll": "Semua kandidat",
-      "shokumuRolloutLpk": "LPK tertentu saja"
+      "shokumuRolloutLpk": "LPK tertentu saja",
+      "cvSettingsTitle": "Pengaturan CV",
+      "cvSettingsDesc": "Font, tata letak, dan format bahasa untuk tampilan dan cetak CV.",
+      "gakkenAutoTranslateTitle": "Auto-translate Kolom Jepang",
+      "gakkenAutoTranslateActiveDesc": "Aktif — kolom Jepang pada form Resume Gakken dikunci dan diterjemahkan otomatis saat kandidat menyimpan.",
+      "gakkenAutoTranslateInactiveDesc": "Tidak aktif — kandidat mengisi kolom Jepang secara manual."
     },
     "recruiterSettings": {
       "navLabel": "Tampilan Rekruiter",

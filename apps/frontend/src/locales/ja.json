@@ -687,7 +687,12 @@
       "shokumuOutputMerged": "Digabung dengan CV / CVと結合",
       "shokumuRolloutTitle": "対象ユーザー（A/Bロールアウト）",
       "shokumuRolloutAll": "全候補者",
-      "shokumuRolloutLpk": "特定のLPKのみ"
+      "shokumuRolloutLpk": "特定のLPKのみ",
+      "cvSettingsTitle": "CV設定",
+      "cvSettingsDesc": "フォント・レイアウト・言語フォーマットなど、CV表示・印刷に関する設定。",
+      "gakkenAutoTranslateTitle": "日本語欄の自動翻訳",
+      "gakkenAutoTranslateActiveDesc": "有効 — Gakkenテンプレートの日本語欄はロックされ、候補者が保存時に自動翻訳されます。",
+      "gakkenAutoTranslateInactiveDesc": "無効 — 候補者が日本語欄を手動で入力します。"
     },
     "recruiterSettings": {
       "navLabel": "採用担当表示設定",
