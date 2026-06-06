@@ -693,7 +693,14 @@
       "cvSettingsDesc": "Font, tata letak, dan format bahasa untuk tampilan dan cetak CV.",
       "gakkenAutoTranslateTitle": "Auto-translate Kolom Jepang",
       "gakkenAutoTranslateActiveDesc": "Aktif — kolom Jepang pada form Resume Gakken dikunci dan diterjemahkan otomatis saat kandidat menyimpan.",
-      "gakkenAutoTranslateInactiveDesc": "Tidak aktif — kandidat mengisi kolom Jepang secara manual."
+      "gakkenAutoTranslateInactiveDesc": "Tidak aktif — kandidat mengisi kolom Jepang secara manual.",
+      "descriptionFull": "Kelola konfigurasi sistem: tab profil, CV, resume, foto, kelengkapan, dan terjemahan.",
+      "tabNav_tabProfil": "Tab Profil",
+      "tabNav_cv": "CV",
+      "tabNav_resume": "Resume",
+      "tabNav_foto": "Foto",
+      "tabNav_terjemahan": "Terjemahan",
+      "tabNav_sistem": "Sistem"
     },
     "recruiterSettings": {
       "navLabel": "Tampilan Rekruiter",

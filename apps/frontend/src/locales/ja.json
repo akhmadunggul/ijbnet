@@ -692,7 +692,14 @@
       "cvSettingsDesc": "フォント・レイアウト・言語フォーマットなど、CV表示・印刷に関する設定。",
       "gakkenAutoTranslateTitle": "日本語欄の自動翻訳",
       "gakkenAutoTranslateActiveDesc": "有効 — Gakkenテンプレートの日本語欄はロックされ、候補者が保存時に自動翻訳されます。",
-      "gakkenAutoTranslateInactiveDesc": "無効 — 候補者が日本語欄を手動で入力します。"
+      "gakkenAutoTranslateInactiveDesc": "無効 — 候補者が日本語欄を手動で入力します。",
+      "descriptionFull": "システム設定：プロフィールタブ・CV・職務経歴書・写真・完成度・翻訳の管理。",
+      "tabNav_tabProfil": "Tab Profil",
+      "tabNav_cv": "CV",
+      "tabNav_resume": "Resume",
+      "tabNav_foto": "Foto",
+      "tabNav_terjemahan": "Terjemahan",
+      "tabNav_sistem": "Sistem"
     },
     "recruiterSettings": {
       "navLabel": "採用担当表示設定",
