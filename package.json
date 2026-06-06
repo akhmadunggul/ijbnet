@@ -10,7 +10,8 @@
     "migrate": "pnpm --filter backend migrate",
     "migrate:undo": "pnpm --filter backend migrate:undo",
     "seed": "pnpm --filter backend seed",
-    "seed:undo": "pnpm --filter backend seed:undo"
+    "seed:undo": "pnpm --filter backend seed:undo",
+    "version:bump": "node -e \"const fs=require('fs'),v=process.argv[1];['package.json','apps/frontend/package.json','apps/backend/package.json'].forEach(f=>{const p=JSON.parse(fs.readFileSync(f,'utf8'));p.version=v;fs.writeFileSync(f,JSON.stringify(p,null,2)+'\\n');});console.log('Bumped to '+v);\""
   },
   "devDependencies": {
     "typescript": "^5.4.5"

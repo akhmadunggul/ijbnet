@@ -153,6 +153,12 @@ apps/frontend/src/
 
 
 ## Version
+
+> **To bump the version:** run `pnpm version:bump <new-version>` from the repo root.
+> This updates `package.json`, `apps/frontend/package.json`, and `apps/backend/package.json` together.
+> Then add the changelog entry below and update the `Current:` line.
+> **Never update CLAUDE.md alone** — the landing page reads from `package.json`.
+
 - v0.1.0 — First working deployment
 - v0.1.1 — Fix Google OAuth new user infinite loading
 - v0.1.2 — Fix Caddyfile POST 405, Google OAuth fully working
