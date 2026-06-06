@@ -26,6 +26,9 @@ import { RecruitmentRequest, initRecruitmentRequest } from './RecruitmentRequest
 import { GlobalSettings, initGlobalSettings } from './GlobalSettings';
 import { CandidateGakkenResume, initCandidateGakkenResume } from './CandidateGakkenResume';
 import { CandidateGakkenCompany, initCandidateGakkenCompany } from './CandidateGakkenCompany';
+import { AbExperiment, initAbExperiment } from './AbExperiment';
+import { AbAssignment, initAbAssignment } from './AbAssignment';
+import { AbEvent, initAbEvent } from './AbEvent';
 
 // Initialize all models
 initCompany(sequelize);
@@ -54,6 +57,9 @@ initRecruitmentRequest(sequelize);
 initGlobalSettings(sequelize);
 initCandidateGakkenResume(sequelize);
 initCandidateGakkenCompany(sequelize);
+initAbExperiment(sequelize);
+initAbAssignment(sequelize);
+initAbEvent(sequelize);
 
 // ── Associations ─────────────────────────────────────────────────────────────
 
@@ -238,4 +244,7 @@ export {
   GlobalSettings,
   CandidateGakkenResume,
   CandidateGakkenCompany,
+  AbExperiment,
+  AbAssignment,
+  AbEvent,
 };

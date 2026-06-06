@@ -1,6 +1,8 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { useEffect } from 'react';
 import { useAuthStore } from './store/authStore';
+import { useAbStore } from './store/abStore';
 import LoginPage, { OAuthCallbackPage } from './pages/LoginPage';
 import CandidateLayout from './pages/candidate/CandidateLayout';
 import CandidateDashboard from './pages/candidate/CandidateDashboard';
@@ -47,6 +49,7 @@ import SuperAdminConsent from './pages/superadmin/SuperAdminConsent';
 import SuperAdminDataEntrySettings from './pages/superadmin/SuperAdminDataEntrySettings';
 import SuperAdminRecruiterSettings from './pages/superadmin/SuperAdminRecruiterSettings';
 import SuperAdminMonitor from './pages/superadmin/SuperAdminMonitor';
+import SuperAdminExperiments from './pages/superadmin/SuperAdminExperiments';
 import type { UserRole } from '@ijbnet/shared';
 
 const queryClient = new QueryClient();
@@ -80,6 +83,16 @@ function ProtectedRoute({
   return <>{children}</>;
 }
 
+function AbInitializer() {
+  const user = useAuthStore(s => s.user);
+  const { fetchAssignments, clearAssignments } = useAbStore();
+  useEffect(() => {
+    if (user) { void fetchAssignments(); }
+    else { clearAssignments(); }
+  }, [user?.id]); // eslint-disable-line react-hooks/exhaustive-deps
+  return null;
+}
+
 function RootRedirect() {
   const { user } = useAuthStore();
   if (user) return <Navigate to={ROLE_HOMES[user.role]} replace />;
@@ -90,6 +103,7 @@ export default function App() {
   return (
     <QueryClientProvider client={queryClient}>
     <BrowserRouter>
+      <AbInitializer />
       <Routes>
         {/* Root */}
         <Route path="/" element={<RootRedirect />} />
@@ -196,6 +210,7 @@ export default function App() {
           <Route path="recruiter-settings" element={<SuperAdminRecruiterSettings />} />
           <Route path="settings" element={<SuperAdminSettings />} />
           <Route path="monitor" element={<SuperAdminMonitor />} />
+          <Route path="experiments" element={<SuperAdminExperiments />} />
         </Route>
 
         {/* Fallback */}

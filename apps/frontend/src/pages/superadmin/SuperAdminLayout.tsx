@@ -21,6 +21,7 @@ const navItems = [
   { to: '/superadmin/recruiter-settings',   icon: '📋', key: 'superadmin.recruiterSettings.navLabel' },
   { to: '/superadmin/settings',             icon: '⚙️', key: 'navSettings' },
   { to: '/superadmin/monitor',             icon: '🖥️', key: 'superadmin.monitor.navLabel' },
+  { to: '/superadmin/experiments',         icon: '🧪', key: 'superadmin.experiments.navLabel' },
 ];
 
 export default function SuperAdminLayout() {
