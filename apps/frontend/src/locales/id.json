@@ -159,7 +159,9 @@
       "statusLabel": "Status Profil",
       "completeness": "Kelengkapan Profil",
       "completeAction": "Lengkapi Profil",
-      "downloadData": "Unduh Data Saya"
+      "downloadData": "Unduh Data Saya",
+      "addressUpdateBanner": "Sistem alamat telah diperbarui. Harap perbarui data alamat Anda agar tampil lengkap di CV.",
+      "addressUpdateAction": "Perbarui Alamat"
     },
     "profile": {
       "title": "Profil Saya",

@@ -158,7 +158,9 @@
       "statusLabel": "プロフィールステータス",
       "completeness": "プロフィール完成度",
       "completeAction": "プロフィールを完成させる",
-      "downloadData": "データをダウンロード"
+      "downloadData": "データをダウンロード",
+      "addressUpdateBanner": "住所システムが更新されました。CVに正確な住所を表示するため、住所情報を更新してください。",
+      "addressUpdateAction": "住所を更新する"
     },
     "profile": {
       "title": "マイプロフィール",

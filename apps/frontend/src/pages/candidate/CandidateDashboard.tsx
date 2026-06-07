@@ -114,9 +114,29 @@ export default function CandidateDashboard() {
     }
   }
 
+  const needsAddressUpdate =
+    !candidate.addressStructured ||
+    !(candidate.addressStructured as any).provinsiName;
+
   return (
     <div className="max-w-3xl mx-auto space-y-6">
       <h1 className="text-2xl font-semibold text-navy-900">{t('candidate.dashboard.title')}</h1>
+
+      {/* Address update notice */}
+      {needsAddressUpdate && (
+        <div className="flex items-start gap-3 bg-amber-50 border border-amber-300 rounded-xl px-4 py-3">
+          <span className="text-amber-500 text-lg mt-0.5">📍</span>
+          <div className="flex-1 min-w-0">
+            <p className="text-sm text-amber-800">{t('candidate.dashboard.addressUpdateBanner')}</p>
+          </div>
+          <button
+            onClick={() => navigate('/portal/profile')}
+            className="shrink-0 text-xs font-medium text-amber-700 border border-amber-400 rounded-lg px-3 py-1.5 hover:bg-amber-100 transition whitespace-nowrap"
+          >
+            {t('candidate.dashboard.addressUpdateAction')}
+          </button>
+        </div>
+      )}
 
       {/* Status card */}
       <div className={`border rounded-xl p-6 ${statusCfg.bg}`}>
