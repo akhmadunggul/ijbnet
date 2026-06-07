@@ -94,6 +94,20 @@ export interface EducationHistoryEntry {
   sortOrder: number;
 }
 
+export interface AddressStructured {
+  provinsiId:    string;
+  provinsiName:  string;
+  kotaId:        string;
+  kotaName:      string;
+  kecamatanId:   string;
+  kecamatanName: string;
+  kelurahanId:   string;
+  kelurahanName: string;
+  jalan:         string;
+  rtRw:          string;
+  kodePos:       string;
+}
+
 export interface CandidateData {
   id: string;
   candidateCode: string;
@@ -121,6 +135,7 @@ export interface CandidateData {
   email: string | null;
   phone: string | null;
   address: string | null;
+  addressStructured: AddressStructured | null;
   eduLevel: string | null;
   eduLabel: string | null;
   eduMajor: string | null;

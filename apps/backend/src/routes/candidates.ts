@@ -183,6 +183,24 @@ router.patch('/me', async (req: Request, res: Response): Promise<void> => {
     Object.entries(rest).filter(([, v]) => v !== undefined),
   );
 
+  // Auto-compose flat `address` string from structured fields
+  if (updates['addressStructured']) {
+    const s = updates['addressStructured'] as {
+      jalan: string; rtRw: string; kelurahanName: string;
+      kecamatanName: string; kotaName: string; provinsiName: string; kodePos: string;
+    };
+    const parts: string[] = [
+      s.jalan,
+      s.rtRw || '',
+      `KEL. ${s.kelurahanName}`,
+      `KEC. ${s.kecamatanName}`,
+      s.kotaName,
+      s.provinsiName,
+      s.kodePos || '',
+    ].map(p => p.trim().toUpperCase()).filter(Boolean);
+    updates['address'] = parts.join(', ');
+  }
+
   // lpkId: allow setting once (only when not yet assigned)
   if (lpkIdInput && !candidate.lpkId) {
     const lpk = await Lpk.findOne({ where: { id: lpkIdInput, isActive: true } });

@@ -6,6 +6,8 @@ import { z } from 'zod';
 import { useTranslation } from 'react-i18next';
 import { api } from '../../lib/api';
 import AuthImage from '../../components/AuthImage';
+import AddressInput from '../../components/AddressInput';
+import type { AddressStructured } from '../../components/AddressInput';
 import type { CandidateMe, CandidateData, CareerEntry, JapaneseTest, CertificationEntry, EducationHistoryEntry } from '../../types/candidate';
 import ShokumuTab from './ShokumuTab';
 
@@ -28,7 +30,7 @@ const personalSchema = z.object({
   spouseInfo:          z.string().nullable().optional(),
   email:               z.string().email().nullable().optional().or(z.literal('')),
   phone:               z.string().nullable().optional(),
-  address:             z.string().nullable().optional(),
+  addressStructured:   z.any().optional(),
   lpkId:               z.string().nullable().optional(),
 });
 
@@ -285,7 +287,7 @@ function PersonalTab({ candidate, onSave, saving }: { candidate: CandidateData; 
     onSuccess: () => qc.invalidateQueries({ queryKey: ['my-candidate'] }),
   });
 
-  const { register, watch, handleSubmit, reset, formState: { isDirty, errors } } = useForm<PersonalForm>({
+  const { register, watch, handleSubmit, reset, setValue, formState: { isDirty, errors } } = useForm<PersonalForm>({
     resolver: zodResolver(personalSchema),
     defaultValues: {
       fullName:           candidate.fullName ?? '',
@@ -305,7 +307,7 @@ function PersonalTab({ candidate, onSave, saving }: { candidate: CandidateData; 
       spouseInfo:         candidate.spouseInfo ?? '',
       email:              candidate.email ?? '',
       phone:              candidate.phone ?? '',
-      address:            candidate.address ?? '',
+      addressStructured:  candidate.addressStructured ?? null,
       lpkId:              candidate.lpkId ?? '',
     },
   });
@@ -419,7 +421,18 @@ function PersonalTab({ candidate, onSave, saving }: { candidate: CandidateData; 
       )}
       <Field label={t('candidate.profile.personal.email')}><input type="email" {...register('email')} className={inputCls} /></Field>
       <Field label={t('candidate.profile.personal.phone')}><input {...register('phone')} className={inputCls} /></Field>
-      <Field label={t('candidate.profile.personal.address')}><textarea {...register('address')} rows={3} className={inputCls} /></Field>
+      <Field label={t('candidate.profile.personal.address')}>
+        {!watch('addressStructured') && candidate.address && (
+          <p className="text-xs text-amber-600 bg-amber-50 rounded p-2 mb-2">
+            {t('candidate.profile.personal.addressLegacy')} {candidate.address}
+          </p>
+        )}
+        <AddressInput
+          value={watch('addressStructured') as AddressStructured | null}
+          onChange={(v) => setValue('addressStructured', v, { shouldDirty: true })}
+          disabled={saving}
+        />
+      </Field>
       <Field label={t('candidate.profile.personal.lpk') + ' *'}>
         <select
           {...register('lpkId')}

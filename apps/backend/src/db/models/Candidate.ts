@@ -28,6 +28,7 @@ export interface CandidateAttributes {
   email: string | null;
   phone: string | null;
   address: string | null;
+  addressStructured: Record<string, unknown> | null;
   eduLevel: string | null;
   eduLabel: string | null;
   eduMajor: string | null;
@@ -95,6 +96,7 @@ export interface CandidateCreationAttributes
     | 'email'
     | 'phone'
     | 'address'
+    | 'addressStructured'
     | 'eduLevel'
     | 'eduLabel'
     | 'eduMajor'
@@ -162,6 +164,7 @@ export class Candidate
   declare email: string | null;
   declare phone: string | null;
   declare address: string | null;
+  declare addressStructured: Record<string, unknown> | null;
   declare eduLevel: string | null;
   declare eduLabel: string | null;
   declare eduMajor: string | null;
@@ -241,6 +244,7 @@ export function initCandidate(sequelize: Sequelize): void {
       email: { type: DataTypes.STRING(255), allowNull: true },
       phone: { type: DataTypes.STRING(30), allowNull: true },
       address: { type: DataTypes.TEXT, allowNull: true },
+      addressStructured: { type: DataTypes.JSON, allowNull: true },
       eduLevel: {
         type: DataTypes.ENUM('SD', 'SMP', 'SMA', 'SMK', 'D1', 'D2', 'D3', 'D4', 'S1', 'S2', 'S3'),
         allowNull: true,

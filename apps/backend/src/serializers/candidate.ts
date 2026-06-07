@@ -24,6 +24,7 @@ export function serializeCandidate(
     email,
     phone,
     address,
+    addressStructured,
     // Nested bodyCheck needs its own encrypted-field stripping
     bodyCheck,
     ...rest
@@ -37,6 +38,7 @@ export function serializeCandidate(
     email?: unknown;
     phone?: unknown;
     address?: unknown;
+    addressStructured?: unknown;
     bodyCheck?: unknown;
   } & Record<string, unknown>;
 
@@ -48,10 +50,12 @@ export function serializeCandidate(
     base['email'] = MASKED_FIELD;
     base['phone'] = MASKED_FIELD;
     base['address'] = MASKED_FIELD;
+    base['addressStructured'] = MASKED_FIELD;
   } else {
     base['email'] = email ?? null;
     base['phone'] = phone ?? null;
     base['address'] = address ?? null;
+    base['addressStructured'] = addressStructured ?? null;
   }
 
   // ── bodyCheck — strip visionEncrypted + tattooEncrypted for all roles ────
