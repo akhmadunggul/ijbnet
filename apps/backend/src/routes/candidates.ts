@@ -203,8 +203,12 @@ router.patch('/me', async (req: Request, res: Response): Promise<void> => {
   if (autoTranslateEnabled) await Promise.all(
     translatePairs.map(async ({ idKey, jaKey }) => {
       const idText = (updates[idKey] ?? (candidate as unknown as Record<string, unknown>)[idKey]) as string | null | undefined;
+      if (!idText) return;
+      const idWasUpdated = idKey in updates;
       const jaText = (updates[jaKey] ?? (candidate as unknown as Record<string, unknown>)[jaKey]) as string | null | undefined;
-      if (!idText || jaText) return;
+      // Skip only when the ID field was not changed in this request AND a JA translation already exists.
+      // If the ID field was just updated, always re-translate to keep JA in sync.
+      if (!idWasUpdated && jaText) return;
       const translated = await translateId2Ja(idText, { userId: req.user!.sub, context: 'auto-save' });
       if (translated) updates[jaKey] = translated;
     }),
