@@ -354,7 +354,7 @@ export function buildCandidateCvHtml(
       </tr>
       <tr>
         <td style="${TD}">Alamat ・ 現住所</td>
-        <td style="${TD}white-space:pre-line;" colspan="3">${addressDisplay}</td>
+        <td style="${TD}" colspan="3">${addressDisplay}</td>
       </tr>
     </tbody>
   </table>

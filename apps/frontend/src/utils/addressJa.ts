@@ -42,27 +42,69 @@ const PROVINSI_JA: Record<string, string> = {
   'Papua Pegunungan':        'パプア山岳州',
 };
 
+// Fallback: resolve province from BPS numeric ID when provinsiName is empty
+const PROVINSI_ID_JA: Record<string, string> = {
+  '11': 'アチェ州',
+  '12': '北スマトラ州',
+  '13': '西スマトラ州',
+  '14': 'リアウ州',
+  '15': 'ジャンビ州',
+  '16': '南スマトラ州',
+  '17': 'ブンクル州',
+  '18': 'ランプン州',
+  '19': 'バンカブリトゥン諸島州',
+  '21': 'リアウ諸島州',
+  '31': 'DKIジャカルタ州',
+  '32': '西ジャワ州',
+  '33': '中ジャワ州',
+  '34': 'ジョグジャカルタ特別州',
+  '35': '東ジャワ州',
+  '36': 'バンテン州',
+  '51': 'バリ州',
+  '52': '西ヌサトゥンガラ州',
+  '53': '東ヌサトゥンガラ州',
+  '61': '西カリマンタン州',
+  '62': '中カリマンタン州',
+  '63': '南カリマンタン州',
+  '64': '東カリマンタン州',
+  '65': '北カリマンタン州',
+  '71': '北スラウェシ州',
+  '72': '中スラウェシ州',
+  '73': '南スラウェシ州',
+  '74': '東南スラウェシ州',
+  '75': 'ゴロンタロ州',
+  '76': '西スラウェシ州',
+  '81': 'マルク州',
+  '82': '北マルク州',
+  '91': '西パプア州',
+  '92': 'パプア州',
+  '93': '南パプア州',
+  '94': '中パプア州',
+  '95': 'パプア山岳州',
+  '96': '南西パプア州',
+};
+
 /**
- * Convert a structured Indonesian address to Japanese postal format:
- *   〒{kodePos}
- *   {provinsiJa}
- *   {kotaName}市
- *   {kecamatanName}区 {kelurahanName}
- *   {jalan}
+ * Convert a structured Indonesian address to Japanese postal format (single line, uppercase):
+ *   〒{kodePos} {provinsiJa} {kotaName}市 {kecamatanName}区 {kelurahanName} {jalan}
  *
- * RT/RW is omitted (not used in Japanese addressing).
- * Returns a newline-separated string, or empty string when required
- * fields are missing.
+ * Province resolved by name first, then by BPS ID as fallback.
+ * RT/RW omitted (not used in Japanese addressing).
+ * Returns empty string when kota/kecamatan/kelurahan are missing.
  */
 export function composeAddressJa(s: AddressStructured): string {
   if (!s.kotaName || !s.kecamatanName || !s.kelurahanName) return '';
 
-  const lines: string[] = [];
-  if (s.kodePos) lines.push(`〒${s.kodePos}`);
-  if (s.provinsiName) lines.push(PROVINSI_JA[s.provinsiName] ?? `${s.provinsiName}州`);
-  lines.push(`${s.kotaName}市`);
-  lines.push(`${s.kecamatanName}区 ${s.kelurahanName}`);
-  if (s.jalan) lines.push(s.jalan);
+  const provinsiJa = s.provinsiName
+    ? (PROVINSI_JA[s.provinsiName] ?? `${s.provinsiName}州`)
+    : (PROVINSI_ID_JA[s.provinsiId] ?? '');
 
-  return lines.join('\n');
+  const parts: string[] = [];
+  if (s.kodePos)   parts.push(`〒${s.kodePos}`);
+  if (provinsiJa)  parts.push(provinsiJa);
+  parts.push(`${s.kotaName}市`);
+  parts.push(`${s.kecamatanName}区 ${s.kelurahanName}`);
+  if (s.jalan)     parts.push(s.jalan);
+
+  return parts.join(' ').toUpperCase();
 }

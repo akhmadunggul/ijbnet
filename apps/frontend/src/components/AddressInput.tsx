@@ -300,8 +300,8 @@ export default function AddressInput({ value, onChange, disabled }: Props) {
       {/* Japanese address preview */}
       {value && composeAddressJa(value) && (
         <div className="text-xs text-gray-600 bg-blue-50 rounded p-2 border border-blue-100">
-          <span className="font-medium text-blue-700">🇯🇵 日本語住所：</span>
-          <pre className="mt-1 font-sans whitespace-pre-wrap">{composeAddressJa(value)}</pre>
+          <span className="font-medium text-blue-700">🇯🇵 日本語住所：</span>{' '}
+          <span>{composeAddressJa(value)}</span>
         </div>
       )}
     </div>

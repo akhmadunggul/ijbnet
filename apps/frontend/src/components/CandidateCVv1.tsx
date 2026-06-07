@@ -486,7 +486,7 @@ export default function CandidateCV({
           </tr>
           <tr>
             <td style={TD}>{L('Alamat', '現住所')}</td>
-            <td style={{ ...TD, whiteSpace: 'pre-line' }} colSpan={3}>{addressDisplay}</td>
+            <td style={TD} colSpan={3}>{addressDisplay}</td>
           </tr>
         </tbody>
       </table>
