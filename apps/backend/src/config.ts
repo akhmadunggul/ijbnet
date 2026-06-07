@@ -38,6 +38,7 @@ export const config = {
   DB_NAME: optional('DB_NAME', 'ijbnet_db'),
   DB_USER: optional('DB_USER', 'ijbnet'),
   DB_PASS: optional('DB_PASS', 'changeme'),
+  SURVEY_DB_NAME: optional('SURVEY_DB_NAME', 'ijbnet_survey'),
 
   JWT_SECRET: optional('JWT_SECRET', 'changeme-min-32-chars-random-string'),
   JWT_EXPIRES_IN: optional('JWT_EXPIRES_IN', '15m'),

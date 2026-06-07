@@ -26,11 +26,6 @@ import { RecruitmentRequest, initRecruitmentRequest } from './RecruitmentRequest
 import { GlobalSettings, initGlobalSettings } from './GlobalSettings';
 import { CandidateGakkenResume, initCandidateGakkenResume } from './CandidateGakkenResume';
 import { CandidateGakkenCompany, initCandidateGakkenCompany } from './CandidateGakkenCompany';
-import { Survey, initSurvey } from './Survey';
-import { SurveyQuestion, initSurveyQuestion } from './SurveyQuestion';
-import { SurveyResponse, initSurveyResponse } from './SurveyResponse';
-import { SurveyAnswer, initSurveyAnswer } from './SurveyAnswer';
-
 // Initialize all models
 initCompany(sequelize);
 initLpk(sequelize);
@@ -58,11 +53,6 @@ initRecruitmentRequest(sequelize);
 initGlobalSettings(sequelize);
 initCandidateGakkenResume(sequelize);
 initCandidateGakkenCompany(sequelize);
-initSurvey(sequelize);
-initSurveyQuestion(sequelize);
-initSurveyResponse(sequelize);
-initSurveyAnswer(sequelize);
-
 // ── Associations ─────────────────────────────────────────────────────────────
 
 // User ↔ Company / Lpk
@@ -203,30 +193,6 @@ Candidate.hasMany(CandidateGakkenCompany, {
 });
 CandidateGakkenCompany.belongsTo(Candidate, { foreignKey: 'candidateId', as: 'candidate' });
 
-// ── Survey (standalone — no FK to any business entity) ───────────────────────
-Survey.hasMany(SurveyQuestion, {
-  foreignKey: 'surveyId',
-  as: 'questions',
-  onDelete: 'CASCADE',
-});
-SurveyQuestion.belongsTo(Survey, { foreignKey: 'surveyId', as: 'survey' });
-
-Survey.hasMany(SurveyResponse, {
-  foreignKey: 'surveyId',
-  as: 'responses',
-  onDelete: 'CASCADE',
-});
-SurveyResponse.belongsTo(Survey, { foreignKey: 'surveyId', as: 'survey' });
-
-SurveyResponse.hasMany(SurveyAnswer, {
-  foreignKey: 'responseId',
-  as: 'answers',
-  onDelete: 'CASCADE',
-});
-SurveyAnswer.belongsTo(SurveyResponse, { foreignKey: 'responseId', as: 'response' });
-
-SurveyAnswer.belongsTo(SurveyQuestion, { foreignKey: 'questionId', as: 'question' });
-
 // Candidate certifications & education history
 Candidate.hasMany(CandidateCertification, {
   foreignKey: 'candidateId',
@@ -270,8 +236,4 @@ export {
   GlobalSettings,
   CandidateGakkenResume,
   CandidateGakkenCompany,
-  Survey,
-  SurveyQuestion,
-  SurveyResponse,
-  SurveyAnswer,
 };

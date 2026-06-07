@@ -7,8 +7,11 @@ import morgan from 'morgan';
 import cookieParser from 'cookie-parser';
 import rateLimit from 'express-rate-limit';
 import { connectDB, sequelize } from './db/connection';
+import { connectSurveyDB } from './db/survey-connection';
+import { runSurveyMigrations } from './db/runSurveyMigrations';
 import { connectRedis } from './utils/redis';
 import './db/models/index'; // Initialize all models and associations
+import './db/survey-models/index'; // Initialize survey models on survey connection
 import passport from './config/passport';
 import apiRouter from './routes/index';
 import { errorHandler, notFound } from './middleware/errorHandler';
@@ -129,6 +132,9 @@ async function start(): Promise<void> {
   try {
     await connectDB();
     initMonitorDb(sequelize);
+
+    await connectSurveyDB();
+    await runSurveyMigrations();
 
     // Restore persisted global settings into in-process caches
     try {

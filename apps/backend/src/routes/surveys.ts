@@ -31,7 +31,7 @@ import {
   SurveyQuestion,
   SurveyResponse,
   SurveyAnswer,
-} from '../db/models/index';
+} from '../db/survey-models/index';
 import type { QuestionType, QuestionOption } from '../db/models/SurveyQuestion';
 
 const router = Router();
