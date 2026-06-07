@@ -58,9 +58,9 @@ import { v4 as uuidv4 } from 'uuid';
 
 const router = Router();
 
-/** Drop the cached /candidates/me response for a given user. Fire-and-forget. */
-function invalidateMe(userId: string): void {
-  cacheDel(`cand:me:${userId}`).catch(() => { /* ignore */ });
+/** Drop the cached /candidates/me response for a given user. */
+async function invalidateMe(userId: string): Promise<void> {
+  await cacheDel(`cand:me:${userId}`).catch(() => { /* ignore */ });
 }
 
 function serializeTimeline(events: CandidateTimeline[]): unknown[] {
@@ -215,7 +215,7 @@ router.patch('/me', async (req: Request, res: Response): Promise<void> => {
   );
 
   await candidate.update(updates);
-  invalidateMe(req.user!.sub);
+  await invalidateMe(req.user!.sub);
 
   const fresh = await findMyCandidate(req.user!.sub);
   const data = fresh!.toJSON() as unknown as Record<string, unknown>;
@@ -264,7 +264,7 @@ router.patch('/me/consent', authenticate, requireRole('candidate'), async (req: 
     recordTimelineEvent(candidate.id, 'consent_given', req.user!.sub, 'candidate')
       .catch((e) => console.error('[consent] timeline event failed:', e));
 
-    invalidateMe(req.user!.sub);
+    await invalidateMe(req.user!.sub);
     res.json({ message: 'Consent recorded.' });
   } catch (err) {
     console.error('[PATCH /me/consent] error:', err);
@@ -291,7 +291,7 @@ router.patch('/me/nik', async (req: Request, res: Response): Promise<void> => {
   }
 
   await candidate.update({ nikEncrypted: encrypt(nik) });
-  invalidateMe(req.user!.sub);
+  await invalidateMe(req.user!.sub);
 
   await AuditLog.create({
     userId: req.user!.sub,
@@ -336,7 +336,7 @@ router.post('/me/submit', async (req: Request, res: Response): Promise<void> => 
   }
 
   await candidate.update({ profileStatus: 'submitted' });
-  invalidateMe(req.user!.sub);
+  await invalidateMe(req.user!.sub);
 
   // Notify managers (global) + admins scoped to this candidate's LPK
   const admins = await User.findAll({
@@ -440,7 +440,7 @@ router.put('/me/career', async (req: Request, res: Response): Promise<void> => {
     await CandidateCareer.bulkCreate(rows);
   }
 
-  invalidateMe(req.user!.sub);
+  await invalidateMe(req.user!.sub);
   const career = await CandidateCareer.findAll({ where: { candidateId: candidate.id }, order: [['startDate', 'ASC'], ['sortOrder', 'ASC']] });
   res.json({ career: career.map((c) => c.toJSON()) });
 });
@@ -476,7 +476,7 @@ router.put('/me/certifications', async (req: Request, res: Response): Promise<vo
     );
   }
 
-  invalidateMe(req.user!.sub);
+  await invalidateMe(req.user!.sub);
   const certifications = await CandidateCertification.findAll({
     where: { candidateId: candidate.id },
     order: [['createdAt', 'ASC']],
@@ -517,7 +517,7 @@ router.put('/me/education-history', async (req: Request, res: Response): Promise
     );
   }
 
-  invalidateMe(req.user!.sub);
+  await invalidateMe(req.user!.sub);
   const educationHistory = await CandidateEducationHistory.findAll({
     where: { candidateId: candidate.id },
     order: [['sortOrder', 'ASC']],
@@ -556,7 +556,7 @@ router.put('/me/tests', async (req: Request, res: Response): Promise<void> => {
     );
   }
 
-  invalidateMe(req.user!.sub);
+  await invalidateMe(req.user!.sub);
   const tests = await CandidateJapaneseTest.findAll({ where: { candidateId: candidate.id }, order: [['testDate', 'DESC']] });
   res.json({ tests: tests.map((t) => t.toJSON()) });
 });
@@ -611,7 +611,7 @@ router.post(
 
     const updateField = slot === 'closeup' ? 'closeupUrl' : 'fullbodyUrl';
     await candidate.update({ [updateField]: urlPath });
-    invalidateMe(req.user!.sub);
+    await invalidateMe(req.user!.sub);
 
     await AuditLog.create({
       userId: req.user!.sub,
@@ -883,7 +883,7 @@ router.patch('/me/shokumu', authenticate, requireRole('candidate'), async (req: 
     );
   }
 
-  invalidateMe(req.user!.sub);
+  await invalidateMe(req.user!.sub);
   res.json({ message: 'Shokumu data saved.' });
 });
 
