@@ -41,10 +41,21 @@ router.get('/assignments', async (req, res) => {
     }
   }
 
-  const result: Record<string, string> = {};
+  const assignments: Record<string, string> = {};
+  // lpkVariants: experimentName → { lpkId: variantKey } — lets clients resolve
+  // the variant for any candidate LPK without needing their own assignment
+  const lpkVariants: Record<string, Record<string, string>> = {};
 
   for (const exp of experiments) {
     const expJson = exp.toJSON();
+
+    // Always expose lpkVariants for lpk-scoped experiments so that viewers
+    // without an LPK (manager, recruiter, super_admin) can still pick the
+    // correct layout based on the candidate being viewed
+    if (expJson.targeting.scope === 'lpk' && expJson.targeting.lpkVariants) {
+      lpkVariants[expJson.name] = expJson.targeting.lpkVariants;
+    }
+
     if (!isEligible({ id: userId, role: jwt.role, lpkId }, expJson.targeting)) continue;
 
     let assignment = await AbAssignment.findOne({
@@ -62,12 +73,19 @@ router.get('/assignments', async (req, res) => {
         userId,
         variantKey,
       });
+    } else {
+      // If lpkVariants config changed after the assignment was created, reconcile
+      const expectedVariant = lpkVariantFor(lpkId, expJson.targeting);
+      if (expectedVariant && assignment.variantKey !== expectedVariant) {
+        await assignment.update({ variantKey: expectedVariant });
+        assignment.variantKey = expectedVariant;
+      }
     }
 
-    result[expJson.name] = assignment.variantKey;
+    assignments[expJson.name] = assignment.variantKey;
   }
 
-  res.json({ assignments: result });
+  res.json({ assignments, lpkVariants });
 });
 
 // Records an experiment event for the current user (impression, conversion, custom).
