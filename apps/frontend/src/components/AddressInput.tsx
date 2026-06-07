@@ -13,10 +13,10 @@ async function fetchRegionData<T>(url: string): Promise<T[]> {
   return data;
 }
 
-type Province    = { id: string; value: string };
-type Regency     = { id: string; value: string; type?: string };
-type District    = { id: string; value: string };
-type Subdistrict = { id: string; value: string; postal_code?: string };
+type Province    = { id: number; value: string };
+type Regency     = { id: number; value: string; type?: string };
+type District    = { id: number; value: string };
+type Subdistrict = { id: number; value: string; postal_code?: string };
 
 export interface AddressStructured {
   provinsiId:    string;
@@ -111,38 +111,38 @@ export default function AddressInput({ value, onChange, disabled }: Props) {
   }, [provinsiId, kotaId, kecamatanId]);
 
   function handleProvinsiChange(id: string) {
-    const prov = provinces.find(p => p.id === id);
+    const prov = provinces.find(p => String(p.id) === id);
     onChange({ ...BLANK, provinsiId: id, provinsiName: prov?.value ?? '' });
   }
 
   function handleKotaChange(id: string) {
-    const kota = regencies.find(r => r.id === id);
+    const kota = regencies.find(r => String(r.id) === id);
     onChange({
       ...(value ?? BLANK),
       kotaId: id, kotaName: kota?.value ?? '',
       kecamatanId: '', kecamatanName: '',
       kelurahanId: '', kelurahanName: '',
-      kodePos: value?.kodePos ?? '',
+      kodePos: '',
     });
   }
 
   function handleKecamatanChange(id: string) {
-    const kec = districts.find(d => d.id === id);
+    const kec = districts.find(d => String(d.id) === id);
     onChange({
       ...(value ?? BLANK),
       kecamatanId: id, kecamatanName: kec?.value ?? '',
       kelurahanId: '', kelurahanName: '',
-      kodePos: value?.kodePos ?? '',
+      kodePos: '',
     });
   }
 
   function handleKelurahanChange(id: string) {
-    const kel = subdistricts.find(s => s.id === id);
+    const kel = subdistricts.find(s => String(s.id) === id);
     onChange({
       ...(value ?? BLANK),
       kelurahanId: id,
       kelurahanName: kel?.value ?? '',
-      kodePos: kel?.postal_code ?? value?.kodePos ?? '',
+      kodePos: kel?.postal_code ?? '',
     });
   }
 
@@ -175,7 +175,7 @@ export default function AddressInput({ value, onChange, disabled }: Props) {
         >
           <option value="">{loadingProv ? '…' : `— ${t('candidate.profile.personal.addressSelectProv')} —`}</option>
           {provinces.map(p => (
-            <option key={p.id} value={p.id}>{p.value}</option>
+            <option key={p.id} value={String(p.id)}>{p.value}</option>
           ))}
         </select>
       </div>
@@ -193,7 +193,7 @@ export default function AddressInput({ value, onChange, disabled }: Props) {
         >
           <option value="">{loadingKota ? '…' : `— ${t('candidate.profile.personal.addressSelectKota')} —`}</option>
           {regencies.map(r => (
-            <option key={r.id} value={r.id}>{r.value}</option>
+            <option key={r.id} value={String(r.id)}>{r.value}</option>
           ))}
         </select>
       </div>
@@ -211,7 +211,7 @@ export default function AddressInput({ value, onChange, disabled }: Props) {
         >
           <option value="">{loadingKec ? '…' : `— ${t('candidate.profile.personal.addressSelectKec')} —`}</option>
           {districts.map(d => (
-            <option key={d.id} value={d.id}>{d.value}</option>
+            <option key={d.id} value={String(d.id)}>{d.value}</option>
           ))}
         </select>
       </div>
@@ -229,7 +229,7 @@ export default function AddressInput({ value, onChange, disabled }: Props) {
         >
           <option value="">{loadingKel ? '…' : `— ${t('candidate.profile.personal.addressSelectKel')} —`}</option>
           {subdistricts.map(s => (
-            <option key={s.id} value={s.id}>{s.value}</option>
+            <option key={s.id} value={String(s.id)}>{s.value}</option>
           ))}
         </select>
       </div>
