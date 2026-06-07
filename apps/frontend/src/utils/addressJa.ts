@@ -55,18 +55,14 @@ const PROVINSI_JA: Record<string, string> = {
  * fields are missing.
  */
 export function composeAddressJa(s: AddressStructured): string {
-  if (!s.provinsiName || !s.kotaName || !s.kecamatanName || !s.kelurahanName) return '';
-
-  const provinsiJa = PROVINSI_JA[s.provinsiName] ?? `${s.provinsiName}州`;
-  const kotaJa     = `${s.kotaName}市`;
-  const kecKelJa   = `${s.kecamatanName}区 ${s.kelurahanName}`;
+  if (!s.kotaName || !s.kecamatanName || !s.kelurahanName) return '';
 
   const lines: string[] = [];
-  if (s.kodePos)  lines.push(`〒${s.kodePos}`);
-  lines.push(provinsiJa);
-  lines.push(kotaJa);
-  lines.push(kecKelJa);
-  if (s.jalan)    lines.push(s.jalan);
+  if (s.kodePos) lines.push(`〒${s.kodePos}`);
+  if (s.provinsiName) lines.push(PROVINSI_JA[s.provinsiName] ?? `${s.provinsiName}州`);
+  lines.push(`${s.kotaName}市`);
+  lines.push(`${s.kecamatanName}区 ${s.kelurahanName}`);
+  if (s.jalan) lines.push(s.jalan);
 
   return lines.join('\n');
 }

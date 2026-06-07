@@ -78,6 +78,14 @@ export default function AddressInput({ value, onChange, disabled }: Props) {
       .finally(() => setLoadingProv(false));
   }, []);
 
+  // Auto-resolve provinsiName when provinces load but name is empty (stale data fix)
+  useEffect(() => {
+    if (provinces.length > 0 && value?.provinsiId && !value.provinsiName) {
+      const prov = provinces.find(p => String(p.id) === value.provinsiId);
+      if (prov) onChange({ ...(value ?? BLANK), provinsiName: prov.value });
+    }
+  }, [provinces]);
+
   // Load regencies when province changes
   useEffect(() => {
     setRegencies([]);
