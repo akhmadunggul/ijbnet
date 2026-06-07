@@ -508,10 +508,10 @@ export default function CandidateCVv2({
               </tr>,
               <tr className="cv-row-sm" key={`career-${i}-e`}>
                 <td style={{ ...TD, width: '25%', height: '22px' }}>
-                  {formatMonthJa(endDate)}
+                  {endDate ? formatMonthJa(endDate) : (company ? '現在' : '')}
                 </td>
                 <td style={TD}>
-                  {company}{company ? '　退社' : ''}
+                  {company}{company ? (endDate ? '　退社' : '　在職中') : ''}
                 </td>
               </tr>,
             ] : [

@@ -5,27 +5,29 @@ import type { Response } from 'express';
 const isoDate = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Must be YYYY-MM-DD');
 const shortStr = (max: number) => z.string().max(max);
 const longStr  = (max: number) => z.string().max(max);
+// Trim + uppercase for roman (Indonesian) text fields stored in the DB
+const upperStr = (max: number) => z.string().max(max).transform(s => s.trim().toUpperCase());
 
 // ── PATCH /candidates/me ──────────────────────────────────────────────────────
 // Explicit allowlist — .strict() rejects any key not listed here.
 // Replaces the BLOCKED_FIELDS denylist which allowed unknown sub-keys to pass.
 export const patchMeSchema = z.object({
   // Identity
-  fullName:            shortStr(200).min(1),
+  fullName:            z.string().min(1).max(200).transform(s => s.trim().toUpperCase()),
   nameKatakana:        shortStr(200).nullable(),
   gender:              z.enum(['M', 'F']).nullable(),
   dateOfBirth:         isoDate.nullable(),
-  birthPlace:          shortStr(100).nullable(),
+  birthPlace:          upperStr(100).nullable(),
   religion:            z.enum(['Islam', 'Kristen', 'Katolik', 'Budha', 'Hindu', 'Lainnya']).nullable(),
   bloodType:           z.enum(['A', 'B', 'AB', 'O', 'A+', 'B+', 'AB+', 'O+', 'Unknown']).nullable(),
   maritalStatus:       z.enum(['single', 'married', 'divorced', 'widowed']).nullable(),
-  spouseInfo:          shortStr(200).nullable(),
+  spouseInfo:          upperStr(200).nullable(),
   childrenCount:       z.number().int().min(0).max(20),
   accompany:           z.enum(['none', 'yes']),
   phone:               shortStr(30).nullable(),
-  address:             shortStr(500).nullable(),
-  hobbies:             shortStr(500).nullable(),
-  bankName:            shortStr(100).nullable(),
+  address:             upperStr(500).nullable(),
+  hobbies:             upperStr(500).nullable(),
+  bankName:            upperStr(100).nullable(),
   hasPassport:         z.boolean().nullable(),
   hasVisitedJapan:     z.boolean().nullable(),
   hasPoliceRecord:     z.boolean().nullable(),
@@ -40,12 +42,12 @@ export const patchMeSchema = z.object({
   sswSectorJa:         shortStr(100).nullable(),
   sswFieldId:          shortStr(100).nullable(),
   sswFieldJa:          shortStr(100).nullable(),
-  jpStudyDuration:     shortStr(100).nullable(),
-  jobCategory:         shortStr(100).nullable(),
+  jpStudyDuration:     upperStr(100).nullable(),
+  jobCategory:         upperStr(100).nullable(),
   // Education (top-level summary only; history uses /education-history)
-  eduLevel:            shortStr(50).nullable(),
-  eduLabel:            shortStr(200).nullable(),
-  eduMajor:            shortStr(200).nullable(),
+  eduLevel:            upperStr(50).nullable(),
+  eduLabel:            upperStr(200).nullable(),
+  eduMajor:            upperStr(200).nullable(),
   // PR & Motivation
   selfIntroId:         longStr(3000).nullable(),
   selfIntroJa:         longStr(3000).nullable(),
@@ -68,14 +70,14 @@ export type PatchMeBody = z.infer<typeof patchMeSchema>;
 
 // ── PUT /candidates/me/career ─────────────────────────────────────────────────
 const careerEntrySchema = z.object({
-  companyName:               shortStr(200).nullable(),
+  companyName:               upperStr(200).nullable(),
   companyBusinessActivity:   longStr(2000).nullable(),
   companyBusinessActivityJa: longStr(2000).nullable(),
-  division:                  shortStr(200).nullable(),
+  division:                  upperStr(200).nullable(),
   divisionJa:   shortStr(200).nullable(),
-  skillGroup:   shortStr(200).nullable(),
+  skillGroup:   upperStr(200).nullable(),
   skillGroupJa: shortStr(200).nullable(),
-  period:       shortStr(50).nullable(),
+  period:       upperStr(50).nullable(),
   startDate:    isoDate.nullable(),
   endDate:      isoDate.nullable(),
   sortOrder:    z.number().int().min(0).max(9999),
@@ -87,10 +89,10 @@ export const putCareerSchema = z.object({
 
 // ── PUT /candidates/me/certifications ─────────────────────────────────────────
 const certEntrySchema = z.object({
-  certName:   shortStr(200),
-  certLevel:  shortStr(50).nullable(),
+  certName:   upperStr(200).nullable(),
+  certLevel:  upperStr(50).nullable(),
   issuedDate: isoDate.nullable(),
-  issuedBy:   shortStr(200).nullable(),
+  issuedBy:   upperStr(200).nullable(),
 }).partial({ certLevel: true, issuedDate: true, issuedBy: true }).strict();
 
 export const putCertSchema = z.object({
@@ -99,8 +101,8 @@ export const putCertSchema = z.object({
 
 // ── PUT /candidates/me/education-history ──────────────────────────────────────
 const eduEntrySchema = z.object({
-  schoolName: shortStr(200),
-  major:      shortStr(200).nullable(),
+  schoolName: upperStr(200).nullable(),
+  major:      upperStr(200).nullable(),
   startDate:  isoDate.nullable(),
   endDate:    isoDate.nullable(),
   status:     shortStr(50).nullable(),

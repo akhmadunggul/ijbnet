@@ -238,10 +238,12 @@ export function buildCandidateCvHtmlV2(
     const rawStart  = row['startDate'] ? toDateStr(row['startDate']) : parsePeriodStart(row['period'] as string | null);
     const rawEnd    = row['endDate'] ? toDateStr(row['endDate']) : null;
     const startMo   = he(formatMonthJa(rawStart));
-    const endMo     = he(formatMonthJa(rawEnd));
+    const isCurrent = !rawEnd;
+    const endMo     = isCurrent ? (company ? '現在' : '') : he(formatMonthJa(rawEnd));
+    const endStatus = isCurrent ? '　在職中' : '　退社';
     return [
       `<tr class="cv-row-sm"><td style="${TD}width:25%;height:22px;">${startMo}</td><td style="${TD}">${company}${company ? '　入社' : ''}</td></tr>`,
-      `<tr class="cv-row-sm"><td style="${TD}width:25%;height:22px;">${endMo}</td><td style="${TD}">${company}${company ? '　退社' : ''}</td></tr>`,
+      `<tr class="cv-row-sm"><td style="${TD}width:25%;height:22px;">${endMo}</td><td style="${TD}">${company}${company ? endStatus : ''}</td></tr>`,
     ];
   }).join('');
 

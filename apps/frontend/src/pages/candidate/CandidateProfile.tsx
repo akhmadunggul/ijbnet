@@ -733,7 +733,9 @@ function CareerTab({ candidate, saving }: { candidate: CandidateData; saving: bo
     defaultValues: {
       entries: (candidate.career ?? []).map((c, i) => {
         const sd = parseYM(c.startDate);
-        const ed = parseYM((c as any).endDate ?? null);
+        const rawEnd = (c as any).endDate as string | null | undefined;
+        // null endDate with a startDate means currently employed (現在)
+        const ed = rawEnd ? parseYM(rawEnd) : (c.startDate ? { month: '', year: 'now' } : { month: '', year: '' });
         return {
           companyName:             c.companyName,
           companyBusinessActivity: c.companyBusinessActivity,
@@ -751,6 +753,7 @@ function CareerTab({ candidate, saving }: { candidate: CandidateData; saving: bo
   const { fields, append, remove, move } = useFieldArray({ control, name: 'entries' });
 
   const [careerSaveError, setCareerSaveError] = useState(false);
+  const [careerDateError, setCareerDateError] = useState(false);
   const careerMutation = useMutation({
     mutationFn: (data: CareerForm) => {
       const toDate = (year: string, month: string) => {
@@ -772,14 +775,27 @@ function CareerTab({ candidate, saving }: { candidate: CandidateData; saving: bo
     },
     onSuccess: (_data, variables) => {
       setCareerSaveError(false);
+      setCareerDateError(false);
       qc.invalidateQueries({ queryKey: ['my-candidate'] });
       reset(variables);
     },
     onError: () => setCareerSaveError(true),
   });
 
+  const onCareerSubmit = (data: CareerForm) => {
+    setCareerDateError(false);
+    for (const e of data.entries) {
+      if (e.startYear && e.endYear && e.endYear !== 'now' && e.endMonth) {
+        const sy = parseInt(e.startYear) * 100 + parseInt(e.startMonth || '1');
+        const ey = parseInt(e.endYear) * 100 + parseInt(e.endMonth);
+        if (ey < sy) { setCareerDateError(true); return; }
+      }
+    }
+    careerMutation.mutate(data);
+  };
+
   return (
-    <form onSubmit={handleSubmit((d) => careerMutation.mutate(d))} className="space-y-4">
+    <form onSubmit={handleSubmit(onCareerSubmit)} className="space-y-4">
       {fields.map((field, i) => {
         const endYearVal = watch(`entries.${i}.endYear`);
         return (
@@ -845,6 +861,7 @@ function CareerTab({ candidate, saving }: { candidate: CandidateData; saving: bo
           {careerMutation.isPending ? t('candidate.profile.saving') : t('candidate.profile.save')}
         </button>
         {isDirty && <span className="text-xs text-amber-600">{t('candidate.profile.unsaved')}</span>}
+        {careerDateError && <span className="text-xs text-red-500">{t('candidate.profile.career.dateOrderError', { defaultValue: 'Tanggal keluar tidak boleh lebih awal dari tanggal masuk.' })}</span>}
         {careerSaveError && <span className="text-xs text-red-500">{t('toastError', { defaultValue: 'Gagal menyimpan. Coba lagi.' })}</span>}
       </div>
     </form>
