@@ -258,9 +258,7 @@ export default function CandidateCVv2({
   const getJa = (jaKey: string, idKey: string): string =>
     v(c[jaKey]) || (autoTranslateEnabled ? v(jaOverride[jaKey]) : '') || v(c[idKey]);
 
-  const L = (idLabel: string, jaLabel: string) =>
-    isJaMode ? jaLabel : `${idLabel} ・ ${jaLabel}`;
-
+  // v2 is always Japanese-only — no bilingual labels
   const age = c.dateOfBirth ? calculateAge(c.dateOfBirth) : null;
 
   const latestTest =
@@ -268,17 +266,14 @@ export default function CandidateCVv2({
       ? c.tests[c.tests.length - 1]
       : null;
 
-  const genderLabel = isJaMode
-    ? (c.gender === 'M' ? '男性' : c.gender === 'F' ? '女性' : '')
-    : (c.gender === 'M' ? 'Laki-laki / 男' : c.gender === 'F' ? 'Perempuan / 女' : '');
+  const genderLabel = c.gender === 'M' ? '男性' : c.gender === 'F' ? '女性' : '';
 
-  const maritalLabelMap: Record<string, string> = isJaMode
-    ? { single: '未婚', married: '既婚', divorced: '離婚', widowed: '死別' }
-    : { single: 'Belum Menikah / 未婚', married: 'Menikah / 既婚', divorced: 'Cerai / 離婚', widowed: 'Janda / Duda' };
+  const maritalLabelMap: Record<string, string> = { single: '未婚', married: '既婚', divorced: '離婚', widowed: '死別' };
 
-  const religionLabelMap: Record<string, string> = isJaMode
-    ? { Islam: 'イスラム教', Kristen: 'キリスト教（プロテスタント）', Katolik: 'キリスト教（カトリック）', Budha: '仏教', Hindu: 'ヒンドゥー教', Lainnya: 'その他' }
-    : { Islam: 'Islam', Kristen: 'Kristen', Katolik: 'Katolik', Budha: 'Budha', Hindu: 'Hindu', Lainnya: 'Lainnya' };
+  const religionLabelMap: Record<string, string> = {
+    Islam: 'イスラム教', Kristen: 'キリスト教（プロテスタント）', Katolik: 'キリスト教（カトリック）',
+    Budha: '仏教', Hindu: 'ヒンドゥー教', Lainnya: 'その他',
+  };
 
   const addressMasked = (c.address as any)?.masked === true;
   const addressDisplay = addressMasked ? '🔒' : v(c.address);
@@ -297,13 +292,8 @@ export default function CandidateCVv2({
     ? `${v(latestTest.testName)}${latestTest.score != null ? ` / ${latestTest.score}` : ''}`
     : '';
 
-  const japanDisplay = isJaMode
-    ? (c.hasVisitedJapan === true ? '有' : c.hasVisitedJapan === false ? '無' : '')
-    : (c.hasVisitedJapan === true ? 'Ada（有）' : c.hasVisitedJapan === false ? 'Belum（無）' : '');
-
-  const passportDisplay = isJaMode
-    ? (c.hasPassport === true ? '有' : c.hasPassport === false ? '無' : '')
-    : (c.hasPassport === true ? 'Ada（有）' : c.hasPassport === false ? 'Tidak（無）' : '');
+  const japanDisplay = c.hasVisitedJapan === true ? '有' : c.hasVisitedJapan === false ? '無' : '';
+  const passportDisplay = c.hasPassport === true ? '有' : c.hasPassport === false ? '無' : '';
 
   const dobStr = c.dateOfBirth ? formatDobJa(c.dateOfBirth) : '';
   const birthDisplay = [v(c.birthPlace), dobStr].filter(Boolean).join('  ');
@@ -348,20 +338,14 @@ export default function CandidateCVv2({
   const containerStyle: React.CSSProperties = {
     ...S.container,
     fontFamily: FONT,
-    textTransform: isJaMode ? 'none' : 'uppercase',
+    textTransform: 'none',
   };
 
-  // ── Education status helper ───────────────────────────────────────────────────
+  // ── Education status helper (Japanese only) ───────────────────────────────────
   const eduStatusLabel = (s: string | null | undefined): string => {
     if (!s) return '';
-    const m: Record<string, { id: string; ja: string }> = {
-      'Lulus':         { id: 'Lulus',         ja: '卒業' },
-      'Drop Out':      { id: 'Drop Out',      ja: '中退' },
-      'Masih Belajar': { id: 'Masih Belajar', ja: '在学中' },
-    };
-    const entry = m[s];
-    if (!entry) return v(s);
-    return L(entry.id, entry.ja);
+    const m: Record<string, string> = { 'Lulus': '卒業', 'Drop Out': '中退', 'Masih Belajar': '在学中' };
+    return m[s] ?? v(s);
   };
 
   return (
@@ -384,7 +368,7 @@ export default function CandidateCVv2({
 
       {/* ── Title ── */}
       <div className="cv-title" style={S.headerTitle}>
-        {isJaMode ? '候補者データ' : '候補者データ ・ DATA KANDIDAT'}
+        候補者データ
       </div>
 
       {/* ── Photo (float right) + basic info table ── */}
@@ -400,17 +384,12 @@ export default function CandidateCVv2({
           ) : (
             <div style={{ height: '150px', lineHeight: '150px', color: '#999' }}>Foto</div>
           )}
-          {layout === 'layout1' && (
-            <div style={{ borderTop: '1px solid #000', padding: '5px 14px' }}>
-              <img src={ijbnetLogo} alt="IJBNet" style={{ width: '100%', height: 'auto', display: 'block' }} />
-            </div>
-          )}
         </div>
 
         <table className="cv-tbl" style={{ ...S.table, width: 'calc(100% - 140px)', float: 'left', marginBottom: 0 }}>
           <tbody>
             <tr>
-              <td style={{ ...TD, width: '20%' }}>{L('Nama', '氏名')}</td>
+              <td style={{ ...TD, width: '20%' }}>氏名</td>
               <td style={TD} colSpan={3}>
                 <div>{v(c.fullName)}</div>
                 {c.nameKatakana && (
@@ -421,33 +400,33 @@ export default function CandidateCVv2({
               </td>
             </tr>
             <tr>
-              <td style={{ ...TD, width: '20%' }}>{L('Tempat, Tgl Lahir', '出身地・生年月日')}</td>
+              <td style={{ ...TD, width: '20%' }}>出身地・生年月日</td>
               <td style={{ ...TD, width: '30%' }}>{birthDisplay}</td>
-              <td style={{ ...TD, width: '20%' }}>{L('Jenis Kelamin', '性別')}</td>
+              <td style={{ ...TD, width: '20%' }}>性別</td>
               <td style={TD}>{genderLabel}</td>
             </tr>
             <tr>
-              <td style={TD}>{L('Usia', '年齢')}</td>
+              <td style={TD}>年齢</td>
               <td style={TD}>{age !== null ? `${age}歳` : ''}</td>
-              <td style={TD}>{L('Agama', '宗教')}</td>
+              <td style={TD}>宗教</td>
               <td style={TD}>{c.religion ? (religionLabelMap[c.religion] ?? v(c.religion)) : ''}</td>
             </tr>
             <tr>
-              <td style={TD}>{L('Gol. Darah', '血液型')}</td>
+              <td style={TD}>血液型</td>
               <td style={TD}>{v(c.bloodType)}</td>
-              <td style={TD}>{L('Status Nikah', '婚姻歴')}</td>
+              <td style={TD}>婚姻歴</td>
               <td style={TD}>
                 {c.maritalStatus ? (maritalLabelMap[c.maritalStatus] ?? v(c.maritalStatus)) : ''}
               </td>
             </tr>
             <tr>
-              <td style={TD}>{L('Tinggi', '身長')}</td>
+              <td style={TD}>身長</td>
               <td style={TD}>{heightDisplay}</td>
-              <td style={TD}>{L('Berat', '体重')}</td>
+              <td style={TD}>体重</td>
               <td style={TD}>{weightDisplay}</td>
             </tr>
             <tr>
-              <td style={TD}>{L('Level JP', '日本語レベル')}</td>
+              <td style={TD}>日本語レベル</td>
               <td style={TD} colSpan={3}>{jpLevelDisplay}</td>
             </tr>
           </tbody>
@@ -458,13 +437,13 @@ export default function CandidateCVv2({
       <table className="cv-tbl" style={S.table}>
         <tbody>
           <tr>
-            <td style={{ ...TD, width: '25%' }}>{L('Pernah ke Jepang', '日本滞在経験')}</td>
+            <td style={{ ...TD, width: '25%' }}>日本滞在経験</td>
             <td style={{ ...TD, width: '25%' }}>{japanDisplay}</td>
-            <td style={{ ...TD, width: '25%' }}>{L('Paspor / Visa', 'パスポート／ビザ')}</td>
+            <td style={{ ...TD, width: '25%' }}>パスポート／ビザ</td>
             <td style={{ ...TD, width: '25%' }}>{passportDisplay}</td>
           </tr>
           <tr>
-            <td style={TD}>{L('Alamat', '現住所')}</td>
+            <td style={TD}>現住所</td>
             <td style={TD} colSpan={3}>{addressDisplay}</td>
           </tr>
         </tbody>
@@ -474,7 +453,7 @@ export default function CandidateCVv2({
       <table className="cv-tbl" style={S.table}>
         <tbody>
           <tr>
-            <td style={ST} colSpan={2}>{L('Pendidikan', '学歴')}</td>
+            <td style={ST} colSpan={2}>学歴</td>
           </tr>
           {eduRows.flatMap((row, i) =>
             row ? [
@@ -491,7 +470,7 @@ export default function CandidateCVv2({
                   {formatMonthJa((row as any).endDate)}
                 </td>
                 <td style={TD}>
-                  {v((row as any).schoolName)}{v((row as any).schoolName) ? `　${eduStatusLabel((row as any).status) || L('Selesai', '卒業')}` : ''}
+                  {v((row as any).schoolName)}{v((row as any).schoolName) ? `　${eduStatusLabel((row as any).status) || '卒業'}` : ''}
                 </td>
               </tr>,
             ] : [
@@ -512,7 +491,7 @@ export default function CandidateCVv2({
       <table className="cv-tbl" style={S.table}>
         <tbody>
           <tr>
-            <td style={ST} colSpan={2}>{L('Pengalaman Kerja', '職歴')}</td>
+            <td style={ST} colSpan={2}>職歴</td>
           </tr>
           {careerRows.flatMap((row, i) => {
             const startDate = (row as any)?.startDate || parsePeriodStart((row as any)?.period);
@@ -553,18 +532,18 @@ export default function CandidateCVv2({
       <table className="cv-tbl" style={S.table}>
         <tbody>
           <tr>
-            <td style={ST} colSpan={3}>{L('Sertifikasi', '資格・公的認定')}</td>
+            <td style={ST} colSpan={3}>資格・公的認定</td>
           </tr>
           <tr style={{ textAlign: 'center' }}>
-            <td style={{ ...TD, width: '25%' }}>{L('Tgl Penerbitan', '発行日')}</td>
-            <td style={{ ...TD, width: '40%' }}>{L('Nama Sertifikat', '名称')}</td>
-            <td style={{ ...TD, width: '35%' }}>{L('Level, Keterangan', 'レベルや詳細')}</td>
+            <td style={{ ...TD, width: '25%' }}>発行日</td>
+            <td style={{ ...TD, width: '40%' }}>名称</td>
+            <td style={{ ...TD, width: '35%' }}>レベルや詳細</td>
           </tr>
           {certRows.map((row, i) =>
             row ? (
               <tr key={i}>
                 <td style={{ ...TD, height: '25px' }}>
-                  {isJaMode ? formatDateJa((row as any).issuedDate) : (row as any).issuedDate}
+                  {formatDateJa((row as any).issuedDate)}
                 </td>
                 <td style={TD}>{(row as any).name}</td>
                 <td style={TD}>{(row as any).info}</td>
@@ -584,16 +563,7 @@ export default function CandidateCVv2({
       <table className="cv-tbl" style={S.table}>
         <tbody>
           <tr>
-            <td style={ST}>
-              {isJaMode ? '技能' : (
-                <>
-                  Skill ・ 技能
-                  <span style={{ fontWeight: 'normal', fontSize: '11px' }}>
-                    {' '}(Keahlian yang berhubungan dengan bidang yang dilamar)
-                  </span>
-                </>
-              )}
-            </td>
+            <td style={ST}>技能</td>
           </tr>
           <tr className="cv-row-md">
             <td style={{ ...TD, height: '60px', whiteSpace: 'pre-wrap' }}>
@@ -607,12 +577,7 @@ export default function CandidateCVv2({
       <table className="cv-tbl" style={{ ...S.table, marginBottom: 0 }}>
         <tbody>
           <tr>
-            <td style={ST}>{L('Promosi Diri', '自己PR')}</td>
-            {layout === 'layout2' && (
-              <td style={{ ...TD, width: '100px', border: '1px solid #000', textAlign: 'center', verticalAlign: 'middle', padding: '6px 10px' }} rowSpan={2}>
-                <img src={ijbnetLogo} alt="IJBNet" style={{ width: '100%', height: 'auto', display: 'block' }} />
-              </td>
-            )}
+            <td style={ST}>自己PR</td>
           </tr>
           <tr className="cv-row-lg">
             <td style={{ ...TD, height: '100px', whiteSpace: 'pre-wrap' }}>
@@ -621,6 +586,11 @@ export default function CandidateCVv2({
           </tr>
         </tbody>
       </table>
+
+      {/* ── IJBNet logo (bottom-right) ── */}
+      <div style={{ textAlign: 'right', paddingTop: '4px' }}>
+        <img src={ijbnetLogo} alt="IJBNet" style={{ width: '80px', height: 'auto', display: 'inline-block' }} />
+      </div>
     </div>
       </div>
     </>

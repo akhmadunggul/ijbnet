@@ -115,12 +115,11 @@ export function buildCandidateCvHtmlV2(
   const age = cj['dateOfBirth'] ? calculateAge(cj['dateOfBirth']) : null;
 
   const genderLabel =
-    cj['gender'] === 'M' ? 'Laki-laki / 男' :
-    cj['gender'] === 'F' ? 'Perempuan / 女' : '';
+    cj['gender'] === 'M' ? '男性' :
+    cj['gender'] === 'F' ? '女性' : '';
 
   const maritalMap: Record<string, string> = {
-    single: 'Belum Menikah / 未婚', married: 'Menikah / 既婚',
-    divorced: 'Cerai / 離婚', widowed: 'Janda / Duda',
+    single: '未婚', married: '既婚', divorced: '離婚', widowed: '死別',
   };
 
   const religionMap: Record<string, string> = {
@@ -144,11 +143,11 @@ export function buildCandidateCvHtmlV2(
     : '';
 
   const japanDisplay =
-    cj['hasVisitedJapan'] === true  ? 'Ada（有）' :
-    cj['hasVisitedJapan'] === false ? 'Belum（無）' : '';
+    cj['hasVisitedJapan'] === true  ? '有' :
+    cj['hasVisitedJapan'] === false ? '無' : '';
   const passportDisplay =
-    cj['hasPassport'] === true  ? 'Ada（有）' :
-    cj['hasPassport'] === false ? 'Tidak（無）' : '';
+    cj['hasPassport'] === true  ? '有' :
+    cj['hasPassport'] === false ? '無' : '';
 
   const combinedCerts: { issuedDate: string; name: string; info: string }[] = [
     ...certs.map((c) => ({
@@ -190,19 +189,15 @@ export function buildCandidateCvHtmlV2(
     ? `<img src="${photoSrc}" alt="foto" style="width:120px;height:150px;object-fit:cover;display:block;">`
     : `<div style="height:150px;line-height:150px;color:#999;text-align:center;">Foto</div>`;
 
-  const logoInPhotoBox = layout === 'layout1'
-    ? `<div style="border-top:1px solid #000;padding:5px 14px;"><img src="${IJBNET_LOGO}" alt="IJBNet" style="width:100%;height:auto;display:block;"></div>`
-    : '';
-
   const photoBoxStyle = layout === 'layout2'
     ? 'width:120px;border:1px solid #000;text-align:center;float:right;flex-shrink:0;height:150px;overflow:hidden;'
     : 'width:120px;border:1px solid #000;text-align:center;float:right;flex-shrink:0;';
 
-  // ── Education status ──────────────────────────────────────────────────────────
+  // ── Education status (Japanese only) ─────────────────────────────────────────
   const eduStatusMap: Record<string, string> = {
-    'Lulus':         'Lulus ・ 卒業',
-    'Drop Out':      'Drop Out ・ 中退',
-    'Masih Belajar': 'Masih Belajar ・ 在学中',
+    'Lulus':         '卒業',
+    'Drop Out':      '中退',
+    'Masih Belajar': '在学中',
   };
 
   // ── Rirekisho-style education rows (2 rows per entry) ────────────────────────
@@ -214,7 +209,7 @@ export function buildCandidateCvHtmlV2(
     const school = he(v(row['schoolName']));
     const statusLabel = row['status']
       ? he(eduStatusMap[String(row['status'])] ?? v(row['status']))
-      : 'Selesai ・ 卒業';
+      : '卒業';
     const startMo = he(formatMonthJa(toDateStr(row['startDate'])));
     const endMo   = he(formatMonthJa(toDateStr(row['endDate'])));
     return [
@@ -247,10 +242,6 @@ export function buildCandidateCvHtmlV2(
       : `<tr class="cv-row-sm"><td style="${TD}height:25px;"></td><td style="${TD}"></td><td style="${TD}"></td></tr>`,
   ).join('');
 
-  const promosiExtra = layout === 'layout2'
-    ? `<td style="${TD}width:100px;text-align:center;vertical-align:middle;padding:6px 10px;" rowspan="2"><img src="${IJBNET_LOGO}" alt="IJBNet" style="width:100%;height:auto;display:block;"></td>`
-    : '';
-
   return `<!DOCTYPE html>
 <html lang="id">
 <head>
@@ -272,50 +263,49 @@ export function buildCandidateCvHtmlV2(
 
   <!-- Title -->
   <div style="text-align:center;font-size:18px;font-weight:bold;margin-bottom:20px;text-decoration:underline;">
-    候補者データ ・ DATA KANDIDAT
+    候補者データ
   </div>
 
   <!-- Photo + basic info -->
   <div style="overflow:hidden;margin-bottom:4px;">
     <div style="${photoBoxStyle}">
       ${photoHtml}
-      ${logoInPhotoBox}
     </div>
     <table style="width:calc(100% - 140px);float:left;margin-bottom:0;">
       <tbody>
         <tr>
-          <td style="${TD}width:20%;">Nama ・ 氏名</td>
+          <td style="${TD}width:20%;">氏名</td>
           <td style="${TD}" colspan="3">
             <div>${he(v(cj['fullName']))}</div>
             ${v(cj['nameKatakana']) ? `<div style="font-size:11px;color:#444;margin-top:2px;">${he(v(cj['nameKatakana']))}</div>` : ''}
           </td>
         </tr>
         <tr>
-          <td style="${TD}width:20%;">Tempat, Tgl Lahir ・ 出身地 生年月日</td>
+          <td style="${TD}width:20%;">出身地・生年月日</td>
           <td style="${TD}width:30%;">${birthDisplay}</td>
-          <td style="${TD}width:20%;">Jenis Kelamin ・ 性別</td>
+          <td style="${TD}width:20%;">性別</td>
           <td style="${TD}">${he(genderLabel)}</td>
         </tr>
         <tr>
-          <td style="${TD}">Usia ・ 年齢</td>
+          <td style="${TD}">年齢</td>
           <td style="${TD}">${age !== null ? `${age}歳` : ''}</td>
-          <td style="${TD}">Agama ・ 宗教</td>
+          <td style="${TD}">宗教</td>
           <td style="${TD}">${he(cj['religion'] ? (religionMap[String(cj['religion'])] ?? v(cj['religion'])) : '')}</td>
         </tr>
         <tr>
-          <td style="${TD}">Gol. Darah ・ 血液型</td>
+          <td style="${TD}">血液型</td>
           <td style="${TD}">${he(v(cj['bloodType']))}</td>
-          <td style="${TD}">Status Nikah ・ 結婚歴</td>
+          <td style="${TD}">婚姻歴</td>
           <td style="${TD}">${he(cj['maritalStatus'] ? (maritalMap[String(cj['maritalStatus'])] ?? v(cj['maritalStatus'])) : '')}</td>
         </tr>
         <tr>
-          <td style="${TD}">Tinggi ・ 身長</td>
+          <td style="${TD}">身長</td>
           <td style="${TD}">${he(heightDisplay)}</td>
-          <td style="${TD}">Berat ・ 体重</td>
+          <td style="${TD}">体重</td>
           <td style="${TD}">${he(weightDisplay)}</td>
         </tr>
         <tr>
-          <td style="${TD}">Level JP ・ 日本語レベル</td>
+          <td style="${TD}">日本語レベル</td>
           <td style="${TD}" colspan="3">${jpLevelDisplay}</td>
         </tr>
       </tbody>
@@ -326,13 +316,13 @@ export function buildCandidateCvHtmlV2(
   <table>
     <tbody>
       <tr>
-        <td style="${TD}width:25%;">Pernah ke Jepang ・ 日本滞在経験</td>
+        <td style="${TD}width:25%;">日本滞在経験</td>
         <td style="${TD}width:25%;">${he(japanDisplay)}</td>
-        <td style="${TD}width:25%;">Paspor / Visa ・ パスポート／ビザ</td>
+        <td style="${TD}width:25%;">パスポート／ビザ</td>
         <td style="${TD}width:25%;">${he(passportDisplay)}</td>
       </tr>
       <tr>
-        <td style="${TD}">Alamat ・ 現住所</td>
+        <td style="${TD}">現住所</td>
         <td style="${TD}" colspan="3">${addressDisplay}</td>
       </tr>
     </tbody>
@@ -341,7 +331,7 @@ export function buildCandidateCvHtmlV2(
   <!-- Pendidikan (rirekisho style) -->
   <table>
     <tbody>
-      <tr><td style="${ST}" colspan="2">Pendidikan ・ 学歴</td></tr>
+      <tr><td style="${ST}" colspan="2">学歴</td></tr>
       ${eduRowsHtml}
     </tbody>
   </table>
@@ -349,7 +339,7 @@ export function buildCandidateCvHtmlV2(
   <!-- Pengalaman Kerja (rirekisho style) -->
   <table>
     <tbody>
-      <tr><td style="${ST}" colspan="2">Pengalaman Kerja ・ 職歴</td></tr>
+      <tr><td style="${ST}" colspan="2">職歴</td></tr>
       ${careerRowsHtml}
     </tbody>
   </table>
@@ -357,11 +347,11 @@ export function buildCandidateCvHtmlV2(
   <!-- Sertifikasi -->
   <table>
     <tbody>
-      <tr><td style="${ST}" colspan="3">Sertifikasi ・ 資格・公的認定</td></tr>
+      <tr><td style="${ST}" colspan="3">資格・公的認定</td></tr>
       <tr style="text-align:center;">
-        <td style="${TD}width:25%;">Tgl Penerbitan ・ 発行日</td>
-        <td style="${TD}width:40%;">Nama Sertifikat ・ 名称</td>
-        <td style="${TD}width:35%;">Level, Keterangan ・ レベルや詳細</td>
+        <td style="${TD}width:25%;">発行日</td>
+        <td style="${TD}width:40%;">名称</td>
+        <td style="${TD}width:35%;">レベルや詳細</td>
       </tr>
       ${certRowsHtml}
     </tbody>
@@ -370,9 +360,7 @@ export function buildCandidateCvHtmlV2(
   <!-- Skill -->
   <table>
     <tbody>
-      <tr>
-        <td style="${ST}">Skill ・ 技能 <span style="font-weight:normal;font-size:11px;">(Keahlian yang berhubungan dengan bidang yang dilamar)</span></td>
-      </tr>
+      <tr><td style="${ST}">技能</td></tr>
       <tr class="cv-row-md">
         <td style="${TD}height:60px;white-space:pre-wrap;">${he(trunc(getJa(cj, 'selfPrJa', 'selfPrId'), 300))}</td>
       </tr>
@@ -383,14 +371,18 @@ export function buildCandidateCvHtmlV2(
   <table style="margin-bottom:0;">
     <tbody>
       <tr>
-        <td style="${ST}">Promosi Diri ・ 自己PR</td>
-        ${promosiExtra}
+        <td style="${ST}">自己PR</td>
       </tr>
       <tr class="cv-row-lg">
         <td style="${TD}height:100px;white-space:pre-wrap;">${he(trunc(getJa(cj, 'selfIntroJa', 'selfIntroId'), 400))}</td>
       </tr>
     </tbody>
   </table>
+
+  <!-- IJBNet logo (bottom-right) -->
+  <div style="text-align:right;padding-top:4px;">
+    <img src="${IJBNET_LOGO}" alt="IJBNet" style="width:80px;height:auto;display:inline-block;">
+  </div>
 
 </div>
 </body>

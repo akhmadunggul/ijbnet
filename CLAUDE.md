@@ -265,6 +265,7 @@ apps/frontend/src/
 - v0.7.9 — CV v2 rirekisho layout + A/B dispatcher: CandidateCVv2 / candidateCvHtmlV2 replace Pendidikan and Pengalaman Kerja tables with 2-row-per-entry Japanese rirekisho format (入学/卒業, 入社/退社); CandidateCV.tsx dispatcher uses useExperiment('cv-layout') to route v1 vs v2; candidateCvHtml.ts dispatcher accepts optional variant; batch export route looks up requester's AB assignment; cvLogoBase64.ts shared logo constant
 - v0.7.10 — A/B per-LPK variant assignment: AbTargeting gains lpkVariants (lpkId→variantKey map); lpkVariantFor() util skips hash-bucketing when explicit mapping is set; SuperAdminExperiments LPK scope shows all LPKs with per-LPK variant dropdown (fetched from /superadmin/lpks); unselected LPKs excluded from experiment
 - v0.7.11 — Fix A/B cv-layout not routing to v2: variant was resolved from the viewer's lpkId (null for manager/recruiter/superadmin) instead of the candidate being viewed; backend now includes lpkVariants map in assignments response; CandidateCV dispatcher checks candidate.lpkId against that map first; stale assignments reconciled on every fetch when lpkVariants config has changed
+- v0.7.12 — CV v2 Japanese-only labels throughout (no Indonesian field names); IJBNet logo moved from below-photo/Promosi Diri to bottom-right of CV; applies to CandidateCVv2.tsx, candidateCvHtmlV2.ts, and generate-cv-v2-sample.mjs
 
-Current: v0.7.11
+Current: v0.7.12
 Live at: https://jinzai.jobagus.id
