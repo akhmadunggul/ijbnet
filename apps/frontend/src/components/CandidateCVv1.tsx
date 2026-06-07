@@ -79,6 +79,18 @@ function formatPeriodJa(start?: string | null, end?: string | null): string {
   return '';
 }
 
+// Future education end dates (e.g. expected graduation year) → null so CV shows 現在
+function normalizeEduEnd(d: string | null | undefined): string | null {
+  if (!d) return null;
+  return d.slice(0, 10) <= new Date().toISOString().slice(0, 10) ? d : null;
+}
+
+// Clamp a date string to empty if it is in the future (e.g. future test/cert date)
+function clampPastDate(d: string): string {
+  if (!d) return '';
+  return d.slice(0, 10) <= new Date().toISOString().slice(0, 10) ? d : '';
+}
+
 function formatDateJa(dateStr: string): string {
   if (!dateStr) return '';
   const parts = dateStr.slice(0, 10).split('-').map(Number);
@@ -320,12 +332,12 @@ export default function CandidateCV({
 
   const combinedCerts = [
     ...(Array.isArray(c.certifications) ? c.certifications : []).map((cert: any) => ({
-      issuedDate: cert.issuedDate ? v(cert.issuedDate).slice(0, 10) : '',
+      issuedDate: clampPastDate(cert.issuedDate ? v(cert.issuedDate).slice(0, 10) : ''),
       name: v(cert.certName),
       info: [cert.certLevel, cert.issuedBy].filter(Boolean).join(' / '),
     })),
     ...(Array.isArray(c.tests) ? c.tests : []).map((t: any) => ({
-      issuedDate: t.testDate ? v(t.testDate).slice(0, 10) : '',
+      issuedDate: clampPastDate(t.testDate ? v(t.testDate).slice(0, 10) : ''),
       name: v(t.testName),
       info: [
         t.score != null ? String(t.score) : null,
@@ -495,7 +507,7 @@ export default function CandidateCV({
               row ? (
                 <tr className="cv-row-sm" key={(row as any).id ?? i}>
                   <td style={{ ...TD, height: '25px' }}>
-                    {formatPeriodJa((row as any).startDate, (row as any).endDate)}
+                    {formatPeriodJa((row as any).startDate, normalizeEduEnd((row as any).endDate))}
                   </td>
                   <td style={TD}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>

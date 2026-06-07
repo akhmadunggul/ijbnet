@@ -298,14 +298,19 @@ export default function CandidateCVv2({
   const dobStr = c.dateOfBirth ? formatDobJa(c.dateOfBirth) : '';
   const birthDisplay = [v(c.birthPlace), dobStr].filter(Boolean).join('  ');
 
+  const todayStr = new Date().toISOString().slice(0, 10);
+  const clampPast = (d: string) => (d && d <= todayStr ? d : '');
+  const normalizeEduEnd = (d: string | null | undefined): string | null =>
+    d ? (d.slice(0, 10) <= todayStr ? d : null) : null;
+
   const combinedCerts = [
     ...(Array.isArray(c.certifications) ? c.certifications : []).map((cert: any) => ({
-      issuedDate: cert.issuedDate ? v(cert.issuedDate).slice(0, 10) : '',
+      issuedDate: clampPast(cert.issuedDate ? v(cert.issuedDate).slice(0, 10) : ''),
       name: v(cert.certName),
       info: [cert.certLevel, cert.issuedBy].filter(Boolean).join(' / '),
     })),
     ...(Array.isArray(c.tests) ? c.tests : []).map((t: any) => ({
-      issuedDate: t.testDate ? v(t.testDate).slice(0, 10) : '',
+      issuedDate: clampPast(t.testDate ? v(t.testDate).slice(0, 10) : ''),
       name: v(t.testName),
       info: [
         t.score != null ? String(t.score) : null,
@@ -467,7 +472,7 @@ export default function CandidateCVv2({
               </tr>,
               <tr className="cv-row-sm" key={`edu-${i}-e`}>
                 <td style={{ ...TD, width: '25%', height: '22px' }}>
-                  {formatMonthJa((row as any).endDate)}
+                  {normalizeEduEnd((row as any).endDate) ? formatMonthJa(normalizeEduEnd((row as any).endDate)!) : (v((row as any).schoolName) ? '現在' : '')}
                 </td>
                 <td style={TD}>
                   {v((row as any).schoolName)}{v((row as any).schoolName) ? `　${eduStatusLabel((row as any).status) || '卒業'}` : ''}

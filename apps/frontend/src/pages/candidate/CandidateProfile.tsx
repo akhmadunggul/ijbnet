@@ -903,18 +903,29 @@ function JapaneseTab({ candidate }: { candidate: CandidateData }) {
     },
   });
   const { fields, append, remove } = useFieldArray({ control, name: 'entries' });
+  const [testFutureDateError, setTestFutureDateError] = useState(false);
 
   const testsMutation = useMutation({
     mutationFn: (data: TestForm) => api.put('/candidates/me/tests', data).then((r) => r.data),
     onSuccess: (_data, variables) => {
+      setTestFutureDateError(false);
       qc.invalidateQueries({ queryKey: ['my-candidate'] });
       reset(variables);
     },
   });
 
+  const todayMax = new Date().toISOString().slice(0, 10);
+
+  const onTestSubmit = (data: TestForm) => {
+    const hasFuture = data.entries.some((e) => e.testDate && e.testDate > todayMax);
+    if (hasFuture) { setTestFutureDateError(true); return; }
+    setTestFutureDateError(false);
+    testsMutation.mutate(data);
+  };
+
   return (
     <div className="space-y-6">
-      <form onSubmit={handleSubmit((d) => testsMutation.mutate(d))} className="space-y-4">
+      <form onSubmit={handleSubmit(onTestSubmit)} className="space-y-4">
         <p className="text-sm font-medium text-gray-700">Test Bahasa Jepang / 日本語テスト</p>
         {fields.map((field, i) => (
           <div key={field.id} className="border border-gray-100 rounded-xl p-4 space-y-3 bg-gray-50">
@@ -930,7 +941,7 @@ function JapaneseTab({ candidate }: { candidate: CandidateData }) {
                 </select>
               </Field>
               <Field label={t('candidate.profile.japanese.score')}><input type="number" {...register(`entries.${i}.score`)} className={inputCls} /></Field>
-              <Field label={t('candidate.profile.japanese.testDate')}><input type="date" {...register(`entries.${i}.testDate`)} className={inputCls} /></Field>
+              <Field label={t('candidate.profile.japanese.testDate')}><input type="date" max={todayMax} {...register(`entries.${i}.testDate`)} className={inputCls} /></Field>
               <Field label={t('candidate.profile.japanese.pass')}>
                 <div className="flex items-center gap-2 pt-2">
                   <input type="checkbox" {...register(`entries.${i}.pass`)} className="h-4 w-4 accent-navy-700" />
@@ -948,6 +959,7 @@ function JapaneseTab({ candidate }: { candidate: CandidateData }) {
             {testsMutation.isPending ? t('candidate.profile.saving') : t('candidate.profile.save')}
           </button>
           {isDirty && <span className="text-xs text-amber-600">{t('candidate.profile.unsaved')}</span>}
+          {testFutureDateError && <span className="text-xs text-red-500">{t('candidate.profile.japanese.futureDateError', { defaultValue: 'Tanggal ujian tidak boleh di masa depan.' })}</span>}
         </div>
       </form>
 

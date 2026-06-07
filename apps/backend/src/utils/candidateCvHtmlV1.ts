@@ -170,15 +170,22 @@ export function buildCandidateCvHtml(
     cj['hasPassport'] === true  ? 'Ada（有）' :
     cj['hasPassport'] === false ? 'Tidak（無）' : '';
 
+  const todayStr = new Date().toISOString().slice(0, 10);
+  const clampPast = (d: string) => (d && d <= todayStr ? d : '');
+  const normalizeEduEnd = (raw: unknown): string | null => {
+    const d = toDateStr(raw);
+    return d && d <= todayStr ? d : null;
+  };
+
   // Combined certs + tests
   const combinedCerts: { issuedDate: string; name: string; info: string }[] = [
     ...certs.map((c) => ({
-      issuedDate: c['issuedDate'] ? String(c['issuedDate']).slice(0, 10) : '',
+      issuedDate: clampPast(c['issuedDate'] ? String(c['issuedDate']).slice(0, 10) : ''),
       name: v(c['certName']),
       info: [c['certLevel'], c['issuedBy']].filter(Boolean).join(' / '),
     })),
     ...tests.map((t) => ({
-      issuedDate: t['testDate'] ? String(t['testDate']).slice(0, 10) : '',
+      issuedDate: clampPast(t['testDate'] ? String(t['testDate']).slice(0, 10) : ''),
       name: v(t['testName']),
       info: [t['score'] != null ? String(t['score']) : null, t['pass'] ? '合格 ✓' : null].filter(Boolean).join(' '),
     })),
@@ -233,7 +240,7 @@ export function buildCandidateCvHtml(
       ? `<span style="font-size:10px;color:#555;flex-shrink:0;margin-left:6px;">${he(eduStatusMap[String(row['status'])] ?? v(row['status']))}</span>`
       : '';
     const schoolCell = `<div style="display:flex;justify-content:space-between;align-items:center;"><span>${he(v(row['schoolName']))}</span>${statusHtml}</div>`;
-    return `<tr class="cv-row-sm"><td style="${TD}height:25px;">${he(formatPeriodJa(toDateStr(row['startDate']), toDateStr(row['endDate'])))}</td><td style="${TD}">${schoolCell}</td><td style="${TD}">${he(v(row['major']))}</td></tr>`;
+    return `<tr class="cv-row-sm"><td style="${TD}height:25px;">${he(formatPeriodJa(toDateStr(row['startDate']), normalizeEduEnd(row['endDate'])))}</td><td style="${TD}">${schoolCell}</td><td style="${TD}">${he(v(row['major']))}</td></tr>`;
   }).join('');
 
   // ── Career rows ───────────────────────────────────────────────────────────────

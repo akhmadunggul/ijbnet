@@ -114,11 +114,13 @@ export const putEduSchema = z.object({
 });
 
 // ── PUT /candidates/me/tests ──────────────────────────────────────────────────
+const isPastOrToday = (d: string) => d <= new Date().toISOString().slice(0, 10);
+
 const testEntrySchema = z.object({
   testName: shortStr(100).nullable(),
   score:    z.number().int().min(0).max(999).nullable(),
   pass:     z.boolean().nullable(),
-  testDate: isoDate.nullable(),
+  testDate: isoDate.refine(isPastOrToday, { message: 'Test date cannot be in the future' }).nullable(),
 }).partial().strict();
 
 export const putTestSchema = z.object({

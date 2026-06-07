@@ -159,14 +159,21 @@ export function buildCandidateCvHtmlV2(
     cj['hasPassport'] === true  ? '有' :
     cj['hasPassport'] === false ? '無' : '';
 
+  const todayStr = new Date().toISOString().slice(0, 10);
+  const clampPast = (d: string) => (d && d <= todayStr ? d : '');
+  const normalizeEduEnd = (raw: unknown): string | null => {
+    const d = raw ? toDateStr(raw) : null;
+    return d && d <= todayStr ? d : null;
+  };
+
   const combinedCerts: { issuedDate: string; name: string; info: string }[] = [
     ...certs.map((c) => ({
-      issuedDate: c['issuedDate'] ? String(c['issuedDate']).slice(0, 10) : '',
+      issuedDate: clampPast(c['issuedDate'] ? String(c['issuedDate']).slice(0, 10) : ''),
       name: v(c['certName']),
       info: [c['certLevel'], c['issuedBy']].filter(Boolean).join(' / '),
     })),
     ...tests.map((t) => ({
-      issuedDate: t['testDate'] ? String(t['testDate']).slice(0, 10) : '',
+      issuedDate: clampPast(t['testDate'] ? String(t['testDate']).slice(0, 10) : ''),
       name: v(t['testName']),
       info: [t['score'] != null ? String(t['score']) : null, t['pass'] ? '合格 ✓' : null].filter(Boolean).join(' '),
     })),
@@ -220,8 +227,9 @@ export function buildCandidateCvHtmlV2(
     const statusLabel = row['status']
       ? he(eduStatusMap[String(row['status'])] ?? v(row['status']))
       : '卒業';
-    const startMo = he(formatMonthJa(toDateStr(row['startDate'])));
-    const endMo   = he(formatMonthJa(toDateStr(row['endDate'])));
+    const startMo       = he(formatMonthJa(toDateStr(row['startDate'])));
+    const effectiveEnd  = normalizeEduEnd(row['endDate']);
+    const endMo         = effectiveEnd ? he(formatMonthJa(effectiveEnd)) : (school ? '現在' : '');
     return [
       `<tr class="cv-row-sm"><td style="${TD}width:25%;height:22px;">${startMo}</td><td style="${TD}">${school}${school ? '　入学' : ''}</td></tr>`,
       `<tr class="cv-row-sm"><td style="${TD}width:25%;height:22px;">${endMo}</td><td style="${TD}">${school}${school ? `　${statusLabel}` : ''}</td></tr>`,
