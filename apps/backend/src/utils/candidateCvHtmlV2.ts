@@ -74,6 +74,16 @@ function formatMonthJa(dateStr: string | null | undefined): string {
   return `${y}年${m}月`;
 }
 
+function formatDateJa(dateStr: string | null | undefined): string {
+  if (!dateStr) return '';
+  const parts = dateStr.slice(0, 10).split('-').map(Number);
+  const [y, m, d] = parts;
+  if (!y) return dateStr;
+  if (d) return `${y}年${m}月${d}日`;
+  if (m) return `${y}年${m}月`;
+  return `${y}年`;
+}
+
 const ID_MONTHS: Record<string, string> = {
   januari: '01', februari: '02', maret: '03', april: '04',
   mei: '05', juni: '06', juli: '07', agustus: '08',
@@ -238,7 +248,7 @@ export function buildCandidateCvHtmlV2(
   // ── Cert rows ─────────────────────────────────────────────────────────────────
   const certRowsHtml = certRows.map((row) =>
     row
-      ? `<tr><td style="${TD}height:25px;">${he(row.issuedDate)}</td><td style="${TD}">${he(row.name)}</td><td style="${TD}">${he(row.info)}</td></tr>`
+      ? `<tr><td style="${TD}height:25px;">${he(formatDateJa(row.issuedDate))}</td><td style="${TD}">${he(row.name)}</td><td style="${TD}">${he(row.info)}</td></tr>`
       : `<tr class="cv-row-sm"><td style="${TD}height:25px;"></td><td style="${TD}"></td><td style="${TD}"></td></tr>`,
   ).join('');
 
