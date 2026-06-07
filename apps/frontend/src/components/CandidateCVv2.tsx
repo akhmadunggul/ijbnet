@@ -317,7 +317,12 @@ export default function CandidateCVv2({
         t.pass ? '合格 ✓' : null,
       ].filter(Boolean).join(' '),
     })),
-  ];
+  ].sort((a, b) => {
+    if (!a.issuedDate && !b.issuedDate) return 0;
+    if (!a.issuedDate) return 1;
+    if (!b.issuedDate) return -1;
+    return a.issuedDate.localeCompare(b.issuedDate);
+  });
 
   const sortedEduHistory = [...(c.educationHistory ?? [])].sort((a, b) => {
     if (!a.startDate && !b.startDate) return 0;

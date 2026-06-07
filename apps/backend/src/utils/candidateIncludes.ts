@@ -19,13 +19,13 @@ import {
  */
 export function candidateIncludes() {
   return [
-    { model: CandidateJapaneseTest,     as: 'tests',            required: false },
-    { model: CandidateCareer,           as: 'career',           required: false, separate: true, order: [['startDate', 'ASC'] as [string, string]] },
+    { model: CandidateJapaneseTest,     as: 'tests',            required: false, separate: true, order: [['testDate',    'ASC'] as [string, string]] },
+    { model: CandidateCareer,           as: 'career',           required: false, separate: true, order: [['startDate',  'ASC'] as [string, string]] },
     { model: CandidateBodyCheck,        as: 'bodyCheck',        required: false },
     { model: CandidateWeeklyTest,       as: 'weeklyTests',      required: false },
     { model: CandidateIntroVideo,       as: 'videos',           required: false },
     { model: ToolsDictionary,           as: 'tools',            required: false },
-    { model: CandidateCertification,    as: 'certifications',   required: false },
-    { model: CandidateEducationHistory, as: 'educationHistory', required: false, separate: true, order: [['startDate', 'ASC'] as [string, string]] },
+    { model: CandidateCertification,    as: 'certifications',   required: false, separate: true, order: [['issuedDate', 'ASC'] as [string, string]] },
+    { model: CandidateEducationHistory, as: 'educationHistory', required: false, separate: true, order: [['startDate',  'ASC'] as [string, string]] },
   ];
 }

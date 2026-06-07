@@ -177,7 +177,7 @@ export function buildCandidateCvHtml(
     return d && d <= todayStr ? d : null;
   };
 
-  // Combined certs + tests
+  // Combined certs + tests — sorted ascending by date; entries without date go last
   const combinedCerts: { issuedDate: string; name: string; info: string }[] = [
     ...certs.map((c) => ({
       issuedDate: clampPast(c['issuedDate'] ? String(c['issuedDate']).slice(0, 10) : ''),
@@ -189,7 +189,12 @@ export function buildCandidateCvHtml(
       name: v(t['testName']),
       info: [t['score'] != null ? String(t['score']) : null, t['pass'] ? '合格 ✓' : null].filter(Boolean).join(' '),
     })),
-  ];
+  ].sort((a, b) => {
+    if (!a.issuedDate && !b.issuedDate) return 0;
+    if (!a.issuedDate) return 1;
+    if (!b.issuedDate) return -1;
+    return a.issuedDate.localeCompare(b.issuedDate);
+  });
 
   const sortedEdu = [...eduHist].sort((a, b) => {
     if (!a['startDate'] && !b['startDate']) return 0;
