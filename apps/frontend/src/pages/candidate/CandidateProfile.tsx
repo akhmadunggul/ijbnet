@@ -1091,7 +1091,7 @@ function CertificationsTab({ candidate }: { candidate: CandidateData }) {
 }
 
 // ── Tab 9 — PR & Motivation ───────────────────────────────────────────────────
-function PrMotivationTab({ candidate, onSave, saving }: { candidate: CandidateData; onSave: (d: PrMotivationForm) => void; saving: boolean }) {
+function PrMotivationTab({ candidate, onSave, saving }: { candidate: CandidateData; onSave: (d: PrMotivationForm) => Promise<{ candidate: Record<string, unknown> } | void>; saving: boolean }) {
   const { t } = useTranslation();
   const { register, handleSubmit, reset, formState: { isDirty } } = useForm<PrMotivationForm>({
     resolver: zodResolver(prMotivationSchema),
@@ -1108,7 +1108,17 @@ function PrMotivationTab({ candidate, onSave, saving }: { candidate: CandidateDa
   });
 
   return (
-    <form onSubmit={handleSubmit(async (d) => { await onSave(d); reset(d); })} className="space-y-6">
+    <form onSubmit={handleSubmit(async (d) => {
+      const result = await onSave(d);
+      const c = result?.candidate;
+      reset({
+        ...d,
+        selfPrJa:      (c?.selfPrJa      as string | undefined) ?? d.selfPrJa,
+        motivationJa:  (c?.motivationJa  as string | undefined) ?? d.motivationJa,
+        selfIntroJa:   (c?.selfIntroJa   as string | undefined) ?? d.selfIntroJa,
+        applyReasonJa: (c?.applyReasonJa as string | undefined) ?? d.applyReasonJa,
+      });
+    })} className="space-y-6">
       <p className="text-xs text-gray-500">{t('candidate.profile.prMotivation.bilingualHint')}</p>
 
       <div className="space-y-2">
@@ -1221,7 +1231,7 @@ export default function CandidateProfile() {
 
   const handleSave = useCallback(async (body: Record<string, unknown>) => {
     setSaving(true);
-    try { await patchMutation.mutateAsync(body); }
+    try { return await patchMutation.mutateAsync(body); }
     finally { setSaving(false); }
   }, [patchMutation]);
 
