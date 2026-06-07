@@ -3,7 +3,6 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useEffect } from 'react';
 import axios from 'axios';
 import { useAuthStore } from './store/authStore';
-import { useAbStore } from './store/abStore';
 import LoginPage, { OAuthCallbackPage } from './pages/LoginPage';
 import CandidateLayout from './pages/candidate/CandidateLayout';
 import CandidateDashboard from './pages/candidate/CandidateDashboard';
@@ -50,7 +49,6 @@ import SuperAdminConsent from './pages/superadmin/SuperAdminConsent';
 import SuperAdminDataEntrySettings from './pages/superadmin/SuperAdminDataEntrySettings';
 import SuperAdminRecruiterSettings from './pages/superadmin/SuperAdminRecruiterSettings';
 import SuperAdminMonitor from './pages/superadmin/SuperAdminMonitor';
-import SuperAdminExperiments from './pages/superadmin/SuperAdminExperiments';
 import type { UserRole } from '@ijbnet/shared';
 
 const queryClient = new QueryClient();
@@ -85,41 +83,19 @@ function ProtectedRoute({
 }
 
 // Eagerly restores the access token from the refresh cookie on page load.
-// Without this, AbInitializer fires with accessToken=null → 401 on /ab/assignments.
+// accessToken is in-memory only — without this, the first authenticated API call
+// after a page refresh would fire with no token and receive a 401.
 function AuthInitializer() {
   const { login, logout } = useAuthStore();
 
   useEffect(() => {
     const user = useAuthStore.getState().user;
-    if (!user) return; // not logged in, nothing to restore
+    if (!user) return;
     axios
       .post<{ accessToken: string }>('/api/auth/refresh', {}, { withCredentials: true })
       .then(res => { login(res.data.accessToken, user); })
       .catch(() => { logout(); });
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
-
-  return null;
-}
-
-function AbInitializer() {
-  const user = useAuthStore(s => s.user);
-  const accessToken = useAuthStore(s => s.accessToken);
-  const { fetchAssignments, clearAssignments } = useAbStore();
-
-  // Only fetch once both user and a valid token are available.
-  // Depends on !!accessToken so it fires when AuthInitializer sets the token after page reload.
-  useEffect(() => {
-    if (user && accessToken) { void fetchAssignments(); }
-    else if (!user) { clearAssignments(); }
-  }, [user?.id, accessToken ? 1 : 0]); // eslint-disable-line react-hooks/exhaustive-deps
-
-  // Re-check when the tab regains focus — picks up experiments activated after login
-  useEffect(() => {
-    if (!user || !accessToken) return;
-    const onFocus = () => { void fetchAssignments(); };
-    window.addEventListener('focus', onFocus);
-    return () => window.removeEventListener('focus', onFocus);
-  }, [user?.id, accessToken ? 1 : 0]); // eslint-disable-line react-hooks/exhaustive-deps
 
   return null;
 }
@@ -135,7 +111,6 @@ export default function App() {
     <QueryClientProvider client={queryClient}>
     <BrowserRouter>
       <AuthInitializer />
-      <AbInitializer />
       <Routes>
         {/* Root */}
         <Route path="/" element={<RootRedirect />} />
@@ -242,7 +217,6 @@ export default function App() {
           <Route path="recruiter-settings" element={<SuperAdminRecruiterSettings />} />
           <Route path="settings" element={<SuperAdminSettings />} />
           <Route path="monitor" element={<SuperAdminMonitor />} />
-          <Route path="experiments" element={<SuperAdminExperiments />} />
         </Route>
 
         {/* Fallback */}

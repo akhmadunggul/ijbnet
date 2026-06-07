@@ -65,6 +65,7 @@ export default function SuperAdminDataEntrySettings() {
   const [layoutKey, setLayoutKey] = useState<LayoutKey>('layout1');
   const [cvLangMode, setCvLangMode] = useState<'bilingual'|'lpk'>('bilingual');
   const [cvLangJaLpkIds, setCvLangJaLpkIds] = useState<string[]>([]);
+  const [cvV2LpkIds, setCvV2LpkIds] = useState<string[]>([]);
   const [completenessMode, setCompletenessMode] = useState<CompletenessMode>('legacy');
   const [photoBgEnabled, setPhotoBgEnabled] = useState(false);
   const [photoBgColor, setPhotoBgColor] = useState('#ffffff');
@@ -133,6 +134,10 @@ export default function SuperAdminDataEntrySettings() {
     queryKey: ['cv-lang-config'],
     queryFn: () => api.get('/superadmin/cv-lang-config').then(r => r.data),
   });
+  const { data: cvVersionConfigData } = useQuery<{ v2LpkIds: string[] }>({
+    queryKey: ['cv-version-config'],
+    queryFn: () => api.get('/superadmin/cv-version-config').then(r => r.data),
+  });
   const { data: shokumuConfigData } = useQuery<{
     enabled: boolean; layout: ShokumuLayout; mergeCv: boolean;
     rolloutMode: ShokumuRolloutMode; rolloutLpkIds: string[];
@@ -177,6 +182,9 @@ export default function SuperAdminDataEntrySettings() {
     }
   }, [cvLangConfigData]);
   useEffect(() => {
+    if (cvVersionConfigData !== undefined) setCvV2LpkIds(cvVersionConfigData.v2LpkIds ?? []);
+  }, [cvVersionConfigData]);
+  useEffect(() => {
     if (shokumuConfigData !== undefined) {
       setShokumuEnabled(shokumuConfigData.enabled);
       if (shokumuConfigData.layout) setShokumuLayout(shokumuConfigData.layout);
@@ -216,6 +224,12 @@ export default function SuperAdminDataEntrySettings() {
       api.put('/superadmin/cv-lang-config', { mode, jaLpkIds }).then(r => r.data),
     onSuccess: () => { markSaved('cvlang'); void qc.invalidateQueries({ queryKey: ['cv-lang-config'] }); },
     onError: () => markError('cvlang'),
+  });
+  const cvVersionMutation = useMutation({
+    mutationFn: (v2LpkIds: string[]) =>
+      api.put('/superadmin/cv-version-config', { v2LpkIds }).then(r => r.data),
+    onSuccess: () => { markSaved('cvversion'); void qc.invalidateQueries({ queryKey: ['cv-version-config'] }); },
+    onError: () => markError('cvversion'),
   });
   const completenessMutation = useMutation({
     mutationFn: (mode: CompletenessMode) =>
@@ -642,6 +656,38 @@ export default function SuperAdminDataEntrySettings() {
                   })}
                 </div>
               )}
+            </div>
+
+            {/* CV Version per LPK */}
+            <div className="px-5 py-4 border-t border-gray-100">
+              {subHead('CV Layout Version per LPK', 'cvversion')}
+              <p className="text-xs text-gray-500 mb-3">
+                LPK yang dipilih akan menggunakan layout CV versi baru (rirekisho / Japanese-only). LPK lain tetap menggunakan layout standar.
+              </p>
+              <div className="border border-gray-100 rounded-lg p-3 bg-gray-50 max-h-48 overflow-y-auto space-y-1.5">
+                {(lpkListData?.lpks ?? []).length === 0 && <p className="text-xs text-gray-400">No LPKs found.</p>}
+                {(lpkListData?.lpks ?? []).map(lpk => (
+                  <label key={lpk.id} className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={cvV2LpkIds.includes(lpk.id)}
+                      onChange={e => {
+                        const ids = e.target.checked
+                          ? [...cvV2LpkIds, lpk.id]
+                          : cvV2LpkIds.filter(id => id !== lpk.id);
+                        setCvV2LpkIds(ids);
+                        cvVersionMutation.mutate(ids);
+                      }}
+                      className="accent-navy-700 w-4 h-4"
+                    />
+                    <span className="text-sm text-gray-800">{lpk.name}</span>
+                    {lpk.city && <span className="text-xs text-gray-400">{lpk.city}</span>}
+                    {cvV2LpkIds.includes(lpk.id) && (
+                      <span className="ml-auto text-xs text-navy-700 font-medium">v2 (履歴書)</span>
+                    )}
+                  </label>
+                ))}
+              </div>
             </div>
           </div>
         </div>

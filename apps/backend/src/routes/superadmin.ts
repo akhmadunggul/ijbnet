@@ -266,6 +266,15 @@ router.get('/cv-lang-config', wrap(async (_req, res) => {
   res.json({ mode, jaLpkIds });
 }));
 
+// ── GET /api/superadmin/cv-version-config — PUBLIC ───────────────────────────
+router.get('/cv-version-config', wrap(async (_req, res) => {
+  const row = await GlobalSettings.findOne({ where: { key: 'cv_v2_lpk_ids' } });
+  const v2LpkIds: string[] = row
+    ? ((row.toJSON() as unknown as Record<string, unknown>)['value'] as string[] | null) ?? []
+    : [];
+  res.json({ v2LpkIds });
+}));
+
 router.use(authenticate, requireRole('super_admin'));
 
 // ── System Stats ──────────────────────────────────────────────────────────────
@@ -535,6 +544,21 @@ router.put('/cv-lang-config', wrap(async (req, res) => {
   ]);
 
   res.json({ mode, jaLpkIds });
+}));
+
+// ── PUT /api/superadmin/cv-version-config ────────────────────────────────────
+router.put('/cv-version-config', wrap(async (req, res) => {
+  const body = req.body as Record<string, unknown>;
+  const rawIds = Array.isArray(body['v2LpkIds']) ? body['v2LpkIds'] : [];
+  const v2LpkIds = (rawIds as unknown[]).filter((id): id is string => typeof id === 'string' && isUUID(id));
+
+  const [row, created] = await GlobalSettings.findOrCreate({
+    where: { key: 'cv_v2_lpk_ids' },
+    defaults: { key: 'cv_v2_lpk_ids', value: v2LpkIds },
+  });
+  if (!created) await row.update({ value: v2LpkIds });
+
+  res.json({ v2LpkIds });
 }));
 
 // ── PUT /api/superadmin/photo-bg-color ───────────────────────────────────────
