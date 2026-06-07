@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useEffect } from 'react';
+import axios from 'axios';
 import { useAuthStore } from './store/authStore';
 import { useAbStore } from './store/abStore';
 import LoginPage, { OAuthCallbackPage } from './pages/LoginPage';
@@ -83,23 +84,42 @@ function ProtectedRoute({
   return <>{children}</>;
 }
 
+// Eagerly restores the access token from the refresh cookie on page load.
+// Without this, AbInitializer fires with accessToken=null → 401 on /ab/assignments.
+function AuthInitializer() {
+  const { login, logout } = useAuthStore();
+
+  useEffect(() => {
+    const user = useAuthStore.getState().user;
+    if (!user) return; // not logged in, nothing to restore
+    axios
+      .post<{ accessToken: string }>('/api/auth/refresh', {}, { withCredentials: true })
+      .then(res => { login(res.data.accessToken, user); })
+      .catch(() => { logout(); });
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  return null;
+}
+
 function AbInitializer() {
   const user = useAuthStore(s => s.user);
+  const accessToken = useAuthStore(s => s.accessToken);
   const { fetchAssignments, clearAssignments } = useAbStore();
 
-  // Fetch (or refresh if stale) whenever the user changes
+  // Only fetch once both user and a valid token are available.
+  // Depends on !!accessToken so it fires when AuthInitializer sets the token after page reload.
   useEffect(() => {
-    if (user) { void fetchAssignments(); }
-    else { clearAssignments(); }
-  }, [user?.id]); // eslint-disable-line react-hooks/exhaustive-deps
+    if (user && accessToken) { void fetchAssignments(); }
+    else if (!user) { clearAssignments(); }
+  }, [user?.id, accessToken ? 1 : 0]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Re-check when the tab regains focus — picks up experiments activated after login
   useEffect(() => {
-    if (!user) return;
+    if (!user || !accessToken) return;
     const onFocus = () => { void fetchAssignments(); };
     window.addEventListener('focus', onFocus);
     return () => window.removeEventListener('focus', onFocus);
-  }, [user?.id]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [user?.id, accessToken ? 1 : 0]); // eslint-disable-line react-hooks/exhaustive-deps
 
   return null;
 }
@@ -114,6 +134,7 @@ export default function App() {
   return (
     <QueryClientProvider client={queryClient}>
     <BrowserRouter>
+      <AuthInitializer />
       <AbInitializer />
       <Routes>
         {/* Root */}
