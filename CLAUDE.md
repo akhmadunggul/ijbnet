@@ -267,6 +267,7 @@ apps/frontend/src/
 - v0.7.11 — Fix A/B cv-layout not routing to v2: variant was resolved from the viewer's lpkId (null for manager/recruiter/superadmin) instead of the candidate being viewed; backend now includes lpkVariants map in assignments response; CandidateCV dispatcher checks candidate.lpkId against that map first; stale assignments reconciled on every fetch when lpkVariants config has changed
 - v0.7.12 — CV v2 Japanese-only labels throughout (no Indonesian field names); IJBNet logo moved from below-photo/Promosi Diri to bottom-right of CV; applies to CandidateCVv2.tsx, candidateCvHtmlV2.ts, and generate-cv-v2-sample.mjs
 - v0.7.13 — Remove A/B testing engine; replace with simple cv_v2_lpk_ids GlobalSetting; superadmin CV tab shows per-LPK v2 checkbox list; batch PDF uses candidate lpkId to pick v1/v2; AuthInitializer retained (prevents 401 on page reload)
+- v0.7.14 — Structured address: replace single address textarea with 4-level cascading dropdowns (Provinsi → Kota/Kabupaten → Kecamatan → Kelurahan/Desa) backed by ihsaninh/wilayah-indonesia GitHub Pages API; Kode Pos auto-filled from subdistrict; flat address field auto-composed server-side; addressStructured masked for recruiters; legacy address notice for existing candidates
 
-Current: v0.7.13
+Current: v0.7.14
 Live at: https://jinzai.jobagus.id
