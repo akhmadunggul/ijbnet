@@ -49,6 +49,8 @@ import SuperAdminConsent from './pages/superadmin/SuperAdminConsent';
 import SuperAdminDataEntrySettings from './pages/superadmin/SuperAdminDataEntrySettings';
 import SuperAdminRecruiterSettings from './pages/superadmin/SuperAdminRecruiterSettings';
 import SuperAdminMonitor from './pages/superadmin/SuperAdminMonitor';
+import SuperAdminSurveys from './pages/superadmin/SuperAdminSurveys';
+import SurveyPublicPage from './pages/SurveyPublicPage';
 import type { UserRole } from '@ijbnet/shared';
 
 const queryClient = new QueryClient();
@@ -118,6 +120,7 @@ export default function App() {
         {/* Public */}
         <Route path="/auth/login" element={<LoginPage />} />
         <Route path="/auth/callback" element={<OAuthCallbackPage />} />
+        <Route path="/angket" element={<SurveyPublicPage />} />
 
         {/* Candidate portal */}
         <Route
@@ -217,6 +220,7 @@ export default function App() {
           <Route path="recruiter-settings" element={<SuperAdminRecruiterSettings />} />
           <Route path="settings" element={<SuperAdminSettings />} />
           <Route path="monitor" element={<SuperAdminMonitor />} />
+          <Route path="surveys" element={<SuperAdminSurveys />} />
         </Route>
 
         {/* Fallback */}

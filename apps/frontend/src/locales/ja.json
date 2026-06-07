@@ -830,6 +830,66 @@
       "events": "イベント",
       "noResults": "割り当てデータがまだありません。",
       "backToList": "一覧に戻る"
+    },
+    "surveys": {
+      "navLabel": "サーベイ",
+      "title": "サーベイ管理",
+      "createBtn": "新しいサーベイを作成",
+      "backToList": "← 一覧に戻る",
+      "tabs": {
+        "settings": "設定",
+        "questions": "質問",
+        "stats": "統計"
+      },
+      "fields": {
+        "titleId": "タイトル（インドネシア語）",
+        "titleJa": "タイトル（日本語）",
+        "slug": "スラッグ",
+        "status": "ステータス",
+        "publishedAt": "公開日時",
+        "closedAt": "終了日時",
+        "featured": "/angketに表示",
+        "descId": "説明（ID）",
+        "descJa": "説明（JA）"
+      },
+      "status": {
+        "draft": "下書き",
+        "active": "公開中",
+        "closed": "終了"
+      },
+      "totalResponses": "回答数合計",
+      "noActive": "公開中のサーベイはありません",
+      "confirmDelete": "このサーベイを削除しますか？すべての回答データも削除されます。",
+      "confirmDeleteQuestion": "この質問を削除しますか？",
+      "saveBtn": "保存",
+      "saved": "保存しました。",
+      "addQuestion": "質問を追加",
+      "editQuestion": "質問を編集",
+      "questionType": "種類",
+      "questionTextId": "質問（インドネシア語）",
+      "questionTextJa": "質問（日本語）",
+      "required": "必須",
+      "options": "選択肢",
+      "addOption": "選択肢を追加",
+      "optionValue": "値",
+      "optionLabelId": "ラベル（ID）",
+      "optionLabelJa": "ラベル（JA）",
+      "types": {
+        "text": "短文テキスト",
+        "textarea": "長文テキスト",
+        "single": "単一選択",
+        "multiple": "複数選択",
+        "rating": "評価（1〜5）"
+      },
+      "noQuestions": "質問がまだありません。",
+      "noStats": "回答がまだありません。",
+      "colTitle": "タイトル",
+      "colStatus": "ステータス",
+      "colResponses": "回答数",
+      "colPublished": "公開日",
+      "colClosed": "終了日",
+      "colFeatured": "Featured",
+      "colActions": "操作"
     }
   },
   "export": {
@@ -1011,6 +1071,24 @@
     "sending": "送信中…",
     "sentSuccess": "{{count}} 名に送信しました。",
     "errorGeneric": "送信中にエラーが発生しました。再試行してください。"
+  },
+  "survey": {
+    "noActive": "調査は現在実施していません",
+    "noActiveDesc": "Survei tidak tersedia saat ini",
+    "loading": "読み込み中…",
+    "langToggleJa": "日本語",
+    "langToggleId": "Indonesia",
+    "submitBtn": "回答を送信",
+    "submitting": "送信中…",
+    "thankYouTitle": "ご回答いただきありがとうございました！",
+    "thankYouTitleJa": "Terima kasih atas partisipasi Anda！",
+    "thankYouBody": "回答が送信されました。",
+    "thankYouBodyJa": "Jawaban Anda telah berhasil dikirim.",
+    "alreadyResponded": "このアンケートにすでに回答済みです。",
+    "alreadyRespondedJa": "Anda sudah mengisi survei ini.",
+    "errorSubmit": "送信中にエラーが発生しました。再試行してください。",
+    "requiredHint": "必須",
+    "ratingLabel": "評価"
   },
   "shokumu": {
     "title": "職務経歴書",

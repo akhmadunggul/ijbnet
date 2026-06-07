@@ -831,6 +831,66 @@
       "events": "Event",
       "noResults": "Belum ada data penugasan.",
       "backToList": "Kembali ke Daftar"
+    },
+    "surveys": {
+      "navLabel": "Survey",
+      "title": "Manajemen Survey",
+      "createBtn": "Buat Survey Baru",
+      "backToList": "← Kembali ke daftar",
+      "tabs": {
+        "settings": "Pengaturan",
+        "questions": "Pertanyaan",
+        "stats": "Statistik"
+      },
+      "fields": {
+        "titleId": "Judul (ID)",
+        "titleJa": "Judul (JA)",
+        "slug": "Slug URL",
+        "status": "Status",
+        "publishedAt": "Tanggal Tayang",
+        "closedAt": "Tanggal Tutup",
+        "featured": "Tampilkan di /angket",
+        "descId": "Deskripsi (ID)",
+        "descJa": "Deskripsi (JA)"
+      },
+      "status": {
+        "draft": "Draft",
+        "active": "Aktif",
+        "closed": "Ditutup"
+      },
+      "totalResponses": "Total Responden",
+      "noActive": "Tidak ada survey aktif",
+      "confirmDelete": "Hapus survey ini? Semua data jawaban akan ikut terhapus.",
+      "confirmDeleteQuestion": "Hapus pertanyaan ini?",
+      "saveBtn": "Simpan",
+      "saved": "Berhasil disimpan.",
+      "addQuestion": "Tambah Pertanyaan",
+      "editQuestion": "Edit Pertanyaan",
+      "questionType": "Tipe",
+      "questionTextId": "Pertanyaan (ID)",
+      "questionTextJa": "Pertanyaan (JA)",
+      "required": "Wajib",
+      "options": "Pilihan Jawaban",
+      "addOption": "Tambah Pilihan",
+      "optionValue": "Value",
+      "optionLabelId": "Label (ID)",
+      "optionLabelJa": "Label (JA)",
+      "types": {
+        "text": "Teks Pendek",
+        "textarea": "Teks Panjang",
+        "single": "Pilihan Tunggal",
+        "multiple": "Pilihan Ganda",
+        "rating": "Rating (1–5)"
+      },
+      "noQuestions": "Belum ada pertanyaan.",
+      "noStats": "Belum ada jawaban.",
+      "colTitle": "Judul",
+      "colStatus": "Status",
+      "colResponses": "Responden",
+      "colPublished": "Tayang",
+      "colClosed": "Tutup",
+      "colFeatured": "Featured",
+      "colActions": "Aksi"
     }
   },
   "export": {
@@ -1012,6 +1072,24 @@
     "sending": "Mengirim…",
     "sentSuccess": "Berhasil dikirim ke {{count}} penerima.",
     "errorGeneric": "Terjadi kesalahan saat mengirim. Silakan coba lagi."
+  },
+  "survey": {
+    "noActive": "Survei tidak tersedia saat ini",
+    "noActiveDesc": "調査は現在実施していません",
+    "loading": "Memuat survei…",
+    "langToggleJa": "日本語",
+    "langToggleId": "Indonesia",
+    "submitBtn": "Kirim Jawaban",
+    "submitting": "Mengirim…",
+    "thankYouTitle": "Terima kasih atas partisipasi Anda！",
+    "thankYouTitleJa": "ご回答いただきありがとうございました！",
+    "thankYouBody": "Jawaban Anda telah berhasil dikirim.",
+    "thankYouBodyJa": "回答が送信されました。",
+    "alreadyResponded": "Anda sudah mengisi survei ini.",
+    "alreadyRespondedJa": "このアンケートにすでに回答済みです。",
+    "errorSubmit": "Terjadi kesalahan saat mengirim. Silakan coba lagi.",
+    "requiredHint": "Wajib diisi",
+    "ratingLabel": "Nilai"
   },
   "shokumu": {
     "title": "職務経歴書",
