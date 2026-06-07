@@ -586,7 +586,10 @@ function EducationTab({ candidate }: { candidate: CandidateData }) {
     defaultValues: {
       entries: (candidate.educationHistory ?? []).map((e, i) => {
         const sd = parseYM(e.startDate);
-        const ed = parseYM(e.endDate);
+        const rawEnd = e.endDate as string | null | undefined;
+        const ed = rawEnd
+          ? parseYM(rawEnd)
+          : (e.startDate ? { month: '', year: 'now' } : { month: '', year: '' });
         return {
           schoolName: e.schoolName,
           startMonth: sd.month,
@@ -603,6 +606,7 @@ function EducationTab({ candidate }: { candidate: CandidateData }) {
   const { fields, append, remove, move } = useFieldArray({ control: historyForm.control, name: 'entries' });
 
   const [saveError, setSaveError] = useState(false);
+  const [dateError, setDateError] = useState(false);
   const historyMutation = useMutation({
     mutationFn: (data: EducationHistoryForm) => {
       const toDate = (year: string, month: string) => {
@@ -623,17 +627,30 @@ function EducationTab({ candidate }: { candidate: CandidateData }) {
     },
     onSuccess: (_data, variables) => {
       setSaveError(false);
+      setDateError(false);
       qc.invalidateQueries({ queryKey: ['my-candidate'] });
       historyForm.reset(variables);
     },
     onError: () => setSaveError(true),
   });
 
+  const onEduSubmit = (data: EducationHistoryForm) => {
+    setDateError(false);
+    for (const e of data.entries) {
+      if (e.startYear && e.endYear && e.endYear !== 'now' && e.endMonth) {
+        const sy = parseInt(e.startYear) * 100 + parseInt(e.startMonth || '1');
+        const ey = parseInt(e.endYear) * 100 + parseInt(e.endMonth);
+        if (ey < sy) { setDateError(true); return; }
+      }
+    }
+    historyMutation.mutate(data);
+  };
+
   return (
     <div className="space-y-8">
       <div>
         <p className="text-sm font-semibold text-gray-700 mb-4">{t('candidate.profile.education.historyTitle')}</p>
-        <form onSubmit={historyForm.handleSubmit((d) => historyMutation.mutate(d))} className="space-y-4">
+        <form onSubmit={historyForm.handleSubmit(onEduSubmit)} className="space-y-4">
           {fields.map((field, i) => {
             const endYearVal = historyForm.watch(`entries.${i}.endYear`);
             return (
@@ -709,6 +726,7 @@ function EducationTab({ candidate }: { candidate: CandidateData }) {
               {historyMutation.isPending ? t('candidate.profile.saving') : t('candidate.profile.save')}
             </button>
             {historyForm.formState.isDirty && <span className="text-xs text-amber-600">{t('candidate.profile.unsaved')}</span>}
+            {dateError && <span className="text-xs text-red-500">{t('candidate.profile.career.dateOrderError', { defaultValue: 'Tanggal keluar tidak boleh lebih awal dari tanggal masuk.' })}</span>}
             {saveError && <span className="text-xs text-red-500">{t('toastError', { defaultValue: 'Gagal menyimpan. Coba lagi.' })}</span>}
           </div>
         </form>
