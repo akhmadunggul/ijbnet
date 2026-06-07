@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
+import { composeAddressJa } from '../utils/addressJa';
 
 const BASE_URL = 'https://ihsaninh.github.io/wilayah-indonesia';
 const apiCache = new Map<string, unknown[]>();
@@ -280,11 +281,19 @@ export default function AddressInput({ value, onChange, disabled }: Props) {
         />
       </div>
 
-      {/* Composed preview */}
+      {/* Indonesian preview */}
       {previewParts.length > 0 && (
         <div className="text-xs text-gray-500 bg-gray-50 rounded p-2 border border-gray-200">
           <span className="font-medium">{t('candidate.profile.personal.addressPreview')}</span>{' '}
           {previewParts.join(', ').toUpperCase()}
+        </div>
+      )}
+
+      {/* Japanese address preview */}
+      {value && composeAddressJa(value) && (
+        <div className="text-xs text-gray-600 bg-blue-50 rounded p-2 border border-blue-100">
+          <span className="font-medium text-blue-700">🇯🇵 日本語住所：</span>
+          <pre className="mt-1 font-sans whitespace-pre-wrap">{composeAddressJa(value)}</pre>
         </div>
       )}
     </div>

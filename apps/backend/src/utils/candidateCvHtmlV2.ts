@@ -5,6 +5,7 @@
 
 // ── IJBNet logo (shared with v1) ──────────────────────────────────────────────
 import { IJBNET_LOGO } from './cvLogoBase64';
+import { composeAddressJa } from './addressJa';
 
 const FONT_MAP: Record<string, string> = {
   'ms-mincho':     '"MS Mincho", serif',
@@ -141,7 +142,9 @@ export function buildCandidateCvHtmlV2(
   const birthDisplay = he([v(cj['birthPlace']), dobStr].filter(Boolean).join('  '));
 
   const addressRaw = cj['address'];
-  const addressDisplay = (addressRaw as any)?.masked === true ? '🔒' : he(v(addressRaw));
+  const addressStructured = cj['addressStructured'] as import('./addressJa').AddressStructuredLike | null | undefined;
+  const addressJa = addressStructured ? composeAddressJa(addressStructured) : '';
+  const addressDisplay = (addressRaw as any)?.masked === true ? '🔒' : he(addressJa || v(addressRaw));
 
   const heightDisplay = (cj['selfReportedHeight'] ?? cj['heightCm']) != null
     ? `${cj['selfReportedHeight'] ?? cj['heightCm']} cm` : '';
@@ -349,7 +352,7 @@ export function buildCandidateCvHtmlV2(
       </tr>
       <tr>
         <td style="${TD}">現住所</td>
-        <td style="${TD}" colspan="3">${addressDisplay}</td>
+        <td style="${TD}white-space:pre-line;" colspan="3">${addressDisplay}</td>
       </tr>
     </tbody>
   </table>

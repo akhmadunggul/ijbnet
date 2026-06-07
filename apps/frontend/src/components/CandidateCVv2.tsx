@@ -3,6 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { api } from '../lib/api';
 import AuthImage from './AuthImage';
 import ijbnetLogo from '../assets/IJBNet_LOGO.png';
+import { composeAddressJa } from '../utils/addressJa';
 
 export interface CandidateCVProps {
   candidate: any;
@@ -276,7 +277,12 @@ export default function CandidateCVv2({
   };
 
   const addressMasked = (c.address as any)?.masked === true;
-  const addressDisplay = addressMasked ? '🔒' : v(c.address);
+  const addressJa = !addressMasked && c.addressStructured
+    ? composeAddressJa(c.addressStructured)
+    : '';
+  const addressDisplay = addressMasked
+    ? '🔒'
+    : (addressJa || v(c.address));
 
   const heightDisplay =
     (c.selfReportedHeight ?? c.heightCm) != null
@@ -454,7 +460,7 @@ export default function CandidateCVv2({
           </tr>
           <tr>
             <td style={TD}>現住所</td>
-            <td style={TD} colSpan={3}>{addressDisplay}</td>
+            <td style={{ ...TD, whiteSpace: 'pre-line' }} colSpan={3}>{addressDisplay}</td>
           </tr>
         </tbody>
       </table>
