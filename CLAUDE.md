@@ -268,6 +268,7 @@ apps/frontend/src/
 - v0.7.12 — CV v2 Japanese-only labels throughout (no Indonesian field names); IJBNet logo moved from below-photo/Promosi Diri to bottom-right of CV; applies to CandidateCVv2.tsx, candidateCvHtmlV2.ts, and generate-cv-v2-sample.mjs
 - v0.7.13 — Remove A/B testing engine; replace with simple cv_v2_lpk_ids GlobalSetting; superadmin CV tab shows per-LPK v2 checkbox list; batch PDF uses candidate lpkId to pick v1/v2; AuthInitializer retained (prevents 401 on page reload)
 - v0.7.14 — Structured address: replace single address textarea with 4-level cascading dropdowns (Provinsi → Kota/Kabupaten → Kecamatan → Kelurahan/Desa) backed by ihsaninh/wilayah-indonesia GitHub Pages API; Kode Pos auto-filled from subdistrict; flat address field auto-composed server-side; addressStructured masked for recruiters; legacy address notice for existing candidates
+- v0.7.15 — Survey (アンケート) for Japanese manufacturing companies at /angket: 実施要項 block, Q4 split to 電話番号+メールアドレス, Q7 split to 正社員数+非正社員数+技能実習生数 (26 questions total), closing thank-you paragraph, Japanese-only display (language toggle removed, i18n forced to ja); A1 Japanese learning module for candidates: 6 Irodori Starter topics, 12 lessons (flash card + quiz), 84 exercises seeded to DB, 3D flip flash cards, MCQ quiz with score tracking, progress rings, /portal/jp-learning
 
-Current: v0.7.14
+Current: v0.7.15
 Live at: https://jinzai.jobagus.id
