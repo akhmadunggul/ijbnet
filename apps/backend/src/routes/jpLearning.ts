@@ -25,10 +25,24 @@ async function getEnabledLpkIds(): Promise<string[]> {
 
 async function isEnabledForCandidate(userId: string): Promise<boolean> {
   const enabledIds = await getEnabledLpkIds();
-  if (enabledIds.length === 0) return false; // no LPKs configured → disabled
-  const candidate = await Candidate.findOne({ where: { userId }, attributes: ['lpkId'] });
-  if (!candidate?.lpkId) return false;
-  return enabledIds.includes(candidate.lpkId);
+  if (enabledIds.length === 0) {
+    console.log('[jpLearning] gate: no LPKs configured in jp_learning_lpk_ids');
+    return false;
+  }
+  const candidate = await Candidate.findOne({ where: { userId }, attributes: ['id', 'lpkId'] });
+  if (!candidate) {
+    console.log(`[jpLearning] gate: no candidate found for userId=${userId}`);
+    return false;
+  }
+  if (!candidate.lpkId) {
+    console.log(`[jpLearning] gate: candidate ${candidate.id} has null lpkId`);
+    return false;
+  }
+  const allowed = enabledIds.includes(candidate.lpkId);
+  if (!allowed) {
+    console.log(`[jpLearning] gate: candidate lpkId=${candidate.lpkId} not in enabledIds=${JSON.stringify(enabledIds)}`);
+  }
+  return allowed;
 }
 
 // ── GET /api/jp/available ─────────────────────────────────────────────────────
