@@ -17,12 +17,14 @@ export interface SurveyQuestionAttributes {
   questionJa: string;
   required: number;
   options: QuestionOption[] | null;
+  groupLabelJa: string | null;
+  groupLabelId: string | null;
   createdAt?: Date;
   updatedAt?: Date;
 }
 
 export interface SurveyQuestionCreationAttributes
-  extends Optional<SurveyQuestionAttributes, 'id' | 'options'> {}
+  extends Optional<SurveyQuestionAttributes, 'id' | 'options' | 'groupLabelJa' | 'groupLabelId'> {}
 
 export class SurveyQuestion
   extends Model<SurveyQuestionAttributes, SurveyQuestionCreationAttributes>
@@ -35,6 +37,8 @@ export class SurveyQuestion
   declare questionJa: string;
   declare required: number;
   declare options: QuestionOption[] | null;
+  declare groupLabelJa: string | null;
+  declare groupLabelId: string | null;
   declare readonly createdAt: Date;
   declare readonly updatedAt: Date;
 }
@@ -42,17 +46,19 @@ export class SurveyQuestion
 export function initSurveyQuestion(sequelize: Sequelize): void {
   SurveyQuestion.init(
     {
-      id:         { type: DataTypes.CHAR(36), primaryKey: true, defaultValue: DataTypes.UUIDV4 },
-      surveyId:   { type: DataTypes.CHAR(36), allowNull: false },
-      sortOrder:  { type: DataTypes.INTEGER, allowNull: false, defaultValue: 0 },
-      type:       {
+      id:           { type: DataTypes.CHAR(36), primaryKey: true, defaultValue: DataTypes.UUIDV4 },
+      surveyId:     { type: DataTypes.CHAR(36), allowNull: false },
+      sortOrder:    { type: DataTypes.INTEGER, allowNull: false, defaultValue: 0 },
+      type:         {
         type: DataTypes.ENUM('text', 'textarea', 'single', 'multiple', 'rating'),
         allowNull: false,
       },
-      questionId: { type: DataTypes.TEXT, allowNull: false },
-      questionJa: { type: DataTypes.TEXT, allowNull: false },
-      required:   { type: DataTypes.TINYINT, allowNull: false, defaultValue: 1 },
-      options:    { type: DataTypes.JSON, allowNull: true },
+      questionId:   { type: DataTypes.TEXT, allowNull: false },
+      questionJa:   { type: DataTypes.TEXT, allowNull: false },
+      required:     { type: DataTypes.TINYINT, allowNull: false, defaultValue: 1 },
+      options:      { type: DataTypes.JSON, allowNull: true },
+      groupLabelJa: { type: DataTypes.TEXT, allowNull: true },
+      groupLabelId: { type: DataTypes.TEXT, allowNull: true },
     },
     { sequelize, tableName: 'survey_questions', timestamps: true },
   );

@@ -26,6 +26,8 @@ interface SurveyQuestion {
   questionJa: string;
   required: number;
   options: QuestionOption[] | null;
+  groupLabelJa: string | null;
+  groupLabelId: string | null;
 }
 
 interface Survey {
@@ -371,20 +373,35 @@ export default function SurveyPublicPage() {
               {survey.questions
                 .slice()
                 .sort((a, b) => a.sortOrder - b.sortOrder)
-                .map((q, idx) => (
-                  <div key={q.id} className="relative">
-                    <div className="absolute -left-0 top-5 w-6 h-6 rounded-full bg-navy-700 text-white text-xs font-bold flex items-center justify-center shadow -translate-x-full mr-2 hidden md:flex">
-                      {idx + 1}
+                .map((q, idx) => {
+                  const groupLabel = lang === 'ja' ? q.groupLabelJa : q.groupLabelId;
+                  return (
+                    <div key={q.id}>
+                      {groupLabel && (
+                        <div className="pt-4 pb-1">
+                          <div
+                            className="text-sm font-bold text-white px-4 py-2 rounded-lg"
+                            style={{ background: '#0F1E2D' }}
+                          >
+                            {groupLabel}
+                          </div>
+                        </div>
+                      )}
+                      <div className="relative">
+                        <div className="absolute -left-0 top-5 w-6 h-6 rounded-full bg-navy-700 text-white text-xs font-bold flex items-center justify-center shadow -translate-x-full mr-2 hidden md:flex">
+                          {idx + 1}
+                        </div>
+                        <QuestionBlock
+                          question={q}
+                          lang={lang}
+                          answer={getAnswer(q.id)}
+                          onAnswer={(a) => setAnswer(q.id, a)}
+                          t={t}
+                        />
+                      </div>
                     </div>
-                    <QuestionBlock
-                      question={q}
-                      lang={lang}
-                      answer={getAnswer(q.id)}
-                      onAnswer={(a) => setAnswer(q.id, a)}
-                      t={t}
-                    />
-                  </div>
-                ))}
+                  );
+                })}
             </div>
 
             {/* Validation error */}
