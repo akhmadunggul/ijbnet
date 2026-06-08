@@ -1089,7 +1089,18 @@
     "alreadyRespondedJa": "Anda sudah mengisi survei ini.",
     "errorSubmit": "送信中にエラーが発生しました。再試行してください。",
     "requiredHint": "必須",
-    "ratingLabel": "評価"
+    "ratingLabel": "評価",
+    "youkou": {
+      "title": "アンケート実施要項",
+      "deadlineLabel": "回答期限",
+      "deadline": "2026年6月30日（火）まで",
+      "methodLabel": "回答方法",
+      "methodText": "本メールへのご返信、または以下のWEBリンクよりご回答ください。",
+      "scheduleLabel": "今後の予定",
+      "scheduleText": "7月中にオンラインにて、ご回答いただいた企業様向けにアンケート結果報告および本プログラムの詳細説明会を開催予定です。",
+      "contactLabel": "お問い合わせ窓口",
+      "contactText": "[IJBNET●●・連絡先：090-0000-1111] ※インドネシア事情に精通した日本人スタッフが対応いたします。"
+    }
   },
   "shokumu": {
     "title": "職務経歴書",

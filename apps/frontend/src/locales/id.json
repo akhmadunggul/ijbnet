@@ -1090,7 +1090,18 @@
     "alreadyRespondedJa": "このアンケートにすでに回答済みです。",
     "errorSubmit": "Terjadi kesalahan saat mengirim. Silakan coba lagi.",
     "requiredHint": "Wajib diisi",
-    "ratingLabel": "Nilai"
+    "ratingLabel": "Nilai",
+    "youkou": {
+      "title": "Petunjuk Pengisian Angket",
+      "deadlineLabel": "Batas Waktu Pengisian",
+      "deadline": "Sampai 30 Juni 2026 (Selasa)",
+      "methodLabel": "Cara Mengisi",
+      "methodText": "Balas email ini, atau isi melalui link berikut:",
+      "scheduleLabel": "Rencana Ke Depan",
+      "scheduleText": "Pada bulan Juli, akan diadakan sesi penjelasan online bagi perusahaan yang telah mengisi survei, mencakup laporan hasil angket dan detail program ini.",
+      "contactLabel": "Kontak",
+      "contactText": "[IJBNET●●・Kontak：090-0000-1111] ※Ditangani oleh staf Jepang yang memahami kondisi Indonesia."
+    }
   },
   "shokumu": {
     "title": "職務経歴書",

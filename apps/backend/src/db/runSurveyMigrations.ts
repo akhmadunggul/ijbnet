@@ -8,7 +8,7 @@ import { DataTypes, QueryInterface } from 'sequelize';
 import { surveySequelize } from './survey-connection';
 
 const SURVEY_ID       = 'a0000000-0000-4000-a000-000000000001';
-const EXPECTED_Q_COUNT = 23;
+const EXPECTED_Q_COUNT = 26;
 
 const SURVEY_TITLE_JA  = 'インドネシア人材の受入をご検討・追加したい企業様へのご質問';
 const SURVEY_TITLE_ID  = 'Pertanyaan untuk Perusahaan yang Mempertimbangkan Penerimaan Tenaga Kerja Indonesia';
@@ -89,14 +89,25 @@ const QUESTIONS: QSeed[] = [
     groupLabelJa: null,
     groupLabelId: null,
     type: 'text',
-    questionJa: 'ご連絡先（電話番号・メールアドレス）',
-    questionId: 'Kontak (Nomor Telepon & Email)',
+    questionJa: '電話番号',
+    questionId: 'Nomor Telepon',
+    required: 1,
+    options: null,
+  },
+  {
+    id: 'a0000000-0000-4001-a000-000000000024',
+    sortOrder: 5,
+    groupLabelJa: null,
+    groupLabelId: null,
+    type: 'text',
+    questionJa: 'メールアドレス',
+    questionId: 'Alamat Email',
     required: 1,
     options: null,
   },
   {
     id: 'a0000000-0000-4001-a000-000000000005',
-    sortOrder: 5,
+    sortOrder: 6,
     groupLabelJa: null,
     groupLabelId: null,
     type: 'textarea',
@@ -107,7 +118,7 @@ const QUESTIONS: QSeed[] = [
   },
   {
     id: 'a0000000-0000-4001-a000-000000000006',
-    sortOrder: 6,
+    sortOrder: 7,
     groupLabelJa: null,
     groupLabelId: null,
     type: 'text',
@@ -118,19 +129,41 @@ const QUESTIONS: QSeed[] = [
   },
   {
     id: 'a0000000-0000-4001-a000-000000000007',
-    sortOrder: 7,
+    sortOrder: 8,
     groupLabelJa: null,
     groupLabelId: null,
     type: 'text',
-    questionJa: '従業員数（正社員／非正社員／技能実習生）',
-    questionId: 'Jumlah Karyawan (tetap / non-tetap / magang)',
+    questionJa: '正社員数',
+    questionId: 'Jumlah Karyawan Tetap',
+    required: 1,
+    options: null,
+  },
+  {
+    id: 'a0000000-0000-4001-a000-000000000025',
+    sortOrder: 9,
+    groupLabelJa: null,
+    groupLabelId: null,
+    type: 'text',
+    questionJa: '非正社員数',
+    questionId: 'Jumlah Karyawan Non-Tetap',
+    required: 1,
+    options: null,
+  },
+  {
+    id: 'a0000000-0000-4001-a000-000000000026',
+    sortOrder: 10,
+    groupLabelJa: null,
+    groupLabelId: null,
+    type: 'text',
+    questionJa: '技能実習生数',
+    questionId: 'Jumlah Magang Teknis',
     required: 1,
     options: null,
   },
   // ── 第2部: 外国人材の受け入れ状況と課題 ─────────────────────────────────────
   {
     id: 'a0000000-0000-4001-a000-000000000008',
-    sortOrder: 8,
+    sortOrder: 11,
     groupLabelJa: '第2部：外国人材の受け入れ状況と課題について',
     groupLabelId: 'Bagian 2: Kondisi Penerimaan Tenaga Kerja Asing & Tantangan',
     type: 'text',
@@ -141,7 +174,7 @@ const QUESTIONS: QSeed[] = [
   },
   {
     id: 'a0000000-0000-4001-a000-000000000009',
-    sortOrder: 9,
+    sortOrder: 12,
     groupLabelJa: null,
     groupLabelId: null,
     type: 'text',
@@ -152,7 +185,7 @@ const QUESTIONS: QSeed[] = [
   },
   {
     id: 'a0000000-0000-4001-a000-000000000010',
-    sortOrder: 10,
+    sortOrder: 13,
     groupLabelJa: null,
     groupLabelId: null,
     type: 'text',
@@ -163,7 +196,7 @@ const QUESTIONS: QSeed[] = [
   },
   {
     id: 'a0000000-0000-4001-a000-000000000011',
-    sortOrder: 11,
+    sortOrder: 14,
     groupLabelJa: null,
     groupLabelId: null,
     type: 'text',
@@ -174,7 +207,7 @@ const QUESTIONS: QSeed[] = [
   },
   {
     id: 'a0000000-0000-4001-a000-000000000012',
-    sortOrder: 12,
+    sortOrder: 15,
     groupLabelJa: null,
     groupLabelId: null,
     type: 'multiple',
@@ -194,7 +227,7 @@ const QUESTIONS: QSeed[] = [
   // ── 第3部: 今回のご提案へのニーズ ───────────────────────────────────────────
   {
     id: 'a0000000-0000-4001-a000-000000000013',
-    sortOrder: 13,
+    sortOrder: 16,
     groupLabelJa: '第3部：今回のご提案（日系企業経験者）へのニーズについて',
     groupLabelId: 'Bagian 3: Kebutuhan terhadap Program yang Ditawarkan',
     type: 'multiple',
@@ -212,7 +245,7 @@ const QUESTIONS: QSeed[] = [
   },
   {
     id: 'a0000000-0000-4001-a000-000000000014',
-    sortOrder: 14,
+    sortOrder: 17,
     groupLabelJa: null,
     groupLabelId: null,
     type: 'textarea',
@@ -223,7 +256,7 @@ const QUESTIONS: QSeed[] = [
   },
   {
     id: 'a0000000-0000-4001-a000-000000000015',
-    sortOrder: 15,
+    sortOrder: 18,
     groupLabelJa: null,
     groupLabelId: null,
     type: 'text',
@@ -234,7 +267,7 @@ const QUESTIONS: QSeed[] = [
   },
   {
     id: 'a0000000-0000-4001-a000-000000000016',
-    sortOrder: 16,
+    sortOrder: 19,
     groupLabelJa: null,
     groupLabelId: null,
     type: 'single',
@@ -250,7 +283,7 @@ const QUESTIONS: QSeed[] = [
   },
   {
     id: 'a0000000-0000-4001-a000-000000000017',
-    sortOrder: 17,
+    sortOrder: 20,
     groupLabelJa: null,
     groupLabelId: null,
     type: 'single',
@@ -266,7 +299,7 @@ const QUESTIONS: QSeed[] = [
   // ── 第4部: サポート体制 ──────────────────────────────────────────────────────
   {
     id: 'a0000000-0000-4001-a000-000000000018',
-    sortOrder: 18,
+    sortOrder: 21,
     groupLabelJa: '第4部：サポート体制（監理団体・システム等）について',
     groupLabelId: 'Bagian 4: Sistem Dukungan (Lembaga Pengawas, dll.)',
     type: 'single',
@@ -280,7 +313,7 @@ const QUESTIONS: QSeed[] = [
   },
   {
     id: 'a0000000-0000-4001-a000-000000000019',
-    sortOrder: 19,
+    sortOrder: 22,
     groupLabelJa: null,
     groupLabelId: null,
     type: 'single',
@@ -294,7 +327,7 @@ const QUESTIONS: QSeed[] = [
   },
   {
     id: 'a0000000-0000-4001-a000-000000000020',
-    sortOrder: 20,
+    sortOrder: 23,
     groupLabelJa: null,
     groupLabelId: null,
     type: 'multiple',
@@ -311,7 +344,7 @@ const QUESTIONS: QSeed[] = [
   },
   {
     id: 'a0000000-0000-4001-a000-000000000021',
-    sortOrder: 21,
+    sortOrder: 24,
     groupLabelJa: null,
     groupLabelId: null,
     type: 'single',
@@ -327,7 +360,7 @@ const QUESTIONS: QSeed[] = [
   },
   {
     id: 'a0000000-0000-4001-a000-000000000022',
-    sortOrder: 22,
+    sortOrder: 25,
     groupLabelJa: null,
     groupLabelId: null,
     type: 'single',
@@ -342,7 +375,7 @@ const QUESTIONS: QSeed[] = [
   },
   {
     id: 'a0000000-0000-4001-a000-000000000023',
-    sortOrder: 23,
+    sortOrder: 26,
     groupLabelJa: null,
     groupLabelId: null,
     type: 'textarea',

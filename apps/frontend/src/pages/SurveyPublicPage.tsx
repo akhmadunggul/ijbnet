@@ -247,6 +247,42 @@ function AisatsuBlock({ text, lang }: { text: string; lang: 'id' | 'ja' }) {
   );
 }
 
+function JisshiYoukou({ lang, t }: { lang: 'id' | 'ja'; t: ReturnType<typeof useTranslation>['t'] }) {
+  return (
+    <div className="mt-4 mb-2 rounded-xl border border-blue-100 bg-blue-50 px-5 py-4 text-sm text-gray-700 leading-relaxed shadow-sm">
+      <p className="font-bold text-gray-800 mb-3">{t('survey.youkou.title')}</p>
+      <dl className="space-y-2">
+        <div className="flex gap-2">
+          <dt className="font-semibold text-gray-600 shrink-0">【{t('survey.youkou.deadlineLabel')}】</dt>
+          <dd>{t('survey.youkou.deadline')}</dd>
+        </div>
+        <div className="flex gap-2">
+          <dt className="font-semibold text-gray-600 shrink-0">【{t('survey.youkou.methodLabel')}】</dt>
+          <dd>
+            {t('survey.youkou.methodText')}{' '}
+            <a
+              href="https://jinzai.jobagus.id/angket"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-blue-600 underline break-all"
+            >
+              https://jinzai.jobagus.id/angket
+            </a>
+          </dd>
+        </div>
+        <div className="flex gap-2">
+          <dt className="font-semibold text-gray-600 shrink-0">【{t('survey.youkou.scheduleLabel')}】</dt>
+          <dd>{t('survey.youkou.scheduleText')}</dd>
+        </div>
+        <div className="flex gap-2">
+          <dt className="font-semibold text-gray-600 shrink-0">【{t('survey.youkou.contactLabel')}】</dt>
+          <dd>{t('survey.youkou.contactText')}</dd>
+        </div>
+      </dl>
+    </div>
+  );
+}
+
 export default function SurveyPublicPage() {
   const { t, i18n } = useTranslation();
   const [lang, setLang] = useState<'id' | 'ja'>('ja');
@@ -401,6 +437,7 @@ export default function SurveyPublicPage() {
                   lang={lang}
                 />
               )}
+              <JisshiYoukou lang={lang} t={t} />
             </div>
 
             {/* Questions */}
