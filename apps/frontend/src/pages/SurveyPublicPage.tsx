@@ -5,7 +5,7 @@
  * survey form. Completely isolated from any candidate/batch logic.
  */
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import axios from 'axios';
@@ -281,8 +281,10 @@ function JisshiYoukou({ lang, t }: { lang: 'id' | 'ja'; t: ReturnType<typeof use
 }
 
 export default function SurveyPublicPage() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const lang = 'ja' as const;
+
+  useEffect(() => { i18n.changeLanguage('ja'); }, [i18n]);
   const [answers, setAnswers] = useState<Map<string, AnswerPayload>>(new Map());
   const [submitted, setSubmitted] = useState(false);
   const [validationError, setValidationError] = useState<string | null>(null);
