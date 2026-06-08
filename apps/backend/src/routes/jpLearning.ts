@@ -23,43 +23,40 @@ async function getEnabledLpkIds(): Promise<string[]> {
   return Array.isArray(val) ? (val as string[]) : [];
 }
 
-async function isEnabledForCandidate(userId: string): Promise<boolean> {
+// Returns the candidate record if their LPK is enabled, null otherwise.
+// Also provides the candidate.id for use as candidateId in progress queries.
+async function getGatedCandidate(userId: string): Promise<{ id: string; lpkId: string } | null> {
   const enabledIds = await getEnabledLpkIds();
   if (enabledIds.length === 0) {
     console.log('[jpLearning] gate: no LPKs configured in jp_learning_lpk_ids');
-    return false;
+    return null;
   }
   const candidate = await Candidate.findOne({ where: { userId }, attributes: ['id', 'lpkId'] });
   if (!candidate) {
     console.log(`[jpLearning] gate: no candidate found for userId=${userId}`);
-    return false;
+    return null;
   }
   if (!candidate.lpkId) {
     console.log(`[jpLearning] gate: candidate ${candidate.id} has null lpkId`);
-    return false;
+    return null;
   }
-  const allowed = enabledIds.includes(candidate.lpkId);
-  if (!allowed) {
+  if (!enabledIds.includes(candidate.lpkId)) {
     console.log(`[jpLearning] gate: candidate lpkId=${candidate.lpkId} not in enabledIds=${JSON.stringify(enabledIds)}`);
+    return null;
   }
-  return allowed;
+  return { id: candidate.id, lpkId: candidate.lpkId };
 }
 
 // ── GET /api/jp/available ─────────────────────────────────────────────────────
-// Lightweight check: can the current candidate access JP learning?
 router.get('/available', wrap(async (req, res) => {
-  const enabled = await isEnabledForCandidate(req.user!.sub);
-  res.json({ enabled });
+  const c = await getGatedCandidate(req.user!.sub);
+  res.json({ enabled: c !== null });
 }));
 
 // ── GET /api/jp/topics ────────────────────────────────────────────────────────
 router.get('/topics', wrap(async (req, res) => {
-  if (!(await isEnabledForCandidate(req.user!.sub))) {
-    res.status(403).json({ error: 'JP learning not available for your LPK' });
-    return;
-  }
-
-  const candidateId = (req as unknown as { user: { candidateId: string } }).user.candidateId;
+  const c = await getGatedCandidate(req.user!.sub);
+  if (!c) { res.status(403).json({ error: 'JP learning not available for your LPK' }); return; }
 
   const topics = await JpTopic.findAll({
     where: { level: 'A1' },
@@ -72,7 +69,7 @@ router.get('/topics', wrap(async (req, res) => {
     }],
   });
 
-  const progress = await JpCandidateProgress.findAll({ where: { candidateId } });
+  const progress = await JpCandidateProgress.findAll({ where: { candidateId: c.id } });
   const completedSet = new Set(progress.map((p) => p.lessonId));
 
   const data = topics.map((topic) => {
@@ -91,31 +88,24 @@ router.get('/topics', wrap(async (req, res) => {
 
 // ── GET /api/jp/lessons/:lessonId ─────────────────────────────────────────────
 router.get('/lessons/:lessonId', wrap(async (req, res) => {
-  if (!(await isEnabledForCandidate(req.user!.sub))) {
-    res.status(403).json({ error: 'JP learning not available for your LPK' });
-    return;
-  }
+  const c = await getGatedCandidate(req.user!.sub);
+  if (!c) { res.status(403).json({ error: 'JP learning not available for your LPK' }); return; }
 
-  const candidateId = (req as unknown as { user: { candidateId: string } }).user.candidateId;
   const { lessonId } = req.params;
-
   const lesson = await JpLesson.findByPk(lessonId, {
     include: [{ model: JpExercise, as: 'exercises', order: [['sortOrder', 'ASC']] }],
   });
   if (!lesson) { res.status(404).json({ error: 'Lesson not found' }); return; }
 
-  const progress = await JpCandidateProgress.findOne({ where: { candidateId, lessonId } });
+  const progress = await JpCandidateProgress.findOne({ where: { candidateId: c.id, lessonId } });
   res.json({ ...lesson.toJSON(), progress: progress ? progress.toJSON() : null });
 }));
 
 // ── POST /api/jp/lessons/:lessonId/complete ───────────────────────────────────
 router.post('/lessons/:lessonId/complete', wrap(async (req, res) => {
-  if (!(await isEnabledForCandidate(req.user!.sub))) {
-    res.status(403).json({ error: 'JP learning not available for your LPK' });
-    return;
-  }
+  const c = await getGatedCandidate(req.user!.sub);
+  if (!c) { res.status(403).json({ error: 'JP learning not available for your LPK' }); return; }
 
-  const candidateId = (req as unknown as { user: { candidateId: string } }).user.candidateId;
   const { lessonId } = req.params;
   const { score, total } = req.body as { score?: number; total?: number };
 
@@ -123,8 +113,8 @@ router.post('/lessons/:lessonId/complete', wrap(async (req, res) => {
   if (!lesson) { res.status(404).json({ error: 'Lesson not found' }); return; }
 
   const [progress, created] = await JpCandidateProgress.findOrCreate({
-    where: { candidateId, lessonId },
-    defaults: { id: uuid(), candidateId, lessonId, completedAt: new Date(), score: score ?? null, total: total ?? null },
+    where: { candidateId: c.id, lessonId },
+    defaults: { id: uuid(), candidateId: c.id, lessonId, completedAt: new Date(), score: score ?? null, total: total ?? null },
   });
 
   if (!created && score != null && total != null && score > (progress.score ?? 0)) {
@@ -136,16 +126,12 @@ router.post('/lessons/:lessonId/complete', wrap(async (req, res) => {
 
 // ── GET /api/jp/progress ──────────────────────────────────────────────────────
 router.get('/progress', wrap(async (req, res) => {
-  if (!(await isEnabledForCandidate(req.user!.sub))) {
-    res.status(403).json({ error: 'JP learning not available for your LPK' });
-    return;
-  }
-
-  const candidateId = (req as unknown as { user: { candidateId: string } }).user.candidateId;
+  const c = await getGatedCandidate(req.user!.sub);
+  if (!c) { res.status(403).json({ error: 'JP learning not available for your LPK' }); return; }
 
   const [allLessons, completedRows] = await Promise.all([
     JpLesson.findAll({ attributes: ['id', 'topicId', 'type'] }),
-    JpCandidateProgress.findAll({ where: { candidateId }, attributes: ['lessonId', 'score', 'total'] }),
+    JpCandidateProgress.findAll({ where: { candidateId: c.id }, attributes: ['lessonId', 'score', 'total'] }),
   ]);
 
   const completedMap = new Map(completedRows.map((r) => [r.lessonId, r]));

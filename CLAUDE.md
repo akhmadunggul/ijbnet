@@ -272,6 +272,7 @@ apps/frontend/src/
 - v0.7.16 — Superadmin LPK deployment control for JP learning: new Fitur tab in Data Entry Settings with per-LPK checkbox list (auto-save); GET/PUT /api/superadmin/jp-learning-config; all /api/jp/* endpoints gate by candidate lpkId; candidate nav item hidden when LPK not enabled; graceful 403 message on JpLearningPage
 - v0.7.17 — Fix migration 000044: use DataTypes.UUID (not CHAR(36)) for all jp_* FK columns to match candidates.id collation; serialize dataJson with JSON.stringify in bulkInsert; replace require('uuid') with ESM import; raise backend health check start_period 30s→120s
 - v0.7.18 — JP learning gate diagnostics: isEnabledForCandidate logs gate failure reason (no config / no candidate record / null lpkId / lpk mismatch) to backend console for production debugging
+- v0.7.19 — Fix JP learning: candidateId was read from JWT (undefined) instead of DB; refactor gate helper getGatedCandidate() returns candidate.id for all progress queries; fix migration-000044 addIndex race condition
 
-Current: v0.7.18
+Current: v0.7.19
 Live at: https://jinzai.jobagus.id
