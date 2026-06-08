@@ -49,6 +49,8 @@ export async function up(queryInterface: QueryInterface): Promise<void> {
   await queryInterface.addIndex('jp_candidate_progress', ['candidateId', 'lessonId'], {
     unique: true,
     name: 'jp_candidate_progress_candidate_lesson_unique',
+  }).catch((e: Error) => {
+    if (!e.message.includes('Duplicate key name')) throw e;
   });
 }
 
