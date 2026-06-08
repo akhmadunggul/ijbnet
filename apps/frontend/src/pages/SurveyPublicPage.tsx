@@ -281,8 +281,8 @@ function JisshiYoukou({ lang, t }: { lang: 'id' | 'ja'; t: ReturnType<typeof use
 }
 
 export default function SurveyPublicPage() {
-  const { t, i18n } = useTranslation();
-  const [lang, setLang] = useState<'id' | 'ja'>('ja');
+  const { t } = useTranslation();
+  const lang = 'ja' as const;
   const [answers, setAnswers] = useState<Map<string, AnswerPayload>>(new Map());
   const [submitted, setSubmitted] = useState(false);
   const [validationError, setValidationError] = useState<string | null>(null);
@@ -302,13 +302,6 @@ export default function SurveyPublicPage() {
       setSubmitted(true);
     },
   });
-
-  // Sync i18n language with lang state
-  const toggleLang = () => {
-    const next = lang === 'ja' ? 'id' : 'ja';
-    setLang(next);
-    i18n.changeLanguage(next);
-  };
 
   const setAnswer = (questionId: string, a: AnswerPayload) => {
     setAnswers((prev) => new Map(prev).set(questionId, a));
@@ -361,12 +354,6 @@ export default function SurveyPublicPage() {
         style={{ background: '#0F1E2D' }}
       >
         <span className="font-serif text-lg text-white tracking-wide">IJBNet</span>
-        <button
-          onClick={toggleLang}
-          className="text-xs font-medium text-white/80 border border-white/20 rounded-full px-3 py-1 hover:bg-white/10 transition"
-        >
-          {lang === 'ja' ? 'Indonesia' : '日本語'}
-        </button>
       </header>
 
       <main className="max-w-2xl mx-auto px-4 py-8 md:py-12">
