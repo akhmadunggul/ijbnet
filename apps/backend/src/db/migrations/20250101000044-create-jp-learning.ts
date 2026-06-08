@@ -2,7 +2,7 @@ import { QueryInterface, DataTypes } from 'sequelize';
 
 export async function up(queryInterface: QueryInterface): Promise<void> {
   await queryInterface.createTable('jp_topics', {
-    id:            { type: DataTypes.CHAR(36),     primaryKey: true, allowNull: false },
+    id:            { type: DataTypes.UUID,         primaryKey: true, allowNull: false },
     level:         { type: DataTypes.STRING(10),   allowNull: false, defaultValue: 'A1' },
     sortOrder:     { type: DataTypes.INTEGER,      allowNull: false, defaultValue: 0 },
     titleJa:       { type: DataTypes.STRING(200),  allowNull: false },
@@ -15,30 +15,30 @@ export async function up(queryInterface: QueryInterface): Promise<void> {
   });
 
   await queryInterface.createTable('jp_lessons', {
-    id:        { type: DataTypes.CHAR(36),    primaryKey: true, allowNull: false },
-    topicId:   { type: DataTypes.CHAR(36),    allowNull: false, references: { model: 'jp_topics', key: 'id' }, onDelete: 'CASCADE' },
-    sortOrder: { type: DataTypes.INTEGER,     allowNull: false, defaultValue: 0 },
-    titleJa:   { type: DataTypes.STRING(200), allowNull: false },
-    titleId:   { type: DataTypes.STRING(200), allowNull: false },
+    id:        { type: DataTypes.UUID,         primaryKey: true, allowNull: false },
+    topicId:   { type: DataTypes.UUID,         allowNull: false, references: { model: 'jp_topics', key: 'id' }, onDelete: 'CASCADE' },
+    sortOrder: { type: DataTypes.INTEGER,      allowNull: false, defaultValue: 0 },
+    titleJa:   { type: DataTypes.STRING(200),  allowNull: false },
+    titleId:   { type: DataTypes.STRING(200),  allowNull: false },
     type:      { type: DataTypes.ENUM('vocabulary', 'quiz'), allowNull: false },
-    createdAt: { type: DataTypes.DATE,        allowNull: false },
-    updatedAt: { type: DataTypes.DATE,        allowNull: false },
+    createdAt: { type: DataTypes.DATE,         allowNull: false },
+    updatedAt: { type: DataTypes.DATE,         allowNull: false },
   });
 
   await queryInterface.createTable('jp_exercises', {
-    id:        { type: DataTypes.CHAR(36),   primaryKey: true, allowNull: false },
-    lessonId:  { type: DataTypes.CHAR(36),   allowNull: false, references: { model: 'jp_lessons', key: 'id' }, onDelete: 'CASCADE' },
-    sortOrder: { type: DataTypes.INTEGER,    allowNull: false, defaultValue: 0 },
+    id:        { type: DataTypes.UUID,         primaryKey: true, allowNull: false },
+    lessonId:  { type: DataTypes.UUID,         allowNull: false, references: { model: 'jp_lessons', key: 'id' }, onDelete: 'CASCADE' },
+    sortOrder: { type: DataTypes.INTEGER,      allowNull: false, defaultValue: 0 },
     type:      { type: DataTypes.ENUM('card', 'quiz'), allowNull: false },
-    dataJson:  { type: DataTypes.JSON,       allowNull: false },
-    createdAt: { type: DataTypes.DATE,       allowNull: false },
-    updatedAt: { type: DataTypes.DATE,       allowNull: false },
+    dataJson:  { type: DataTypes.JSON,         allowNull: false },
+    createdAt: { type: DataTypes.DATE,         allowNull: false },
+    updatedAt: { type: DataTypes.DATE,         allowNull: false },
   });
 
   await queryInterface.createTable('jp_candidate_progress', {
-    id:          { type: DataTypes.CHAR(36),  primaryKey: true, allowNull: false },
-    candidateId: { type: DataTypes.CHAR(36),  allowNull: false, references: { model: 'candidates', key: 'id' }, onDelete: 'CASCADE' },
-    lessonId:    { type: DataTypes.CHAR(36),  allowNull: false, references: { model: 'jp_lessons', key: 'id' }, onDelete: 'CASCADE' },
+    id:          { type: DataTypes.UUID,      primaryKey: true, allowNull: false },
+    candidateId: { type: DataTypes.UUID,      allowNull: false, references: { model: 'candidates', key: 'id' }, onDelete: 'CASCADE' },
+    lessonId:    { type: DataTypes.UUID,      allowNull: false, references: { model: 'jp_lessons', key: 'id' }, onDelete: 'CASCADE' },
     completedAt: { type: DataTypes.DATE,      allowNull: false },
     score:       { type: DataTypes.INTEGER,   allowNull: true },
     total:       { type: DataTypes.INTEGER,   allowNull: true },
