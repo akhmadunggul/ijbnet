@@ -270,6 +270,7 @@ apps/frontend/src/
 - v0.7.14 — Structured address: replace single address textarea with 4-level cascading dropdowns (Provinsi → Kota/Kabupaten → Kecamatan → Kelurahan/Desa) backed by ihsaninh/wilayah-indonesia GitHub Pages API; Kode Pos auto-filled from subdistrict; flat address field auto-composed server-side; addressStructured masked for recruiters; legacy address notice for existing candidates
 - v0.7.15 — Survey (アンケート) for Japanese manufacturing companies at /angket: 実施要項 block, Q4 split to 電話番号+メールアドレス, Q7 split to 正社員数+非正社員数+技能実習生数 (26 questions total), closing thank-you paragraph, Japanese-only display (language toggle removed, i18n forced to ja); A1 Japanese learning module for candidates: 6 Irodori Starter topics, 12 lessons (flash card + quiz), 84 exercises seeded to DB, 3D flip flash cards, MCQ quiz with score tracking, progress rings, /portal/jp-learning
 - v0.7.16 — Superadmin LPK deployment control for JP learning: new Fitur tab in Data Entry Settings with per-LPK checkbox list (auto-save); GET/PUT /api/superadmin/jp-learning-config; all /api/jp/* endpoints gate by candidate lpkId; candidate nav item hidden when LPK not enabled; graceful 403 message on JpLearningPage
+- v0.7.17 — Fix migration 000044: use DataTypes.UUID (not CHAR(36)) for all jp_* FK columns to match candidates.id collation; serialize dataJson with JSON.stringify in bulkInsert; replace require('uuid') with ESM import; raise backend health check start_period 30s→120s
 
-Current: v0.7.16
+Current: v0.7.17
 Live at: https://jinzai.jobagus.id
