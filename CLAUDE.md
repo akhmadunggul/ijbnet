@@ -273,6 +273,7 @@ apps/frontend/src/
 - v0.7.17 — Fix migration 000044: use DataTypes.UUID (not CHAR(36)) for all jp_* FK columns to match candidates.id collation; serialize dataJson with JSON.stringify in bulkInsert; replace require('uuid') with ESM import; raise backend health check start_period 30s→120s
 - v0.7.18 — JP learning gate diagnostics: isEnabledForCandidate logs gate failure reason (no config / no candidate record / null lpkId / lpk mismatch) to backend console for production debugging
 - v0.7.19 — Fix JP learning: candidateId was read from JWT (undefined) instead of DB; refactor gate helper getGatedCandidate() returns candidate.id for all progress queries; fix migration-000044 addIndex race condition
+- v0.7.20 — chore: bump version
 
-Current: v0.7.19
+Current: v0.7.20
 Live at: https://jinzai.jobagus.id
