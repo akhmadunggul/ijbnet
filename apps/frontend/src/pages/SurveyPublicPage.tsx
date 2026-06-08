@@ -108,12 +108,9 @@ function QuestionBlock({
   t: ReturnType<typeof useTranslation>['t'];
 }) {
   const questionText = lang === 'ja' ? question.questionJa : question.questionId;
-  const altText = lang === 'ja' ? question.questionId : question.questionJa;
 
   const labelFor = (opt: QuestionOption) =>
-    lang === 'ja'
-      ? `${opt.labelJa}（${opt.labelId}）`
-      : `${opt.labelId}（${opt.labelJa}）`;
+    lang === 'ja' ? opt.labelJa : opt.labelId;
 
   const toggleOption = (v: string) => {
     const current = answer.answerOptions ?? [];
@@ -127,17 +124,9 @@ function QuestionBlock({
   return (
     <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-5 md:p-6">
       {/* Question text */}
-      <p className="font-semibold text-gray-900 text-base leading-snug">
+      <p className="font-semibold text-gray-900 text-base leading-snug whitespace-pre-line">
         {questionText}
-        {question.required === 1 && (
-          <span className="ml-2 text-xs font-medium text-red-500 align-middle">
-            {t('survey.requiredHint')}
-          </span>
-        )}
       </p>
-      {altText && altText !== questionText && (
-        <p className="text-xs text-gray-400 mt-0.5">{altText}</p>
-      )}
 
       {/* Answer input */}
       <div className="mt-3">
@@ -243,6 +232,14 @@ function AisatsuBlock({ text, lang }: { text: string; lang: 'id' | 'ja' }) {
           <p className="whitespace-pre-line">{body}</p>
         </div>
       )}
+    </div>
+  );
+}
+
+function SurveyClosing({ lang, t }: { lang: 'id' | 'ja'; t: ReturnType<typeof useTranslation>['t'] }) {
+  return (
+    <div className="mt-6 rounded-xl border border-gray-200 bg-white px-6 py-5 text-sm text-gray-700 leading-relaxed shadow-sm whitespace-pre-line">
+      {t('survey.closing')}
     </div>
   );
 }
@@ -425,12 +422,6 @@ export default function SurveyPublicPage() {
               <h1 className="text-xl md:text-2xl font-bold text-gray-900 leading-snug text-center">
                 {lang === 'ja' ? survey.titleJa : survey.titleId}
               </h1>
-              {lang === 'ja' && survey.titleId && (
-                <p className="text-xs text-gray-400 mt-1 text-center">{survey.titleId}</p>
-              )}
-              {lang === 'id' && survey.titleJa && (
-                <p className="text-xs text-gray-400 mt-1 text-center">{survey.titleJa}</p>
-              )}
               {(lang === 'ja' ? survey.descriptionJa : survey.descriptionId) && (
                 <AisatsuBlock
                   text={(lang === 'ja' ? survey.descriptionJa : survey.descriptionId) ?? ''}
@@ -475,6 +466,9 @@ export default function SurveyPublicPage() {
                   );
                 })}
             </div>
+
+            {/* Closing message */}
+            <SurveyClosing lang={lang} t={t} />
 
             {/* Validation error */}
             {validationError && (
