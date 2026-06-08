@@ -158,7 +158,10 @@ const EXERCISES = [
 export async function up(queryInterface: QueryInterface): Promise<void> {
   await queryInterface.bulkInsert('jp_topics', TOPICS);
   await queryInterface.bulkInsert('jp_lessons', LESSONS);
-  await queryInterface.bulkInsert('jp_exercises', EXERCISES);
+  // Explicitly serialize dataJson to string — bulkInsert does not apply
+  // DataTypes.JSON auto-stringify without an attribute map.
+  const serialized = EXERCISES.map(e => ({ ...e, dataJson: JSON.stringify(e.dataJson) }));
+  await queryInterface.bulkInsert('jp_exercises', serialized);
 }
 
 export async function down(queryInterface: QueryInterface): Promise<void> {

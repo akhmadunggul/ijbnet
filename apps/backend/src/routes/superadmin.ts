@@ -1,4 +1,5 @@
 import { Router, Request, Response } from 'express';
+import { v4 as uuidv4 } from 'uuid';
 import { Op, fn, col } from 'sequelize';
 import { isUUID, isEmail } from 'validator';
 import bcrypt from 'bcrypt';
@@ -1188,7 +1189,7 @@ router.post('/consent-clause', wrap(async (req, res) => {
     return;
   }
 
-  const newId = require('uuid').v4() as string;
+  const newId = uuidv4();
 
   await sequelize.transaction(async (t) => {
     const currentActive = await ConsentClause.findOne({ where: { isActive: true }, transaction: t });
@@ -1324,7 +1325,7 @@ router.put('/jp-learning-config', wrap(async (req, res) => {
   }
   const [row] = await GlobalSettings.findOrCreate({
     where: { key: 'jp_learning_lpk_ids' },
-    defaults: { id: require('uuid').v4(), key: 'jp_learning_lpk_ids', value: [] },
+    defaults: { id: uuidv4(), key: 'jp_learning_lpk_ids', value: [] },
   });
   await row.update({ value: lpkIds });
   res.json({ lpkIds });
