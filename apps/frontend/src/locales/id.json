@@ -712,11 +712,18 @@
       "gakkenAutoTranslateActiveDesc": "Aktif — kolom Jepang pada form Resume Gakken dikunci dan diterjemahkan otomatis saat kandidat menyimpan.",
       "gakkenAutoTranslateInactiveDesc": "Tidak aktif — kandidat mengisi kolom Jepang secara manual.",
       "descriptionFull": "Kelola konfigurasi sistem: tab profil, CV, resume, foto, kelengkapan, dan terjemahan.",
+      "fiturDesc": "Aktifkan atau nonaktifkan fitur khusus per LPK.",
+      "jpLearningTitle": "Belajar Bahasa Jepang (日本語学習)",
+      "jpLearningDesc": "LPK yang dipilih akan dapat mengakses fitur belajar bahasa Jepang A1 di portal kandidat.",
+      "jpLearningActiveLabel": "Aktif",
+      "jpLearningNoneSelected": "Tidak ada LPK yang dipilih — fitur ini dinonaktifkan untuk semua kandidat.",
+      "noLpks": "Tidak ada LPK ditemukan.",
       "tabNav_tabProfil": "Tab Profil",
       "tabNav_cv": "CV",
       "tabNav_resume": "Resume",
       "tabNav_foto": "Foto",
       "tabNav_terjemahan": "Terjemahan",
+      "tabNav_fitur": "Fitur",
       "tabNav_sistem": "Sistem"
     },
     "recruiterSettings": {

@@ -30,6 +30,12 @@ export default function CandidateLayout() {
     setShowConsent(needsConsent);
   }, [data]);
 
+  const { data: jpAvailableData } = useQuery<{ enabled: boolean }>({
+    queryKey: ['jp-available'],
+    queryFn: () => api.get('/jp/available').then((r) => r.data),
+    retry: false,
+  });
+
   const unreadCount: number = useQuery<{ unreadCount: number }>({
     queryKey: ['notifications-count'],
     queryFn: () => api.get('/notifications?limit=1&unread=true').then((r) => r.data),
@@ -47,7 +53,7 @@ export default function CandidateLayout() {
   const navItems = [
     { to: '/portal/dashboard', icon: '🏠', label: t('navDashboard') },
     { to: '/portal/profile', icon: '👤', label: t('navProfile') },
-    { to: '/portal/jp-learning', icon: '🇯🇵', label: t('navJpLearning') },
+    ...(jpAvailableData?.enabled ? [{ to: '/portal/jp-learning', icon: '🇯🇵', label: t('navJpLearning') }] : []),
     { to: '/portal/notifications', icon: '🔔', label: t('navNotifications') },
   ];
 

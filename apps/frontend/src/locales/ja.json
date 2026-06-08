@@ -711,11 +711,18 @@
       "gakkenAutoTranslateActiveDesc": "有効 — Gakkenテンプレートの日本語欄はロックされ、候補者が保存時に自動翻訳されます。",
       "gakkenAutoTranslateInactiveDesc": "無効 — 候補者が日本語欄を手動で入力します。",
       "descriptionFull": "システム設定：プロフィールタブ・CV・職務経歴書・写真・完成度・翻訳の管理。",
+      "fiturDesc": "LPK別に特定機能を有効・無効にします。",
+      "jpLearningTitle": "日本語学習機能",
+      "jpLearningDesc": "選択したLPKの候補者が候補者ポータルでA1レベルの日本語学習機能を使用できます。",
+      "jpLearningActiveLabel": "有効",
+      "jpLearningNoneSelected": "LPKが選択されていません — 全候補者でこの機能は無効です。",
+      "noLpks": "LPKが見つかりません。",
       "tabNav_tabProfil": "Tab Profil",
       "tabNav_cv": "CV",
       "tabNav_resume": "Resume",
       "tabNav_foto": "Foto",
       "tabNav_terjemahan": "Terjemahan",
+      "tabNav_fitur": "機能",
       "tabNav_sistem": "Sistem"
     },
     "recruiterSettings": {

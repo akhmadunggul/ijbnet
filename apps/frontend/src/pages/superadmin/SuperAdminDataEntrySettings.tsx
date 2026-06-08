@@ -77,6 +77,7 @@ export default function SuperAdminDataEntrySettings() {
   const [shokumuRolloutLpkIds, setShokumuRolloutLpkIds] = useState<string[]>([]);
   const [shokumuTemplate, setShokumuTemplate] = useState<ShokumuTemplate>('generic');
   const [shokumuRecruiterEnabled, setShokumuRecruiterEnabled] = useState(false);
+  const [jpLearningLpkIds, setJpLearningLpkIds] = useState<string[]>([]);
 
   // API key management state (explicit save — not auto-save)
   const [serviceTestStatus, setServiceTestStatus] = useState<Record<string, ServiceTestStatus>>({});
@@ -161,6 +162,11 @@ export default function SuperAdminDataEntrySettings() {
     queryFn: () => api.get('/superadmin/translation-api-config').then(r => r.data),
     staleTime: 30_000,
   });
+  const { data: jpLearningConfigData } = useQuery<{ lpkIds: string[] }>({
+    queryKey: ['jp-learning-config'],
+    queryFn: () => api.get('/superadmin/jp-learning-config').then(r => r.data),
+    staleTime: 60_000,
+  });
 
   // ── Server → state sync ───────────────────────────────────────────────────
   useEffect(() => { if (data?.config) setConfig({ ...data.config } as Record<TabKey, boolean>); }, [data]);
@@ -195,6 +201,9 @@ export default function SuperAdminDataEntrySettings() {
       setShokumuRecruiterEnabled(shokumuConfigData.recruiterEnabled ?? false);
     }
   }, [shokumuConfigData]);
+  useEffect(() => {
+    if (jpLearningConfigData !== undefined) setJpLearningLpkIds(jpLearningConfigData.lpkIds ?? []);
+  }, [jpLearningConfigData]);
 
   // ── Mutations ─────────────────────────────────────────────────────────────
   const tabMutation = useMutation({
@@ -254,6 +263,12 @@ export default function SuperAdminDataEntrySettings() {
       api.put('/superadmin/shokumu-config', p).then(r => r.data),
     onSuccess: () => { markSaved('shokumu'); void qc.invalidateQueries({ queryKey: ['shokumu-config'] }); },
     onError: () => markError('shokumu'),
+  });
+  const jpLearningMutation = useMutation({
+    mutationFn: (lpkIds: string[]) =>
+      api.put('/superadmin/jp-learning-config', { lpkIds }).then(r => r.data),
+    onSuccess: () => { markSaved('jplearning'); void qc.invalidateQueries({ queryKey: ['jp-learning-config'] }); },
+    onError: () => markError('jplearning'),
   });
 
   // ── Auto-save helpers ─────────────────────────────────────────────────────
@@ -334,7 +349,7 @@ export default function SuperAdminDataEntrySettings() {
   }
 
   // ── Render helpers ────────────────────────────────────────────────────────
-  type TabNav = 'tabProfil'|'cv'|'resume'|'foto'|'terjemahan'|'sistem';
+  type TabNav = 'tabProfil'|'cv'|'resume'|'foto'|'terjemahan'|'fitur'|'sistem';
   const [activeTab, setActiveTab] = useState<TabNav>('tabProfil');
 
   const TAB_NAV: { key: TabNav; labelKey: string }[] = [
@@ -343,6 +358,7 @@ export default function SuperAdminDataEntrySettings() {
     { key: 'resume',     labelKey: 'tabNav_resume' },
     { key: 'foto',       labelKey: 'tabNav_foto' },
     { key: 'terjemahan', labelKey: 'tabNav_terjemahan' },
+    { key: 'fitur',      labelKey: 'tabNav_fitur' },
     { key: 'sistem',     labelKey: 'tabNav_sistem' },
   ];
 
@@ -888,6 +904,50 @@ export default function SuperAdminDataEntrySettings() {
         <div className="space-y-2">
           {panelHead(t('superadmin.dataEntrySettings.translateDesc'), 'translate')}
           {translationServicePanel}
+        </div>
+      )}
+
+      {/* ── Tab: Fitur ─────────────────────────────────────────────────────── */}
+      {activeTab === 'fitur' && (
+        <div className="space-y-2">
+          {panelHead(t('superadmin.dataEntrySettings.fiturDesc'), 'jplearning')}
+          <div className="bg-white rounded-xl border border-gray-100 shadow-sm divide-y divide-gray-100">
+
+            {/* JP Learning LPK gate */}
+            <div className="px-5 py-4">
+              {subHead(t('superadmin.dataEntrySettings.jpLearningTitle'), 'jplearning')}
+              <p className="text-xs text-gray-500 mb-3">{t('superadmin.dataEntrySettings.jpLearningDesc')}</p>
+              <div className="border border-gray-100 rounded-lg p-3 bg-gray-50 max-h-48 overflow-y-auto space-y-1.5">
+                {(lpkListData?.lpks ?? []).length === 0 && (
+                  <p className="text-xs text-gray-400">{t('superadmin.dataEntrySettings.noLpks')}</p>
+                )}
+                {(lpkListData?.lpks ?? []).map(lpk => (
+                  <label key={lpk.id} className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={jpLearningLpkIds.includes(lpk.id)}
+                      onChange={e => {
+                        const ids = e.target.checked
+                          ? [...jpLearningLpkIds, lpk.id]
+                          : jpLearningLpkIds.filter(id => id !== lpk.id);
+                        setJpLearningLpkIds(ids);
+                        jpLearningMutation.mutate(ids);
+                      }}
+                      className="accent-navy-700 w-4 h-4"
+                    />
+                    <span className="text-sm text-gray-800">{lpk.name}</span>
+                    {lpk.city && <span className="text-xs text-gray-400">{lpk.city}</span>}
+                    {jpLearningLpkIds.includes(lpk.id) && (
+                      <span className="ml-auto text-xs text-navy-700 font-medium">🇯🇵 {t('superadmin.dataEntrySettings.jpLearningActiveLabel')}</span>
+                    )}
+                  </label>
+                ))}
+              </div>
+              {jpLearningLpkIds.length === 0 && (
+                <p className="mt-2 text-xs text-amber-600">{t('superadmin.dataEntrySettings.jpLearningNoneSelected')}</p>
+              )}
+            </div>
+          </div>
         </div>
       )}
 

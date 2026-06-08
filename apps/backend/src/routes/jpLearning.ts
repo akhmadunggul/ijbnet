@@ -1,7 +1,7 @@
 import { Router, Request, Response } from 'express';
 import { v4 as uuid } from 'uuid';
 import { authenticate, requireRole } from '../middleware/auth';
-import { JpTopic, JpLesson, JpExercise, JpCandidateProgress } from '../db/models';
+import { JpTopic, JpLesson, JpExercise, JpCandidateProgress, GlobalSettings, Candidate } from '../db/models';
 
 const router = Router();
 
@@ -15,9 +15,36 @@ function wrap(fn: (req: Request, res: Response) => Promise<void>) {
 // All endpoints require a logged-in candidate
 router.use(authenticate, requireRole('candidate'));
 
+// ── LPK gate helper ───────────────────────────────────────────────────────────
+async function getEnabledLpkIds(): Promise<string[]> {
+  const row = await GlobalSettings.findOne({ where: { key: 'jp_learning_lpk_ids' } });
+  if (!row) return [];
+  const val = (row.toJSON() as unknown as Record<string, unknown>)['value'];
+  return Array.isArray(val) ? (val as string[]) : [];
+}
+
+async function isEnabledForCandidate(userId: string): Promise<boolean> {
+  const enabledIds = await getEnabledLpkIds();
+  if (enabledIds.length === 0) return false; // no LPKs configured → disabled
+  const candidate = await Candidate.findOne({ where: { userId }, attributes: ['lpkId'] });
+  if (!candidate?.lpkId) return false;
+  return enabledIds.includes(candidate.lpkId);
+}
+
+// ── GET /api/jp/available ─────────────────────────────────────────────────────
+// Lightweight check: can the current candidate access JP learning?
+router.get('/available', wrap(async (req, res) => {
+  const enabled = await isEnabledForCandidate(req.user!.sub);
+  res.json({ enabled });
+}));
+
 // ── GET /api/jp/topics ────────────────────────────────────────────────────────
-// Returns all topics for the candidate's level with per-lesson progress counts.
 router.get('/topics', wrap(async (req, res) => {
+  if (!(await isEnabledForCandidate(req.user!.sub))) {
+    res.status(403).json({ error: 'JP learning not available for your LPK' });
+    return;
+  }
+
   const candidateId = (req as unknown as { user: { candidateId: string } }).user.candidateId;
 
   const topics = await JpTopic.findAll({
@@ -31,7 +58,6 @@ router.get('/topics', wrap(async (req, res) => {
     }],
   });
 
-  // Fetch all progress rows for this candidate in one query
   const progress = await JpCandidateProgress.findAll({ where: { candidateId } });
   const completedSet = new Set(progress.map((p) => p.lessonId));
 
@@ -50,31 +76,31 @@ router.get('/topics', wrap(async (req, res) => {
 }));
 
 // ── GET /api/jp/lessons/:lessonId ─────────────────────────────────────────────
-// Returns a lesson with its exercises and the candidate's existing progress.
 router.get('/lessons/:lessonId', wrap(async (req, res) => {
+  if (!(await isEnabledForCandidate(req.user!.sub))) {
+    res.status(403).json({ error: 'JP learning not available for your LPK' });
+    return;
+  }
+
   const candidateId = (req as unknown as { user: { candidateId: string } }).user.candidateId;
   const { lessonId } = req.params;
 
   const lesson = await JpLesson.findByPk(lessonId, {
-    include: [{
-      model: JpExercise,
-      as: 'exercises',
-      order: [['sortOrder', 'ASC']],
-    }],
+    include: [{ model: JpExercise, as: 'exercises', order: [['sortOrder', 'ASC']] }],
   });
   if (!lesson) { res.status(404).json({ error: 'Lesson not found' }); return; }
 
   const progress = await JpCandidateProgress.findOne({ where: { candidateId, lessonId } });
-
-  res.json({
-    ...lesson.toJSON(),
-    progress: progress ? progress.toJSON() : null,
-  });
+  res.json({ ...lesson.toJSON(), progress: progress ? progress.toJSON() : null });
 }));
 
 // ── POST /api/jp/lessons/:lessonId/complete ───────────────────────────────────
-// Marks a lesson as complete (upsert). For quiz lessons, records score/total.
 router.post('/lessons/:lessonId/complete', wrap(async (req, res) => {
+  if (!(await isEnabledForCandidate(req.user!.sub))) {
+    res.status(403).json({ error: 'JP learning not available for your LPK' });
+    return;
+  }
+
   const candidateId = (req as unknown as { user: { candidateId: string } }).user.candidateId;
   const { lessonId } = req.params;
   const { score, total } = req.body as { score?: number; total?: number };
@@ -84,30 +110,23 @@ router.post('/lessons/:lessonId/complete', wrap(async (req, res) => {
 
   const [progress, created] = await JpCandidateProgress.findOrCreate({
     where: { candidateId, lessonId },
-    defaults: {
-      id: uuid(),
-      candidateId,
-      lessonId,
-      completedAt: new Date(),
-      score: score ?? null,
-      total: total ?? null,
-    },
+    defaults: { id: uuid(), candidateId, lessonId, completedAt: new Date(), score: score ?? null, total: total ?? null },
   });
 
-  // If already exists and new score is better, update
-  if (!created && score != null && total != null) {
-    const existing = progress.score ?? 0;
-    if (score > existing) {
-      await progress.update({ score, total, completedAt: new Date() });
-    }
+  if (!created && score != null && total != null && score > (progress.score ?? 0)) {
+    await progress.update({ score, total, completedAt: new Date() });
   }
 
   res.json(progress.toJSON());
 }));
 
 // ── GET /api/jp/progress ──────────────────────────────────────────────────────
-// Summary: completed lessons, total lessons, per-topic breakdown.
 router.get('/progress', wrap(async (req, res) => {
+  if (!(await isEnabledForCandidate(req.user!.sub))) {
+    res.status(403).json({ error: 'JP learning not available for your LPK' });
+    return;
+  }
+
   const candidateId = (req as unknown as { user: { candidateId: string } }).user.candidateId;
 
   const [allLessons, completedRows] = await Promise.all([
@@ -119,7 +138,6 @@ router.get('/progress', wrap(async (req, res) => {
   const totalLessons = allLessons.length;
   const completedLessons = allLessons.filter((l) => completedMap.has(l.id)).length;
 
-  // Per-topic breakdown
   const topicMap: Record<string, { total: number; completed: number }> = {};
   for (const l of allLessons) {
     if (!topicMap[l.topicId]) topicMap[l.topicId] = { total: 0, completed: 0 };

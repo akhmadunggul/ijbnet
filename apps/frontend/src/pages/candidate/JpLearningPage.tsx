@@ -406,6 +406,18 @@ export default function JpLearningPage() {
             <div className="text-center text-gray-400 py-20 text-sm">読み込み中…</div>
           )}
 
+          {topicsQuery.isError && (
+            (topicsQuery.error as { response?: { status?: number } })?.response?.status === 403 ? (
+              <div className="text-center py-20 space-y-3">
+                <p className="text-4xl">🇯🇵</p>
+                <p className="text-base font-semibold text-gray-700">日本語学習機能はご利用いただけません</p>
+                <p className="text-sm text-gray-400">この機能はまだあなたの研修センターでは有効になっていません。</p>
+              </div>
+            ) : (
+              <div className="text-center text-red-400 py-20 text-sm">データの読み込みに失敗しました。</div>
+            )
+          )}
+
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {(topicsQuery.data ?? []).map((topic) => (
               <button

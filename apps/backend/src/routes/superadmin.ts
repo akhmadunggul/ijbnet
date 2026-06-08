@@ -275,6 +275,15 @@ router.get('/cv-version-config', wrap(async (_req, res) => {
   res.json({ v2LpkIds });
 }));
 
+// ── GET /api/superadmin/jp-learning-config — PUBLIC ──────────────────────────
+router.get('/jp-learning-config', wrap(async (_req, res) => {
+  const row = await GlobalSettings.findOne({ where: { key: 'jp_learning_lpk_ids' } });
+  const lpkIds: string[] = row
+    ? ((row.toJSON() as unknown as Record<string, unknown>)['value'] as string[] | null) ?? []
+    : [];
+  res.json({ lpkIds });
+}));
+
 router.use(authenticate, requireRole('super_admin'));
 
 // ── System Stats ──────────────────────────────────────────────────────────────
@@ -1304,6 +1313,21 @@ router.post('/consent-clause/:id/push', wrap(async (req, res) => {
   });
 
   res.json({ message: 'Consent push complete.', affectedCandidates });
+}));
+
+// ── PUT /api/superadmin/jp-learning-config ────────────────────────────────────
+router.put('/jp-learning-config', wrap(async (req, res) => {
+  const { lpkIds } = req.body as { lpkIds: unknown };
+  if (!Array.isArray(lpkIds) || !lpkIds.every((id) => typeof id === 'string' && isUUID(id, 4))) {
+    res.status(400).json({ error: 'lpkIds must be an array of UUIDs' });
+    return;
+  }
+  const [row] = await GlobalSettings.findOrCreate({
+    where: { key: 'jp_learning_lpk_ids' },
+    defaults: { id: require('uuid').v4(), key: 'jp_learning_lpk_ids', value: [] },
+  });
+  await row.update({ value: lpkIds });
+  res.json({ lpkIds });
 }));
 
 export default router;
