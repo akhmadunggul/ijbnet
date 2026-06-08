@@ -213,6 +213,40 @@ function QuestionBlock({
 
 // ── Main component ────────────────────────────────────────────────────────────
 
+function AisatsuBlock({ text, lang }: { text: string; lang: 'id' | 'ja' }) {
+  const [open, setOpen] = useState(true);
+
+  // Split into lines for formatting: first 2 lines = header, rest = body
+  const lines = text.split('\n');
+  const addressee = lines[0] ?? '';
+  const sender    = lines[1] ?? '';
+  // body = everything after the two header lines
+  const body = lines.slice(2).join('\n').trim();
+
+  return (
+    <div className="mt-6 mb-2 rounded-xl border border-gray-200 bg-white overflow-hidden shadow-sm">
+      <button
+        type="button"
+        onClick={() => setOpen((o) => !o)}
+        className="w-full flex items-center justify-between px-5 py-3 hover:bg-gray-50 transition text-left"
+      >
+        <span className="text-sm font-semibold text-gray-700">
+          {lang === 'ja' ? '📄 ご挨拶・アンケートのご説明' : '📄 Salam Pembuka & Penjelasan Survei'}
+        </span>
+        <span className="text-gray-400 text-xs ml-2">{open ? '▲' : '▼'}</span>
+      </button>
+
+      {open && (
+        <div className="border-t border-gray-100 px-6 py-5 text-sm text-gray-700 leading-relaxed">
+          <p className="font-semibold">{addressee}</p>
+          <p className="text-gray-500 mb-4">{sender}</p>
+          <p className="whitespace-pre-line">{body}</p>
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function SurveyPublicPage() {
   const { t, i18n } = useTranslation();
   const [lang, setLang] = useState<'id' | 'ja'>('ja');
@@ -351,20 +385,21 @@ export default function SurveyPublicPage() {
         {survey && !hasAlreadyResponded(survey.id) && !submitted && (
           <form onSubmit={handleSubmit} noValidate>
             {/* Survey header */}
-            <div className="mb-8 text-center">
-              <h1 className="text-2xl md:text-3xl font-bold text-gray-900 leading-tight">
+            <div className="mb-8">
+              <h1 className="text-xl md:text-2xl font-bold text-gray-900 leading-snug text-center">
                 {lang === 'ja' ? survey.titleJa : survey.titleId}
               </h1>
               {lang === 'ja' && survey.titleId && (
-                <p className="text-sm text-gray-400 mt-1">{survey.titleId}</p>
+                <p className="text-xs text-gray-400 mt-1 text-center">{survey.titleId}</p>
               )}
               {lang === 'id' && survey.titleJa && (
-                <p className="text-sm text-gray-400 mt-1">{survey.titleJa}</p>
+                <p className="text-xs text-gray-400 mt-1 text-center">{survey.titleJa}</p>
               )}
               {(lang === 'ja' ? survey.descriptionJa : survey.descriptionId) && (
-                <p className="mt-4 text-sm text-gray-600 leading-relaxed text-left bg-white border border-gray-200 rounded-xl px-5 py-4">
-                  {lang === 'ja' ? survey.descriptionJa : survey.descriptionId}
-                </p>
+                <AisatsuBlock
+                  text={(lang === 'ja' ? survey.descriptionJa : survey.descriptionId) ?? ''}
+                  lang={lang}
+                />
               )}
             </div>
 

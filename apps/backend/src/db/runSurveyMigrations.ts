@@ -10,17 +10,29 @@ import { surveySequelize } from './survey-connection';
 const SURVEY_ID       = 'a0000000-0000-4000-a000-000000000001';
 const EXPECTED_Q_COUNT = 23;
 
-const SURVEY_TITLE_JA  = '愛知経協会員企業様へのアンケート調査';
-const SURVEY_TITLE_ID  = 'Survei untuk Perusahaan Anggota Aichi Keizai Kyokai';
+const SURVEY_TITLE_JA  = 'インドネシア人材の受入をご検討・追加したい企業様へのご質問';
+const SURVEY_TITLE_ID  = 'Pertanyaan untuk Perusahaan yang Mempertimbangkan Penerimaan Tenaga Kerja Indonesia';
 const SURVEY_DESC_JA   =
-  '貴社におかれましては、ますますご清栄のこととお慶び申し上げます。IJBNet（Indonesia Japan Business Network）代表のスヨト・ライスと申します。\n\n' +
-  'この度、愛知県経営者協会様、IPC、学研、そしてIJBNetの共同プロジェクトとして、「インドネシアからの優秀な製造人材の募集・教育・派遣プログラム」を推進する運びとなりました。\n\n' +
-  '本プログラムの最大の特徴は、インドネシア現地の大手日系自動車関連製造企業で数年間の就労経験を持ち、日本の製造業の基本（5Sや安全第一など）をすでに習得している若手人材を、愛知県の製造業の皆様へご提案できる点にあります。\n\n' +
-  '会員企業の皆様が現場で抱えられている課題や、外国人材に対するご要望を正確に把握し、最適なご提案を行うため、アンケート調査を実施させていただきます。ご多忙の折誠に恐縮ですが、ご協力のほど何卒よろしくお願い申し上げます。';
+  '愛知県経営者協会会員企業の皆様\n' +
+  'IJBNet代表　スヨト・ライス\n\n' +
+  '「インドネシア人材受入に関するアンケートご協力のお願い」\n\n' +
+  '拝啓\n' +
+  '貴社におかれましては、ますますご清栄のこととお慶び申し上げます。IJBNet（Indonesia Japan Business Network）代表のスヨト・ライスと申します。\n' +
+  'この度、愛知県経営者協会様、IPC、学研、そしてIJBNetの共同プロジェクトとして、「インドネシアからの優秀な製造人材の募集・教育・派遣プログラム」を推進する運びとなりました。\n' +
+  '本プログラムの最大の特徴は、インドネシア現地の大手日系自動車関連製造企業で数年間の就労経験を持ち、日本の製造業の基本（5Sや安全第一など）をすでに習得している若手人材を、愛知県の製造業の皆様へご提案できる点にあります。\n' +
+  '会員企業の皆様が現場で抱えられている課題や、外国人材に対するご要望を正確に把握し、最適なご提案を行うため、アンケート調査を実施させていただきます。\n' +
+  'ご多忙の折誠に恐縮ですが、ご協力のほど何卒よろしくお願い申し上げます。\n\n' +
+  '敬具';
 const SURVEY_DESC_ID   =
-  'Kami dari IJBNet (Indonesia Japan Business Network), yang diwakili oleh Suyoto Rais, menjalankan program perekrutan, pendidikan, dan penempatan tenaga manufaktur unggulan dari Indonesia bersama Aichi Keizai Kyokai, IPC, dan Gakken.\n\n' +
-  'Program ini menawarkan tenaga kerja muda berpengalaman dari perusahaan manufaktur otomotif Jepang terkemuka di Indonesia yang telah memahami prinsip manufaktur Jepang (5S, K3, dll.).\n\n' +
-  'Survei ini dilaksanakan untuk memahami tantangan dan kebutuhan perusahaan anggota terkait tenaga kerja asing. Kami sangat mengharapkan partisipasi Anda.';
+  'Kepada seluruh perusahaan anggota Aichi Keizai Kyokai\n' +
+  'IJBNet — Suyoto Rais\n\n' +
+  '「Permohonan Partisipasi Survei mengenai Penerimaan Tenaga Kerja Indonesia」\n\n' +
+  'Dengan hormat,\n' +
+  'Kami dari IJBNet (Indonesia Japan Business Network), diwakili oleh Suyoto Rais, menjalankan program perekrutan, pendidikan, dan penempatan tenaga manufaktur unggulan dari Indonesia bersama Aichi Keizai Kyokai, IPC, dan Gakken.\n' +
+  'Keunggulan utama program ini adalah kami dapat merekomendasikan tenaga kerja muda yang telah berpengalaman di perusahaan manufaktur otomotif Jepang terkemuka di Indonesia dan telah memahami prinsip-prinsip manufaktur Jepang (5S, K3, dll.).\n' +
+  'Survei ini dilaksanakan untuk memahami tantangan di lapangan dan kebutuhan perusahaan anggota terkait tenaga kerja asing, agar kami dapat memberikan rekomendasi yang paling sesuai.\n' +
+  'Kami sangat menghargai kesediaan Anda untuk berpartisipasi di tengah kesibukan Anda.\n\n' +
+  'Hormat kami,';
 
 // ── Question seed data ────────────────────────────────────────────────────────
 
