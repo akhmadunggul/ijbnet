@@ -528,15 +528,15 @@ export default function SuperAdminDataEntrySettings() {
       </div>
 
       {/* ── Tab bar ───────────────────────────────────────────────────────── */}
-      <div className="flex overflow-x-auto border-b border-gray-200 scrollbar-none">
+      <div className="flex flex-wrap gap-1 border-b border-gray-200 pb-0">
         {TAB_NAV.map(tab => (
           <button
             key={tab.key}
             onClick={() => setActiveTab(tab.key)}
-            className={`px-3 py-2.5 text-sm font-medium whitespace-nowrap transition-colors relative shrink-0 ${
+            className={`px-3 py-2 text-sm font-medium whitespace-nowrap transition-colors rounded-t-lg ${
               activeTab === tab.key
-                ? 'text-navy-700 after:absolute after:bottom-[-1px] after:left-0 after:right-0 after:h-0.5 after:bg-navy-700'
-                : 'text-gray-500 hover:text-gray-700'
+                ? 'bg-navy-700 text-white'
+                : 'text-gray-500 hover:text-gray-700 hover:bg-gray-100'
             }`}
           >
             {t(`superadmin.dataEntrySettings.${tab.labelKey}`)}
