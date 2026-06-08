@@ -840,7 +840,8 @@
       "tabs": {
         "settings": "Pengaturan",
         "questions": "Pertanyaan",
-        "stats": "Statistik"
+        "stats": "Statistik",
+        "responses": "Jawaban"
       },
       "fields": {
         "titleId": "Judul (ID)",

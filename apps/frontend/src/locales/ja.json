@@ -839,7 +839,8 @@
       "tabs": {
         "settings": "設定",
         "questions": "質問",
-        "stats": "統計"
+        "stats": "統計",
+        "responses": "回答一覧"
       },
       "fields": {
         "titleId": "タイトル（インドネシア語）",

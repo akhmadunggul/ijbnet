@@ -30,6 +30,28 @@ interface SurveyQuestion {
   questionJa: string;
   required: number;
   options: QuestionOption[] | null;
+  groupLabelJa: string | null;
+  groupLabelId: string | null;
+}
+
+interface SurveyAnswer {
+  questionId: string;
+  answerText: string | null;
+  answerOptions: string[] | null;
+}
+
+interface SurveyResponse {
+  id: string;
+  submittedAt: string;
+  answers: SurveyAnswer[];
+}
+
+interface ResponsesPage {
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
+  data: SurveyResponse[];
 }
 
 interface SurveySummary {
@@ -282,7 +304,9 @@ export default function SuperAdminSurveys() {
 
   const [view, setView] = useState<'list' | 'detail'>('list');
   const [selectedId, setSelectedId] = useState<string | null>(null);
-  const [detailTab, setDetailTab] = useState<'settings' | 'questions' | 'stats'>('settings');
+  const [detailTab, setDetailTab] = useState<'settings' | 'questions' | 'stats' | 'responses'>('settings');
+  const [responsePage, setResponsePage] = useState(1);
+  const [expandedResponse, setExpandedResponse] = useState<string | null>(null);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [savedMsg, setSavedMsg] = useState('');
   const [showQuestionForm, setShowQuestionForm] = useState(false);
@@ -347,6 +371,31 @@ export default function SuperAdminSurveys() {
     queryFn: () => api.get(`/surveys/${selectedId}/stats`).then((r) => r.data as SurveyStats),
     enabled: !!selectedId && detailTab === 'stats',
   });
+
+  const { data: responsesPage } = useQuery<ResponsesPage>({
+    queryKey: ['superadmin-survey-responses', selectedId, responsePage],
+    queryFn: () =>
+      api.get(`/surveys/${selectedId}/responses?page=${responsePage}&limit=20`).then((r) => r.data as ResponsesPage),
+    enabled: !!selectedId && detailTab === 'responses',
+  });
+
+  const handleExportCsv = () => {
+    const token = (api.defaults.headers['Authorization'] as string | undefined)?.replace('Bearer ', '') ?? '';
+    const a = document.createElement('a');
+    a.href = `/api/surveys/${selectedId}/export.csv`;
+    a.download = `survey-responses.csv`;
+    // Use fetch to include auth header
+    void fetch(a.href, { headers: { Authorization: `Bearer ${token}` } })
+      .then((r) => r.blob())
+      .then((blob) => {
+        const url = URL.createObjectURL(blob);
+        a.href = url;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+      });
+  };
 
   // ── Mutations ──────────────────────────────────────────────────────────────
 
@@ -611,11 +660,11 @@ export default function SuperAdminSurveys() {
       </div>
 
       {/* Tabs */}
-      <div className="flex gap-1 mb-6 bg-gray-100 rounded-lg p-1 w-fit">
-        {(['settings', 'questions', 'stats'] as const).map((tab) => (
+      <div className="flex gap-1 mb-6 bg-gray-100 rounded-lg p-1 w-fit flex-wrap">
+        {(['settings', 'questions', 'stats', 'responses'] as const).map((tab) => (
           <button
             key={tab}
-            onClick={() => setDetailTab(tab)}
+            onClick={() => { setDetailTab(tab); if (tab === 'responses') setResponsePage(1); }}
             className={`px-4 py-1.5 text-sm rounded-md font-medium transition ${
               detailTab === tab
                 ? 'bg-white shadow text-gray-900'
@@ -845,64 +894,184 @@ export default function SuperAdminSurveys() {
             <div className="text-center text-gray-400 py-12 text-sm">読み込み中… / Memuat…</div>
           ) : (
             <>
-              <div className="bg-white border border-gray-200 rounded-xl px-6 py-4 mb-6 flex items-center gap-4">
+              <div className="bg-white border border-gray-200 rounded-xl px-6 py-4 mb-6 flex items-center justify-between gap-4">
                 <div>
                   <p className="text-xs text-gray-500">{t('superadmin.surveys.totalResponses')}</p>
                   <p className="text-3xl font-bold text-gray-900">{stats.totalResponses}</p>
                 </div>
+                {stats.totalResponses > 0 && (
+                  <button
+                    onClick={handleExportCsv}
+                    className="px-4 py-2 text-sm font-medium border border-gray-300 rounded-lg hover:bg-gray-50 transition flex items-center gap-2"
+                  >
+                    ⬇ CSV エクスポート
+                  </button>
+                )}
               </div>
 
               {stats.totalResponses === 0 ? (
                 <p className="text-sm text-gray-400">{t('superadmin.surveys.noStats')}</p>
               ) : (
-                <div className="space-y-5">
-                  {stats.questions.map((qs) => (
-                    <div key={qs.questionId} className="bg-white border border-gray-200 rounded-xl px-6 py-5">
-                      <p className="font-semibold text-gray-900 text-sm">{qs.questionJa}</p>
-                      <p className="text-xs text-gray-400 mb-3">{qs.questionTextId}</p>
-
-                      {/* Choice / rating questions */}
-                      {qs.options && (
-                        <div className="space-y-2">
-                          {qs.options.map((opt) => (
-                            <div key={opt.value}>
-                              <div className="flex justify-between text-xs text-gray-700 mb-0.5">
-                                <span>{opt.labelJa}（{opt.labelId}）</span>
-                                <span className="font-mono">{opt.count} ({opt.pct}%)</span>
-                              </div>
-                              <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
-                                <div
-                                  className="h-full rounded-full transition-all"
-                                  style={{
-                                    width: `${opt.pct}%`,
-                                    background: '#1E3A5F',
-                                  }}
-                                />
-                              </div>
+                <div className="space-y-2">
+                  {(() => {
+                    const groupMap = new Map(
+                      (surveyDetail?.questions ?? []).map((q) => [q.id, q.groupLabelJa]),
+                    );
+                    return stats.questions.map((qs) => {
+                      const groupLabel = groupMap.get(qs.questionId);
+                      return (
+                        <div key={qs.questionId}>
+                          {groupLabel && (
+                            <div
+                              className="text-xs font-bold text-white px-4 py-2 rounded-lg mt-4 mb-1"
+                              style={{ background: '#0F1E2D' }}
+                            >
+                              {groupLabel}
                             </div>
-                          ))}
-                        </div>
-                      )}
+                          )}
+                          <div className="bg-white border border-gray-200 rounded-xl px-6 py-5">
+                            <p className="font-semibold text-gray-900 text-sm">{qs.questionJa}</p>
+                            <p className="text-xs text-gray-400 mb-3">{qs.questionTextId}</p>
 
-                      {/* Text questions */}
-                      {qs.texts && (
-                        <div className="space-y-2 max-h-60 overflow-y-auto pr-1">
-                          {qs.texts.length === 0 ? (
-                            <p className="text-xs text-gray-400">{t('superadmin.surveys.noStats')}</p>
-                          ) : (
-                            qs.texts.map((item, i) => (
-                              <div key={i} className="bg-gray-50 rounded-lg px-3 py-2">
-                                <p className="text-sm text-gray-800 whitespace-pre-wrap break-words">{item.text}</p>
-                                {item.submittedAt && (
-                                  <p className="text-xs text-gray-400 mt-1">{formatDt(item.submittedAt)}</p>
+                            {qs.options && (
+                              <div className="space-y-2">
+                                {qs.options.map((opt) => (
+                                  <div key={opt.value}>
+                                    <div className="flex justify-between text-xs text-gray-700 mb-0.5">
+                                      <span className="flex-1 mr-2">{opt.labelJa}</span>
+                                      <span className="font-mono shrink-0">{opt.count}件 ({opt.pct}%)</span>
+                                    </div>
+                                    <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
+                                      <div
+                                        className="h-full rounded-full transition-all"
+                                        style={{ width: `${opt.pct}%`, background: '#1E3A5F' }}
+                                      />
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+
+                            {qs.texts && (
+                              <div className="space-y-2 max-h-60 overflow-y-auto pr-1">
+                                {qs.texts.length === 0 ? (
+                                  <p className="text-xs text-gray-400">{t('superadmin.surveys.noStats')}</p>
+                                ) : (
+                                  qs.texts.map((item, i) => (
+                                    <div key={i} className="bg-gray-50 rounded-lg px-3 py-2">
+                                      <p className="text-sm text-gray-800 whitespace-pre-wrap break-words">{item.text}</p>
+                                      {item.submittedAt && (
+                                        <p className="text-xs text-gray-400 mt-1">{formatDt(item.submittedAt)}</p>
+                                      )}
+                                    </div>
+                                  ))
                                 )}
                               </div>
-                            ))
-                          )}
+                            )}
+                          </div>
+                        </div>
+                      );
+                    });
+                  })()}
+                </div>
+              )}
+            </>
+          )}
+        </div>
+      )}
+
+      {/* ── Jawaban tab ─────────────────────────────────────────────────────── */}
+      {detailTab === 'responses' && (
+        <div className="max-w-3xl">
+          {!responsesPage ? (
+            <div className="text-center text-gray-400 py-12 text-sm">読み込み中… / Memuat…</div>
+          ) : responsesPage.total === 0 ? (
+            <p className="text-sm text-gray-400 py-8 text-center">{t('superadmin.surveys.noStats')}</p>
+          ) : (
+            <>
+              <div className="flex items-center justify-between mb-4">
+                <p className="text-sm text-gray-600">
+                  {responsesPage.total} 件の回答 / {responsesPage.total} jawaban
+                </p>
+                <button
+                  onClick={handleExportCsv}
+                  className="px-4 py-1.5 text-sm font-medium border border-gray-300 rounded-lg hover:bg-gray-50 transition"
+                >
+                  ⬇ CSV エクスポート
+                </button>
+              </div>
+
+              <div className="space-y-3">
+                {responsesPage.data.map((resp) => {
+                  const questions = surveyDetail?.questions
+                    ?.slice()
+                    .sort((a, b) => a.sortOrder - b.sortOrder) ?? [];
+                  const answerMap = new Map(resp.answers.map((a) => [a.questionId, a]));
+                  const companyName = answerMap.get(questions[0]?.id)?.answerText ?? '—';
+                  const isExpanded = expandedResponse === resp.id;
+
+                  return (
+                    <div key={resp.id} className="bg-white border border-gray-200 rounded-xl overflow-hidden">
+                      <button
+                        type="button"
+                        className="w-full flex items-center justify-between px-5 py-4 text-left hover:bg-gray-50 transition"
+                        onClick={() => setExpandedResponse(isExpanded ? null : resp.id)}
+                      >
+                        <div>
+                          <p className="font-semibold text-gray-900 text-sm">{companyName}</p>
+                          <p className="text-xs text-gray-400 mt-0.5">{formatDt(resp.submittedAt)}</p>
+                        </div>
+                        <span className="text-gray-400 text-sm">{isExpanded ? '▲' : '▼'}</span>
+                      </button>
+
+                      {isExpanded && (
+                        <div className="border-t border-gray-100 px-5 py-4 space-y-4">
+                          {questions.map((q) => {
+                            const a = answerMap.get(q.id);
+                            if (!a) return null;
+                            const hasText    = a.answerText && a.answerText.trim().length > 0;
+                            const hasOptions = Array.isArray(a.answerOptions) && a.answerOptions.length > 0;
+                            if (!hasText && !hasOptions) return null;
+
+                            const opts = (q.options ?? []) as { value: string; labelJa: string }[];
+                            const displayValue = hasOptions
+                              ? (a.answerOptions ?? []).map((v) => opts.find((o) => o.value === v)?.labelJa ?? v).join('、')
+                              : (a.answerText ?? '');
+
+                            return (
+                              <div key={q.id}>
+                                <p className="text-xs font-medium text-gray-500">{q.questionJa}</p>
+                                <p className="text-sm text-gray-900 mt-0.5 whitespace-pre-wrap break-words">{displayValue}</p>
+                              </div>
+                            );
+                          })}
                         </div>
                       )}
                     </div>
-                  ))}
+                  );
+                })}
+              </div>
+
+              {/* Pagination */}
+              {responsesPage.totalPages > 1 && (
+                <div className="flex items-center justify-center gap-2 mt-6">
+                  <button
+                    disabled={responsePage <= 1}
+                    onClick={() => setResponsePage((p) => p - 1)}
+                    className="px-3 py-1 text-sm border border-gray-300 rounded-lg disabled:opacity-40 hover:bg-gray-50 transition"
+                  >
+                    ←
+                  </button>
+                  <span className="text-sm text-gray-600">
+                    {responsePage} / {responsesPage.totalPages}
+                  </span>
+                  <button
+                    disabled={responsePage >= responsesPage.totalPages}
+                    onClick={() => setResponsePage((p) => p + 1)}
+                    className="px-3 py-1 text-sm border border-gray-300 rounded-lg disabled:opacity-40 hover:bg-gray-50 transition"
+                  >
+                    →
+                  </button>
                 </div>
               )}
             </>

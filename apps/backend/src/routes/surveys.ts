@@ -535,4 +535,100 @@ router.get(
   }),
 );
 
+// ── GET /surveys/:id/responses — paginated individual responses ──────────────
+router.get(
+  '/:id/responses',
+  wrap(async (req, res) => {
+    const { id } = req.params;
+    const survey = await Survey.findByPk(id);
+    if (!survey) {
+      res.status(404).json({ error: 'NOT_FOUND' });
+      return;
+    }
+
+    const page  = Math.max(1, parseInt(String(req.query['page']  ?? '1'),  10));
+    const limit = Math.min(50, Math.max(1, parseInt(String(req.query['limit'] ?? '20'), 10)));
+
+    const total = await SurveyResponse.count({ where: { surveyId: id } });
+
+    const responses = await SurveyResponse.findAll({
+      where: { surveyId: id },
+      include: [{ model: SurveyAnswer, as: 'answers', attributes: ['questionId', 'answerText', 'answerOptions'] }],
+      order: [['submittedAt', 'DESC']],
+      limit,
+      offset: (page - 1) * limit,
+    });
+
+    res.json({
+      total,
+      page,
+      limit,
+      totalPages: Math.ceil(total / limit),
+      data: responses.map((r) => r.toJSON()),
+    });
+  }),
+);
+
+// ── GET /surveys/:id/export.csv — CSV download ───────────────────────────────
+router.get(
+  '/:id/export.csv',
+  wrap(async (req, res) => {
+    const { id } = req.params;
+    const survey = await Survey.findByPk(id);
+    if (!survey) {
+      res.status(404).json({ error: 'NOT_FOUND' });
+      return;
+    }
+
+    const questions = await SurveyQuestion.findAll({
+      where: { surveyId: id },
+      order: [['sortOrder', 'ASC']],
+    });
+
+    const responses = await SurveyResponse.findAll({
+      where: { surveyId: id },
+      include: [{ model: SurveyAnswer, as: 'answers', attributes: ['questionId', 'answerText', 'answerOptions'] }],
+      order: [['submittedAt', 'ASC']],
+    });
+
+    const esc = (s: string) => `"${String(s ?? '').replace(/"/g, '""').replace(/\n/g, ' ')}"`;
+
+    const headers = [
+      '回答日時',
+      ...questions.map((q) => `Q${q.sortOrder} ${q.questionJa.slice(0, 30)}`),
+    ];
+    const csvRows: string[] = [headers.map(esc).join(',')];
+
+    for (const resp of responses) {
+      const respJson = resp.toJSON() as unknown as { submittedAt: string; answers?: { questionId: string; answerText: string | null; answerOptions: string[] | null }[] };
+      const answerMap = new Map((respJson.answers ?? []).map((a) => [a.questionId, a]));
+
+      const row = [
+        new Date(respJson.submittedAt).toLocaleString('ja-JP', { timeZone: 'Asia/Tokyo' }),
+        ...questions.map((q) => {
+          const a = answerMap.get(q.id);
+          if (!a) return '';
+          if (a.answerText) return a.answerText;
+          if (Array.isArray(a.answerOptions) && a.answerOptions.length > 0) {
+            const opts = (q.options as { value: string; labelJa: string }[] | null) ?? [];
+            return a.answerOptions
+              .map((v) => opts.find((o) => o.value === v)?.labelJa ?? v)
+              .join('、');
+          }
+          return '';
+        }),
+      ];
+      csvRows.push(row.map(esc).join(','));
+    }
+
+    const bom = '﻿';
+    const csv = bom + csvRows.join('\r\n');
+    const filename = `survey-${survey.slug ?? id}-responses.csv`;
+
+    res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+    res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+    res.send(csv);
+  }),
+);
+
 export default router;
