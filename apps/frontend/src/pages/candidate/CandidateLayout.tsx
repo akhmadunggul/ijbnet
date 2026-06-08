@@ -47,6 +47,7 @@ export default function CandidateLayout() {
   const navItems = [
     { to: '/portal/dashboard', icon: '🏠', label: t('navDashboard') },
     { to: '/portal/profile', icon: '👤', label: t('navProfile') },
+    { to: '/portal/jp-learning', icon: '🇯🇵', label: t('navJpLearning') },
     { to: '/portal/notifications', icon: '🔔', label: t('navNotifications') },
   ];
 

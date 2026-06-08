@@ -26,6 +26,10 @@ import { RecruitmentRequest, initRecruitmentRequest } from './RecruitmentRequest
 import { GlobalSettings, initGlobalSettings } from './GlobalSettings';
 import { CandidateGakkenResume, initCandidateGakkenResume } from './CandidateGakkenResume';
 import { CandidateGakkenCompany, initCandidateGakkenCompany } from './CandidateGakkenCompany';
+import { JpTopic, initJpTopic } from './JpTopic';
+import { JpLesson, initJpLesson } from './JpLesson';
+import { JpExercise, initJpExercise } from './JpExercise';
+import { JpCandidateProgress, initJpCandidateProgress } from './JpCandidateProgress';
 // Initialize all models
 initCompany(sequelize);
 initLpk(sequelize);
@@ -53,6 +57,10 @@ initRecruitmentRequest(sequelize);
 initGlobalSettings(sequelize);
 initCandidateGakkenResume(sequelize);
 initCandidateGakkenCompany(sequelize);
+initJpTopic(sequelize);
+initJpLesson(sequelize);
+initJpExercise(sequelize);
+initJpCandidateProgress(sequelize);
 // ── Associations ─────────────────────────────────────────────────────────────
 
 // User ↔ Company / Lpk
@@ -193,6 +201,15 @@ Candidate.hasMany(CandidateGakkenCompany, {
 });
 CandidateGakkenCompany.belongsTo(Candidate, { foreignKey: 'candidateId', as: 'candidate' });
 
+// JP Learning
+JpTopic.hasMany(JpLesson, { foreignKey: 'topicId', as: 'lessons', onDelete: 'CASCADE' });
+JpLesson.belongsTo(JpTopic, { foreignKey: 'topicId', as: 'topic' });
+JpLesson.hasMany(JpExercise, { foreignKey: 'lessonId', as: 'exercises', onDelete: 'CASCADE' });
+JpExercise.belongsTo(JpLesson, { foreignKey: 'lessonId', as: 'lesson' });
+Candidate.hasMany(JpCandidateProgress, { foreignKey: 'candidateId', as: 'jpProgress', onDelete: 'CASCADE' });
+JpCandidateProgress.belongsTo(Candidate, { foreignKey: 'candidateId', as: 'candidate' });
+JpCandidateProgress.belongsTo(JpLesson, { foreignKey: 'lessonId', as: 'lesson' });
+
 // Candidate certifications & education history
 Candidate.hasMany(CandidateCertification, {
   foreignKey: 'candidateId',
@@ -236,4 +253,8 @@ export {
   GlobalSettings,
   CandidateGakkenResume,
   CandidateGakkenCompany,
+  JpTopic,
+  JpLesson,
+  JpExercise,
+  JpCandidateProgress,
 };

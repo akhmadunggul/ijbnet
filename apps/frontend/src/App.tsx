@@ -10,6 +10,7 @@ import CandidateProfile from './pages/candidate/CandidateProfile';
 import CandidateNotifications from './pages/candidate/CandidateNotifications';
 import CandidateCVPage from './pages/candidate/CandidateCVPage';
 import ShokumuResumePage from './pages/candidate/ShokumuResumePage';
+import JpLearningPage from './pages/candidate/JpLearningPage';
 import AdminLayout from './pages/admin/AdminLayout';
 import AdminDashboard from './pages/admin/AdminDashboard';
 import AdminCandidates from './pages/admin/AdminCandidates';
@@ -137,6 +138,7 @@ export default function App() {
           <Route path="notifications" element={<CandidateNotifications />} />
           <Route path="cv" element={<CandidateCVPage />} />
           <Route path="shokumu" element={<ShokumuResumePage />} />
+          <Route path="jp-learning" element={<JpLearningPage />} />
         </Route>
 
         {/* Admin portal */}
