@@ -479,7 +479,11 @@
     "noNotifications": "Tidak ada notifikasi",
     "today": "Hari Ini",
     "yesterday": "Kemarin",
-    "earlier": "Sebelumnya"
+    "earlier": "Sebelumnya",
+    "searchPlaceholder": "Cari notifikasi...",
+    "showOlder": "Tampilkan lebih lama ({{count}})",
+    "hideOlder": "Sembunyikan",
+    "noResults": "Tidak ada notifikasi yang cocok"
   },
   "superadmin": {
     "dashboard": {

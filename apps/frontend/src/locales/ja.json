@@ -478,7 +478,11 @@
     "noNotifications": "通知はありません",
     "today": "今日",
     "yesterday": "昨日",
-    "earlier": "以前"
+    "earlier": "以前",
+    "searchPlaceholder": "通知を検索...",
+    "showOlder": "古い通知を表示 ({{count}}件)",
+    "hideOlder": "非表示",
+    "noResults": "一致する通知はありません"
   },
   "superadmin": {
     "dashboard": {
