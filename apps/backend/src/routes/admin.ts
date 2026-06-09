@@ -180,6 +180,7 @@ router.patch('/candidates/:id/status', async (req: Request, res: Response): Prom
   const from = candidate.profileStatus;
 
   const ALLOWED: Record<string, string[]> = {
+    incomplete: ['submitted'],
     submitted: ['under_review'],
     under_review: ['approved', 'rejected'],
   };
@@ -192,11 +193,25 @@ router.patch('/candidates/:id/status', async (req: Request, res: Response): Prom
     return;
   }
 
-  await candidate.update({ profileStatus: status as 'under_review' | 'approved' | 'rejected' });
+  // For incomplete → submitted, require 100% completeness
+  if (from === 'incomplete' && status === 'submitted') {
+    const full = await Candidate.findOne({ where: { id: candidate.id }, include: candidateIncludes() });
+    const { pct } = calcCompleteness(full!.toJSON() as unknown as Record<string, unknown>);
+    if (pct < 100) {
+      res.status(400).json({
+        error: 'INCOMPLETE_PROFILE',
+        message: `Profile is ${pct}% complete. Must be 100% before submitting.`,
+      });
+      return;
+    }
+  }
+
+  await candidate.update({ profileStatus: status as 'submitted' | 'under_review' | 'approved' | 'rejected' });
 
   // Notify candidate
   if (candidate.userId) {
     const titleMap: Record<string, string> = {
+      submitted: 'Profil Anda telah diajukan oleh admin',
       under_review: 'Profil Anda sedang direview',
       approved: 'Profil Anda telah disetujui',
       rejected: 'Profil Anda ditolak',
@@ -225,7 +240,8 @@ router.patch('/candidates/:id/status', async (req: Request, res: Response): Prom
 
   await audit(req, 'UPDATE_STATUS', candidate.id, { from, to: status });
 
-  const eventMap: Record<string, 'profile_under_review' | 'profile_approved' | 'profile_rejected'> = {
+  const eventMap: Record<string, 'profile_submitted' | 'profile_under_review' | 'profile_approved' | 'profile_rejected'> = {
+    submitted: 'profile_submitted',
     under_review: 'profile_under_review',
     approved: 'profile_approved',
     rejected: 'profile_rejected',

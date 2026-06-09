@@ -14,7 +14,8 @@ interface AuditLogsResponse {
   logs: AuditLogEntry[];
 }
 
-const STATUS_TRANSITIONS: Record<string, Array<{ to: string; labelId: string; labelJa: string; danger?: boolean }>> = {
+const STATUS_TRANSITIONS: Record<string, Array<{ to: string; labelId: string; labelJa: string; danger?: boolean; requireComplete?: boolean }>> = {
+  incomplete: [{ to: 'submitted', labelId: 'Ajukan Profil', labelJa: 'プロフィール提出', requireComplete: true }],
   submitted: [{ to: 'under_review', labelId: 'Mulai Review', labelJa: 'レビュー開始' }],
   under_review: [
     { to: 'approved', labelId: 'Setujui', labelJa: '承認' },
@@ -98,7 +99,9 @@ export default function AdminCandidateDetail() {
   const c = data?.candidate;
   if (!c) return null;
 
-  const transitions = STATUS_TRANSITIONS[c.profileStatus] ?? [];
+  const transitions = (STATUS_TRANSITIONS[c.profileStatus] ?? []).filter(
+    (tr) => !tr.requireComplete || c.completeness.pct === 100,
+  );
 
   return (
     <div className="max-w-3xl mx-auto space-y-5">

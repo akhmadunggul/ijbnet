@@ -276,6 +276,7 @@ apps/frontend/src/
 - v0.7.20 — chore: bump version
 - v0.7.21 — Recruiter Permintaan Kandidat: edit and delete actions for pending requests; PATCH + DELETE /api/recruiter/requests/:id (ownership check, 409 if not pending); edit modal pre-filled with existing data, cascading SSW dropdowns, delete confirm dialog; Actions column hidden for non-pending rows; bilingual i18n; new top-level cancel/save/error keys
 - v0.7.22 — Fix superadmin user search always returning empty: add subQuery: false to User.findAndCountAll (Sequelize subQuery+Op.or+LEFT JOINs silently returns 0 rows on MySQL 8.0); debounce search input 300ms; show error state instead of silent empty table
+- v0.7.23 — Fix admin portal: add incomplete → submitted transition for admin; "Ajukan Profil" button shown only when profile is 100% complete; completeness gate enforced on backend; profile_submitted timeline event recorded; candidate notified
 
-Current: v0.7.22
+Current: v0.7.23
 Live at: https://jinzai.jobagus.id
