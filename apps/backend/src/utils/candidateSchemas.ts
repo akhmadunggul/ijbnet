@@ -2,7 +2,13 @@ import { z } from 'zod';
 import type { Response } from 'express';
 
 // ── Shared primitives ─────────────────────────────────────────────────────────
-const isoDate = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Must be YYYY-MM-DD');
+const isoDate = z
+  .string()
+  .regex(/^\d{4}-\d{2}-\d{2}$/, 'Must be YYYY-MM-DD')
+  .refine((s) => {
+    const d = new Date(s);
+    return !isNaN(d.getTime()) && d.toISOString().startsWith(s);
+  }, 'Must be a valid calendar date');
 const shortStr = (max: number) => z.string().max(max);
 const longStr  = (max: number) => z.string().max(max);
 // Trim + uppercase for roman (Indonesian) text fields stored in the DB

@@ -455,7 +455,13 @@ router.put('/me/career', async (req: Request, res: Response): Promise<void> => {
         };
       }),
     );
-    await CandidateCareer.bulkCreate(rows);
+    try {
+      await CandidateCareer.bulkCreate(rows);
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : String(err);
+      res.status(400).json({ error: 'INVALID_DATE', message: msg });
+      return;
+    }
   }
 
   await invalidateMe(req.user!.sub);
@@ -521,18 +527,24 @@ router.put('/me/education-history', async (req: Request, res: Response): Promise
   await CandidateEducationHistory.destroy({ where: { candidateId: candidate.id } });
 
   if (entries?.length) {
-    await CandidateEducationHistory.bulkCreate(
-      entries.map((e, i) => ({
-        id: uuidv4(),
-        candidateId: candidate.id,
-        schoolName: e.schoolName ?? '',
-        major: e.major ?? null,
-        startDate: e.startDate ?? null,
-        endDate: e.endDate ?? null,
-        status: e.status ?? null,
-        sortOrder: e.sortOrder ?? i,
-      })),
-    );
+    try {
+      await CandidateEducationHistory.bulkCreate(
+        entries.map((e, i) => ({
+          id: uuidv4(),
+          candidateId: candidate.id,
+          schoolName: e.schoolName ?? '',
+          major: e.major ?? null,
+          startDate: e.startDate ?? null,
+          endDate: e.endDate ?? null,
+          status: e.status ?? null,
+          sortOrder: e.sortOrder ?? i,
+        })),
+      );
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : String(err);
+      res.status(400).json({ error: 'INVALID_DATE', message: msg });
+      return;
+    }
   }
 
   await invalidateMe(req.user!.sub);
@@ -1079,7 +1091,7 @@ router.get('/me/shokumu-pdf', authenticate, requireRole('candidate'), pdfLimiter
         }
       }
       if (Object.keys(entryUpdates).length > 0 && entry['id']) {
-        await CandidateCareer.update(entryUpdates, { where: { id: entry['id'] as string, candidateId: candidate.id } });
+        await CandidateCareer.update(entryUpdates, { where: { id: entry['id'] as string, candidateId: candidate.id } }).catch(() => null);
       }
     }));
   }
