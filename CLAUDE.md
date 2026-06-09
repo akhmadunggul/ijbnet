@@ -279,6 +279,7 @@ apps/frontend/src/
 - v0.7.23 — Fix admin portal: add incomplete → submitted transition for admin; "Ajukan Profil" button shown only when profile is 100% complete; completeness gate enforced on backend; profile_submitted timeline event recorded; candidate notified
 - v0.7.24 — Fix unhandledRejection crash: strengthen isoDate Zod validator to reject semantically invalid dates (e.g. month 13) in addition to format check; add try-catch to career + education bulkCreate routes; add .catch() to shokumu PDF career update
 - v0.7.25 — Superadmin Tampilan Kolom Rekruter: add Resume (経歴書) column toggle; resume column in Dalam Seleksi now respects both shokumu_recruiter_enabled and the new cols.resume visibility flag
+- v0.7.26 — Recruiter final hiring decision: configurable 1-week/2-week deadline (superadmin Sistem tab); per-candidate accept/reject with checkbox digital-signature confirmation; auto-generated 内定通知書/不採用通知書 PDF downloaded on submit; accepted → profileStatus=hired; rejected → candidate returned to pool; deadline countdown badges on interview list; notifications to candidate and manager
 
-Current: v0.7.25
+Current: v0.7.26
 Live at: https://jinzai.jobagus.id

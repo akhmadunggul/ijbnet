@@ -32,6 +32,7 @@ import { CandidateTimeline } from '../db/models/CandidateTimeline';
 import { renderPdf, isPdfError } from '../utils/browserPool';
 import { buildShokumuHtml } from '../utils/shokumuTemplate';
 import { buildGakkenHtml } from '../utils/gakkenTemplate';
+import { buildHiringLetterHtml } from '../utils/hiringLetterTemplate';
 import { config } from '../config';
 import { isUUID } from 'validator';
 import { v4 as uuidv4 } from 'uuid';
@@ -860,6 +861,191 @@ router.get('/candidates/:id/shokumu-pdf', wrap(async (req: Request, res: Respons
   } catch (err) {
     if (isPdfError(err, 'CHROME_NOT_FOUND')) { res.status(503).json({ error: 'PDF_UNAVAILABLE' }); return; }
     if (isPdfError(err, 'PDF_QUEUE_TIMEOUT')) { res.status(503).json({ error: 'PDF_BUSY' }); return; }
+    throw err;
+  }
+}));
+
+// ── POST /api/recruiter/interviews/:proposalId/decision ──────────────────────
+router.post('/interviews/:proposalId/decision', wrap(async (req: Request, res: Response): Promise<void> => {
+  const { proposalId } = req.params as { proposalId: string };
+  if (!isUUID(proposalId)) {
+    res.status(400).json({ error: 'BAD_REQUEST' });
+    return;
+  }
+
+  const { decision, confirmedBySignature } = req.body as {
+    decision?: string;
+    confirmedBySignature?: boolean;
+  };
+
+  if (decision !== 'accepted' && decision !== 'rejected') {
+    res.status(400).json({ error: 'BAD_REQUEST', message: 'decision must be accepted or rejected.' });
+    return;
+  }
+  if (!confirmedBySignature) {
+    res.status(422).json({ error: 'SIGNATURE_REQUIRED', message: 'You must confirm this decision with your digital signature.' });
+    return;
+  }
+
+  const companyId = await getRecruiterCompanyId(req.user!.sub);
+  if (!companyId) {
+    res.status(403).json({ error: 'FORBIDDEN' });
+    return;
+  }
+
+  const proposal = await InterviewProposal.findByPk(proposalId, {
+    include: [
+      {
+        model: BatchCandidate,
+        as: 'batchCandidate',
+        include: [
+          {
+            model: Batch,
+            as: 'batch',
+            include: [{ model: Company, as: 'company', attributes: ['id', 'name', 'nameJa'] }],
+          },
+          {
+            model: Candidate,
+            as: 'candidate',
+            attributes: ['id', 'fullName', 'nameKatakana', 'candidateCode', 'userId', 'profileStatus', 'interviewStatus'],
+          },
+        ],
+      },
+    ],
+  });
+
+  if (!proposal) {
+    res.status(404).json({ error: 'NOT_FOUND' });
+    return;
+  }
+
+  const bcData = (proposal as unknown as Record<string, unknown>)['batchCandidate'] as Record<string, unknown> | null;
+  const batchData = (bcData?.['batch'] as Record<string, unknown>) ?? null;
+  if (!batchData || batchData['companyId'] !== companyId) {
+    res.status(403).json({ error: 'FORBIDDEN' });
+    return;
+  }
+
+  if (proposal.status !== 'completed') {
+    res.status(422).json({ error: 'INVALID_STATE', message: 'Decision can only be made for completed interviews.' });
+    return;
+  }
+  if (proposal.recruiterDecision !== null) {
+    res.status(409).json({ error: 'DECISION_ALREADY_MADE', message: 'A decision has already been recorded for this interview.' });
+    return;
+  }
+
+  const candidateData = (bcData?.['candidate'] as Record<string, unknown>) ?? null;
+  const candidateId = candidateData?.['id'] as string | null;
+  const candidateName = (candidateData?.['fullName'] as string) ?? 'Kandidat';
+  const candidateUserId = candidateData?.['userId'] as string | null;
+  const companyData = (batchData?.['company'] as Record<string, unknown>) ?? null;
+  const companyName = (companyData?.['name'] as string) ?? 'Perusahaan';
+  const companyNameJa = (companyData?.['nameJa'] as string | null) ?? null;
+
+  if (!candidateId) {
+    res.status(404).json({ error: 'NOT_FOUND' });
+    return;
+  }
+
+  const now = new Date();
+
+  // Record the decision on the proposal
+  await proposal.update({ recruiterDecision: decision, recruiterDecisionAt: now });
+
+  // Apply decision effects
+  if (decision === 'accepted') {
+    await Candidate.update({ profileStatus: 'hired' }, { where: { id: candidateId } });
+
+    if (candidateUserId) {
+      await notifyUser(
+        candidateUserId,
+        'RECRUITER_HIRED',
+        `Selamat! Anda diterima di ${companyName}`,
+        `Rekruter dari ${companyName} telah memberikan keputusan penerimaan untuk Anda.`,
+        'interview_proposal',
+        proposalId,
+      );
+    }
+    await notifyByRole(
+      'manager',
+      'RECRUITER_HIRED',
+      `Rekruter menerima kandidat: ${candidateName}`,
+      `${companyName} telah menerima kandidat ${candidateName}.`,
+      'interview_proposal',
+      proposalId,
+    );
+
+    await recordTimelineEvent(candidateId, 'hired', req.user!.sub, 'recruiter', { proposalId, companyName });
+  } else {
+    // Return to pool: remove from selection
+    const allocation = await BatchCandidate.findOne({
+      where: { id: proposal.batchCandidateId },
+    });
+    if (allocation) {
+      await allocation.update({ isSelected: false, selectedAt: null, isConfirmed: false, confirmedAt: null });
+    }
+
+    if (candidateUserId) {
+      await notifyUser(
+        candidateUserId,
+        'RECRUITER_REJECTED',
+        'Keputusan rekruter',
+        `Rekruter dari ${companyName} tidak dapat menerima Anda pada kesempatan ini. Status Anda telah dikembalikan ke pool kandidat.`,
+        'interview_proposal',
+        proposalId,
+      );
+    }
+    await notifyByRole(
+      'manager',
+      'RECRUITER_REJECTED',
+      `Rekruter menolak kandidat: ${candidateName}`,
+      `${companyName} tidak menerima kandidat ${candidateName}. Kandidat dikembalikan ke pool.`,
+      'interview_proposal',
+      proposalId,
+    );
+
+    await recordTimelineEvent(candidateId, 'recruiter_rejected', req.user!.sub, 'recruiter', { proposalId, companyName });
+  }
+
+  await AuditLog.create({
+    userId: req.user!.sub,
+    action: decision === 'accepted' ? 'RECRUITER_HIRED' : 'RECRUITER_REJECTED',
+    entityType: 'interview_proposal',
+    entityId: proposalId,
+    targetCandidateId: candidateId,
+    ipAddress: req.ip ?? null,
+    userAgent: req.headers['user-agent'] ?? null,
+    payload: { decision, companyName },
+  });
+
+  // Generate the formal letter PDF
+  const letterHtml = buildHiringLetterHtml({
+    decision,
+    candidateName,
+    companyName,
+    companyNameJa,
+    date: now,
+  });
+
+  try {
+    const letterPdf = await renderPdf(letterHtml, { top: '25mm', bottom: '20mm', left: '25mm', right: '25mm' });
+    const letterBase64 = letterPdf.toString('base64');
+
+    res.json({
+      ok: true,
+      decision,
+      letterPdfBase64: letterBase64,
+      letterFilename: decision === 'accepted'
+        ? `内定通知書_${candidateName}.pdf`
+        : `不採用通知書_${candidateName}.pdf`,
+    });
+  } catch (err) {
+    // Letter generation is non-critical — decision is already recorded
+    if (isPdfError(err, 'CHROME_NOT_FOUND') || isPdfError(err, 'PDF_QUEUE_TIMEOUT')) {
+      res.json({ ok: true, decision, letterPdfBase64: null, letterFilename: null });
+      return;
+    }
     throw err;
   }
 }));

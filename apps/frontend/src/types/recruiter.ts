@@ -107,6 +107,9 @@ export interface InterviewProposalData {
   proposedDates: string[] | null;
   finalDate: string | null;
   status: 'proposed' | 'scheduled' | 'completed' | 'cancelled';
+  recruiterDecision: 'accepted' | 'rejected' | null;
+  recruiterDecisionAt: string | null;
+  decisionDeadline: string | null;
   createdAt: string;
   updatedAt: string;
 }

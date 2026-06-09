@@ -8,6 +8,9 @@ export interface InterviewProposalAttributes {
   candidatePreferredDate: string | null;
   finalDate: Date | null;
   status: 'proposed' | 'scheduled' | 'completed' | 'cancelled';
+  recruiterDecision: 'accepted' | 'rejected' | null;
+  recruiterDecisionAt: Date | null;
+  decisionDeadline: Date | null;
   createdAt?: Date;
   updatedAt?: Date;
 }
@@ -15,7 +18,15 @@ export interface InterviewProposalAttributes {
 export interface InterviewProposalCreationAttributes
   extends Optional<
     InterviewProposalAttributes,
-    'id' | 'proposedBy' | 'proposedDates' | 'candidatePreferredDate' | 'finalDate' | 'status'
+    | 'id'
+    | 'proposedBy'
+    | 'proposedDates'
+    | 'candidatePreferredDate'
+    | 'finalDate'
+    | 'status'
+    | 'recruiterDecision'
+    | 'recruiterDecisionAt'
+    | 'decisionDeadline'
   > {}
 
 export class InterviewProposal
@@ -28,6 +39,9 @@ export class InterviewProposal
   declare candidatePreferredDate: string | null;
   declare finalDate: Date | null;
   declare status: 'proposed' | 'scheduled' | 'completed' | 'cancelled';
+  declare recruiterDecision: 'accepted' | 'rejected' | null;
+  declare recruiterDecisionAt: Date | null;
+  declare decisionDeadline: Date | null;
   declare readonly createdAt: Date;
   declare readonly updatedAt: Date;
 }
@@ -46,6 +60,13 @@ export function initInterviewProposal(sequelize: Sequelize): void {
         defaultValue: 'proposed',
         allowNull: false,
       },
+      recruiterDecision: {
+        type: DataTypes.ENUM('accepted', 'rejected'),
+        allowNull: true,
+        defaultValue: null,
+      },
+      recruiterDecisionAt: { type: DataTypes.DATE, allowNull: true },
+      decisionDeadline: { type: DataTypes.DATE, allowNull: true },
     },
     { sequelize, tableName: 'interview_proposals', timestamps: true },
   );

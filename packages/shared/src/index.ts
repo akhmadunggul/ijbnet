@@ -6,7 +6,8 @@ export type ProfileStatus =
   | 'under_review'
   | 'approved'
   | 'confirmed'
-  | 'rejected';
+  | 'rejected'
+  | 'hired';
 
 export type BatchStatus = 'draft' | 'active' | 'selection' | 'approved' | 'closed';
 

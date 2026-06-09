@@ -623,6 +623,28 @@ router.put('/journey-visualization', wrap(async (req, res) => {
   res.json({ mode });
 }));
 
+// ── GET /api/superadmin/interview-decision-config ────────────────────────────
+router.get('/interview-decision-config', wrap(async (_req, res) => {
+  const row = await GlobalSettings.findOne({ where: { key: 'interview_decision_deadline_days' } });
+  const days = row ? Number((row.toJSON() as unknown as Record<string, unknown>)['value'] ?? 7) : 7;
+  res.json({ deadlineDays: days });
+}));
+
+// ── PUT /api/superadmin/interview-decision-config ────────────────────────────
+router.put('/interview-decision-config', wrap(async (req, res) => {
+  const body = req.body as Record<string, unknown>;
+  const raw = Number(body['deadlineDays']);
+  const deadlineDays = [7, 14].includes(raw) ? raw : 7;
+
+  const [row, created] = await GlobalSettings.findOrCreate({
+    where: { key: 'interview_decision_deadline_days' },
+    defaults: { key: 'interview_decision_deadline_days', value: deadlineDays },
+  });
+  if (!created) await row.update({ value: deadlineDays });
+
+  res.json({ deadlineDays });
+}));
+
 // ── PUT /api/superadmin/shokumu-config ───────────────────────────────────────
 router.put('/shokumu-config', wrap(async (req, res) => {
   const body = req.body as Record<string, unknown>;

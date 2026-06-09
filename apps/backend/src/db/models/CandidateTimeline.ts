@@ -16,7 +16,9 @@ export type TimelineEventType =
   | 'interview_passed'
   | 'interview_failed'
   | 'recruiter_accepted'
-  | 'provisional_acceptance';
+  | 'provisional_acceptance'
+  | 'hired'
+  | 'recruiter_rejected';
 
 export interface CandidateTimelineAttributes {
   id: string;

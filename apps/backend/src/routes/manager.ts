@@ -19,6 +19,7 @@ import {
   InterviewProposal,
   Company,
   RecruitmentRequest,
+  GlobalSettings,
 } from '../db/models/index';
 import { serializeCandidate } from '../serializers/candidate';
 import { calcCompleteness } from '../utils/completeness';
@@ -862,7 +863,13 @@ router.patch('/interviews/:proposalId/result', wrap(async (req: Request, res: Re
   }
 
   const newStatus = result === 'cancelled' ? 'cancelled' : 'completed';
-  await proposal.update({ status: newStatus });
+  let decisionDeadline: Date | null = null;
+  if (newStatus === 'completed') {
+    const deadlineRow = await GlobalSettings.findOne({ where: { key: 'interview_decision_deadline_days' } });
+    const days = deadlineRow ? Number((deadlineRow.toJSON() as unknown as Record<string, unknown>)['value'] ?? 7) : 7;
+    decisionDeadline = new Date(Date.now() + days * 24 * 60 * 60 * 1000);
+  }
+  await proposal.update({ status: newStatus, ...(decisionDeadline ? { decisionDeadline } : {}) });
 
   const bcData = (proposal as unknown as Record<string, unknown>)['batchCandidate'] as Record<string, unknown> | null;
   const candidateData = (bcData?.['candidate'] as Record<string, unknown>) ?? null;

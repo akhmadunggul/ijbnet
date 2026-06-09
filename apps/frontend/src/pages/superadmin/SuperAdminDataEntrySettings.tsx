@@ -78,6 +78,7 @@ export default function SuperAdminDataEntrySettings() {
   const [shokumuTemplate, setShokumuTemplate] = useState<ShokumuTemplate>('generic');
   const [shokumuRecruiterEnabled, setShokumuRecruiterEnabled] = useState(false);
   const [jpLearningLpkIds, setJpLearningLpkIds] = useState<string[]>([]);
+  const [decisionDeadlineDays, setDecisionDeadlineDays] = useState<7 | 14>(7);
 
   // API key management state (explicit save — not auto-save)
   const [serviceTestStatus, setServiceTestStatus] = useState<Record<string, ServiceTestStatus>>({});
@@ -167,6 +168,11 @@ export default function SuperAdminDataEntrySettings() {
     queryFn: () => api.get('/superadmin/jp-learning-config').then(r => r.data),
     staleTime: 60_000,
   });
+  const { data: decisionConfigData } = useQuery<{ deadlineDays: number }>({
+    queryKey: ['interview-decision-config'],
+    queryFn: () => api.get('/superadmin/interview-decision-config').then(r => r.data),
+    staleTime: 60_000,
+  });
 
   // ── Server → state sync ───────────────────────────────────────────────────
   useEffect(() => { if (data?.config) setConfig({ ...data.config } as Record<TabKey, boolean>); }, [data]);
@@ -204,6 +210,11 @@ export default function SuperAdminDataEntrySettings() {
   useEffect(() => {
     if (jpLearningConfigData !== undefined) setJpLearningLpkIds(jpLearningConfigData.lpkIds ?? []);
   }, [jpLearningConfigData]);
+  useEffect(() => {
+    if (decisionConfigData?.deadlineDays) {
+      setDecisionDeadlineDays(decisionConfigData.deadlineDays === 14 ? 14 : 7);
+    }
+  }, [decisionConfigData]);
 
   // ── Mutations ─────────────────────────────────────────────────────────────
   const tabMutation = useMutation({
@@ -269,6 +280,12 @@ export default function SuperAdminDataEntrySettings() {
       api.put('/superadmin/jp-learning-config', { lpkIds }).then(r => r.data),
     onSuccess: () => { markSaved('jplearning'); void qc.invalidateQueries({ queryKey: ['jp-learning-config'] }); },
     onError: () => markError('jplearning'),
+  });
+  const decisionDeadlineMutation = useMutation({
+    mutationFn: (days: number) =>
+      api.put('/superadmin/interview-decision-config', { deadlineDays: days }).then(r => r.data),
+    onSuccess: () => { markSaved('decisiondeadline'); void qc.invalidateQueries({ queryKey: ['interview-decision-config'] }); },
+    onError: () => markError('decisiondeadline'),
   });
 
   // ── Auto-save helpers ─────────────────────────────────────────────────────
@@ -997,6 +1014,34 @@ export default function SuperAdminDataEntrySettings() {
                 </label>
               ))}
             </div>
+          </div>
+
+          {/* Interview Decision Deadline */}
+          <div>
+            {subHead(t('superadmin.dataEntrySettings.decisionDeadlineTitle'), 'decisiondeadline')}
+            <p className="text-xs text-gray-500 mb-3">{t('superadmin.dataEntrySettings.decisionDeadlineDesc')}</p>
+            <div className="bg-white rounded-xl border border-gray-100 shadow-sm divide-y divide-gray-50">
+              {([7, 14] as (7 | 14)[]).map(days => (
+                <label key={days} className="flex items-start gap-4 px-5 py-4 cursor-pointer hover:bg-gray-50 transition">
+                  <input
+                    type="radio" name="decision_deadline_days" value={days}
+                    checked={decisionDeadlineDays === days}
+                    onChange={() => { setDecisionDeadlineDays(days); decisionDeadlineMutation.mutate(days); }}
+                    className="accent-navy-700 mt-0.5"
+                  />
+                  <div>
+                    <p className="text-sm font-medium text-gray-800">
+                      {days === 7 ? t('superadmin.dataEntrySettings.deadline7Label') : t('superadmin.dataEntrySettings.deadline14Label')}
+                    </p>
+                    <p className="text-xs text-gray-400">
+                      {days === 7 ? t('superadmin.dataEntrySettings.deadline7Desc') : t('superadmin.dataEntrySettings.deadline14Desc')}
+                    </p>
+                  </div>
+                </label>
+              ))}
+            </div>
+            {savedFlash['decisiondeadline'] && <p className="text-xs text-green-600 mt-2">{t('saved')}</p>}
+            {errorFlash['decisiondeadline'] && <p className="text-xs text-red-600 mt-2">{t('toastError')}</p>}
           </div>
 
         </div>

@@ -213,7 +213,7 @@ export function initCandidate(sequelize: Sequelize): void {
       userId: { type: DataTypes.UUID, allowNull: true },
       lpkId: { type: DataTypes.UUID, allowNull: true },
       profileStatus: {
-        type: DataTypes.ENUM('incomplete', 'submitted', 'under_review', 'approved', 'confirmed', 'rejected'),
+        type: DataTypes.ENUM('incomplete', 'submitted', 'under_review', 'approved', 'confirmed', 'rejected', 'hired'),
         defaultValue: 'incomplete',
         allowNull: false,
       },
