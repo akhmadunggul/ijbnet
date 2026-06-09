@@ -138,7 +138,7 @@ export default function ManagerInterviews() {
                   return (
                     <tr key={iv.id} className="hover:bg-gray-50/60 transition">
                       <td className="px-4 py-3">
-                        {bc ? (
+                        {bc?.candidate ? (
                           <>
                             <p className="font-medium text-navy-900">{bc.candidate.fullName}</p>
                             <p className="text-xs text-gray-400">{bc.candidate.candidateCode}</p>
@@ -146,7 +146,7 @@ export default function ManagerInterviews() {
                         ) : '—'}
                       </td>
                       <td className="px-4 py-3 text-gray-600">
-                        {bc?.batch.company
+                        {bc?.batch?.company
                           ? (lang === 'ja' && bc.batch.company.nameJa ? bc.batch.company.nameJa : bc.batch.company.name)
                           : '—'}
                       </td>

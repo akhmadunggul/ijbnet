@@ -74,6 +74,8 @@ export function initCandidateTimeline(sequelize: Sequelize): void {
           'interview_failed',
           'recruiter_accepted',
           'provisional_acceptance',
+          'hired',
+          'recruiter_rejected',
         ),
         allowNull: false,
       },

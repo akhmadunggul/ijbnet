@@ -65,7 +65,7 @@ export interface ManagerInterview {
   createdAt: string;
   batchCandidate?: {
     id: string;
-    candidate: { id: string; candidateCode: string; fullName: string; email: string | null };
-    batch: { id: string; batchCode: string | null; company: { name: string; nameJa: string | null } | null };
+    candidate: { id: string; candidateCode: string; fullName: string; email: string | null } | null;
+    batch: { id: string; batchCode: string | null; company: { name: string; nameJa: string | null } | null } | null;
   };
 }
