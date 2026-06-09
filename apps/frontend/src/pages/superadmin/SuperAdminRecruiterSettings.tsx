@@ -3,13 +3,13 @@ import { useTranslation } from 'react-i18next';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '../../lib/api';
 
-type ColKey = 'foto' | 'nama' | 'ju' | 'pendidikan' | 'program' | 'bahasaJp' | 'cekFisik' | 'fotoBadan' | 'video' | 'profil' | 'pilih';
+type ColKey = 'foto' | 'nama' | 'ju' | 'pendidikan' | 'program' | 'bahasaJp' | 'cekFisik' | 'fotoBadan' | 'video' | 'profil' | 'resume' | 'pilih';
 
-const ALL_COLS: ColKey[] = ['foto', 'nama', 'ju', 'pendidikan', 'program', 'bahasaJp', 'cekFisik', 'fotoBadan', 'video', 'profil', 'pilih'];
+const ALL_COLS: ColKey[] = ['foto', 'nama', 'ju', 'pendidikan', 'program', 'bahasaJp', 'cekFisik', 'fotoBadan', 'video', 'profil', 'resume', 'pilih'];
 
 const DEFAULT_CONFIG: Record<ColKey, boolean> = {
   foto: true, nama: true, ju: true, pendidikan: true, program: true,
-  bahasaJp: true, cekFisik: true, fotoBadan: true, video: true, profil: true, pilih: true,
+  bahasaJp: true, cekFisik: true, fotoBadan: true, video: true, profil: true, resume: true, pilih: true,
 };
 
 interface ColConfigResponse {

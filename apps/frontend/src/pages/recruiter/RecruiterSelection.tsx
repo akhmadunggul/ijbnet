@@ -617,11 +617,11 @@ function ConfirmDialog({
 
 // ── Column config ─────────────────────────────────────────────────────────────
 
-type ColKey = 'foto' | 'nama' | 'ju' | 'pendidikan' | 'program' | 'bahasaJp' | 'cekFisik' | 'fotoBadan' | 'video' | 'profil' | 'pilih';
+type ColKey = 'foto' | 'nama' | 'ju' | 'pendidikan' | 'program' | 'bahasaJp' | 'cekFisik' | 'fotoBadan' | 'video' | 'profil' | 'resume' | 'pilih';
 
 const DEFAULT_COLS: Record<ColKey, boolean> = {
   foto: true, nama: true, ju: true, pendidikan: true, program: true,
-  bahasaJp: true, cekFisik: true, fotoBadan: true, video: true, profil: true, pilih: true,
+  bahasaJp: true, cekFisik: true, fotoBadan: true, video: true, profil: true, resume: true, pilih: true,
 };
 
 interface ColConfigResponse { config: Record<ColKey, boolean>; }
@@ -667,7 +667,9 @@ export default function RecruiterSelection() {
   });
   const recruiterResumeEnabled = shokumuConfig?.recruiterEnabled === true;
 
-  const visibleColCount = 1 + (Object.values(cols) as boolean[]).filter(Boolean).length + (recruiterResumeEnabled ? 1 : 0);
+  const visibleColCount = 1
+    + (Object.entries(cols) as [string, boolean][]).filter(([k, v]) => k !== 'resume' && v).length
+    + (recruiterResumeEnabled && cols.resume ? 1 : 0);
 
   // Initialize selection store from batch data
   useEffect(() => {
@@ -898,7 +900,7 @@ export default function RecruiterSelection() {
                 {cols.fotoBadan && <th className="px-3 py-3 text-center text-xs font-medium text-gray-400">{lang === 'ja' ? '全身写真' : 'Foto Badan'}</th>}
                 {cols.video && <th className="px-3 py-3 text-center text-xs font-medium text-gray-400">{lang === 'ja' ? '動画' : 'Video'}</th>}
                 {cols.profil && <th className="px-3 py-3 text-center text-xs font-medium text-gray-400">{lang === 'ja' ? 'プロフィール' : 'Profil'}</th>}
-                {recruiterResumeEnabled && <th className="px-3 py-3 text-center text-xs font-medium text-gray-400">{lang === 'ja' ? '経歴書' : 'Resume'}</th>}
+                {recruiterResumeEnabled && cols.resume && <th className="px-3 py-3 text-center text-xs font-medium text-gray-400">{lang === 'ja' ? '経歴書' : 'Resume'}</th>}
                 {cols.pilih && <th className="px-3 py-3 text-center text-xs font-medium text-gray-400">{lang === 'ja' ? '選択' : 'Pilih'}</th>}
               </tr>
             </thead>
@@ -1023,7 +1025,7 @@ export default function RecruiterSelection() {
                         </button>
                       </td>
                     )}
-                    {recruiterResumeEnabled && (
+                    {recruiterResumeEnabled && cols.resume && (
                       <td className="px-3 py-3 text-center">
                         <button
                           onClick={() => navigate(`/recruiter/candidates/${bc.candidateId}/shokumu`)}

@@ -219,7 +219,7 @@ router.get('/recruiter-selection-columns', wrap(async (_req, res) => {
   const row = await GlobalSettings.findOne({ where: { key: 'recruiter_selection_columns' } });
   const defaultConfig = {
     foto: true, nama: true, ju: true, pendidikan: true, program: true,
-    bahasaJp: true, cekFisik: true, fotoBadan: true, video: true, profil: true, pilih: true,
+    bahasaJp: true, cekFisik: true, fotoBadan: true, video: true, profil: true, resume: true, pilih: true,
   };
   res.json({ config: row ? (row.toJSON() as unknown as Record<string, unknown>)['value'] : defaultConfig });
 }));
@@ -483,7 +483,7 @@ router.put('/translation-config', wrap(async (req, res) => {
 // ── PUT /api/superadmin/recruiter-selection-columns ──────────────────────────
 router.put('/recruiter-selection-columns', wrap(async (req, res) => {
   const body = req.body as Record<string, unknown>;
-  const validKeys = ['foto', 'nama', 'ju', 'pendidikan', 'program', 'bahasaJp', 'cekFisik', 'fotoBadan', 'video', 'profil', 'pilih'];
+  const validKeys = ['foto', 'nama', 'ju', 'pendidikan', 'program', 'bahasaJp', 'cekFisik', 'fotoBadan', 'video', 'profil', 'resume', 'pilih'];
   const config: Record<string, boolean> = {};
   for (const k of validKeys) {
     config[k] = body[k] !== false;
