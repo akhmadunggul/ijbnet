@@ -166,32 +166,46 @@ function UserDrawer({ user, companies, lpks, onClose, onSuccess }: DrawerProps) 
           </div>
           {form.role === 'recruiter' && (
             <div>
-              <label className="text-xs font-medium text-gray-600 block mb-1">{t('superadmin.companies.title')}</label>
+              <label className="text-xs font-medium text-gray-600 block mb-1">
+                {t('superadmin.companies.title')} <span className="text-red-500">*</span>
+              </label>
               <select
                 value={form.companyId}
                 onChange={(e) => set('companyId', e.target.value)}
-                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className={`w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                  !form.companyId ? 'border-red-300 bg-red-50' : 'border-gray-200'
+                }`}
               >
                 <option value="">— Select company —</option>
                 {companies.map((c) => (
                   <option key={c.id} value={c.id}>{c.name}</option>
                 ))}
               </select>
+              {!form.companyId && (
+                <p className="text-xs text-red-500 mt-1">Recruiter harus ditugaskan ke perusahaan.</p>
+              )}
             </div>
           )}
           {form.role === 'admin' && (
             <div>
-              <label className="text-xs font-medium text-gray-600 block mb-1">{t('superadmin.lpks.title')}</label>
+              <label className="text-xs font-medium text-gray-600 block mb-1">
+                {t('superadmin.lpks.title')} <span className="text-red-500">*</span>
+              </label>
               <select
                 value={form.lpkId}
                 onChange={(e) => set('lpkId', e.target.value)}
-                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className={`w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                  !form.lpkId ? 'border-red-300 bg-red-50' : 'border-gray-200'
+                }`}
               >
                 <option value="">— Select LPK —</option>
                 {lpks.map((l) => (
                   <option key={l.id} value={l.id}>{l.name}</option>
                 ))}
               </select>
+              {!form.lpkId && (
+                <p className="text-xs text-red-500 mt-1">Admin harus ditugaskan ke LPK.</p>
+              )}
             </div>
           )}
           {!user && (
@@ -214,7 +228,11 @@ function UserDrawer({ user, companies, lpks, onClose, onSuccess }: DrawerProps) 
           </button>
           <button
             onClick={() => mutation.mutate()}
-            disabled={mutation.isPending}
+            disabled={
+              mutation.isPending ||
+              (form.role === 'recruiter' && !form.companyId) ||
+              (form.role === 'admin' && !form.lpkId)
+            }
             className="flex-1 bg-gray-900 text-white rounded-lg py-2 text-sm font-medium hover:bg-gray-700 transition disabled:opacity-50"
           >
             {mutation.isPending ? '…' : t('btnSave')}

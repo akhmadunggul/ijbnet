@@ -750,6 +750,14 @@ router.post('/users', wrap(async (req, res) => {
     res.status(400).json({ error: 'BAD_REQUEST', message: 'Valid role required.' });
     return;
   }
+  if (role === 'recruiter' && (!companyId || !isUUID(companyId))) {
+    res.status(400).json({ error: 'BAD_REQUEST', message: 'Recruiter must be assigned to a company.' });
+    return;
+  }
+  if (role === 'admin' && (!lpkId || !isUUID(lpkId))) {
+    res.status(400).json({ error: 'BAD_REQUEST', message: 'Admin must be assigned to an LPK.' });
+    return;
+  }
 
   const existing = await User.findOne({ where: { email } });
   if (existing) {
@@ -804,6 +812,20 @@ router.put('/users/:id', validateUuidParam('id'), wrap(async (req, res) => {
   }
   if (companyId !== undefined) updates.companyId = companyId && isUUID(String(companyId)) ? String(companyId) : null;
   if (lpkId !== undefined) updates.lpkId = lpkId && isUUID(String(lpkId)) ? String(lpkId) : null;
+
+  // Determine the effective role after this update
+  const effectiveRole = updates.role ?? user.role;
+  const effectiveCompanyId = updates.companyId !== undefined ? updates.companyId : user.companyId;
+  const effectiveLpkId = updates.lpkId !== undefined ? updates.lpkId : user.lpkId;
+
+  if (effectiveRole === 'recruiter' && !effectiveCompanyId) {
+    res.status(400).json({ error: 'BAD_REQUEST', message: 'Recruiter must be assigned to a company.' });
+    return;
+  }
+  if (effectiveRole === 'admin' && !effectiveLpkId) {
+    res.status(400).json({ error: 'BAD_REQUEST', message: 'Admin must be assigned to an LPK.' });
+    return;
+  }
 
   await user.update(updates);
   res.json({ user: serializeUser(user.toJSON() as unknown as Record<string, unknown>) });
