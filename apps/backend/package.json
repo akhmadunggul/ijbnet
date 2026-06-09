@@ -1,6 +1,6 @@
 {
   "name": "@ijbnet/backend",
-  "version": "0.7.20",
+  "version": "0.7.21",
   "private": true,
   "scripts": {
     "dev": "ts-node-dev --respawn --transpile-only src/index.ts",

@@ -152,6 +152,9 @@
   "loading": "読み込み中…",
   "noData": "データがありません。",
   "optional": "任意",
+  "cancel": "キャンセル",
+  "save": "保存",
+  "error": "エラーが発生しました。",
   "comingSoon": "近日公開予定。",
   "candidate": {
     "dashboard": {
@@ -990,6 +993,13 @@
     "batch": "バッチ",
     "noRequests": "依頼はありません。",
     "noRequestsYet": "送信した依頼がここに表示されます。",
+    "actions": "操作",
+    "editBtn": "編集",
+    "deleteBtn": "削除",
+    "editTitle": "依頼を編集",
+    "editSuccess": "依頼を更新しました。",
+    "deleteSuccess": "依頼を削除しました。",
+    "deleteConfirm": "この依頼を削除してもよろしいですか？",
     "form": {
       "title": "新規依頼を送信",
       "description": "以下のフォームに入力して、IJBNetマネージャーに候補者の依頼を送信してください。",

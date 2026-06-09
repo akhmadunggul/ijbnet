@@ -274,6 +274,7 @@ apps/frontend/src/
 - v0.7.18 — JP learning gate diagnostics: isEnabledForCandidate logs gate failure reason (no config / no candidate record / null lpkId / lpk mismatch) to backend console for production debugging
 - v0.7.19 — Fix JP learning: candidateId was read from JWT (undefined) instead of DB; refactor gate helper getGatedCandidate() returns candidate.id for all progress queries; fix migration-000044 addIndex race condition
 - v0.7.20 — chore: bump version
+- v0.7.21 — Recruiter Permintaan Kandidat: edit and delete actions for pending requests; PATCH + DELETE /api/recruiter/requests/:id (ownership check, 409 if not pending); edit modal pre-filled with existing data, cascading SSW dropdowns, delete confirm dialog; Actions column hidden for non-pending rows; bilingual i18n; new top-level cancel/save/error keys
 
-Current: v0.7.20
+Current: v0.7.21
 Live at: https://jinzai.jobagus.id

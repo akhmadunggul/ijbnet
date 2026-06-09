@@ -702,6 +702,62 @@ router.get('/requests/:id', wrap(async (req: Request, res: Response): Promise<vo
   res.json({ request: request.toJSON() });
 }));
 
+// ── PATCH /api/recruiter/requests/:id ────────────────────────────────────────
+router.patch('/requests/:id', wrap(async (req: Request, res: Response): Promise<void> => {
+  const { id } = req.params as { id: string };
+  if (!isUUID(id)) { res.status(400).json({ error: 'BAD_REQUEST' }); return; }
+
+  const companyId = await getRecruiterCompanyId(req.user!.sub);
+  if (!companyId) { res.status(403).json({ error: 'NO_COMPANY' }); return; }
+
+  const request = await RecruitmentRequest.findOne({ where: { id, companyId } });
+  if (!request) { res.status(404).json({ error: 'NOT_FOUND' }); return; }
+  if (request.status !== 'pending') {
+    res.status(409).json({ error: 'NOT_PENDING', message: 'Only pending requests can be edited.' });
+    return;
+  }
+
+  const { kubun, sswSectorId, sswSectorJa, sswFieldId, sswFieldJa, requestedCount, notes } = req.body as {
+    kubun?: string; sswSectorId?: string; sswSectorJa?: string;
+    sswFieldId?: string; sswFieldJa?: string; requestedCount?: number; notes?: string | null;
+  };
+
+  if (requestedCount !== undefined && requestedCount < 1) {
+    res.status(400).json({ error: 'BAD_REQUEST' }); return;
+  }
+
+  await request.update({
+    ...(kubun        !== undefined && { kubun: kubun as 'SSW1' | 'SSW2' | 'Trainee' }),
+    ...(sswSectorId  !== undefined && { sswSectorId }),
+    ...(sswSectorJa  !== undefined && { sswSectorJa }),
+    ...(sswFieldId   !== undefined && { sswFieldId }),
+    ...(sswFieldJa   !== undefined && { sswFieldJa }),
+    ...(requestedCount !== undefined && { requestedCount: Number(requestedCount) }),
+    ...(notes        !== undefined && { notes: notes ?? null }),
+  });
+
+  res.json({ request: request.toJSON() });
+}));
+
+// ── DELETE /api/recruiter/requests/:id ───────────────────────────────────────
+router.delete('/requests/:id', wrap(async (req: Request, res: Response): Promise<void> => {
+  const { id } = req.params as { id: string };
+  if (!isUUID(id)) { res.status(400).json({ error: 'BAD_REQUEST' }); return; }
+
+  const companyId = await getRecruiterCompanyId(req.user!.sub);
+  if (!companyId) { res.status(403).json({ error: 'NO_COMPANY' }); return; }
+
+  const request = await RecruitmentRequest.findOne({ where: { id, companyId } });
+  if (!request) { res.status(404).json({ error: 'NOT_FOUND' }); return; }
+  if (request.status !== 'pending') {
+    res.status(409).json({ error: 'NOT_PENDING', message: 'Only pending requests can be deleted.' });
+    return;
+  }
+
+  await request.destroy();
+  res.json({ ok: true });
+}));
+
 // ── GET /api/recruiter/candidates/:id/gakken-resume ──────────────────────────
 router.get('/candidates/:id/gakken-resume', wrap(async (req: Request, res: Response): Promise<void> => {
   const { id } = req.params as { id: string };

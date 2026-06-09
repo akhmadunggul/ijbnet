@@ -153,6 +153,9 @@
   "loading": "Memuat…",
   "noData": "Tidak ada data.",
   "optional": "opsional",
+  "cancel": "Batal",
+  "save": "Simpan",
+  "error": "Terjadi kesalahan.",
   "comingSoon": "Segera hadir.",
   "candidate": {
     "dashboard": {
@@ -991,6 +994,13 @@
     "batch": "Batch",
     "noRequests": "Belum ada permintaan.",
     "noRequestsYet": "Permintaan yang Anda ajukan akan muncul di sini.",
+    "actions": "Aksi",
+    "editBtn": "Edit",
+    "deleteBtn": "Hapus",
+    "editTitle": "Edit Permintaan",
+    "editSuccess": "Permintaan berhasil diperbarui.",
+    "deleteSuccess": "Permintaan berhasil dihapus.",
+    "deleteConfirm": "Yakin ingin menghapus permintaan ini?",
     "form": {
       "title": "Ajukan Permintaan Baru",
       "description": "Isi form berikut untuk mengajukan permintaan kandidat kepada Manager IJBNet.",
