@@ -282,6 +282,7 @@ apps/frontend/src/
 - v0.7.26 — Recruiter final hiring decision: configurable 1-week/2-week deadline (superadmin Sistem tab); per-candidate accept/reject with checkbox digital-signature confirmation; auto-generated 内定通知書/不採用通知書 PDF downloaded on submit; accepted → profileStatus=hired; rejected → candidate returned to pool; deadline countdown badges on interview list; notifications to candidate and manager
 - v0.8.0 — Fix manager interviews blank page: null-guard batchCandidate.candidate (LEFT JOIN orphan crash on null candidate); fix bc?.batch?.company optional chain; add missing 'hired'/'recruiter_rejected' to CandidateTimeline Sequelize ENUM; enforce companyId required for recruiter and lpkId required for admin on superadmin user create/edit
 - v0.8.1 — Notifications UX: search bar (client-side filter by title/body), collapsible section for notifications older than 7 days (auto-expands when searching); shared NotificationsPage component across all 4 roles; fetch limit raised 50→100
+- v0.8.2 — Interview workflow redesign: manager marks completion only (no pass/fail); recruiter issues 内定通知書/不採用通知書 as the sole determination; hiring_letter notifications include 📄 download button (role-aware endpoint); on-demand letter PDF endpoints (manager/recruiter/candidate); manager Return-to-Pool for rejected candidates resets batch allocation + profileStatus; returned_to_pool timeline event
 
-Current: v0.8.1
+Current: v0.8.2
 Live at: https://jinzai.jobagus.id
