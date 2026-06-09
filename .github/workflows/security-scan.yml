@@ -22,8 +22,19 @@ jobs:
         with:
           fetch-depth: 0  # required for --scan-mode quick (diff-scoping)
 
-      - name: Install Strix
-        run: curl -sSL https://strix.ai/install | bash
+      - name: Install Strix (pinned release + checksum)
+        env:
+          # Pin to a specific release. Update STRIX_VERSION + SHA256 together
+          # when upgrading. Get SHA256 from: https://github.com/usestrix/strix/releases
+          STRIX_VERSION: "0.1.13"
+          STRIX_SHA256: "REPLACE_WITH_ACTUAL_SHA256_FROM_RELEASE_PAGE"
+        run: |
+          curl -sSL \
+            "https://github.com/usestrix/strix/releases/download/v${STRIX_VERSION}/strix-linux-amd64" \
+            -o strix
+          echo "${STRIX_SHA256}  strix" | sha256sum -c
+          chmod +x strix
+          sudo mv strix /usr/local/bin/strix
 
       - name: Run Strix security scan
         env:
