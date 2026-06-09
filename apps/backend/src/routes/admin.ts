@@ -24,6 +24,7 @@ import { recordTimelineEvent, currentAgeHours } from '../utils/timeline';
 import { CandidateTimeline } from '../db/models/CandidateTimeline';
 import { candidateIncludes } from '../utils/candidateIncludes';
 import { backfillCareerJa } from '../utils/translate';
+import { autoSubmitIfComplete } from '../utils/autoSubmit';
 import { isUUID } from 'validator';
 import { v4 as uuidv4 } from 'uuid';
 
@@ -638,6 +639,35 @@ router.get('/candidates/:id/timeline', async (req: Request, res: Response): Prom
       return json;
     }),
   });
+});
+
+// ── POST /api/admin/candidates/bulk-submit-complete ───────────────────────────
+// Backfill: auto-submit all 'incomplete' candidates in this LPK that are 100% complete.
+router.post('/candidates/bulk-submit-complete', async (req: Request, res: Response): Promise<void> => {
+  const lpkId = await getAdminLpkId(req.user!.sub);
+  if (!lpkId) {
+    res.status(403).json({ error: 'FORBIDDEN' });
+    return;
+  }
+
+  // Find all incomplete candidates in this LPK that have consent and an lpkId
+  const candidates = await Candidate.findAll({
+    where: { lpkId, profileStatus: 'incomplete', consentGiven: true },
+    attributes: ['id'],
+  });
+
+  let submitted = 0;
+  let skipped = 0;
+
+  await Promise.allSettled(
+    candidates.map(async (c) => {
+      const wasSubmitted = await autoSubmitIfComplete(c.id, req.user!.sub, 'admin');
+      if (wasSubmitted) submitted++;
+      else skipped++;
+    }),
+  );
+
+  res.json({ submitted, skipped, total: candidates.length });
 });
 
 export default router;

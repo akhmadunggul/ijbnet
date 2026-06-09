@@ -57,6 +57,7 @@ import type { PhotoSlot } from '../utils/storage';
 import { encrypt } from '../utils/crypto';
 import { cacheGet, cacheSet, cacheDel } from '../utils/redis';
 import { buildHiringLetterHtml } from '../utils/hiringLetterTemplate';
+import { autoSubmitIfComplete } from '../utils/autoSubmit';
 import { isUUID } from 'validator';
 import { v4 as uuidv4 } from 'uuid';
 
@@ -238,6 +239,9 @@ router.patch('/me', async (req: Request, res: Response): Promise<void> => {
 
   await candidate.update(updates);
   await invalidateMe(req.user!.sub);
+  autoSubmitIfComplete(candidate.id, req.user!.sub, 'candidate').catch((e) =>
+    console.error('[autoSubmit] PATCH /me failed:', e),
+  );
 
   const fresh = await findMyCandidate(req.user!.sub);
   const data = fresh!.toJSON() as unknown as Record<string, unknown>;
@@ -287,6 +291,9 @@ router.patch('/me/consent', authenticate, requireRole('candidate'), async (req: 
       .catch((e) => console.error('[consent] timeline event failed:', e));
 
     await invalidateMe(req.user!.sub);
+    autoSubmitIfComplete(candidate.id, req.user!.sub, 'candidate').catch((e) =>
+      console.error('[autoSubmit] PATCH /me/consent failed:', e),
+    );
     res.json({ message: 'Consent recorded.' });
   } catch (err) {
     console.error('[PATCH /me/consent] error:', err);
@@ -314,6 +321,9 @@ router.patch('/me/nik', async (req: Request, res: Response): Promise<void> => {
 
   await candidate.update({ nikEncrypted: encrypt(nik) });
   await invalidateMe(req.user!.sub);
+  autoSubmitIfComplete(candidate.id, req.user!.sub, 'candidate').catch((e) =>
+    console.error('[autoSubmit] PATCH /me/nik failed:', e),
+  );
 
   await AuditLog.create({
     userId: req.user!.sub,
@@ -469,6 +479,9 @@ router.put('/me/career', async (req: Request, res: Response): Promise<void> => {
   }
 
   await invalidateMe(req.user!.sub);
+  autoSubmitIfComplete(candidate.id, req.user!.sub, 'candidate').catch((e) =>
+    console.error('[autoSubmit] PUT /me/career failed:', e),
+  );
   const career = await CandidateCareer.findAll({ where: { candidateId: candidate.id }, order: [['startDate', 'ASC'], ['sortOrder', 'ASC']] });
   res.json({ career: career.map((c) => c.toJSON()) });
 });
@@ -505,6 +518,9 @@ router.put('/me/certifications', async (req: Request, res: Response): Promise<vo
   }
 
   await invalidateMe(req.user!.sub);
+  autoSubmitIfComplete(candidate.id, req.user!.sub, 'candidate').catch((e) =>
+    console.error('[autoSubmit] PUT /me/certifications failed:', e),
+  );
   const certifications = await CandidateCertification.findAll({
     where: { candidateId: candidate.id },
     order: [['createdAt', 'ASC']],
@@ -552,6 +568,9 @@ router.put('/me/education-history', async (req: Request, res: Response): Promise
   }
 
   await invalidateMe(req.user!.sub);
+  autoSubmitIfComplete(candidate.id, req.user!.sub, 'candidate').catch((e) =>
+    console.error('[autoSubmit] PUT /me/education-history failed:', e),
+  );
   const educationHistory = await CandidateEducationHistory.findAll({
     where: { candidateId: candidate.id },
     order: [['sortOrder', 'ASC']],
@@ -591,6 +610,9 @@ router.put('/me/tests', async (req: Request, res: Response): Promise<void> => {
   }
 
   await invalidateMe(req.user!.sub);
+  autoSubmitIfComplete(candidate.id, req.user!.sub, 'candidate').catch((e) =>
+    console.error('[autoSubmit] PUT /me/tests failed:', e),
+  );
   const tests = await CandidateJapaneseTest.findAll({ where: { candidateId: candidate.id }, order: [['testDate', 'DESC']] });
   res.json({ tests: tests.map((t) => t.toJSON()) });
 });
@@ -646,6 +668,9 @@ router.post(
     const updateField = slot === 'closeup' ? 'closeupUrl' : 'fullbodyUrl';
     await candidate.update({ [updateField]: urlPath });
     await invalidateMe(req.user!.sub);
+    autoSubmitIfComplete(candidate.id, req.user!.sub, 'candidate').catch((e) =>
+      console.error('[autoSubmit] photo upload failed:', e),
+    );
 
     await AuditLog.create({
       userId: req.user!.sub,

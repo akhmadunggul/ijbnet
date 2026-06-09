@@ -1,9 +1,15 @@
 import { useState, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { api } from '../../lib/api';
 import type { AdminCandidate } from '../../types/admin';
+
+interface BulkSubmitResult {
+  submitted: number;
+  skipped: number;
+  total: number;
+}
 
 interface ListResponse {
   candidates: AdminCandidate[];
@@ -34,7 +40,9 @@ export default function AdminCandidates() {
   const { t, i18n } = useTranslation();
   const lang = i18n.language;
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const [searchParams, setSearchParams] = useSearchParams();
+  const [bulkResult, setBulkResult] = useState<BulkSubmitResult | null>(null);
 
   const [search, setSearch] = useState(searchParams.get('search') ?? '');
   const [profileStatus, setProfileStatus] = useState(searchParams.get('profileStatus') ?? '');
@@ -69,9 +77,38 @@ export default function AdminCandidates() {
   const pageSize = data?.pageSize ?? 20;
   const totalPages = Math.ceil(total / pageSize);
 
+  const bulkSubmitMutation = useMutation<BulkSubmitResult>({
+    mutationFn: () =>
+      api.post('/admin/candidates/bulk-submit-complete').then((r) => r.data),
+    onSuccess: (result) => {
+      setBulkResult(result);
+      void queryClient.invalidateQueries({ queryKey: ['admin-candidates'] });
+    },
+  });
+
   return (
     <div className="space-y-4">
-      <h1 className="text-2xl font-semibold text-navy-900">{t('admin.candidates.title')}</h1>
+      <div className="flex items-center justify-between gap-3 flex-wrap">
+        <h1 className="text-2xl font-semibold text-navy-900">{t('admin.candidates.title')}</h1>
+        <div className="flex items-center gap-3">
+          {bulkResult && (
+            <span className="text-xs text-green-700 bg-green-50 border border-green-100 px-3 py-1.5 rounded-lg">
+              {lang === 'ja'
+                ? `${bulkResult.submitted}件を自動提出しました (スキップ: ${bulkResult.skipped}件)`
+                : `${bulkResult.submitted} kandidat berhasil diajukan (dilewati: ${bulkResult.skipped})`}
+            </span>
+          )}
+          <button
+            onClick={() => { setBulkResult(null); bulkSubmitMutation.mutate(); }}
+            disabled={bulkSubmitMutation.isPending}
+            className="text-sm bg-gold-600 hover:bg-gold-700 text-white px-4 py-1.5 rounded-lg transition disabled:opacity-50"
+          >
+            {bulkSubmitMutation.isPending
+              ? (lang === 'ja' ? '処理中…' : 'Memproses…')
+              : (lang === 'ja' ? '完全なプロフィールを提出' : 'Submit Semua yang Lengkap')}
+          </button>
+        </div>
+      </div>
 
       {/* Filters */}
       <div className="bg-white border border-gray-100 rounded-xl p-4 flex flex-wrap gap-3">
