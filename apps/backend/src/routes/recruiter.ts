@@ -961,47 +961,39 @@ router.post('/interviews/:proposalId/decision', wrap(async (req: Request, res: R
       await notifyUser(
         candidateUserId,
         'RECRUITER_HIRED',
-        `Selamat! Anda diterima di ${companyName}`,
-        `Rekruter dari ${companyName} telah memberikan keputusan penerimaan untuk Anda.`,
-        'interview_proposal',
+        `Selamat! Anda diterima di ${companyName} 🎉`,
+        `${companyName} telah menerbitkan 内定通知書 untuk Anda. Ketuk untuk mengunduh surat.`,
+        'hiring_letter',
         proposalId,
       );
     }
     await notifyByRole(
       'manager',
       'RECRUITER_HIRED',
-      `Rekruter menerima kandidat: ${candidateName}`,
-      `${companyName} telah menerima kandidat ${candidateName}.`,
-      'interview_proposal',
+      `内定通知書 diterbitkan: ${candidateName}`,
+      `${companyName} telah menerbitkan 内定通知書 untuk kandidat ${candidateName}. Ketuk untuk mengunduh surat.`,
+      'hiring_letter',
       proposalId,
     );
 
     await recordTimelineEvent(candidateId, 'hired', req.user!.sub, 'recruiter', { proposalId, companyName });
   } else {
-    // Return to pool: remove from selection
-    const allocation = await BatchCandidate.findOne({
-      where: { id: proposal.batchCandidateId },
-    });
-    if (allocation) {
-      await allocation.update({ isSelected: false, selectedAt: null, isConfirmed: false, confirmedAt: null });
-    }
-
     if (candidateUserId) {
       await notifyUser(
         candidateUserId,
         'RECRUITER_REJECTED',
-        'Keputusan rekruter',
-        `Rekruter dari ${companyName} tidak dapat menerima Anda pada kesempatan ini. Status Anda telah dikembalikan ke pool kandidat.`,
-        'interview_proposal',
+        `Keputusan dari ${companyName}`,
+        `${companyName} telah menerbitkan 不採用通知書 untuk Anda. Ketuk untuk mengunduh surat.`,
+        'hiring_letter',
         proposalId,
       );
     }
     await notifyByRole(
       'manager',
       'RECRUITER_REJECTED',
-      `Rekruter menolak kandidat: ${candidateName}`,
-      `${companyName} tidak menerima kandidat ${candidateName}. Kandidat dikembalikan ke pool.`,
-      'interview_proposal',
+      `不採用通知書 diterbitkan: ${candidateName}`,
+      `${companyName} tidak menerima kandidat ${candidateName}. Gunakan "Kembalikan ke Pool" jika kandidat akan dialokasikan ulang.`,
+      'hiring_letter',
       proposalId,
     );
 
@@ -1045,6 +1037,66 @@ router.post('/interviews/:proposalId/decision', wrap(async (req: Request, res: R
     if (isPdfError(err, 'CHROME_NOT_FOUND') || isPdfError(err, 'PDF_QUEUE_TIMEOUT')) {
       res.json({ ok: true, decision, letterPdfBase64: null, letterFilename: null });
       return;
+    }
+    throw err;
+  }
+}));
+
+// ── GET /api/recruiter/interviews/:proposalId/letter ─────────────────────────
+router.get('/interviews/:proposalId/letter', wrap(async (req: Request, res: Response): Promise<void> => {
+  const { proposalId } = req.params as { proposalId: string };
+  if (!isUUID(proposalId)) { res.status(400).json({ error: 'BAD_REQUEST' }); return; }
+
+  const companyId = await getRecruiterCompanyId(req.user!.sub);
+  if (!companyId) { res.status(403).json({ error: 'FORBIDDEN' }); return; }
+
+  const proposal = await InterviewProposal.findByPk(proposalId, {
+    include: [
+      {
+        model: BatchCandidate,
+        as: 'batchCandidate',
+        include: [
+          { model: Candidate, as: 'candidate', attributes: ['id', 'fullName'] },
+          { model: Batch, as: 'batch', include: [{ model: Company, as: 'company', attributes: ['name', 'nameJa'] }] },
+        ],
+      },
+    ],
+  });
+
+  if (!proposal || proposal.recruiterDecision === null) {
+    res.status(404).json({ error: 'NOT_FOUND' }); return;
+  }
+
+  const bcData = (proposal as unknown as Record<string, unknown>)['batchCandidate'] as Record<string, unknown> | null;
+  const batchData = (bcData?.['batch'] as Record<string, unknown>) ?? null;
+  if (!batchData || batchData['companyId'] !== companyId) {
+    res.status(403).json({ error: 'FORBIDDEN' }); return;
+  }
+
+  const candidateName = ((bcData?.['candidate'] as Record<string, unknown>)?.['fullName'] as string) ?? 'Kandidat';
+  const companyData = (batchData?.['company'] as Record<string, unknown>) ?? null;
+  const companyName = (companyData?.['name'] as string) ?? 'Perusahaan';
+  const companyNameJa = (companyData?.['nameJa'] as string | null) ?? null;
+
+  const html = buildHiringLetterHtml({
+    decision: proposal.recruiterDecision,
+    candidateName,
+    companyName,
+    companyNameJa,
+    date: proposal.recruiterDecisionAt ?? new Date(),
+  });
+
+  try {
+    const pdf = await renderPdf(html, { top: '25mm', bottom: '20mm', left: '25mm', right: '25mm' });
+    const filename = proposal.recruiterDecision === 'accepted'
+      ? `内定通知書_${candidateName}.pdf`
+      : `不採用通知書_${candidateName}.pdf`;
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `attachment; filename*=UTF-8''${encodeURIComponent(filename)}`);
+    res.send(pdf);
+  } catch (err) {
+    if (isPdfError(err, 'CHROME_NOT_FOUND') || isPdfError(err, 'PDF_QUEUE_TIMEOUT')) {
+      res.status(503).json({ error: 'PDF_UNAVAILABLE' }); return;
     }
     throw err;
   }

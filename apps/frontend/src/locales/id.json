@@ -483,7 +483,8 @@
     "searchPlaceholder": "Cari notifikasi...",
     "showOlder": "Tampilkan lebih lama ({{count}})",
     "hideOlder": "Sembunyikan",
-    "noResults": "Tidak ada notifikasi yang cocok"
+    "noResults": "Tidak ada notifikasi yang cocok",
+    "downloadLetter": "Unduh Surat Keputusan"
   },
   "superadmin": {
     "dashboard": {
@@ -991,9 +992,13 @@
       "finalize": "Tetapkan Tanggal",
       "markResult": "Tandai Hasil",
       "finalDate": "Tanggal Final",
-      "resultPass": "Lulus",
-      "resultFail": "Tidak Lulus",
+      "resultCompleted": "Wawancara selesai dilaksanakan",
       "resultCancelled": "Dibatalkan",
+      "resultNote": "Keputusan Diterima/Ditolak diterbitkan oleh Rekruter.",
+      "decisionAccepted": "Diterima (内定)",
+      "decisionRejected": "Ditolak (不採用)",
+      "returnToPool": "Kembalikan ke Pool",
+      "returnToPoolConfirm": "Kandidat ini akan dikembalikan ke pool dan dapat dialokasikan ke batch wawancara yang lain. Status kandidat akan direset ke Approved.",
       "proposedDates": "Tanggal Diusulkan",
       "selectDate": "Pilih tanggal",
       "customDate": "Tanggal lain"

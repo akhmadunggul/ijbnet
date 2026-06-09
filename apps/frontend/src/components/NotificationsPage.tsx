@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '../lib/api';
+import { useAuthStore } from '../store/authStore';
 import type { NotificationData } from '../types/candidate';
 
 interface NotificationsResponse {
@@ -40,17 +41,27 @@ function formatRelative(iso: string, lang: string): string {
 
 const ONE_WEEK_MS = 7 * 24 * 60 * 60 * 1000;
 
+function letterUrl(role: string | undefined, referenceId: string): string {
+  if (role === 'manager')   return `/api/manager/interviews/${referenceId}/letter`;
+  if (role === 'recruiter') return `/api/recruiter/interviews/${referenceId}/letter`;
+  return `/api/candidates/me/letter/${referenceId}`;
+}
+
 function NotifItem({
   n,
   onMarkRead,
   isPending,
+  userRole,
 }: {
   n: NotificationData;
   onMarkRead: (id: string) => void;
   isPending: boolean;
+  userRole: string | undefined;
 }) {
-  const { i18n } = useTranslation();
+  const { t, i18n } = useTranslation();
   const lang = i18n.language;
+  const isLetter = n.referenceType === 'hiring_letter' && n.referenceId;
+
   return (
     <li
       onClick={() => { if (!n.isRead && !isPending) onMarkRead(n.id); }}
@@ -64,6 +75,17 @@ function NotifItem({
       <div className="flex-1 min-w-0">
         <p className="text-sm font-medium text-gray-800">{n.title}</p>
         {n.body && <p className="text-sm text-gray-500 mt-0.5">{n.body}</p>}
+        {isLetter && (
+          <a
+            href={letterUrl(userRole, n.referenceId!)}
+            target="_blank"
+            rel="noopener noreferrer"
+            onClick={(e) => e.stopPropagation()}
+            className="inline-flex items-center gap-1 mt-2 text-xs font-medium text-navy-700 bg-navy-50 border border-navy-100 px-3 py-1 rounded-lg hover:bg-navy-100 transition"
+          >
+            📄 {t('notifications.downloadLetter')}
+          </a>
+        )}
         <p className="text-xs text-gray-300 mt-1">{formatRelative(n.createdAt, lang)}</p>
       </div>
       {!n.isRead && (
@@ -110,6 +132,9 @@ export default function NotificationsPage({ extraInvalidations = [] }: Props) {
     mutationFn: () => api.patch('/notifications/read-all'),
     onSuccess: invalidateAll,
   });
+
+  const { user } = useAuthStore();
+  const userRole = user?.role;
 
   const all = data?.notifications ?? [];
   const unreadCount = data?.unreadCount ?? 0;
@@ -206,6 +231,7 @@ export default function NotificationsPage({ extraInvalidations = [] }: Props) {
                   n={n}
                   onMarkRead={(id) => markOneMutation.mutate(id)}
                   isPending={markOneMutation.isPending}
+                  userRole={userRole}
                 />
               ))}
             </ul>
@@ -235,6 +261,7 @@ export default function NotificationsPage({ extraInvalidations = [] }: Props) {
                       n={n}
                       onMarkRead={(id) => markOneMutation.mutate(id)}
                       isPending={markOneMutation.isPending}
+                      userRole={userRole}
                     />
                   ))}
                 </ul>

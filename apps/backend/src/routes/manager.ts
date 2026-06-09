@@ -40,6 +40,8 @@ import { recordTimelineEvent, currentAgeHours } from '../utils/timeline';
 import { CandidateTimeline } from '../db/models/CandidateTimeline';
 import { candidateIncludes } from '../utils/candidateIncludes';
 import { backfillCareerJa } from '../utils/translate';
+import { renderPdf, isPdfError } from '../utils/browserPool';
+import { buildHiringLetterHtml } from '../utils/hiringLetterTemplate';
 import { isUUID } from 'validator';
 import { v4 as uuidv4 } from 'uuid';
 import { config } from '../config';
@@ -856,20 +858,19 @@ router.patch('/interviews/:proposalId/result', wrap(async (req: Request, res: Re
     return;
   }
 
-  const { result } = req.body as { result?: 'pass' | 'fail' | 'cancelled' };
-  if (!result || !['pass', 'fail', 'cancelled'].includes(result)) {
-    res.status(400).json({ error: 'BAD_REQUEST', message: 'result must be pass, fail, or cancelled.' });
+  const { result } = req.body as { result?: 'completed' | 'cancelled' };
+  if (!result || !['completed', 'cancelled'].includes(result)) {
+    res.status(400).json({ error: 'BAD_REQUEST', message: 'result must be completed or cancelled.' });
     return;
   }
 
-  const newStatus = result === 'cancelled' ? 'cancelled' : 'completed';
   let decisionDeadline: Date | null = null;
-  if (newStatus === 'completed') {
+  if (result === 'completed') {
     const deadlineRow = await GlobalSettings.findOne({ where: { key: 'interview_decision_deadline_days' } });
     const days = deadlineRow ? Number((deadlineRow.toJSON() as unknown as Record<string, unknown>)['value'] ?? 7) : 7;
     decisionDeadline = new Date(Date.now() + days * 24 * 60 * 60 * 1000);
   }
-  await proposal.update({ status: newStatus, ...(decisionDeadline ? { decisionDeadline } : {}) });
+  await proposal.update({ status: result, ...(decisionDeadline ? { decisionDeadline } : {}) });
 
   const bcData = (proposal as unknown as Record<string, unknown>)['batchCandidate'] as Record<string, unknown> | null;
   const candidateData = (bcData?.['candidate'] as Record<string, unknown>) ?? null;
@@ -882,37 +883,34 @@ router.patch('/interviews/:proposalId/result', wrap(async (req: Request, res: Re
   const candidateUserId = candidateData?.['userId'] as string | null;
   const companyName = (companyData?.['name'] as string) ?? 'Perusahaan';
 
-  if (candidateId) {
-    const interviewStatus = result === 'pass' ? 'pass' : result === 'fail' ? 'fail' : 'cancelled';
-    await Candidate.update({ interviewStatus }, { where: { id: candidateId } });
-  }
-
   if (candidateUserId) {
     await notifyUser(
       candidateUserId,
       'INTERVIEW_RESULT',
-      result === 'pass' ? 'Selamat! Anda lulus wawancara 🎉' : 'Hasil wawancara Anda',
-      result === 'pass'
-        ? `Anda telah lulus wawancara dengan ${companyName}.`
-        : `Terima kasih telah mengikuti wawancara dengan ${companyName}.`,
+      result === 'completed'
+        ? 'Wawancara selesai dilaksanakan / 面接が完了しました'
+        : 'Wawancara dibatalkan / 面接がキャンセルされました',
+      result === 'completed'
+        ? `Wawancara Anda dengan ${companyName} telah selesai. Keputusan rekruter akan segera disampaikan.`
+        : `Wawancara Anda dengan ${companyName} dibatalkan.`,
       'interview_proposal',
       proposalId,
     );
   }
-  if (candidateEmail) {
+  if (candidateEmail && result === 'cancelled') {
     await sendEmail(
       candidateEmail,
-      interviewResultSubject(result),
-      interviewResultHtml(candidateName, companyName, result),
+      interviewResultSubject('cancelled'),
+      interviewResultHtml(candidateName, companyName, 'cancelled'),
     );
   }
 
   await audit(req, 'INTERVIEW_RESULT', 'interview_proposal', proposalId, candidateId ?? undefined, { result });
 
-  if (candidateId && (result === 'pass' || result === 'fail')) {
+  if (candidateId) {
     await recordTimelineEvent(
       candidateId,
-      result === 'pass' ? 'interview_passed' : 'interview_failed',
+      result === 'completed' ? 'interview_passed' : 'interview_failed',
       req.user!.sub,
       'manager',
       { proposalId, result },
@@ -920,6 +918,120 @@ router.patch('/interviews/:proposalId/result', wrap(async (req: Request, res: Re
   }
 
   res.json({ proposal: proposal.toJSON() });
+}));
+
+// ── GET /api/manager/interviews/:proposalId/letter ────────────────────────────
+router.get('/interviews/:proposalId/letter', wrap(async (req: Request, res: Response): Promise<void> => {
+  const { proposalId } = req.params as { proposalId: string };
+  if (!isUUID(proposalId)) { res.status(400).json({ error: 'BAD_REQUEST' }); return; }
+
+  const proposal = await InterviewProposal.findByPk(proposalId, {
+    include: [
+      {
+        model: BatchCandidate,
+        as: 'batchCandidate',
+        include: [
+          { model: Candidate, as: 'candidate', attributes: ['id', 'fullName'] },
+          { model: Batch, as: 'batch', include: [{ model: Company, as: 'company', attributes: ['name', 'nameJa'] }] },
+        ],
+      },
+    ],
+  });
+
+  if (!proposal || proposal.recruiterDecision === null) {
+    res.status(404).json({ error: 'NOT_FOUND' }); return;
+  }
+
+  const bcData = (proposal as unknown as Record<string, unknown>)['batchCandidate'] as Record<string, unknown> | null;
+  const candidateName = ((bcData?.['candidate'] as Record<string, unknown>)?.['fullName'] as string) ?? 'Kandidat';
+  const batchData = (bcData?.['batch'] as Record<string, unknown>) ?? null;
+  const companyData = (batchData?.['company'] as Record<string, unknown>) ?? null;
+  const companyName = (companyData?.['name'] as string) ?? 'Perusahaan';
+  const companyNameJa = (companyData?.['nameJa'] as string | null) ?? null;
+
+  const html = buildHiringLetterHtml({
+    decision: proposal.recruiterDecision,
+    candidateName,
+    companyName,
+    companyNameJa,
+    date: proposal.recruiterDecisionAt ?? new Date(),
+  });
+
+  try {
+    const pdf = await renderPdf(html, { top: '25mm', bottom: '20mm', left: '25mm', right: '25mm' });
+    const filename = proposal.recruiterDecision === 'accepted'
+      ? `内定通知書_${candidateName}.pdf`
+      : `不採用通知書_${candidateName}.pdf`;
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `attachment; filename*=UTF-8''${encodeURIComponent(filename)}`);
+    res.send(pdf);
+  } catch (err) {
+    if (isPdfError(err, 'CHROME_NOT_FOUND') || isPdfError(err, 'PDF_QUEUE_TIMEOUT')) {
+      res.status(503).json({ error: 'PDF_UNAVAILABLE' }); return;
+    }
+    throw err;
+  }
+}));
+
+// ── POST /api/manager/interviews/:proposalId/return-to-pool ──────────────────
+router.post('/interviews/:proposalId/return-to-pool', wrap(async (req: Request, res: Response): Promise<void> => {
+  const { proposalId } = req.params as { proposalId: string };
+  if (!isUUID(proposalId)) { res.status(400).json({ error: 'BAD_REQUEST' }); return; }
+
+  const proposal = await InterviewProposal.findByPk(proposalId, {
+    include: [
+      {
+        model: BatchCandidate,
+        as: 'batchCandidate',
+        include: [
+          { model: Candidate, as: 'candidate', attributes: ['id', 'fullName', 'userId', 'profileStatus'] },
+          { model: Batch, as: 'batch', include: [{ model: Company, as: 'company', attributes: ['name'] }] },
+        ],
+      },
+    ],
+  });
+
+  if (!proposal) { res.status(404).json({ error: 'NOT_FOUND' }); return; }
+  if (proposal.recruiterDecision !== 'rejected') {
+    res.status(422).json({ error: 'INVALID_STATE', message: 'Only rejected candidates can be returned to pool.' });
+    return;
+  }
+
+  const bcData = (proposal as unknown as Record<string, unknown>)['batchCandidate'] as Record<string, unknown> | null;
+  const candidateData = (bcData?.['candidate'] as Record<string, unknown>) ?? null;
+  const batchData = (bcData?.['batch'] as Record<string, unknown>) ?? null;
+  const companyData = (batchData?.['company'] as Record<string, unknown>) ?? null;
+
+  const candidateId = candidateData?.['id'] as string | null;
+  const candidateUserId = candidateData?.['userId'] as string | null;
+  const candidateName = (candidateData?.['fullName'] as string) ?? 'Kandidat';
+  const companyName = (companyData?.['name'] as string) ?? 'Perusahaan';
+
+  if (!candidateId) { res.status(404).json({ error: 'NOT_FOUND' }); return; }
+
+  const allocation = await BatchCandidate.findOne({ where: { id: proposal.batchCandidateId } });
+  if (allocation) {
+    await allocation.update({ isSelected: false, selectedAt: null, isConfirmed: false, confirmedAt: null });
+  }
+
+  await Candidate.update({ profileStatus: 'approved' }, { where: { id: candidateId } });
+
+  await recordTimelineEvent(candidateId, 'returned_to_pool', req.user!.sub, 'manager', { proposalId, companyName });
+
+  if (candidateUserId) {
+    await notifyUser(
+      candidateUserId,
+      'STATUS_CHANGED',
+      'Status Anda diperbarui / ステータスが更新されました',
+      'Anda telah dikembalikan ke pool kandidat dan dapat dialokasikan ke batch wawancara baru.',
+      'interview_proposal',
+      proposalId,
+    );
+  }
+
+  await audit(req, 'RETURNED_TO_POOL', 'interview_proposal', proposalId, candidateId, { companyName, candidateName });
+
+  res.json({ ok: true });
 }));
 
 // ── POST /api/manager/candidates/:id/provisional-acceptance ──────────────────

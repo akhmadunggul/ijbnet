@@ -482,7 +482,8 @@
     "searchPlaceholder": "通知を検索...",
     "showOlder": "古い通知を表示 ({{count}}件)",
     "hideOlder": "非表示",
-    "noResults": "一致する通知はありません"
+    "noResults": "一致する通知はありません",
+    "downloadLetter": "通知書をダウンロード"
   },
   "superadmin": {
     "dashboard": {
@@ -990,9 +991,13 @@
       "finalize": "日程確定",
       "markResult": "結果を記録",
       "finalDate": "確定日",
-      "resultPass": "合格",
-      "resultFail": "不合格",
+      "resultCompleted": "面接実施済み",
       "resultCancelled": "キャンセル",
+      "resultNote": "内定／不採用の決定は採用担当者が発行します。",
+      "decisionAccepted": "内定",
+      "decisionRejected": "不採用",
+      "returnToPool": "プールに戻す",
+      "returnToPoolConfirm": "この候補者をプールに戻し、別の面接バッチに割り当てられるようにします。候補者のステータスはApprovedにリセットされます。",
       "proposedDates": "提案日程",
       "selectDate": "日程を選択",
       "customDate": "その他の日程"

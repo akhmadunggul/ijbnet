@@ -40,7 +40,10 @@ export default function ManagerInterviews() {
 
   // Result modal state
   const [resultId, setResultId] = useState<string | null>(null);
-  const [resultValue, setResultValue] = useState<'pass' | 'fail' | 'cancelled'>('pass');
+  const [resultValue, setResultValue] = useState<'completed' | 'cancelled'>('completed');
+
+  // Return-to-pool confirm
+  const [returnPoolId, setReturnPoolId] = useState<string | null>(null);
 
   const queryParams = statusTab !== 'all' ? `?status=${statusTab}` : '';
 
@@ -64,6 +67,14 @@ export default function ManagerInterviews() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['manager-interviews'] });
       setResultId(null);
+    },
+  });
+
+  const returnPoolMutation = useMutation({
+    mutationFn: (id: string) => api.post(`/manager/interviews/${id}/return-to-pool`),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['manager-interviews'] });
+      setReturnPoolId(null);
     },
   });
 
@@ -135,6 +146,10 @@ export default function ManagerInterviews() {
                 {interviews.map((iv) => {
                   const cfg = STATUS_CONFIG[iv.status];
                   const bc = iv.batchCandidate;
+                  const canMarkResult = iv.status === 'scheduled';
+                  const hasDecision = iv.recruiterDecision !== null;
+                  const isRejected = iv.recruiterDecision === 'rejected';
+
                   return (
                     <tr key={iv.id} className="hover:bg-gray-50/60 transition">
                       <td className="px-4 py-3">
@@ -165,12 +180,25 @@ export default function ManagerInterviews() {
                         {iv.finalDate ? formatDateShort(iv.finalDate, lang) : '—'}
                       </td>
                       <td className="px-4 py-3">
-                        <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${cfg?.color ?? 'bg-gray-100 text-gray-600'}`}>
-                          {cfg?.key ? t(cfg.key) : iv.status}
-                        </span>
+                        <div className="flex flex-col gap-1">
+                          <span className={`px-2 py-0.5 rounded-full text-xs font-medium w-fit ${cfg?.color ?? 'bg-gray-100 text-gray-600'}`}>
+                            {cfg?.key ? t(cfg.key) : iv.status}
+                          </span>
+                          {hasDecision && (
+                            <span className={`px-2 py-0.5 rounded-full text-xs font-medium w-fit ${
+                              iv.recruiterDecision === 'accepted'
+                                ? 'bg-green-100 text-green-700'
+                                : 'bg-red-100 text-red-700'
+                            }`}>
+                              {iv.recruiterDecision === 'accepted'
+                                ? t('manager.interviews.decisionAccepted')
+                                : t('manager.interviews.decisionRejected')}
+                            </span>
+                          )}
+                        </div>
                       </td>
                       <td className="px-4 py-3">
-                        <div className="flex gap-2">
+                        <div className="flex flex-col gap-1.5">
                           {iv.status === 'proposed' && (
                             <button
                               onClick={() => openFinalizeModal(iv)}
@@ -179,12 +207,30 @@ export default function ManagerInterviews() {
                               {t('manager.interviews.finalize')}
                             </button>
                           )}
-                          {iv.status === 'scheduled' && (
+                          {canMarkResult && (
                             <button
-                              onClick={() => { setResultId(iv.id); setResultValue('pass'); }}
+                              onClick={() => { setResultId(iv.id); setResultValue('completed'); }}
                               className="text-xs bg-amber-50 text-amber-700 px-3 py-1 rounded-lg hover:bg-amber-100 transition"
                             >
                               {t('manager.interviews.markResult')}
+                            </button>
+                          )}
+                          {hasDecision && (
+                            <a
+                              href={`/api/manager/interviews/${iv.id}/letter`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-xs bg-gray-50 text-gray-600 px-3 py-1 rounded-lg hover:bg-gray-100 transition border border-gray-200 text-center"
+                            >
+                              {iv.recruiterDecision === 'accepted' ? '内定通知書' : '不採用通知書'} ↓
+                            </a>
+                          )}
+                          {isRejected && (
+                            <button
+                              onClick={() => setReturnPoolId(iv.id)}
+                              className="text-xs bg-orange-50 text-orange-700 px-3 py-1 rounded-lg hover:bg-orange-100 transition"
+                            >
+                              {t('manager.interviews.returnToPool')}
                             </button>
                           )}
                         </div>
@@ -204,7 +250,6 @@ export default function ManagerInterviews() {
           <div className="bg-white rounded-2xl shadow-xl p-6 w-full max-w-md mx-4 space-y-4">
             <h2 className="text-lg font-semibold text-navy-900">{t('manager.interviews.finalize')}</h2>
 
-            {/* Candidate's preferred date hint */}
             {finalizeInterview.candidatePreferredDate && (
               <div className="bg-green-50 border border-green-200 rounded-lg px-3 py-2 text-xs text-green-800">
                 ✓ {lang === 'ja' ? '候補者の希望日: ' : 'Tanggal pilihan kandidat: '}
@@ -212,7 +257,6 @@ export default function ManagerInterviews() {
               </div>
             )}
 
-            {/* Proposed dates as radio buttons */}
             {finalizeInterview.proposedDates && finalizeInterview.proposedDates.length > 0 && (
               <div className="space-y-2">
                 <p className="text-xs font-medium text-gray-500">{t('manager.interviews.selectDate')}</p>
@@ -239,7 +283,6 @@ export default function ManagerInterviews() {
               </div>
             )}
 
-            {/* Custom date */}
             <div className="space-y-1">
               <label className="flex items-center gap-3 cursor-pointer">
                 <input
@@ -280,13 +323,14 @@ export default function ManagerInterviews() {
         </div>
       )}
 
-      {/* Result Modal */}
+      {/* Result Modal — simplified to completed / cancelled */}
       {resultId && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
           <div className="bg-white rounded-2xl shadow-xl p-6 w-full max-w-sm mx-4 space-y-4">
             <h2 className="text-lg font-semibold text-navy-900">{t('manager.interviews.markResult')}</h2>
+            <p className="text-xs text-gray-500">{t('manager.interviews.resultNote')}</p>
             <div className="space-y-2">
-              {(['pass', 'fail', 'cancelled'] as const).map((r) => (
+              {(['completed', 'cancelled'] as const).map((r) => (
                 <label key={r} className="flex items-center gap-3 cursor-pointer">
                   <input
                     type="radio"
@@ -297,10 +341,8 @@ export default function ManagerInterviews() {
                     className="accent-navy-700"
                   />
                   <span className="text-sm text-gray-700">
-                    {r === 'pass'
-                      ? t('manager.interviews.resultPass')
-                      : r === 'fail'
-                      ? t('manager.interviews.resultFail')
+                    {r === 'completed'
+                      ? t('manager.interviews.resultCompleted')
                       : t('manager.interviews.resultCancelled')}
                   </span>
                 </label>
@@ -319,6 +361,31 @@ export default function ManagerInterviews() {
                 className="text-sm bg-navy-700 text-white px-4 py-2 rounded-lg hover:bg-navy-800 transition disabled:opacity-50"
               >
                 {resultMutation.isPending ? t('loading') : t('btnSave')}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Return to Pool confirm dialog */}
+      {returnPoolId && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+          <div className="bg-white rounded-2xl shadow-xl p-6 w-full max-w-sm mx-4 space-y-4">
+            <h2 className="text-lg font-semibold text-navy-900">{t('manager.interviews.returnToPool')}</h2>
+            <p className="text-sm text-gray-600">{t('manager.interviews.returnToPoolConfirm')}</p>
+            <div className="flex justify-end gap-3 pt-2">
+              <button
+                onClick={() => setReturnPoolId(null)}
+                className="text-sm text-gray-600 px-4 py-2 rounded-lg hover:bg-gray-50 border border-gray-200 transition"
+              >
+                {t('btnCancel')}
+              </button>
+              <button
+                onClick={() => returnPoolMutation.mutate(returnPoolId)}
+                disabled={returnPoolMutation.isPending}
+                className="text-sm bg-orange-600 text-white px-4 py-2 rounded-lg hover:bg-orange-700 transition disabled:opacity-50"
+              >
+                {returnPoolMutation.isPending ? t('loading') : t('manager.interviews.returnToPool')}
               </button>
             </div>
           </div>
