@@ -701,6 +701,7 @@ router.get('/users', wrap(async (req, res) => {
     order: [['createdAt', 'DESC']],
     limit,
     offset,
+    subQuery: false,
   });
 
   res.json({

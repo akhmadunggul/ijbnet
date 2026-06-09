@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '../../lib/api';
@@ -230,16 +230,22 @@ export default function SuperAdminUsers() {
   const qc = useQueryClient();
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
   const [roleFilter, setRoleFilter] = useState('');
   const [activeFilter, setActiveFilter] = useState('');
   const [drawerUser, setDrawerUser] = useState<UserRow | null | 'new'>(null);
   const [tempPassword, setTempPassword] = useState<string | null>(null);
 
-  const { data, isLoading } = useQuery<UsersResponse>({
-    queryKey: ['superadmin-users', page, search, roleFilter, activeFilter],
+  useEffect(() => {
+    const t = setTimeout(() => { setDebouncedSearch(search); setPage(1); }, 300);
+    return () => clearTimeout(t);
+  }, [search]);
+
+  const { data, isLoading, isError } = useQuery<UsersResponse>({
+    queryKey: ['superadmin-users', page, debouncedSearch, roleFilter, activeFilter],
     queryFn: () => {
       const params = new URLSearchParams({ page: String(page), pageSize: '20' });
-      if (search) params.set('search', search);
+      if (debouncedSearch) params.set('search', debouncedSearch);
       if (roleFilter) params.set('role', roleFilter);
       if (activeFilter !== '') params.set('isActive', activeFilter);
       return api.get(`/superadmin/users?${params.toString()}`).then((r) => r.data);
@@ -295,7 +301,7 @@ export default function SuperAdminUsers() {
         <input
           type="text"
           value={search}
-          onChange={(e) => { setSearch(e.target.value); setPage(1); }}
+          onChange={(e) => setSearch(e.target.value)}
           placeholder={t('filterSearch')}
           className="border border-gray-200 rounded-lg px-3 py-2 text-sm w-56 focus:outline-none focus:ring-2 focus:ring-blue-500"
         />
@@ -322,6 +328,8 @@ export default function SuperAdminUsers() {
       <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
         {isLoading ? (
           <div className="p-6 text-sm text-gray-500">{t('loading')}</div>
+        ) : isError ? (
+          <div className="p-6 text-sm text-red-600">{t('error')}</div>
         ) : (
           <table className="w-full text-sm">
             <thead className="bg-gray-50 border-b border-gray-100">
