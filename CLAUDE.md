@@ -275,6 +275,7 @@ apps/frontend/src/
 - v0.7.19 — Fix JP learning: candidateId was read from JWT (undefined) instead of DB; refactor gate helper getGatedCandidate() returns candidate.id for all progress queries; fix migration-000044 addIndex race condition
 - v0.7.20 — chore: bump version
 - v0.7.21 — Recruiter Permintaan Kandidat: edit and delete actions for pending requests; PATCH + DELETE /api/recruiter/requests/:id (ownership check, 409 if not pending); edit modal pre-filled with existing data, cascading SSW dropdowns, delete confirm dialog; Actions column hidden for non-pending rows; bilingual i18n; new top-level cancel/save/error keys
+- v0.7.22 — Fix superadmin user search always returning empty: add subQuery: false to User.findAndCountAll (Sequelize subQuery+Op.or+LEFT JOINs silently returns 0 rows on MySQL 8.0); debounce search input 300ms; show error state instead of silent empty table
 
-Current: v0.7.21
+Current: v0.7.22
 Live at: https://jinzai.jobagus.id
