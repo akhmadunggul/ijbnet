@@ -284,6 +284,7 @@ apps/frontend/src/
 - v0.8.1 — Notifications UX: search bar (client-side filter by title/body), collapsible section for notifications older than 7 days (auto-expands when searching); shared NotificationsPage component across all 4 roles; fetch limit raised 50→100
 - v0.8.2 — Interview workflow redesign: manager marks completion only (no pass/fail); recruiter issues 内定通知書/不採用通知書 as the sole determination; hiring_letter notifications include 📄 download button (role-aware endpoint); on-demand letter PDF endpoints (manager/recruiter/candidate); manager Return-to-Pool for rejected candidates resets batch allocation + profileStatus; returned_to_pool timeline event
 - v0.8.3 — Auto-submit on 100% completeness: autoSubmitIfComplete() utility called after every candidate profile save (personal data, consent, NIK, career, certifications, education, tests, photos); admin bulk-submit endpoint (POST /api/admin/candidates/bulk-submit-complete) + "Submit Semua yang Lengkap" button in admin candidates page to backfill existing stuck candidates
+- v0.8.4 — Manager meeting link: PATCH /api/manager/interviews/:id/meeting-link sets Zoom/Meet/Teams URL on scheduled proposals; link shown in manager table + candidate dashboard; candidate dashboard polls every 60s and shows teal join button when link is available; fix recruiter portal blank when batch is closed (add closed to getActiveBatch filter)
 
-Current: v0.8.3
+Current: v0.8.4
 Live at: https://jinzai.jobagus.id
