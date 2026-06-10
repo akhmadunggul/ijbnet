@@ -11,7 +11,9 @@
     "migrate:undo:all": "sequelize-cli db:migrate:undo:all",
     "seed": "sequelize-cli db:seed:all",
     "seed:undo": "sequelize-cli db:seed:undo:all",
-    "lint": "eslint src --ext .ts"
+    "lint": "eslint src --ext .ts",
+    "test": "jest --runInBand",
+    "test:regression": "jest --testPathPattern=regression --runInBand"
   },
   "dependencies": {
     "@ijbnet/shared": "workspace:*",
@@ -62,6 +64,9 @@
     "@types/uuid": "^9.0.8",
     "@types/validator": "^13.12.0",
     "docx": "^9.7.1",
+    "@types/jest": "^29.5.12",
+    "jest": "^29.7.0",
+    "ts-jest": "^29.1.4",
     "ts-node": "^10.9.2",
     "ts-node-dev": "^2.0.0",
     "typescript": "^5.4.5"

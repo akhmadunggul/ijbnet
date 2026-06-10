@@ -19,6 +19,7 @@ import { config } from './config';
 import { record429, recordFatal, recordHighMemory, snapshotMetrics, recordHttpRequest, initMonitorDb } from './utils/monitor';
 import { httpRequestsTotal, httpRequestDuration, errors5xxTotal, normalizeRoute } from './utils/metrics';
 import { setCompletenessMode, type CompletenessMode } from './utils/completeness';
+import { checkDbSchema } from './utils/schemaCheck';
 import { GlobalSettings } from './db/models/index';
 
 const app = express();
@@ -131,6 +132,7 @@ setInterval(() => {
 async function start(): Promise<void> {
   try {
     await connectDB();
+    await checkDbSchema(sequelize);
     initMonitorDb(sequelize);
 
     await connectSurveyDB();
