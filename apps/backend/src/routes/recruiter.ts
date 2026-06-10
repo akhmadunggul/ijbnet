@@ -1124,4 +1124,35 @@ router.get('/interviews/:proposalId/letter', wrap(async (req: Request, res: Resp
   }
 }));
 
+// ── GET /api/recruiter/interviews/:proposalId/letter/data ─────────────────────
+router.get('/interviews/:proposalId/letter/data', wrap(async (req: Request, res: Response): Promise<void> => {
+  const { proposalId } = req.params as { proposalId: string };
+  if (!isUUID(proposalId)) { res.status(400).json({ error: 'BAD_REQUEST' }); return; }
+
+  const companyId = await getRecruiterCompanyId(req.user!.sub);
+  if (!companyId) { res.status(403).json({ error: 'FORBIDDEN' }); return; }
+
+  const proposal = await InterviewProposal.findByPk(proposalId, {
+    include: [{ model: BatchCandidate, as: 'batchCandidate', include: [
+      { model: Candidate, as: 'candidate', attributes: ['id', 'fullName'] },
+      { model: Batch, as: 'batch', include: [{ model: Company, as: 'company', attributes: ['name', 'nameJa'] }] },
+    ]}],
+  });
+  if (!proposal || proposal.recruiterDecision === null) { res.status(404).json({ error: 'NOT_FOUND' }); return; }
+
+  const bcData = (proposal as unknown as Record<string, unknown>)['batchCandidate'] as Record<string, unknown> | null;
+  const batchData = (bcData?.['batch'] as Record<string, unknown>) ?? null;
+  if (!batchData || batchData['companyId'] !== companyId) { res.status(403).json({ error: 'FORBIDDEN' }); return; }
+
+  const candidateName = ((bcData?.['candidate'] as Record<string, unknown>)?.['fullName'] as string) ?? 'Kandidat';
+  const companyData = (batchData?.['company'] as Record<string, unknown>) ?? null;
+  res.json({
+    decision: proposal.recruiterDecision,
+    candidateName,
+    companyName: (companyData?.['name'] as string) ?? 'Perusahaan',
+    companyNameJa: (companyData?.['nameJa'] as string | null) ?? null,
+    date: (proposal.recruiterDecisionAt ?? new Date()).toISOString(),
+  });
+}));
+
 export default router;

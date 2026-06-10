@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '../lib/api';
 import { useAuthStore } from '../store/authStore';
@@ -41,10 +42,10 @@ function formatRelative(iso: string, lang: string): string {
 
 const ONE_WEEK_MS = 7 * 24 * 60 * 60 * 1000;
 
-function letterUrl(role: string | undefined, referenceId: string): string {
-  if (role === 'manager')   return `/api/manager/interviews/${referenceId}/letter`;
-  if (role === 'recruiter') return `/api/recruiter/interviews/${referenceId}/letter`;
-  return `/api/candidates/me/letter/${referenceId}`;
+function letterViewPath(role: string | undefined, referenceId: string): string {
+  if (role === 'manager')   return `/manager/letter/${referenceId}`;
+  if (role === 'recruiter') return `/recruiter/letter/${referenceId}`;
+  return `/portal/letter/${referenceId}`;
 }
 
 function NotifItem({
@@ -59,6 +60,7 @@ function NotifItem({
   userRole: string | undefined;
 }) {
   const { t, i18n } = useTranslation();
+  const navigate = useNavigate();
   const lang = i18n.language;
   const isLetter = n.referenceType === 'hiring_letter' && n.referenceId;
 
@@ -76,15 +78,12 @@ function NotifItem({
         <p className="text-sm font-medium text-gray-800">{n.title}</p>
         {n.body && <p className="text-sm text-gray-500 mt-0.5">{n.body}</p>}
         {isLetter && (
-          <a
-            href={letterUrl(userRole, n.referenceId!)}
-            target="_blank"
-            rel="noopener noreferrer"
-            onClick={(e) => e.stopPropagation()}
+          <button
+            onClick={(e) => { e.stopPropagation(); navigate(letterViewPath(userRole, n.referenceId!)); }}
             className="inline-flex items-center gap-1 mt-2 text-xs font-medium text-navy-700 bg-navy-50 border border-navy-100 px-3 py-1 rounded-lg hover:bg-navy-100 transition"
           >
             📄 {t('notifications.downloadLetter')}
-          </a>
+          </button>
         )}
         <p className="text-xs text-gray-300 mt-1">{formatRelative(n.createdAt, lang)}</p>
       </div>

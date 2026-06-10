@@ -1399,4 +1399,36 @@ router.get('/me/letter/:proposalId', authenticate, requireRole('candidate'), asy
   }
 });
 
+// ── GET /api/candidates/me/letter/:proposalId/data ────────────────────────────
+router.get('/me/letter/:proposalId/data', authenticate, requireRole('candidate'), async (req: Request, res: Response): Promise<void> => {
+  const { proposalId } = req.params as { proposalId: string };
+  if (!isUUID(proposalId)) { res.status(400).json({ error: 'BAD_REQUEST' }); return; }
+
+  const candidate = await Candidate.findOne({ where: { userId: req.user!.sub }, attributes: ['id'] });
+  if (!candidate) { res.status(404).json({ error: 'NOT_FOUND' }); return; }
+
+  const proposal = await InterviewProposal.findByPk(proposalId, {
+    include: [{ model: BatchCandidate, as: 'batchCandidate', include: [
+      { model: Candidate, as: 'candidate', attributes: ['id', 'fullName'] },
+      { model: Batch, as: 'batch', include: [{ model: Company, as: 'company', attributes: ['name', 'nameJa'] }] },
+    ]}],
+  });
+  if (!proposal || proposal.recruiterDecision === null) { res.status(404).json({ error: 'NOT_FOUND' }); return; }
+
+  const bcData = (proposal as unknown as Record<string, unknown>)['batchCandidate'] as Record<string, unknown> | null;
+  const bcCandidateId = ((bcData?.['candidate'] as Record<string, unknown>)?.['id'] as string) ?? null;
+  if (bcCandidateId !== candidate.id) { res.status(403).json({ error: 'FORBIDDEN' }); return; }
+
+  const candidateName = ((bcData?.['candidate'] as Record<string, unknown>)?.['fullName'] as string) ?? 'Kandidat';
+  const batchData = (bcData?.['batch'] as Record<string, unknown>) ?? null;
+  const companyData = (batchData?.['company'] as Record<string, unknown>) ?? null;
+  res.json({
+    decision: proposal.recruiterDecision,
+    candidateName,
+    companyName: (companyData?.['name'] as string) ?? 'Perusahaan',
+    companyNameJa: (companyData?.['nameJa'] as string | null) ?? null,
+    date: (proposal.recruiterDecisionAt ?? new Date()).toISOString(),
+  });
+});
+
 export default router;

@@ -52,6 +52,7 @@ import SuperAdminRecruiterSettings from './pages/superadmin/SuperAdminRecruiterS
 import SuperAdminMonitor from './pages/superadmin/SuperAdminMonitor';
 import SuperAdminSurveys from './pages/superadmin/SuperAdminSurveys';
 import SurveyPublicPage from './pages/SurveyPublicPage';
+import HiringLetterPage from './pages/HiringLetterPage';
 import type { UserRole } from '@ijbnet/shared';
 
 const queryClient = new QueryClient();
@@ -138,6 +139,7 @@ export default function App() {
           <Route path="notifications" element={<CandidateNotifications />} />
           <Route path="cv" element={<CandidateCVPage />} />
           <Route path="shokumu" element={<ShokumuResumePage />} />
+          <Route path="letter/:proposalId" element={<HiringLetterPage />} />
           <Route path="jp-learning" element={<JpLearningPage />} />
         </Route>
 
@@ -174,6 +176,7 @@ export default function App() {
           <Route path="candidates" element={<ManagerCandidates />} />
           <Route path="candidates/:id" element={<ManagerCandidateDetail />} />
           <Route path="candidates/:id/cv" element={<ManagerCandidateCVPage />} />
+          <Route path="letter/:proposalId" element={<HiringLetterPage />} />
           <Route path="batches" element={<ManagerBatches />} />
           <Route path="batches/:id" element={<ManagerBatchDetail />} />
           <Route path="requests" element={<ManagerRequests />} />
@@ -196,6 +199,7 @@ export default function App() {
           <Route path="selection" element={<RecruiterSelection />} />
           <Route path="candidates/:id/cv" element={<RecruiterCandidateCVPage />} />
           <Route path="candidates/:id/shokumu" element={<RecruiterShokumuPage />} />
+          <Route path="letter/:proposalId" element={<HiringLetterPage />} />
           <Route path="confirmed" element={<RecruiterConfirmed />} />
           <Route path="interviews" element={<RecruiterInterviews />} />
           <Route path="notifications" element={<RecruiterNotifications />} />

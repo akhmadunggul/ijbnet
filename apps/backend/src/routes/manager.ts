@@ -1054,6 +1054,32 @@ router.get('/interviews/:proposalId/letter', wrap(async (req: Request, res: Resp
   }
 }));
 
+// ── GET /api/manager/interviews/:proposalId/letter/data ───────────────────────
+router.get('/interviews/:proposalId/letter/data', wrap(async (req: Request, res: Response): Promise<void> => {
+  const { proposalId } = req.params as { proposalId: string };
+  if (!isUUID(proposalId)) { res.status(400).json({ error: 'BAD_REQUEST' }); return; }
+
+  const proposal = await InterviewProposal.findByPk(proposalId, {
+    include: [{ model: BatchCandidate, as: 'batchCandidate', include: [
+      { model: Candidate, as: 'candidate', attributes: ['id', 'fullName'] },
+      { model: Batch, as: 'batch', include: [{ model: Company, as: 'company', attributes: ['name', 'nameJa'] }] },
+    ]}],
+  });
+  if (!proposal || proposal.recruiterDecision === null) { res.status(404).json({ error: 'NOT_FOUND' }); return; }
+
+  const bcData = (proposal as unknown as Record<string, unknown>)['batchCandidate'] as Record<string, unknown> | null;
+  const candidateName = ((bcData?.['candidate'] as Record<string, unknown>)?.['fullName'] as string) ?? 'Kandidat';
+  const batchData = (bcData?.['batch'] as Record<string, unknown>) ?? null;
+  const companyData = (batchData?.['company'] as Record<string, unknown>) ?? null;
+  res.json({
+    decision: proposal.recruiterDecision,
+    candidateName,
+    companyName: (companyData?.['name'] as string) ?? 'Perusahaan',
+    companyNameJa: (companyData?.['nameJa'] as string | null) ?? null,
+    date: (proposal.recruiterDecisionAt ?? new Date()).toISOString(),
+  });
+}));
+
 // ── POST /api/manager/interviews/:proposalId/return-to-pool ──────────────────
 router.post('/interviews/:proposalId/return-to-pool', wrap(async (req: Request, res: Response): Promise<void> => {
   const { proposalId } = req.params as { proposalId: string };
