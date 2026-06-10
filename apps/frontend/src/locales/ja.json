@@ -998,6 +998,10 @@
       "decisionRejected": "不採用",
       "returnToPool": "プールに戻す",
       "returnToPoolConfirm": "この候補者をプールに戻し、別の面接バッチに割り当てられるようにします。候補者のステータスはApprovedにリセットされます。",
+      "addMeetingLink": "面接リンクを追加",
+      "editMeetingLink": "面接リンクを編集",
+      "meetingLinkTitle": "面接リンク (Zoom / Meet)",
+      "meetingLinkHint": "Zoom、Google Meet、Microsoft TeamsなどのURLを入力してください。",
       "proposedDates": "提案日程",
       "selectDate": "日程を選択",
       "customDate": "その他の日程"

@@ -8,6 +8,7 @@ export interface InterviewProposalAttributes {
   candidatePreferredDate: string | null;
   finalDate: Date | null;
   status: 'proposed' | 'scheduled' | 'completed' | 'cancelled';
+  meetingLink: string | null;
   recruiterDecision: 'accepted' | 'rejected' | null;
   recruiterDecisionAt: Date | null;
   decisionDeadline: Date | null;
@@ -24,6 +25,7 @@ export interface InterviewProposalCreationAttributes
     | 'candidatePreferredDate'
     | 'finalDate'
     | 'status'
+    | 'meetingLink'
     | 'recruiterDecision'
     | 'recruiterDecisionAt'
     | 'decisionDeadline'
@@ -39,6 +41,7 @@ export class InterviewProposal
   declare candidatePreferredDate: string | null;
   declare finalDate: Date | null;
   declare status: 'proposed' | 'scheduled' | 'completed' | 'cancelled';
+  declare meetingLink: string | null;
   declare recruiterDecision: 'accepted' | 'rejected' | null;
   declare recruiterDecisionAt: Date | null;
   declare decisionDeadline: Date | null;
@@ -60,6 +63,7 @@ export function initInterviewProposal(sequelize: Sequelize): void {
         defaultValue: 'proposed',
         allowNull: false,
       },
+      meetingLink: { type: DataTypes.STRING(500), allowNull: true },
       recruiterDecision: {
         type: DataTypes.ENUM('accepted', 'rejected'),
         allowNull: true,

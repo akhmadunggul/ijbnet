@@ -999,6 +999,10 @@
       "decisionRejected": "Ditolak (不採用)",
       "returnToPool": "Kembalikan ke Pool",
       "returnToPoolConfirm": "Kandidat ini akan dikembalikan ke pool dan dapat dialokasikan ke batch wawancara yang lain. Status kandidat akan direset ke Approved.",
+      "addMeetingLink": "Tambah link meeting",
+      "editMeetingLink": "Edit link meeting",
+      "meetingLinkTitle": "Link Wawancara (Zoom / Meet)",
+      "meetingLinkHint": "Masukkan URL Zoom, Google Meet, Microsoft Teams, atau platform lainnya.",
       "proposedDates": "Tanggal Diusulkan",
       "selectDate": "Pilih tanggal",
       "customDate": "Tanggal lain"

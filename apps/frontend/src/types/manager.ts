@@ -62,6 +62,7 @@ export interface ManagerInterview {
   proposedDates: string[] | null;
   candidatePreferredDate: string | null;
   finalDate: string | null;
+  meetingLink: string | null;
   recruiterDecision: 'accepted' | 'rejected' | null;
   recruiterDecisionAt: string | null;
   decisionDeadline: string | null;

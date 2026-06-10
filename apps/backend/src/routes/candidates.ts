@@ -770,6 +770,27 @@ router.get('/me/interview/pending', authenticate, requireRole('candidate'), asyn
   res.json({ proposal: proposal ? proposal.toJSON() : null });
 });
 
+// ── GET /api/candidates/me/interview/scheduled ────────────────────────────────
+// Returns the candidate's most recent scheduled (confirmed) interview proposal, including meetingLink.
+router.get('/me/interview/scheduled', authenticate, requireRole('candidate'), async (req: Request, res: Response): Promise<void> => {
+  const candidate = await Candidate.findOne({ where: { userId: req.user!.sub }, attributes: ['id'] });
+  if (!candidate) { res.json({ proposal: null }); return; }
+
+  const bcs = await BatchCandidate.findAll({
+    where: { candidateId: candidate.id, isSelected: true },
+    attributes: ['id'],
+  });
+  const bcIds = bcs.map((b) => b.id);
+  if (!bcIds.length) { res.json({ proposal: null }); return; }
+
+  const proposal = await InterviewProposal.findOne({
+    where: { batchCandidateId: { [Op.in]: bcIds }, status: 'scheduled' },
+    order: [['createdAt', 'DESC']],
+  });
+
+  res.json({ proposal: proposal ? proposal.toJSON() : null });
+});
+
 // ── PATCH /api/candidates/me/interviews/:proposalId/confirm-date ──────────────
 // Candidate selects their preferred date from the recruiter's proposed options.
 // This is called BEFORE the manager finalises. Records interview_date_confirmed.

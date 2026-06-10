@@ -45,6 +45,10 @@ export default function ManagerInterviews() {
   // Return-to-pool confirm
   const [returnPoolId, setReturnPoolId] = useState<string | null>(null);
 
+  // Meeting link modal state
+  const [meetingLinkId, setMeetingLinkId] = useState<string | null>(null);
+  const [meetingLinkValue, setMeetingLinkValue] = useState('');
+
   const queryParams = statusTab !== 'all' ? `?status=${statusTab}` : '';
 
   const { data, isLoading } = useQuery<InterviewsResponse>({
@@ -75,6 +79,16 @@ export default function ManagerInterviews() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['manager-interviews'] });
       setReturnPoolId(null);
+    },
+  });
+
+  const meetingLinkMutation = useMutation({
+    mutationFn: ({ id, meetingLink }: { id: string; meetingLink: string | null }) =>
+      api.patch(`/manager/interviews/${id}/meeting-link`, { meetingLink }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['manager-interviews'] });
+      setMeetingLinkId(null);
+      setMeetingLinkValue('');
     },
   });
 
@@ -149,6 +163,7 @@ export default function ManagerInterviews() {
                   const canMarkResult = iv.status === 'scheduled';
                   const hasDecision = iv.recruiterDecision !== null;
                   const isRejected = iv.recruiterDecision === 'rejected';
+                  const canSetLink = iv.status === 'scheduled';
 
                   return (
                     <tr key={iv.id} className="hover:bg-gray-50/60 transition">
@@ -178,6 +193,17 @@ export default function ManagerInterviews() {
                       </td>
                       <td className="px-4 py-3 text-xs text-gray-600">
                         {iv.finalDate ? formatDateShort(iv.finalDate, lang) : '—'}
+                        {iv.meetingLink && (
+                          <a
+                            href={iv.meetingLink}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            onClick={(e) => e.stopPropagation()}
+                            className="block mt-1 text-teal-600 hover:underline truncate max-w-[160px]"
+                          >
+                            🔗 {iv.meetingLink.replace(/^https?:\/\//, '')}
+                          </a>
+                        )}
                       </td>
                       <td className="px-4 py-3">
                         <div className="flex flex-col gap-1">
@@ -213,6 +239,21 @@ export default function ManagerInterviews() {
                               className="text-xs bg-amber-50 text-amber-700 px-3 py-1 rounded-lg hover:bg-amber-100 transition"
                             >
                               {t('manager.interviews.markResult')}
+                            </button>
+                          )}
+                          {canSetLink && (
+                            <button
+                              onClick={() => {
+                                setMeetingLinkId(iv.id);
+                                setMeetingLinkValue(iv.meetingLink ?? '');
+                              }}
+                              className={`text-xs px-3 py-1 rounded-lg transition ${
+                                iv.meetingLink
+                                  ? 'bg-teal-50 text-teal-700 hover:bg-teal-100'
+                                  : 'bg-gray-50 text-gray-500 hover:bg-gray-100 border border-dashed border-gray-200'
+                              }`}
+                            >
+                              {iv.meetingLink ? '🔗 ' + t('manager.interviews.editMeetingLink') : '+ ' + t('manager.interviews.addMeetingLink')}
                             </button>
                           )}
                           {hasDecision && (
@@ -362,6 +403,60 @@ export default function ManagerInterviews() {
               >
                 {resultMutation.isPending ? t('loading') : t('btnSave')}
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Meeting Link Modal */}
+      {meetingLinkId && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+          <div className="bg-white rounded-2xl shadow-xl p-6 w-full max-w-md mx-4 space-y-4">
+            <h2 className="text-lg font-semibold text-navy-900">
+              {lang === 'ja' ? '面接リンクの設定' : t('manager.interviews.meetingLinkTitle')}
+            </h2>
+            <p className="text-xs text-gray-500">
+              {lang === 'ja'
+                ? 'Zoom、Google Meet、Microsoft TeamsなどのURLを入力してください。'
+                : t('manager.interviews.meetingLinkHint')}
+            </p>
+            <input
+              type="url"
+              value={meetingLinkValue}
+              onChange={(e) => setMeetingLinkValue(e.target.value)}
+              placeholder="https://zoom.us/j/... atau https://meet.google.com/..."
+              className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-300"
+            />
+            {meetingLinkMutation.isError && (
+              <p className="text-xs text-red-500">
+                {lang === 'ja' ? 'URLが無効です。httpsで始まるURLを入力してください。' : 'URL tidak valid. Gunakan URL yang diawali https://.'}
+              </p>
+            )}
+            <div className="flex justify-between items-center pt-2">
+              {meetingLinkValue && (
+                <button
+                  onClick={() => meetingLinkMutation.mutate({ id: meetingLinkId, meetingLink: null })}
+                  disabled={meetingLinkMutation.isPending}
+                  className="text-xs text-red-500 hover:underline disabled:opacity-50"
+                >
+                  {lang === 'ja' ? 'リンクを削除' : 'Hapus link'}
+                </button>
+              )}
+              <div className="flex gap-3 ml-auto">
+                <button
+                  onClick={() => { setMeetingLinkId(null); setMeetingLinkValue(''); }}
+                  className="text-sm text-gray-600 px-4 py-2 rounded-lg hover:bg-gray-50 border border-gray-200 transition"
+                >
+                  {t('btnCancel')}
+                </button>
+                <button
+                  onClick={() => meetingLinkMutation.mutate({ id: meetingLinkId, meetingLink: meetingLinkValue || null })}
+                  disabled={meetingLinkMutation.isPending}
+                  className="text-sm bg-teal-600 text-white px-4 py-2 rounded-lg hover:bg-teal-700 transition disabled:opacity-50"
+                >
+                  {meetingLinkMutation.isPending ? t('loading') : t('btnSave')}
+                </button>
+              </div>
             </div>
           </div>
         </div>

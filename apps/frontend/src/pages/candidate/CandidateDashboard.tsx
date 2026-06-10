@@ -14,6 +14,13 @@ interface PendingProposal {
   status: string;
 }
 
+interface ScheduledProposal {
+  id: string;
+  finalDate: string | null;
+  meetingLink: string | null;
+  status: string;
+}
+
 const STATUS_CONFIG: Record<string, { label: string; labelJa: string; color: string; bg: string }> = {
   incomplete:   { label: 'Profil belum lengkap', labelJa: 'プロフィール未完成', color: 'text-gray-600',  bg: 'bg-gray-50 border-gray-200' },
   submitted:    { label: 'Menunggu review',       labelJa: 'レビュー待ち',       color: 'text-blue-600',  bg: 'bg-blue-50 border-blue-200' },
@@ -45,6 +52,12 @@ export default function CandidateDashboard() {
   const { data: pendingProposalData } = useQuery<{ proposal: PendingProposal | null }>({
     queryKey: ['my-pending-proposal'],
     queryFn: () => api.get('/candidates/me/interview/pending').then((r) => r.data),
+    refetchInterval: 60_000,
+  });
+
+  const { data: scheduledProposalData } = useQuery<{ proposal: ScheduledProposal | null }>({
+    queryKey: ['my-scheduled-proposal'],
+    queryFn: () => api.get('/candidates/me/interview/scheduled').then((r) => r.data),
     refetchInterval: 60_000,
   });
 
@@ -255,6 +268,42 @@ export default function CandidateDashboard() {
                 ))}
               </div>
             </>
+          )}
+        </div>
+      )}
+
+      {/* Scheduled interview card — shown when manager has confirmed the date */}
+      {scheduledProposalData?.proposal && scheduledProposalData.proposal.finalDate && (
+        <div className="bg-white border border-teal-200 rounded-xl p-5 space-y-3">
+          <div className="flex items-center gap-2">
+            <span className="text-xl">📅</span>
+            <p className="text-sm font-semibold text-teal-800">
+              {lang === 'ja' ? '面接日程が確定しました' : 'Jadwal wawancara telah dikonfirmasi'}
+            </p>
+          </div>
+          <p className="text-sm text-gray-700">
+            <span className="font-medium">
+              {new Date(scheduledProposalData.proposal.finalDate).toLocaleString(
+                lang === 'ja' ? 'ja-JP' : 'id-ID',
+                { dateStyle: 'full', timeStyle: 'short' },
+              )}
+            </span>
+          </p>
+          {scheduledProposalData.proposal.meetingLink ? (
+            <a
+              href={scheduledProposalData.proposal.meetingLink}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-2 bg-teal-600 hover:bg-teal-700 text-white text-sm font-medium px-4 py-2 rounded-lg transition"
+            >
+              🔗 {lang === 'ja' ? '面接リンクに参加する' : 'Bergabung ke wawancara'}
+            </a>
+          ) : (
+            <p className="text-xs text-gray-400">
+              {lang === 'ja'
+                ? 'マネージャーが面接リンクを追加するまでお待ちください。'
+                : 'Menunggu manager menambahkan link wawancara.'}
+            </p>
           )}
         </div>
       )}

@@ -824,6 +824,78 @@ router.patch('/interviews/:proposalId/finalize', wrap(async (req: Request, res: 
   res.json({ proposal: proposal.toJSON() });
 }));
 
+// ── PATCH /api/manager/interviews/:proposalId/meeting-link ───────────────────
+router.patch('/interviews/:proposalId/meeting-link', wrap(async (req: Request, res: Response): Promise<void> => {
+  const { proposalId } = req.params as { proposalId: string };
+  if (!isUUID(proposalId)) {
+    res.status(400).json({ error: 'BAD_REQUEST' });
+    return;
+  }
+
+  const proposal = await InterviewProposal.findByPk(proposalId, {
+    include: [
+      {
+        model: BatchCandidate,
+        as: 'batchCandidate',
+        include: [
+          { model: Candidate, as: 'candidate', attributes: ['id', 'userId', 'fullName', 'candidateCode'] },
+        ],
+      },
+    ],
+  });
+  if (!proposal) {
+    res.status(404).json({ error: 'NOT_FOUND' });
+    return;
+  }
+  if (proposal.status !== 'scheduled') {
+    res.status(422).json({ error: 'INVALID_STATE', message: 'Meeting link can only be set on a scheduled interview.' });
+    return;
+  }
+
+  const { meetingLink } = req.body as { meetingLink?: string | null };
+
+  // Allow clearing the link (null/empty)
+  if (meetingLink !== null && meetingLink !== undefined && meetingLink !== '') {
+    try {
+      const url = new URL(meetingLink);
+      if (url.protocol !== 'https:') throw new Error();
+    } catch {
+      res.status(422).json({ error: 'INVALID_URL', message: 'Meeting link must be a valid HTTPS URL.' });
+      return;
+    }
+    if (meetingLink.length > 500) {
+      res.status(422).json({ error: 'INVALID_URL', message: 'Meeting link too long.' });
+      return;
+    }
+  }
+
+  const normalised = meetingLink || null;
+  await proposal.update({ meetingLink: normalised });
+
+  // Notify candidate when a link is set (not when cleared)
+  if (normalised) {
+    const bcData = (proposal as unknown as Record<string, unknown>)['batchCandidate'] as Record<string, unknown> | null;
+    const candidateData = (bcData?.['candidate'] as Record<string, unknown>) ?? null;
+    const candidateUserId = candidateData?.['userId'] as string | null;
+    const candidateName  = (candidateData?.['fullName'] as string) ?? 'Kandidat';
+
+    if (candidateUserId) {
+      await notifyUser(
+        candidateUserId,
+        'INTERVIEW_SCHEDULED',
+        'Link wawancara ditambahkan / 面接リンクが追加されました',
+        `Link: ${normalised}`,
+        'interview_proposal',
+        proposalId,
+      );
+    }
+  }
+
+  await audit(req, 'INTERVIEW_SET_MEETING_LINK', 'interview_proposal', proposalId, undefined, { meetingLink: normalised });
+
+  res.json({ proposal: proposal.toJSON() });
+}));
+
 // ── PATCH /api/manager/interviews/:proposalId/result ─────────────────────────
 router.patch('/interviews/:proposalId/result', wrap(async (req: Request, res: Response): Promise<void> => {
   const { proposalId } = req.params as { proposalId: string };
