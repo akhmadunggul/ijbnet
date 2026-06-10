@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '../../lib/api';
 import type { ManagerInterview } from '../../types/manager';
@@ -26,6 +27,7 @@ function formatDateShort(iso: string, lang: string) {
 
 export default function ManagerInterviews() {
   const { t, i18n } = useTranslation();
+  const navigate = useNavigate();
   const lang = i18n.language;
   const queryClient = useQueryClient();
 
@@ -257,14 +259,12 @@ export default function ManagerInterviews() {
                             </button>
                           )}
                           {hasDecision && (
-                            <a
-                              href={`/api/manager/interviews/${iv.id}/letter`}
-                              target="_blank"
-                              rel="noopener noreferrer"
+                            <button
+                              onClick={() => navigate(`/manager/letter/${iv.id}`)}
                               className="text-xs bg-gray-50 text-gray-600 px-3 py-1 rounded-lg hover:bg-gray-100 transition border border-gray-200 text-center"
                             >
-                              {iv.recruiterDecision === 'accepted' ? '内定通知書' : '不採用通知書'} ↓
-                            </a>
+                              {iv.recruiterDecision === 'accepted' ? '内定通知書' : '不採用通知書'}
+                            </button>
                           )}
                           {isRejected && (
                             <button
