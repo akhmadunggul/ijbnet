@@ -288,6 +288,7 @@ apps/frontend/src/
 - v0.8.5 — Fix meeting link not exposed in recruiter portal: add meetingLink to InterviewProposalData type; show teal join button (or pending message) in RecruiterInterviews expanded panel for scheduled proposals; regression test suite expanded to 21 tests
 - v0.8.6 — Fix interview flow notification gaps: Step 1 (recruiter proposes) now notifies candidate + manager (was admin LPK only); Step 2 (candidate confirms) now notifies adminLPK + recruiter (was manager only); Step 3b (manager sets link) now notifies recruiter (was candidate only); candidate date picker redesigned to two-step (radio select → Terima button); regression tests expanded to 35
 - v0.8.7 — Hiring letter in-browser viewer: new HiringLetterPage renders 内定通知書/不採用通知書 as a React component (A4 layout, Noto Serif JP, zoom controls, print + PDF save); /letter-data JSON endpoints added for all 3 roles; notifications navigate to viewer instead of triggering a file download with no auth header
+- v0.8.8 — Fix hiring letter UNAUTHORIZED: ManagerInterviews had a bare <a href="/api/..."> that opened the PDF endpoint in a new tab with no Authorization header; replaced with navigate() to HiringLetterPage
 
-Current: v0.8.7
+Current: v0.8.8
 Live at: https://jinzai.jobagus.id
