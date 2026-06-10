@@ -59,7 +59,7 @@ async function getRecruiterCompanyId(userId: string): Promise<string | null> {
 
 async function getActiveBatch(companyId: string) {
   return Batch.findOne({
-    where: { companyId, status: { [Op.in]: ['active', 'selection', 'approved'] } },
+    where: { companyId, status: { [Op.in]: ['active', 'selection', 'approved', 'closed'] } },
     include: [{ model: Company, as: 'company', attributes: ['id', 'name', 'nameJa'] }],
     order: [['createdAt', 'DESC']],
   });
