@@ -833,18 +833,38 @@ router.patch('/me/interviews/:proposalId/confirm-date', authenticate, requireRol
     { proposalId, candidatePreferredDate: date },
   );
 
-  // Notify managers that candidate has confirmed their preferred date
-  const managers = await User.findAll({ where: { role: 'manager', isActive: true }, attributes: ['id'] });
-  await Promise.all(managers.map((m) =>
-    notifyUser(
-      m.id,
+  // Fetch candidate's LPK for admin notification
+  const candidateFull = await Candidate.findByPk(candidate.id, { attributes: ['lpkId', 'fullName', 'candidateCode'] });
+
+  const [managers, adminUsers] = await Promise.all([
+    User.findAll({ where: { role: 'manager', isActive: true }, attributes: ['id'] }),
+    candidateFull?.lpkId
+      ? User.findAll({ where: { role: 'admin', lpkId: candidateFull.lpkId, isActive: true }, attributes: ['id'] })
+      : Promise.resolve([]),
+  ]);
+
+  const notifTitle = `Kandidat mengkonfirmasi jadwal: ${candidateFull?.fullName ?? ''}`;
+  const notifBody  = `Kandidat telah memilih tanggal wawancara: ${date}. Silakan tetapkan jadwal final.`;
+
+  await Promise.all([
+    // Notify managers
+    ...managers.map((m) =>
+      notifyUser(m.id, 'CANDIDATE_DATE_CONFIRMED', notifTitle, notifBody, 'interview_proposal', proposalId),
+    ),
+    // Notify LPK admins
+    ...adminUsers.map((a) =>
+      notifyUser(a.id, 'CANDIDATE_DATE_CONFIRMED', notifTitle, notifBody, 'interview_proposal', proposalId),
+    ),
+    // Notify recruiter who proposed
+    ...(proposal.proposedBy ? [notifyUser(
+      proposal.proposedBy,
       'CANDIDATE_DATE_CONFIRMED',
-      'Kandidat mengkonfirmasi jadwal wawancara',
-      `Kandidat telah memilih tanggal wawancara: ${date}. Silakan tetapkan jadwal final.`,
+      `候補者が日程を確認しました: ${candidateFull?.fullName ?? ''}`,
+      `候補者が面接日程を選択しました: ${date}`,
       'interview_proposal',
       proposalId,
-    ),
-  ));
+    )] : []),
+  ]);
 
   res.json({ message: 'Preferred date confirmed.', candidatePreferredDate: date });
 });

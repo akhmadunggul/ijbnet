@@ -411,17 +411,28 @@ router.post('/interviews/:batchCandidateId/propose', wrap(async (req: Request, r
     status: 'proposed',
   });
 
-  // Notify LPK admin for this candidate
+  // Notify candidate, LPK admin, and all managers
   if (allocation.candidateId) {
     const candidate = await Candidate.findByPk(allocation.candidateId, {
-      attributes: ['lpkId', 'fullName', 'candidateCode'],
+      attributes: ['id', 'lpkId', 'fullName', 'candidateCode', 'userId'],
     });
     if (candidate) {
-      const adminUsers = await User.findAll({
-        where: { role: 'admin', lpkId: candidate.lpkId, isActive: true },
-      });
-      await Promise.all(
-        adminUsers.map((u) =>
+      const [adminUsers, managers] = await Promise.all([
+        User.findAll({ where: { role: 'admin', lpkId: candidate.lpkId, isActive: true } }),
+        User.findAll({ where: { role: 'manager', isActive: true }, attributes: ['id'] }),
+      ]);
+      await Promise.all([
+        // Notify candidate
+        ...(candidate.userId ? [notifyUser(
+          candidate.userId,
+          'INTERVIEW_PROPOSED',
+          'Jadwal wawancara diusulkan / 面接日程が提案されました',
+          'Rekruter mengusulkan jadwal wawancara. Silakan pilih salah satu tanggal yang tersedia.',
+          'interview_proposal',
+          proposal.id,
+        )] : []),
+        // Notify LPK admins
+        ...adminUsers.map((u) =>
           notifyUser(
             u.id,
             'INTERVIEW_PROPOSED',
@@ -431,7 +442,18 @@ router.post('/interviews/:batchCandidateId/propose', wrap(async (req: Request, r
             proposal.id,
           ),
         ),
-      );
+        // Notify managers
+        ...managers.map((m) =>
+          notifyUser(
+            m.id,
+            'INTERVIEW_PROPOSED',
+            `Jadwal wawancara diusulkan: ${candidate.fullName}`,
+            `Rekruter mengusulkan jadwal wawancara untuk kandidat ${candidate.candidateCode}.`,
+            'interview_proposal',
+            proposal.id,
+          ),
+        ),
+      ]);
     }
   }
 

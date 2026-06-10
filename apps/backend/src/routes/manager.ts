@@ -872,23 +872,32 @@ router.patch('/interviews/:proposalId/meeting-link', wrap(async (req: Request, r
   const normalised = meetingLink || null;
   await proposal.update({ meetingLink: normalised });
 
-  // Notify candidate when a link is set (not when cleared)
+  // Notify candidate and recruiter when a link is set (not when cleared)
   if (normalised) {
     const bcData = (proposal as unknown as Record<string, unknown>)['batchCandidate'] as Record<string, unknown> | null;
     const candidateData = (bcData?.['candidate'] as Record<string, unknown>) ?? null;
     const candidateUserId = candidateData?.['userId'] as string | null;
-    const candidateName  = (candidateData?.['fullName'] as string) ?? 'Kandidat';
 
-    if (candidateUserId) {
-      await notifyUser(
+    await Promise.all([
+      // Notify candidate
+      ...(candidateUserId ? [notifyUser(
         candidateUserId,
         'INTERVIEW_SCHEDULED',
         'Link wawancara ditambahkan / 面接リンクが追加されました',
         `Link: ${normalised}`,
         'interview_proposal',
         proposalId,
-      );
-    }
+      )] : []),
+      // Notify recruiter who proposed
+      ...(proposal.proposedBy ? [notifyUser(
+        proposal.proposedBy,
+        'INTERVIEW_SCHEDULED',
+        '面接リンクが追加されました / Link wawancara telah ditambahkan',
+        `Link: ${normalised}`,
+        'interview_proposal',
+        proposalId,
+      )] : []),
+    ]);
   }
 
   await audit(req, 'INTERVIEW_SET_MEETING_LINK', 'interview_proposal', proposalId, undefined, { meetingLink: normalised });

@@ -38,6 +38,7 @@ export default function CandidateDashboard() {
   const [exporting, setExporting] = useState(false);
   const [exportError, setExportError] = useState<string | null>(null);
   const [dateToast, setDateToast] = useState('');
+  const [selectedDate, setSelectedDate] = useState('');
 
   const { data, isLoading } = useQuery<CandidateMe>({
     queryKey: ['my-candidate'],
@@ -73,6 +74,7 @@ export default function CandidateDashboard() {
       qc.invalidateQueries({ queryKey: ['my-pending-proposal'] });
       qc.invalidateQueries({ queryKey: ['my-timeline'] });
       setDateToast(vars.date);
+      setSelectedDate('');
     },
   });
 
@@ -232,41 +234,88 @@ export default function CandidateDashboard() {
 
       {/* Interview date selection — shown when recruiter has proposed dates */}
       {pendingProposalData?.proposal && (
-        <div className="bg-white border border-amber-200 rounded-xl p-5 space-y-3">
+        <div className="bg-white border border-amber-200 rounded-xl p-5 space-y-4">
           <div className="flex items-center gap-2">
             <span className="text-xl">📅</span>
             <p className="text-sm font-semibold text-amber-800">
-              {lang === 'ja' ? '面接日程の確認をお願いします' : 'Pilih tanggal wawancara yang tersedia'}
+              {lang === 'ja' ? '面接日程の確認をお願いします' : 'Pilih Tanggal Wawancara'}
             </p>
           </div>
 
           {pendingProposalData.proposal.candidatePreferredDate ? (
             <div className="bg-green-50 border border-green-200 rounded-lg px-4 py-3 text-sm text-green-800">
-              ✓ {lang === 'ja' ? '選択済み: ' : 'Sudah dipilih: '}
-              <strong>{pendingProposalData.proposal.candidatePreferredDate}</strong>
-              {' — '}{lang === 'ja' ? 'マネージャーが日程を確定します。' : 'Manager akan menetapkan jadwal final.'}
+              <p className="font-medium">✓ {lang === 'ja' ? '日程を選択しました' : 'Tanggal telah dipilih'}</p>
+              <p className="mt-1">
+                <strong>
+                  {new Date(pendingProposalData.proposal.candidatePreferredDate).toLocaleString(
+                    lang === 'ja' ? 'ja-JP' : 'id-ID',
+                    { dateStyle: 'full', timeStyle: 'short' },
+                  )}
+                </strong>
+              </p>
+              <p className="text-xs text-green-600 mt-1">
+                {lang === 'ja' ? 'マネージャーが面接日程を確定します。しばらくお待ちください。' : 'Manager akan menetapkan jadwal final. Harap tunggu konfirmasi.'}
+              </p>
             </div>
           ) : dateToast ? (
             <div className="bg-green-50 border border-green-200 rounded-lg px-4 py-3 text-sm text-green-800">
-              ✓ {lang === 'ja' ? '選択しました: ' : 'Dipilih: '}<strong>{dateToast}</strong>
+              <p className="font-medium">✓ {lang === 'ja' ? '日程を選択しました' : 'Tanggal berhasil dipilih'}</p>
+              <p className="mt-1">
+                <strong>
+                  {new Date(dateToast).toLocaleString(
+                    lang === 'ja' ? 'ja-JP' : 'id-ID',
+                    { dateStyle: 'full', timeStyle: 'short' },
+                  )}
+                </strong>
+              </p>
             </div>
           ) : (
             <>
               <p className="text-xs text-gray-500">
-                {lang === 'ja' ? '以下の日程から都合の良い日を選択してください:' : 'Pilih tanggal yang sesuai dengan jadwal Anda:'}
+                {lang === 'ja'
+                  ? '以下の候補日から都合の良い日を選択し、「承諾する」ボタンを押してください:'
+                  : 'Pilih salah satu tanggal di bawah ini, lalu klik tombol Terima:'}
               </p>
-              <div className="flex flex-wrap gap-2">
+              <div className="flex flex-col gap-2">
                 {(pendingProposalData.proposal.proposedDates ?? []).map((d) => (
                   <button
                     key={d}
-                    onClick={() => confirmDateMutation.mutate({ proposalId: pendingProposalData.proposal!.id, date: d })}
-                    disabled={confirmDateMutation.isPending}
-                    className="px-4 py-2 border-2 border-amber-300 text-amber-800 rounded-lg text-sm font-medium hover:bg-amber-50 hover:border-amber-400 disabled:opacity-50 transition"
+                    onClick={() => setSelectedDate(selectedDate === d ? '' : d)}
+                    className={`w-full text-left px-4 py-3 rounded-lg border-2 text-sm font-medium transition flex items-center gap-3 ${
+                      selectedDate === d
+                        ? 'border-amber-500 bg-amber-50 text-amber-900'
+                        : 'border-gray-200 text-gray-700 hover:border-amber-300 hover:bg-amber-50'
+                    }`}
                   >
-                    {d}
+                    <span className={`inline-flex items-center justify-center w-4 h-4 rounded-full border-2 shrink-0 ${
+                      selectedDate === d ? 'border-amber-500 bg-amber-500' : 'border-gray-400'
+                    }`}>
+                      {selectedDate === d && <span className="w-1.5 h-1.5 rounded-full bg-white" />}
+                    </span>
+                    {new Date(d).toLocaleString(
+                      lang === 'ja' ? 'ja-JP' : 'id-ID',
+                      { dateStyle: 'full', timeStyle: 'short' },
+                    )}
                   </button>
                 ))}
               </div>
+              <button
+                onClick={() => {
+                  if (!selectedDate) return;
+                  confirmDateMutation.mutate({ proposalId: pendingProposalData.proposal!.id, date: selectedDate });
+                }}
+                disabled={!selectedDate || confirmDateMutation.isPending}
+                className="w-full py-2.5 bg-amber-500 hover:bg-amber-600 disabled:bg-gray-200 disabled:text-gray-400 text-white font-semibold rounded-lg text-sm transition"
+              >
+                {confirmDateMutation.isPending
+                  ? (lang === 'ja' ? '送信中...' : 'Mengirim...')
+                  : (lang === 'ja' ? '承諾する' : 'Terima')}
+              </button>
+              {confirmDateMutation.isError && (
+                <p className="text-xs text-red-500">
+                  {lang === 'ja' ? 'エラーが発生しました。もう一度お試しください。' : 'Terjadi kesalahan. Silakan coba lagi.'}
+                </p>
+              )}
             </>
           )}
         </div>

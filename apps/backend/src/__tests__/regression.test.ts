@@ -176,6 +176,154 @@ describe('v0.8.5 — meetingLink exposed in recruiter interview data', () => {
   });
 });
 
+// ── Bug: v0.8.5 — interview flow notification gaps ────────────────────────────
+// Step 1 (recruiter proposes): only admin LPK was notified — candidate and manager missing.
+// Step 2 (candidate confirms date): only managers were notified — admin LPK and recruiter missing.
+// Step 3b (manager sets meeting link): only candidate was notified — recruiter missing.
+describe('v0.8.5 — interview flow notification recipients', () => {
+  type NotifTarget = 'candidate' | 'adminLpk' | 'manager' | 'recruiter';
+
+  // Models the notification targets for each step.
+  function notifyOnPropose(hasCandidate: boolean): NotifTarget[] {
+    const targets: NotifTarget[] = ['adminLpk', 'manager'];
+    if (hasCandidate) targets.push('candidate');
+    return targets;
+  }
+
+  function notifyOnCandidateConfirm(hasRecruiter: boolean, hasAdminLpk: boolean): NotifTarget[] {
+    const targets: NotifTarget[] = ['manager'];
+    if (hasAdminLpk) targets.push('adminLpk');
+    if (hasRecruiter) targets.push('recruiter');
+    return targets;
+  }
+
+  function notifyOnMeetingLink(hasRecruiter: boolean): NotifTarget[] {
+    const targets: NotifTarget[] = ['candidate'];
+    if (hasRecruiter) targets.push('recruiter');
+    return targets;
+  }
+
+  it('Step 1 (propose): candidate, adminLpk, and manager all notified', () => {
+    const targets = notifyOnPropose(true);
+    expect(targets).toContain('candidate');
+    expect(targets).toContain('adminLpk');
+    expect(targets).toContain('manager');
+  });
+
+  it('Step 1 (propose): no crash when candidate userId is null', () => {
+    // candidate userId may be null for OAuth-incomplete accounts
+    const targets = notifyOnPropose(false);
+    expect(targets).not.toContain('candidate');
+    expect(targets).toContain('adminLpk');
+    expect(targets).toContain('manager');
+  });
+
+  it('Step 2 (candidate confirms): manager, adminLpk, and recruiter all notified', () => {
+    const targets = notifyOnCandidateConfirm(true, true);
+    expect(targets).toContain('manager');
+    expect(targets).toContain('adminLpk');
+    expect(targets).toContain('recruiter');
+  });
+
+  it('Step 2 (candidate confirms): no crash when proposedBy (recruiter) is null', () => {
+    const targets = notifyOnCandidateConfirm(false, true);
+    expect(targets).not.toContain('recruiter');
+    expect(targets).toContain('manager');
+  });
+
+  it('Step 2 (candidate confirms): no crash when candidate has no lpkId', () => {
+    const targets = notifyOnCandidateConfirm(true, false);
+    expect(targets).not.toContain('adminLpk');
+    expect(targets).toContain('manager');
+    expect(targets).toContain('recruiter');
+  });
+
+  it('Step 3b (meeting link): both candidate and recruiter notified', () => {
+    const targets = notifyOnMeetingLink(true);
+    expect(targets).toContain('candidate');
+    expect(targets).toContain('recruiter');
+  });
+
+  it('Step 3b (meeting link): no crash when proposedBy (recruiter) is null', () => {
+    const targets = notifyOnMeetingLink(false);
+    expect(targets).toContain('candidate');
+    expect(targets).not.toContain('recruiter');
+  });
+
+  it('Step 3b (meeting link): notifications NOT sent when link is cleared', () => {
+    // Clearing the link (null/empty) must not trigger notifications
+    function notifyOnMeetingLinkSet(link: string | null): NotifTarget[] {
+      if (!link) return [];
+      return notifyOnMeetingLink(true);
+    }
+    expect(notifyOnMeetingLinkSet(null)).toHaveLength(0);
+    expect(notifyOnMeetingLinkSet('')).toHaveLength(0);
+    expect(notifyOnMeetingLinkSet('https://meet.google.com/abc')).toContain('candidate');
+  });
+});
+
+// ── Bug: v0.8.5 — candidate date picker one-click confirms with no Accept step ─
+// Root cause: each proposed-date button called confirmDateMutation directly on click.
+//             Candidates could accidentally confirm the wrong date with a single tap.
+// Fix: two-step UX — click selects the date (radio style), a separate "Terima" button
+//      submits. The Accept button is disabled until a date is selected.
+describe('v0.8.5 — candidate interview date picker is two-step', () => {
+  // Simulates the state machine for the date selection UI.
+  function makePicker(proposedDates: string[]) {
+    let selectedDate = '';
+    return {
+      select: (d: string) => { selectedDate = d; },
+      deselect: () => { selectedDate = ''; },
+      canAccept: () => selectedDate !== '',
+      accept: (mutate: (d: string) => void) => {
+        if (!selectedDate) throw new Error('no date selected');
+        mutate(selectedDate);
+      },
+      getSelected: () => selectedDate,
+      proposedDates,
+    };
+  }
+
+  it('Accept button is disabled when no date is selected', () => {
+    const picker = makePicker(['2026-07-01T10:00:00Z', '2026-07-02T10:00:00Z']);
+    expect(picker.canAccept()).toBe(false);
+  });
+
+  it('Accept button is enabled after selecting a date', () => {
+    const picker = makePicker(['2026-07-01T10:00:00Z', '2026-07-02T10:00:00Z']);
+    picker.select('2026-07-01T10:00:00Z');
+    expect(picker.canAccept()).toBe(true);
+  });
+
+  it('clicking Accept submits the selected date', () => {
+    const picker = makePicker(['2026-07-01T10:00:00Z', '2026-07-02T10:00:00Z']);
+    picker.select('2026-07-02T10:00:00Z');
+    let submitted = '';
+    picker.accept((d) => { submitted = d; });
+    expect(submitted).toBe('2026-07-02T10:00:00Z');
+  });
+
+  it('clicking Accept without selection throws (never reaches API)', () => {
+    const picker = makePicker(['2026-07-01T10:00:00Z']);
+    expect(() => picker.accept(() => {})).toThrow('no date selected');
+  });
+
+  it('clicking a selected date again deselects it (toggle)', () => {
+    const picker = makePicker(['2026-07-01T10:00:00Z']);
+    picker.select('2026-07-01T10:00:00Z');
+    expect(picker.canAccept()).toBe(true);
+    picker.deselect();
+    expect(picker.canAccept()).toBe(false);
+  });
+
+  it('only one date can be selected at a time', () => {
+    const picker = makePicker(['2026-07-01T10:00:00Z', '2026-07-02T10:00:00Z']);
+    picker.select('2026-07-01T10:00:00Z');
+    picker.select('2026-07-02T10:00:00Z'); // re-select different date
+    expect(picker.getSelected()).toBe('2026-07-02T10:00:00Z');
+  });
+});
+
 // ── Bug: v0.4.9 — completeness used admin-only fields for self-reported checks ─
 // Root cause: calcLegacy checked heightCm/weightKg (admin-filled) instead of
 //             selfReportedHeight/selfReportedWeight (candidate-filled).
