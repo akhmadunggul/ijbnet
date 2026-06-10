@@ -467,7 +467,10 @@
     "deadlineLabel": "決定期限",
     "deadlinePassed": "期限超過",
     "deadlineSoon": "残り{days}日",
-    "deadlineIn": "残り{days}日"
+    "deadlineIn": "残り{days}日",
+    "meetingLink": "面接リンク",
+    "joinMeeting": "面接リンクに参加する",
+    "meetingLinkPending": "マネージャーが面接リンクを追加するまでお待ちください"
   },
   "notifications": {
     "title": "通知",

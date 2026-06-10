@@ -337,6 +337,29 @@ export default function RecruiterInterviews() {
                       </div>
                     )}
 
+                    {/* Meeting link — shown for scheduled interviews */}
+                    {iv.status === 'scheduled' && (
+                      <div className="mb-4 flex items-center gap-3 bg-teal-50 border border-teal-200 rounded-lg px-4 py-3">
+                        <span className="text-teal-600 text-lg shrink-0">🔗</span>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-xs font-medium text-teal-700 mb-1">{t('interviews.meetingLink')}</p>
+                          {iv.meetingLink ? (
+                            <a
+                              href={iv.meetingLink}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              onClick={(e) => e.stopPropagation()}
+                              className="inline-flex items-center gap-1.5 bg-teal-600 hover:bg-teal-700 text-white text-sm font-medium px-3 py-1.5 rounded-lg transition"
+                            >
+                              {t('interviews.joinMeeting')}
+                            </a>
+                          ) : (
+                            <p className="text-xs text-teal-500 italic">{t('interviews.meetingLinkPending')}</p>
+                          )}
+                        </div>
+                      </div>
+                    )}
+
                     <CandidateTimeline
                       endpoint={`/recruiter/candidates/${cand.id}/timeline`}
                       queryKey={['recruiter-timeline', cand.id]}

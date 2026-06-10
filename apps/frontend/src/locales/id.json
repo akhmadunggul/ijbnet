@@ -468,7 +468,10 @@
     "deadlineLabel": "Tenggat keputusan",
     "deadlinePassed": "Tenggat lewat",
     "deadlineSoon": "{days} hari lagi",
-    "deadlineIn": "{days} hari lagi"
+    "deadlineIn": "{days} hari lagi",
+    "meetingLink": "Link Wawancara",
+    "joinMeeting": "Bergabung ke wawancara",
+    "meetingLinkPending": "Menunggu manager menambahkan link wawancara"
   },
   "notifications": {
     "title": "Notifikasi",

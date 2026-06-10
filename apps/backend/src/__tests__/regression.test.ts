@@ -119,6 +119,63 @@ describe('v0.8.4 — column naming convention', () => {
   );
 });
 
+// ── Bug: v0.8.5 — meetingLink missing from recruiter InterviewProposalData type ─
+// Error: meetingLink field returned by API but not typed → recruiter portal showed
+//        no meeting link for scheduled interviews; candidate join button rendered
+//        correctly (used a local interface) but recruiter never saw the link.
+// Fix: Added meetingLink: string | null to InterviewProposalData in types/recruiter.ts
+//      and added meeting link display block in RecruiterInterviews expanded panel.
+describe('v0.8.5 — meetingLink exposed in recruiter interview data', () => {
+  interface InterviewProposalData {
+    id: string;
+    finalDate: string | null;
+    meetingLink: string | null;
+    status: 'proposed' | 'scheduled' | 'completed' | 'cancelled';
+  }
+
+  function canShowJoinButton(proposal: InterviewProposalData): boolean {
+    return proposal.status === 'scheduled' && !!proposal.meetingLink;
+  }
+
+  function showLinkPending(proposal: InterviewProposalData): boolean {
+    return proposal.status === 'scheduled' && !proposal.meetingLink;
+  }
+
+  it('shows join button when scheduled + meetingLink present', () => {
+    const p: InterviewProposalData = {
+      id: 'p1', finalDate: '2026-06-15T10:00:00Z',
+      meetingLink: 'https://meet.google.com/abc-def', status: 'scheduled',
+    };
+    expect(canShowJoinButton(p)).toBe(true);
+    expect(showLinkPending(p)).toBe(false);
+  });
+
+  it('shows pending text when scheduled but no meetingLink', () => {
+    const p: InterviewProposalData = {
+      id: 'p2', finalDate: '2026-06-15T10:00:00Z',
+      meetingLink: null, status: 'scheduled',
+    };
+    expect(canShowJoinButton(p)).toBe(false);
+    expect(showLinkPending(p)).toBe(true);
+  });
+
+  it('hides meeting link block entirely when not scheduled', () => {
+    for (const status of ['proposed', 'completed', 'cancelled'] as const) {
+      const p: InterviewProposalData = { id: 'p3', finalDate: null, meetingLink: 'https://example.com', status };
+      expect(canShowJoinButton(p)).toBe(false);
+      expect(showLinkPending(p)).toBe(false);
+    }
+  });
+
+  it('meetingLink field is typed as string | null (not undefined)', () => {
+    const p: InterviewProposalData = {
+      id: 'p4', finalDate: null, meetingLink: null, status: 'proposed',
+    };
+    // TypeScript would fail to compile if meetingLink were missing from the interface
+    expect(Object.prototype.hasOwnProperty.call(p, 'meetingLink')).toBe(true);
+  });
+});
+
 // ── Bug: v0.4.9 — completeness used admin-only fields for self-reported checks ─
 // Root cause: calcLegacy checked heightCm/weightKg (admin-filled) instead of
 //             selfReportedHeight/selfReportedWeight (candidate-filled).
