@@ -1,4 +1,50 @@
-export type UserRole = 'candidate' | 'admin' | 'manager' | 'recruiter' | 'super_admin';
+export type UserRole = 'candidate' | 'admin' | 'manager' | 'recruiter' | 'super_admin' | 'reviewer';
+
+// ── JRAS (Japan Readiness Assessment System) ─────────────────────────────────
+
+export type JrasDimensionKey =
+  | 'language'     // D1 — otomatis dari data JP learning / weekly tests / JLPT
+  | 'culture'      // D2 — SJT budaya & etika kerja
+  | 'legal'        // D3 — kepatuhan aturan & hukum
+  | 'psych'        // D4 — kesiapan psikologis (sensitif)
+  | 'finance'      // D5 — literasi keuangan & risiko utang (sensitif)
+  | 'motivation'   // D6 — motivasi & dukungan sosial
+  | 'observation'; // D7 — observasi LPK
+
+export const JRAS_DIMENSION_KEYS: JrasDimensionKey[] = [
+  'language', 'culture', 'legal', 'psych', 'finance', 'motivation', 'observation',
+];
+
+export type JrasInstrumentType = 'sjt' | 'likert' | 'quiz' | 'observation';
+export type JrasInstrumentStatus = 'draft' | 'in_review' | 'approved' | 'active' | 'retired';
+export type JrasItemType = 'sjt' | 'likert' | 'quiz';
+export type JrasReviewerType = 'ex_ssw' | 'jp_hr' | 'expert';
+export type JrasReviewVerdict = 'approve' | 'request_changes';
+
+export interface JrasItemOption {
+  labelId: string;
+  labelJa: string;
+}
+
+export interface JrasItemScoring {
+  scoringType: 'weighted' | 'keyed' | 'likert';
+  /** weighted: bobot 0–1 per pilihan, indeks sejajar dengan options */
+  weights?: number[];
+  /** keyed (quiz): indeks pilihan yang benar */
+  correctIndex?: number;
+  /** likert: true bila skala dibalik (jawaban tinggi = risiko) */
+  reverse?: boolean;
+  /** wajib untuk SJT — alasan pembobotan, diverifikasi reviewer */
+  rationale?: string;
+}
+
+/** Kuota persetujuan review sebelum instrumen bisa diaktifkan */
+export interface JrasReviewQuota {
+  ex_ssw: number;
+  jp_hr: number;
+}
+
+export const JRAS_DEFAULT_REVIEW_QUOTA: JrasReviewQuota = { ex_ssw: 2, jp_hr: 1 };
 
 export type ProfileStatus =
   | 'incomplete'

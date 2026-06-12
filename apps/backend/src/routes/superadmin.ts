@@ -28,7 +28,10 @@ import {
   AuditLog,
   ConsentClause,
   GlobalSettings,
+  JrasReviewer,
+  JrasInstrument,
 } from '../db/models/index';
+import { notifyUser } from '../utils/notify';
 import { serializeCandidate, serializeUser } from '../serializers/candidate';
 import { candidateIncludes } from '../utils/candidateIncludes';
 import { calcCompleteness, setCompletenessMode, type CompletenessMode } from '../utils/completeness';
@@ -719,6 +722,7 @@ router.get('/users', wrap(async (req, res) => {
     include: [
       { model: Company, as: 'company', attributes: ['id', 'name'], required: false },
       { model: Lpk, as: 'lpk', attributes: ['id', 'name'], required: false },
+      { model: JrasReviewer, as: 'jrasReviewer', attributes: ['reviewerType', 'active'], required: false },
     ],
     order: [['createdAt', 'DESC']],
     limit,
@@ -735,7 +739,7 @@ router.get('/users', wrap(async (req, res) => {
 }));
 
 router.post('/users', wrap(async (req, res) => {
-  const { email, name, role, password, companyId, lpkId } = req.body as Record<string, string | undefined>;
+  const { email, name, role, password, companyId, lpkId, reviewerType } = req.body as Record<string, string | undefined>;
 
   if (!email || !isEmail(email)) {
     res.status(400).json({ error: 'BAD_REQUEST', message: 'Valid email required.' });
@@ -745,7 +749,7 @@ router.post('/users', wrap(async (req, res) => {
     res.status(400).json({ error: 'BAD_REQUEST', message: 'Name required.' });
     return;
   }
-  const VALID_ROLES = ['candidate', 'admin', 'manager', 'recruiter', 'super_admin'];
+  const VALID_ROLES = ['candidate', 'admin', 'manager', 'recruiter', 'super_admin', 'reviewer'];
   if (!role || !VALID_ROLES.includes(role)) {
     res.status(400).json({ error: 'BAD_REQUEST', message: 'Valid role required.' });
     return;
@@ -756,6 +760,11 @@ router.post('/users', wrap(async (req, res) => {
   }
   if (role === 'admin' && (!lpkId || !isUUID(lpkId))) {
     res.status(400).json({ error: 'BAD_REQUEST', message: 'Admin must be assigned to an LPK.' });
+    return;
+  }
+  const VALID_REVIEWER_TYPES = ['ex_ssw', 'jp_hr', 'expert'];
+  if (role === 'reviewer' && (!reviewerType || !VALID_REVIEWER_TYPES.includes(reviewerType))) {
+    res.status(400).json({ error: 'BAD_REQUEST', message: 'Reviewer must have a reviewer type (ex_ssw, jp_hr, expert).' });
     return;
   }
 
@@ -772,11 +781,30 @@ router.post('/users', wrap(async (req, res) => {
   const user = await User.create({
     email,
     name,
-    role: role as 'candidate' | 'admin' | 'manager' | 'recruiter' | 'super_admin',
+    role: role as 'candidate' | 'admin' | 'manager' | 'recruiter' | 'super_admin' | 'reviewer',
     passwordHash,
     companyId: companyId && isUUID(companyId) ? companyId : null,
     lpkId: lpkId && isUUID(lpkId) ? lpkId : null,
   });
+
+  // Reviewer langsung siap bekerja: registrasi profil + rekap antrean tertunda
+  if (role === 'reviewer') {
+    await JrasReviewer.create({
+      userId: user.id,
+      reviewerType: reviewerType as 'ex_ssw' | 'jp_hr' | 'expert',
+    });
+    const pending = await JrasInstrument.count({ where: { status: 'in_review' } });
+    if (pending > 0) {
+      await notifyUser(
+        user.id,
+        'JRAS_REVIEW_REQUESTED',
+        'Instrumen JRAS menunggu review Anda',
+        `Ada ${pending} instrumen dalam antrean review.`,
+        'jras_instrument',
+        undefined,
+      );
+    }
+  }
 
   const resp: Record<string, unknown> = {
     user: serializeUser(user.toJSON() as unknown as Record<string, unknown>),
@@ -790,6 +818,7 @@ router.get('/users/:id', validateUuidParam('id'), wrap(async (req, res) => {
     include: [
       { model: Company, as: 'company', attributes: ['id', 'name'], required: false },
       { model: Lpk, as: 'lpk', attributes: ['id', 'name'], required: false },
+      { model: JrasReviewer, as: 'jrasReviewer', attributes: ['reviewerType', 'active'], required: false },
     ],
   });
   if (!user) { res.status(404).json({ error: 'NOT_FOUND' }); return; }
@@ -801,8 +830,8 @@ router.put('/users/:id', validateUuidParam('id'), wrap(async (req, res) => {
   const user = await User.findByPk(id);
   if (!user) { res.status(404).json({ error: 'NOT_FOUND' }); return; }
 
-  const { name, role, companyId, lpkId, isActive } = req.body as Record<string, unknown>;
-  type RoleType = 'candidate' | 'admin' | 'manager' | 'recruiter' | 'super_admin';
+  const { name, role, companyId, lpkId, isActive, reviewerType } = req.body as Record<string, unknown>;
+  type RoleType = 'candidate' | 'admin' | 'manager' | 'recruiter' | 'super_admin' | 'reviewer';
   const updates: Partial<{ name: string | null; role: RoleType; companyId: string | null; lpkId: string | null; isActive: boolean }> = {};
 
   if (name !== undefined) updates.name = String(name);
@@ -827,7 +856,42 @@ router.put('/users/:id', validateUuidParam('id'), wrap(async (req, res) => {
     return;
   }
 
+  const VALID_REVIEWER_TYPES = ['ex_ssw', 'jp_hr', 'expert'];
+  const existingReviewer = await JrasReviewer.findOne({ where: { userId: id } });
+  if (effectiveRole === 'reviewer') {
+    const effectiveType = (reviewerType as string | undefined) ?? existingReviewer?.reviewerType;
+    if (!effectiveType || !VALID_REVIEWER_TYPES.includes(effectiveType)) {
+      res.status(400).json({ error: 'BAD_REQUEST', message: 'Reviewer must have a reviewer type (ex_ssw, jp_hr, expert).' });
+      return;
+    }
+  }
+
   await user.update(updates);
+
+  // Sinkronkan profil reviewer dengan role efektif
+  if (effectiveRole === 'reviewer') {
+    const effectiveType = ((reviewerType as string | undefined) ?? existingReviewer!.reviewerType) as 'ex_ssw' | 'jp_hr' | 'expert';
+    if (existingReviewer) {
+      await existingReviewer.update({ reviewerType: effectiveType, active: true });
+    } else {
+      await JrasReviewer.create({ userId: id, reviewerType: effectiveType });
+      const pending = await JrasInstrument.count({ where: { status: 'in_review' } });
+      if (pending > 0) {
+        await notifyUser(
+          id,
+          'JRAS_REVIEW_REQUESTED',
+          'Instrumen JRAS menunggu review Anda',
+          `Ada ${pending} instrumen dalam antrean review.`,
+          'jras_instrument',
+          undefined,
+        );
+      }
+    }
+  } else if (existingReviewer && existingReviewer.active) {
+    // Role berpindah dari reviewer: nonaktifkan profil, riwayat review tetap
+    await existingReviewer.update({ active: false });
+  }
+
   res.json({ user: serializeUser(user.toJSON() as unknown as Record<string, unknown>) });
 }));
 

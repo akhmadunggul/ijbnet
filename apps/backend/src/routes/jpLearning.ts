@@ -58,8 +58,10 @@ router.get('/topics', wrap(async (req, res) => {
   const c = await getGatedCandidate(req.user!.sub);
   if (!c) { res.status(403).json({ error: 'JP learning not available for your LPK' }); return; }
 
+  // category: halaman JP Learning hanya menampilkan modul bahasa;
+  // modul JRAS (culture/legal/finance/mental) tampil di jalur pembelajaran JRAS
   const topics = await JpTopic.findAll({
-    where: { level: 'A1' },
+    where: { level: 'A1', category: 'language' },
     order: [['sortOrder', 'ASC']],
     include: [{
       model: JpLesson,

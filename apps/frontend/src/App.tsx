@@ -38,6 +38,11 @@ import ManagerInterviews from './pages/manager/ManagerInterviews';
 import ManagerNotifications from './pages/manager/ManagerNotifications';
 import ManagerRequests from './pages/manager/ManagerRequests';
 import ManagerNotifyPage from './pages/manager/ManagerNotifyPage';
+import ReviewerLayout from './pages/reviewer/ReviewerLayout';
+import ReviewerQueue from './pages/reviewer/ReviewerQueue';
+import ReviewerInstrumentPage from './pages/reviewer/ReviewerInstrumentPage';
+import ReviewerHistory from './pages/reviewer/ReviewerHistory';
+import ReviewerNotifications from './pages/reviewer/ReviewerNotifications';
 import SuperAdminLayout from './pages/superadmin/SuperAdminLayout';
 import SuperAdminDashboard from './pages/superadmin/SuperAdminDashboard';
 import SuperAdminUsers from './pages/superadmin/SuperAdminUsers';
@@ -51,6 +56,8 @@ import SuperAdminDataEntrySettings from './pages/superadmin/SuperAdminDataEntryS
 import SuperAdminRecruiterSettings from './pages/superadmin/SuperAdminRecruiterSettings';
 import SuperAdminMonitor from './pages/superadmin/SuperAdminMonitor';
 import SuperAdminSurveys from './pages/superadmin/SuperAdminSurveys';
+import SuperAdminJras from './pages/superadmin/SuperAdminJras';
+import SuperAdminJrasInstrument from './pages/superadmin/SuperAdminJrasInstrument';
 import SurveyPublicPage from './pages/SurveyPublicPage';
 import HiringLetterPage from './pages/HiringLetterPage';
 import type { UserRole } from '@ijbnet/shared';
@@ -63,6 +70,7 @@ const ROLE_HOMES: Record<UserRole, string> = {
   manager: '/manager/dashboard',
   recruiter: '/recruiter/requests',
   super_admin: '/superadmin/dashboard',
+  reviewer: '/reviewer/queue',
 };
 
 function ComingSoon({ label }: { label: string }) {
@@ -205,6 +213,22 @@ export default function App() {
           <Route path="notifications" element={<RecruiterNotifications />} />
         </Route>
 
+        {/* Reviewer portal (JRAS item bank review) */}
+        <Route
+          path="/reviewer"
+          element={
+            <ProtectedRoute roles={['reviewer']}>
+              <ReviewerLayout />
+            </ProtectedRoute>
+          }
+        >
+          <Route index element={<Navigate to="queue" replace />} />
+          <Route path="queue" element={<ReviewerQueue />} />
+          <Route path="instruments/:id" element={<ReviewerInstrumentPage />} />
+          <Route path="history" element={<ReviewerHistory />} />
+          <Route path="notifications" element={<ReviewerNotifications />} />
+        </Route>
+
         {/* Super Admin */}
         <Route
           path="/superadmin"
@@ -227,6 +251,8 @@ export default function App() {
           <Route path="settings" element={<SuperAdminSettings />} />
           <Route path="monitor" element={<SuperAdminMonitor />} />
           <Route path="surveys" element={<SuperAdminSurveys />} />
+          <Route path="jras" element={<SuperAdminJras />} />
+          <Route path="jras/instruments/:id" element={<SuperAdminJrasInstrument />} />
         </Route>
 
         {/* Fallback */}

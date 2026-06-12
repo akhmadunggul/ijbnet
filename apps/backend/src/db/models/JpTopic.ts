@@ -1,8 +1,11 @@
 import { DataTypes, Model, Optional, Sequelize } from 'sequelize';
 
+export type JpTopicCategory = 'language' | 'culture' | 'legal' | 'finance' | 'mental';
+
 export interface JpTopicAttributes {
   id: string;
   level: string;
+  category: JpTopicCategory;
   sortOrder: number;
   titleJa: string;
   titleId: string;
@@ -13,11 +16,12 @@ export interface JpTopicAttributes {
   updatedAt?: Date;
 }
 
-interface JpTopicCreationAttributes extends Optional<JpTopicAttributes, 'id' | 'descriptionJa' | 'descriptionId' | 'emoji'> {}
+interface JpTopicCreationAttributes extends Optional<JpTopicAttributes, 'id' | 'category' | 'descriptionJa' | 'descriptionId' | 'emoji'> {}
 
 export class JpTopic extends Model<JpTopicAttributes, JpTopicCreationAttributes> implements JpTopicAttributes {
   declare id: string;
   declare level: string;
+  declare category: JpTopicCategory;
   declare sortOrder: number;
   declare titleJa: string;
   declare titleId: string;
@@ -33,6 +37,11 @@ export function initJpTopic(sequelize: Sequelize): void {
     {
       id:            { type: DataTypes.CHAR(36),    primaryKey: true },
       level:         { type: DataTypes.STRING(10),  allowNull: false, defaultValue: 'A1' },
+      category:      {
+        type: DataTypes.ENUM('language', 'culture', 'legal', 'finance', 'mental'),
+        allowNull: false,
+        defaultValue: 'language',
+      },
       sortOrder:     { type: DataTypes.INTEGER,     allowNull: false, defaultValue: 0 },
       titleJa:       { type: DataTypes.STRING(200), allowNull: false },
       titleId:       { type: DataTypes.STRING(200), allowNull: false },

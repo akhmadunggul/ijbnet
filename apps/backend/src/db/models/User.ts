@@ -62,7 +62,7 @@ export function initUser(sequelize: Sequelize): void {
       googleId: { type: DataTypes.STRING(255), allowNull: true, unique: true },
       passwordHash: { type: DataTypes.STRING(255), allowNull: true },
       role: {
-        type: DataTypes.ENUM('candidate', 'admin', 'manager', 'recruiter', 'super_admin'),
+        type: DataTypes.ENUM('candidate', 'admin', 'manager', 'recruiter', 'super_admin', 'reviewer'),
         allowNull: false,
       },
       avatarUrl: { type: DataTypes.TEXT, allowNull: true },

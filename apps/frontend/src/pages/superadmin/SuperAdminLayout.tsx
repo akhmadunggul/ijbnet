@@ -22,6 +22,7 @@ const navItems = [
   { to: '/superadmin/settings',             icon: '⚙️', key: 'navSettings' },
   { to: '/superadmin/monitor',             icon: '🖥️', key: 'superadmin.monitor.navLabel' },
   { to: '/superadmin/surveys',             icon: '📝', key: 'superadmin.surveys.navLabel' },
+  { to: '/superadmin/jras',                icon: '🎯', key: 'superadmin.jras.navLabel' },
 ];
 
 export default function SuperAdminLayout() {

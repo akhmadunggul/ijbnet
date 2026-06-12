@@ -12,6 +12,7 @@ interface UserRow {
   lastLoginAt: string | null;
   company?: { id: string; name: string } | null;
   lpk?: { id: string; name: string } | null;
+  jrasReviewer?: { reviewerType: string; active: boolean } | null;
 }
 
 interface UsersResponse {
@@ -30,9 +31,11 @@ const ROLE_BADGE: Record<string, string> = {
   admin: 'bg-blue-100 text-blue-700',
   recruiter: 'bg-indigo-100 text-indigo-700',
   candidate: 'bg-gray-100 text-gray-700',
+  reviewer: 'bg-amber-100 text-amber-700',
 };
 
-const ROLES = ['candidate', 'admin', 'manager', 'recruiter', 'super_admin'];
+const ROLES = ['candidate', 'admin', 'manager', 'recruiter', 'super_admin', 'reviewer'];
+const REVIEWER_TYPES = ['ex_ssw', 'jp_hr', 'expert'];
 
 function TempPasswordModal({ password, onClose }: { password: string; onClose: () => void }) {
   const { t } = useTranslation();
@@ -85,6 +88,7 @@ function UserDrawer({ user, companies, lpks, onClose, onSuccess }: DrawerProps) 
     password: '',
     companyId: user?.company?.id ?? '',
     lpkId: user?.lpk?.id ?? '',
+    reviewerType: user?.jrasReviewer?.reviewerType ?? '',
   });
   const [error, setError] = useState('');
   const qc = useQueryClient();
@@ -96,6 +100,7 @@ function UserDrawer({ user, companies, lpks, onClose, onSuccess }: DrawerProps) 
         role: form.role,
         companyId: form.companyId || undefined,
         lpkId: form.lpkId || undefined,
+        reviewerType: form.role === 'reviewer' ? form.reviewerType || undefined : undefined,
       };
       if (!user) {
         body['email'] = form.email;
@@ -186,6 +191,28 @@ function UserDrawer({ user, companies, lpks, onClose, onSuccess }: DrawerProps) 
               )}
             </div>
           )}
+          {form.role === 'reviewer' && (
+            <div>
+              <label className="text-xs font-medium text-gray-600 block mb-1">
+                {t('superadmin.jras.reviewerTypeLabel')} <span className="text-red-500">*</span>
+              </label>
+              <select
+                value={form.reviewerType}
+                onChange={(e) => set('reviewerType', e.target.value)}
+                className={`w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                  !form.reviewerType ? 'border-red-300 bg-red-50' : 'border-gray-200'
+                }`}
+              >
+                <option value="">—</option>
+                {REVIEWER_TYPES.map((rt) => (
+                  <option key={rt} value={rt}>{t(`jras.reviewerType.${rt}`)}</option>
+                ))}
+              </select>
+              {!form.reviewerType && (
+                <p className="text-xs text-red-500 mt-1">{t('superadmin.users.reviewerTypeRequired')}</p>
+              )}
+            </div>
+          )}
           {form.role === 'admin' && (
             <div>
               <label className="text-xs font-medium text-gray-600 block mb-1">
@@ -231,7 +258,8 @@ function UserDrawer({ user, companies, lpks, onClose, onSuccess }: DrawerProps) 
             disabled={
               mutation.isPending ||
               (form.role === 'recruiter' && !form.companyId) ||
-              (form.role === 'admin' && !form.lpkId)
+              (form.role === 'admin' && !form.lpkId) ||
+              (form.role === 'reviewer' && !form.reviewerType)
             }
             className="flex-1 bg-gray-900 text-white rounded-lg py-2 text-sm font-medium hover:bg-gray-700 transition disabled:opacity-50"
           >
@@ -373,7 +401,9 @@ export default function SuperAdminUsers() {
                     </span>
                   </td>
                   <td className="px-4 py-3 text-xs text-gray-500">
-                    {u.company?.name ?? u.lpk?.name ?? '—'}
+                    {u.role === 'reviewer' && u.jrasReviewer
+                      ? t(`jras.reviewerType.${u.jrasReviewer.reviewerType}`)
+                      : (u.company?.name ?? u.lpk?.name ?? '—')}
                   </td>
                   <td className="px-4 py-3">
                     <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${u.isActive ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>

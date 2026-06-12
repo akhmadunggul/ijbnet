@@ -30,6 +30,19 @@ import { JpTopic, initJpTopic } from './JpTopic';
 import { JpLesson, initJpLesson } from './JpLesson';
 import { JpExercise, initJpExercise } from './JpExercise';
 import { JpCandidateProgress, initJpCandidateProgress } from './JpCandidateProgress';
+import { JrasInstrument, initJrasInstrument } from './JrasInstrument';
+import { JrasItem, initJrasItem } from './JrasItem';
+import { JrasReviewer, initJrasReviewer } from './JrasReviewer';
+import { JrasReview, initJrasReview } from './JrasReview';
+import { JrasCommitteeMember, initJrasCommitteeMember } from './JrasCommitteeMember';
+import { JrasAttempt, initJrasAttempt } from './JrasAttempt';
+import { JrasAnswer, initJrasAnswer } from './JrasAnswer';
+import { JrasAppeal, initJrasAppeal } from './JrasAppeal';
+import { JrasDimensionScore, initJrasDimensionScore } from './JrasDimensionScore';
+import { JrasRiskRule, initJrasRiskRule } from './JrasRiskRule';
+import { JrasRiskFlag, initJrasRiskFlag } from './JrasRiskFlag';
+import { JrasIntervention, initJrasIntervention } from './JrasIntervention';
+import { JrasLearningPath, initJrasLearningPath } from './JrasLearningPath';
 // Initialize all models
 initCompany(sequelize);
 initLpk(sequelize);
@@ -61,6 +74,19 @@ initJpTopic(sequelize);
 initJpLesson(sequelize);
 initJpExercise(sequelize);
 initJpCandidateProgress(sequelize);
+initJrasInstrument(sequelize);
+initJrasItem(sequelize);
+initJrasReviewer(sequelize);
+initJrasReview(sequelize);
+initJrasCommitteeMember(sequelize);
+initJrasAttempt(sequelize);
+initJrasAnswer(sequelize);
+initJrasAppeal(sequelize);
+initJrasDimensionScore(sequelize);
+initJrasRiskRule(sequelize);
+initJrasRiskFlag(sequelize);
+initJrasIntervention(sequelize);
+initJrasLearningPath(sequelize);
 // ── Associations ─────────────────────────────────────────────────────────────
 
 // User ↔ Company / Lpk
@@ -210,6 +236,49 @@ Candidate.hasMany(JpCandidateProgress, { foreignKey: 'candidateId', as: 'jpProgr
 JpCandidateProgress.belongsTo(Candidate, { foreignKey: 'candidateId', as: 'candidate' });
 JpCandidateProgress.belongsTo(JpLesson, { foreignKey: 'lessonId', as: 'lesson' });
 
+// JRAS
+JrasInstrument.hasMany(JrasItem, { foreignKey: 'instrumentId', as: 'items', onDelete: 'CASCADE' });
+JrasItem.belongsTo(JrasInstrument, { foreignKey: 'instrumentId', as: 'instrument' });
+
+JrasInstrument.hasMany(JrasReview, { foreignKey: 'instrumentId', as: 'reviews', onDelete: 'CASCADE' });
+JrasReview.belongsTo(JrasInstrument, { foreignKey: 'instrumentId', as: 'instrument' });
+JrasReview.belongsTo(User, { foreignKey: 'reviewerUserId', as: 'reviewer' });
+
+User.hasOne(JrasReviewer, { foreignKey: 'userId', as: 'jrasReviewer', onDelete: 'CASCADE' });
+JrasReviewer.belongsTo(User, { foreignKey: 'userId', as: 'user' });
+
+User.hasOne(JrasCommitteeMember, { foreignKey: 'userId', as: 'jrasCommitteeMember', onDelete: 'CASCADE' });
+JrasCommitteeMember.belongsTo(User, { foreignKey: 'userId', as: 'user' });
+
+Candidate.hasMany(JrasAttempt, { foreignKey: 'candidateId', as: 'jrasAttempts', onDelete: 'CASCADE' });
+JrasAttempt.belongsTo(Candidate, { foreignKey: 'candidateId', as: 'candidate' });
+JrasAttempt.belongsTo(JrasInstrument, { foreignKey: 'instrumentId', as: 'instrument' });
+JrasAttempt.belongsTo(User, { foreignKey: 'observerUserId', as: 'observer' });
+
+JrasAttempt.hasMany(JrasAnswer, { foreignKey: 'attemptId', as: 'answers', onDelete: 'CASCADE' });
+JrasAnswer.belongsTo(JrasAttempt, { foreignKey: 'attemptId', as: 'attempt' });
+JrasAnswer.belongsTo(JrasItem, { foreignKey: 'itemId', as: 'item' });
+
+Candidate.hasMany(JrasAppeal, { foreignKey: 'candidateId', as: 'jrasAppeals', onDelete: 'CASCADE' });
+JrasAppeal.belongsTo(Candidate, { foreignKey: 'candidateId', as: 'candidate' });
+JrasAppeal.belongsTo(JrasInstrument, { foreignKey: 'instrumentId', as: 'instrument' });
+JrasAppeal.belongsTo(JrasAttempt, { foreignKey: 'attemptId', as: 'attempt' });
+
+Candidate.hasMany(JrasDimensionScore, { foreignKey: 'candidateId', as: 'jrasScores', onDelete: 'CASCADE' });
+JrasDimensionScore.belongsTo(Candidate, { foreignKey: 'candidateId', as: 'candidate' });
+
+Candidate.hasMany(JrasRiskFlag, { foreignKey: 'candidateId', as: 'jrasFlags', onDelete: 'CASCADE' });
+JrasRiskFlag.belongsTo(Candidate, { foreignKey: 'candidateId', as: 'candidate' });
+
+JrasRiskFlag.hasMany(JrasIntervention, { foreignKey: 'flagId', as: 'interventions', onDelete: 'CASCADE' });
+JrasIntervention.belongsTo(JrasRiskFlag, { foreignKey: 'flagId', as: 'flag' });
+JrasIntervention.belongsTo(Candidate, { foreignKey: 'candidateId', as: 'candidate' });
+JrasIntervention.belongsTo(User, { foreignKey: 'assignedToUserId', as: 'assignedTo' });
+
+Candidate.hasMany(JrasLearningPath, { foreignKey: 'candidateId', as: 'jrasLearningPaths', onDelete: 'CASCADE' });
+JrasLearningPath.belongsTo(Candidate, { foreignKey: 'candidateId', as: 'candidate' });
+JrasLearningPath.belongsTo(JpLesson, { foreignKey: 'lessonId', as: 'lesson' });
+
 // Candidate certifications & education history
 Candidate.hasMany(CandidateCertification, {
   foreignKey: 'candidateId',
@@ -257,4 +326,17 @@ export {
   JpLesson,
   JpExercise,
   JpCandidateProgress,
+  JrasInstrument,
+  JrasItem,
+  JrasReviewer,
+  JrasReview,
+  JrasCommitteeMember,
+  JrasAttempt,
+  JrasAnswer,
+  JrasAppeal,
+  JrasDimensionScore,
+  JrasRiskRule,
+  JrasRiskFlag,
+  JrasIntervention,
+  JrasLearningPath,
 };

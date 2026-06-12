@@ -17,6 +17,7 @@ export const ROLE_REDIRECTS: Record<string, string> = {
   manager: '/manager/candidates',
   recruiter: '/recruiter/selection',
   super_admin: '/superadmin/dashboard',
+  reviewer: '/reviewer/queue',
 };
 
 export default function LoginPage() {
