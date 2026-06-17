@@ -257,16 +257,18 @@ router.post('/candidates/batch-cv.pdf', wrap(async (req, res) => {
   }
 
   // Fetch layout + font + translate + cv-version settings once for the whole batch
-  const [layoutRow, fontRow, translateRow, v2LpkRow] = await Promise.all([
+  const [layoutRow, fontRow, translateRow, v2LpkRow, v3LpkRow] = await Promise.all([
     GlobalSettings.findOne({ where: { key: 'cv_layout' } }),
     GlobalSettings.findOne({ where: { key: 'cv_font'   } }),
     GlobalSettings.findOne({ where: { key: 'auto_translate_enabled' } }),
     GlobalSettings.findOne({ where: { key: 'cv_v2_lpk_ids' } }),
+    GlobalSettings.findOne({ where: { key: 'cv_v3_lpk_ids' } }),
   ]);
   const cvLayout     = layoutRow    ? String((layoutRow.toJSON()    as unknown as Record<string, unknown>)['value'] ?? 'layout1')   : 'layout1';
   const cvFont       = fontRow      ? String((fontRow.toJSON()      as unknown as Record<string, unknown>)['value'] ?? 'ms-mincho') : 'ms-mincho';
   const autoTranslate = translateRow ? (translateRow.toJSON() as unknown as Record<string, unknown>)['value'] !== false : true;
   const v2LpkIds: string[] = v2LpkRow ? ((v2LpkRow.toJSON() as unknown as Record<string, unknown>)['value'] as string[] ?? []) : [];
+  const v3LpkIds: string[] = v3LpkRow ? ((v3LpkRow.toJSON() as unknown as Record<string, unknown>)['value'] as string[] ?? []) : [];
 
   // For each candidate: translate missing Ja fields, embed photo, build HTML.
   // All in one pass so the same mutated cj object is used for HTML generation.
@@ -322,7 +324,9 @@ router.post('/candidates/batch-cv.pdf', wrap(async (req, res) => {
     } catch { /* no photo */ }
 
     const candidateLpkId = cj['lpkId'] as string | null | undefined;
-    const cvVariant = candidateLpkId && v2LpkIds.includes(candidateLpkId) ? 'v2' : undefined;
+    const cvVariant = candidateLpkId && v3LpkIds.includes(candidateLpkId) ? 'v3'
+      : candidateLpkId && v2LpkIds.includes(candidateLpkId) ? 'v2'
+      : undefined;
     return buildCandidateCvHtml(cj, { font: cvFont, layout: cvLayout, photoBase64, variant: cvVariant });
   }));
 

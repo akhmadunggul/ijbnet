@@ -269,11 +269,17 @@ router.get('/cv-lang-config', wrap(async (_req, res) => {
 
 // ── GET /api/superadmin/cv-version-config — PUBLIC ───────────────────────────
 router.get('/cv-version-config', wrap(async (_req, res) => {
-  const row = await GlobalSettings.findOne({ where: { key: 'cv_v2_lpk_ids' } });
-  const v2LpkIds: string[] = row
-    ? ((row.toJSON() as unknown as Record<string, unknown>)['value'] as string[] | null) ?? []
+  const [v2Row, v3Row] = await Promise.all([
+    GlobalSettings.findOne({ where: { key: 'cv_v2_lpk_ids' } }),
+    GlobalSettings.findOne({ where: { key: 'cv_v3_lpk_ids' } }),
+  ]);
+  const v2LpkIds: string[] = v2Row
+    ? ((v2Row.toJSON() as unknown as Record<string, unknown>)['value'] as string[] | null) ?? []
     : [];
-  res.json({ v2LpkIds });
+  const v3LpkIds: string[] = v3Row
+    ? ((v3Row.toJSON() as unknown as Record<string, unknown>)['value'] as string[] | null) ?? []
+    : [];
+  res.json({ v2LpkIds, v3LpkIds });
 }));
 
 // ── GET /api/superadmin/jp-learning-config — PUBLIC ──────────────────────────
@@ -559,16 +565,22 @@ router.put('/cv-lang-config', wrap(async (req, res) => {
 // ── PUT /api/superadmin/cv-version-config ────────────────────────────────────
 router.put('/cv-version-config', wrap(async (req, res) => {
   const body = req.body as Record<string, unknown>;
-  const rawIds = Array.isArray(body['v2LpkIds']) ? body['v2LpkIds'] : [];
-  const v2LpkIds = (rawIds as unknown[]).filter((id): id is string => typeof id === 'string' && isUUID(id));
 
-  const [row, created] = await GlobalSettings.findOrCreate({
-    where: { key: 'cv_v2_lpk_ids' },
-    defaults: { key: 'cv_v2_lpk_ids', value: v2LpkIds },
-  });
-  if (!created) await row.update({ value: v2LpkIds });
+  const filterUUIDs = (raw: unknown): string[] =>
+    (Array.isArray(raw) ? raw as unknown[] : [])
+      .filter((id): id is string => typeof id === 'string' && isUUID(id));
 
-  res.json({ v2LpkIds });
+  const v2LpkIds = filterUUIDs(body['v2LpkIds']);
+  const v3LpkIds = filterUUIDs(body['v3LpkIds']);
+
+  const upsert = async (key: string, value: string[]) => {
+    const [row, created] = await GlobalSettings.findOrCreate({ where: { key }, defaults: { key, value } });
+    if (!created) await row.update({ value });
+  };
+
+  await Promise.all([upsert('cv_v2_lpk_ids', v2LpkIds), upsert('cv_v3_lpk_ids', v3LpkIds)]);
+
+  res.json({ v2LpkIds, v3LpkIds });
 }));
 
 // ── PUT /api/superadmin/photo-bg-color ───────────────────────────────────────

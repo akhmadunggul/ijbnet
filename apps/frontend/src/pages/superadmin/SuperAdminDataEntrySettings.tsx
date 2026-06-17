@@ -66,6 +66,7 @@ export default function SuperAdminDataEntrySettings() {
   const [cvLangMode, setCvLangMode] = useState<'bilingual'|'lpk'>('bilingual');
   const [cvLangJaLpkIds, setCvLangJaLpkIds] = useState<string[]>([]);
   const [cvV2LpkIds, setCvV2LpkIds] = useState<string[]>([]);
+  const [cvV3LpkIds, setCvV3LpkIds] = useState<string[]>([]);
   const [completenessMode, setCompletenessMode] = useState<CompletenessMode>('legacy');
   const [photoBgEnabled, setPhotoBgEnabled] = useState(false);
   const [photoBgColor, setPhotoBgColor] = useState('#ffffff');
@@ -136,7 +137,7 @@ export default function SuperAdminDataEntrySettings() {
     queryKey: ['cv-lang-config'],
     queryFn: () => api.get('/superadmin/cv-lang-config').then(r => r.data),
   });
-  const { data: cvVersionConfigData } = useQuery<{ v2LpkIds: string[] }>({
+  const { data: cvVersionConfigData } = useQuery<{ v2LpkIds: string[]; v3LpkIds: string[] }>({
     queryKey: ['cv-version-config'],
     queryFn: () => api.get('/superadmin/cv-version-config').then(r => r.data),
   });
@@ -194,7 +195,10 @@ export default function SuperAdminDataEntrySettings() {
     }
   }, [cvLangConfigData]);
   useEffect(() => {
-    if (cvVersionConfigData !== undefined) setCvV2LpkIds(cvVersionConfigData.v2LpkIds ?? []);
+    if (cvVersionConfigData !== undefined) {
+      setCvV2LpkIds(cvVersionConfigData.v2LpkIds ?? []);
+      setCvV3LpkIds(cvVersionConfigData.v3LpkIds ?? []);
+    }
   }, [cvVersionConfigData]);
   useEffect(() => {
     if (shokumuConfigData !== undefined) {
@@ -246,8 +250,8 @@ export default function SuperAdminDataEntrySettings() {
     onError: () => markError('cvlang'),
   });
   const cvVersionMutation = useMutation({
-    mutationFn: (v2LpkIds: string[]) =>
-      api.put('/superadmin/cv-version-config', { v2LpkIds }).then(r => r.data),
+    mutationFn: (ids: { v2LpkIds: string[]; v3LpkIds: string[] }) =>
+      api.put('/superadmin/cv-version-config', ids).then(r => r.data),
     onSuccess: () => { markSaved('cvversion'); void qc.invalidateQueries({ queryKey: ['cv-version-config'] }); },
     onError: () => markError('cvversion'),
   });
@@ -694,10 +698,11 @@ export default function SuperAdminDataEntrySettings() {
             {/* CV Version per LPK */}
             <div className="px-5 py-4 border-t border-gray-100">
               {subHead('CV Layout Version per LPK', 'cvversion')}
-              <p className="text-xs text-gray-500 mb-3">
-                LPK yang dipilih akan menggunakan layout CV versi baru (rirekisho / Japanese-only). LPK lain tetap menggunakan layout standar.
+              <p className="text-xs text-gray-500 mb-2">
+                <strong>v2</strong>: rirekisho / Japanese-only layout. <strong>v3</strong>: bilingual layout dengan status pendidikan Japanese-only (卒業 / 中退 / 在学中). LPK tanpa pilihan menggunakan v1 (bilingual standar).
               </p>
-              <div className="border border-gray-100 rounded-lg p-3 bg-gray-50 max-h-48 overflow-y-auto space-y-1.5">
+              <p className="text-xs font-medium text-gray-600 mb-1">v2 (履歴書 — rirekisho)</p>
+              <div className="border border-gray-100 rounded-lg p-3 bg-gray-50 max-h-40 overflow-y-auto space-y-1.5 mb-3">
                 {(lpkListData?.lpks ?? []).length === 0 && <p className="text-xs text-gray-400">No LPKs found.</p>}
                 {(lpkListData?.lpks ?? []).map(lpk => (
                   <label key={lpk.id} className="flex items-center gap-2 cursor-pointer">
@@ -709,14 +714,39 @@ export default function SuperAdminDataEntrySettings() {
                           ? [...cvV2LpkIds, lpk.id]
                           : cvV2LpkIds.filter(id => id !== lpk.id);
                         setCvV2LpkIds(ids);
-                        cvVersionMutation.mutate(ids);
+                        cvVersionMutation.mutate({ v2LpkIds: ids, v3LpkIds: cvV3LpkIds });
                       }}
                       className="accent-navy-700 w-4 h-4"
                     />
                     <span className="text-sm text-gray-800">{lpk.name}</span>
                     {lpk.city && <span className="text-xs text-gray-400">{lpk.city}</span>}
                     {cvV2LpkIds.includes(lpk.id) && (
-                      <span className="ml-auto text-xs text-navy-700 font-medium">v2 (履歴書)</span>
+                      <span className="ml-auto text-xs text-navy-700 font-medium">v2</span>
+                    )}
+                  </label>
+                ))}
+              </div>
+              <p className="text-xs font-medium text-gray-600 mb-1">v3 (bilingual + Japanese-only edu status)</p>
+              <div className="border border-gray-100 rounded-lg p-3 bg-gray-50 max-h-40 overflow-y-auto space-y-1.5">
+                {(lpkListData?.lpks ?? []).length === 0 && <p className="text-xs text-gray-400">No LPKs found.</p>}
+                {(lpkListData?.lpks ?? []).map(lpk => (
+                  <label key={lpk.id} className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={cvV3LpkIds.includes(lpk.id)}
+                      onChange={e => {
+                        const ids = e.target.checked
+                          ? [...cvV3LpkIds, lpk.id]
+                          : cvV3LpkIds.filter(id => id !== lpk.id);
+                        setCvV3LpkIds(ids);
+                        cvVersionMutation.mutate({ v2LpkIds: cvV2LpkIds, v3LpkIds: ids });
+                      }}
+                      className="accent-navy-700 w-4 h-4"
+                    />
+                    <span className="text-sm text-gray-800">{lpk.name}</span>
+                    {lpk.city && <span className="text-xs text-gray-400">{lpk.city}</span>}
+                    {cvV3LpkIds.includes(lpk.id) && (
+                      <span className="ml-auto text-xs text-navy-700 font-medium">v3</span>
                     )}
                   </label>
                 ))}
