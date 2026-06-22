@@ -27,6 +27,7 @@ export default function AdminLayout() {
   const navItems = [
     { to: '/admin/dashboard', icon: '🏠', label: t('navDashboard') },
     { to: '/admin/candidates', icon: '👥', label: t('navCandidates') },
+    { to: '/admin/import', icon: '📥', label: t('navImport') },
     { to: '/admin/notifications', icon: '🔔', label: t('navNotifications') },
   ];
 

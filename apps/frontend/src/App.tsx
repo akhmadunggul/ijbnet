@@ -19,6 +19,7 @@ import AdminCandidateCVPage from './pages/admin/AdminCandidateCVPage';
 import AdminBodyCheck from './pages/admin/AdminBodyCheck';
 import AdminVideos from './pages/admin/AdminVideos';
 import AdminNotifications from './pages/admin/AdminNotifications';
+import AdminImportPage from './pages/admin/AdminImportPage';
 import RecruiterLayout from './pages/recruiter/RecruiterLayout';
 import RecruiterSelection from './pages/recruiter/RecruiterSelection';
 import RecruiterCandidateCVPage from './pages/recruiter/RecruiterCandidateCVPage';
@@ -160,6 +161,7 @@ export default function App() {
           <Route path="body-check/:id" element={<AdminBodyCheck />} />
           <Route path="videos/:id" element={<AdminVideos />} />
           <Route path="notifications" element={<AdminNotifications />} />
+              <Route path="import" element={<AdminImportPage />} />
         </Route>
 
         {/* Manager portal */}
