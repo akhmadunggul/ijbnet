@@ -1,6 +1,3 @@
-cd D:\Development\SSW\ijbnet
-
-@'
 # Environment — NEVER commit
 .env
 .env.local
@@ -38,21 +35,46 @@ desktop.ini
 # TypeScript cache
 *.tsbuildinfo
 
-# Sequelize
-
-
-# Docker
-
+# Docker variants
+docker-composev4.yml
 docker-composev6.yml
 
 # Test artifacts
 coverage/
-'@ | Out-File -FilePath ".gitignore" -Encoding utf8
+test_output.*
+test_passport_ok.py
+batch-cv-*.pdf
+apps/backend/cv-v*-sample.html
+apps/backend/cv-v*-sample.pdf
+*.tflite
 
-Write-Host "Done"
+# Local dev / ops SQL (never commit DB content)
 seed_candidates.sql
-docker-composev4.yml
+dev-data.sql
+completeness_check.sql
+structure_dump.sql
+
+# Local ops / deploy scripts
+redeploy.ps1
+deploy.ps1
+
+# Root-level documents and photos (reference files, not source code)
+/*.docx
+/*.doc
+/*.jpeg
+/*.jpg
+/batch-cv-*.pdf
+
+# Unused/stale frontend assets
+apps/frontend/src/assets/Arashiyama*.jpg
+
+# Tooling outputs
+.understand-anything/
+ZAP/
+
+# Claude / AI tooling
 .claude/
 prompts/
-'ndev-data.sql
+
+# Misc
 production configs.zip
