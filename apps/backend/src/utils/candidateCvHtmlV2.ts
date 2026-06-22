@@ -296,7 +296,7 @@ export function buildCandidateCvHtmlV2(
   </div>
 
   <!-- Photo + basic info -->
-  <div style="overflow:hidden;margin-bottom:4px;">
+  <div style="margin-bottom:4px;">
     <div style="${photoBoxStyle}">
       ${photoHtml}
     </div>
@@ -339,6 +339,7 @@ export function buildCandidateCvHtmlV2(
         </tr>
       </tbody>
     </table>
+    <div style="clear:both;"></div>
   </div>
 
   <!-- Japan / Passport / Address -->
