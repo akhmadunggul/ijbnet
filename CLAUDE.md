@@ -290,6 +290,7 @@ apps/frontend/src/
 - v0.8.7 — Hiring letter in-browser viewer: new HiringLetterPage renders 内定通知書/不採用通知書 as a React component (A4 layout, Noto Serif JP, zoom controls, print + PDF save); /letter-data JSON endpoints added for all 3 roles; notifications navigate to viewer instead of triggering a file download with no auth header
 - v0.8.8 — Fix hiring letter UNAUTHORIZED: ManagerInterviews had a bare <a href="/api/..."> that opened the PDF endpoint in a new tab with no Authorization header; replaced with navigate() to HiringLetterPage
 - v0.8.9 — Add CV v3: bilingual layout identical to v1 but education status shown in Japanese only (卒業/中退/在学中); superadmin CV tab has separate v2 and v3 per-LPK checkbox lists; v1 unchanged
+- v0.8.10 — Fix batch CV logo cut off: replace overflow:hidden float clearfix with explicit clear:both div in all three CV HTML templates (v1/v2/v3); logo now renders correctly in both single and batch PDF export
 
-Current: v0.8.9
+Current: v0.8.10
 Live at: https://jinzai.jobagus.id
