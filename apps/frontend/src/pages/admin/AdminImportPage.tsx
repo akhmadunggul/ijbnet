@@ -78,9 +78,11 @@ export default function AdminImportPage() {
         <div className="flex-1 min-w-0">
           <p className="font-semibold text-blue-900 text-sm">Unduh Template Excel</p>
           <p className="text-xs text-blue-700 mt-0.5">
-            Template berisi 4 sheet: Kandidat, Pendidikan, Pengalaman_Kerja, Tes_JP.
-            Sheet <strong>Referensi_Bidang_SSW</strong> berisi daftar nilai valid untuk kolom
+            Template berisi sheet <strong>Petunjuk</strong> (panduan lengkap), 4 sheet data
+            (Kandidat, Pendidikan, Pengalaman_Kerja, Tes_JP), dan sheet{' '}
+            <strong>Referensi_Bidang_SSW</strong> berisi daftar nilai valid untuk kolom{' '}
             <code className="mx-1 bg-blue-100 px-1 rounded">bidang_ssw</code>.
+            Baris contoh (hijau) boleh dibiarkan — sistem mengabaikannya jika email tidak valid.
           </p>
         </div>
         <button

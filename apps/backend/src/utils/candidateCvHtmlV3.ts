@@ -400,7 +400,7 @@ export function buildCandidateCvHtmlV3(
         <td style="${ST}">Skill ・ 技能 <span style="font-weight:normal;font-size:11px;">(Keahlian yang berhubungan dengan bidang yang dilamar)</span></td>
       </tr>
       <tr class="cv-row-md">
-        <td style="${TD}height:60px;white-space:pre-wrap;">${he(trunc(getJa(cj, 'selfPrJa', 'selfPrId'), 300))}</td>
+        <td style="${TD}height:40px;white-space:pre-wrap;">${he(trunc(getJa(cj, 'selfPrJa', 'selfPrId'), 300))}</td>
       </tr>
     </tbody>
   </table>
@@ -413,7 +413,7 @@ export function buildCandidateCvHtmlV3(
         ${promosiExtra}
       </tr>
       <tr class="cv-row-lg">
-        <td style="${TD}height:100px;white-space:pre-wrap;">${he(trunc(getJa(cj, 'selfIntroJa', 'selfIntroId'), 400))}</td>
+        <td style="${TD}height:60px;white-space:pre-wrap;">${he(trunc(getJa(cj, 'selfIntroJa', 'selfIntroId'), 400))}</td>
       </tr>
     </tbody>
   </table>

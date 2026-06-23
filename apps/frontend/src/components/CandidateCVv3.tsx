@@ -622,7 +622,7 @@ export default function CandidateCVv3({
             </td>
           </tr>
           <tr className="cv-row-md">
-            <td style={{ ...TD, height: '60px', whiteSpace: 'pre-wrap' }}>
+            <td style={{ ...TD, height: '40px', whiteSpace: 'pre-wrap' }}>
               {trunc(getJa('selfPrJa', 'selfPrId'), 300)}
             </td>
           </tr>
@@ -641,7 +641,7 @@ export default function CandidateCVv3({
             )}
           </tr>
           <tr className="cv-row-lg">
-            <td style={{ ...TD, height: '100px', whiteSpace: 'pre-wrap' }}>
+            <td style={{ ...TD, height: '60px', whiteSpace: 'pre-wrap' }}>
               {trunc(getJa('selfIntroJa', 'selfIntroId'), 400)}
             </td>
           </tr>

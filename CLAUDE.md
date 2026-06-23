@@ -291,6 +291,8 @@ apps/frontend/src/
 - v0.8.8 — Fix hiring letter UNAUTHORIZED: ManagerInterviews had a bare <a href="/api/..."> that opened the PDF endpoint in a new tab with no Authorization header; replaced with navigate() to HiringLetterPage
 - v0.8.9 — Add CV v3: bilingual layout identical to v1 but education status shown in Japanese only (卒業/中退/在学中); superadmin CV tab has separate v2 and v3 per-LPK checkbox lists; v1 unchanged
 - v0.8.10 — Fix batch CV logo cut off: replace overflow:hidden float clearfix with explicit clear:both div in all three CV HTML templates (v1/v2/v3); logo now renders correctly in both single and batch PDF export
+- v0.9.0 — Admin batch import from Excel: POST /api/admin/candidates/import (multer .xlsx, upsert by email, replaces education/career/tests); downloadable template with 6 sheets (Petunjuk instructions, Kandidat, Pendidikan, Pengalaman_Kerja, Tes_JP, Referensi_Bidang_SSW read-only); dropdown validation + cell notes in template; AdminImportPage with drag-and-drop upload and result summary; fix sheetToRows header normalisation (strip * suffix so column lookups no longer silently fail)
+- v0.9.1 — Fix CV 2-page overflow: reduce Skill section minimum height 60px→40px and Promosi Diri minimum height 100px→60px in all six CV templates (CandidateCVv1/v2/v3.tsx + candidateCvHtmlV1/v2/v3.ts); cells grow with content but no longer hold unnecessary empty space when text is short
 
-Current: v0.8.10
+Current: v0.9.1
 Live at: https://jinzai.jobagus.id
