@@ -584,7 +584,7 @@ export default function CandidateCVv3({
           <tr style={{ textAlign: 'center' }}>
             <td style={{ ...TD, width: '25%' }}>{L('Tgl Penerbitan', '発行日')}</td>
             <td style={{ ...TD, width: '40%' }}>{L('Nama Sertifikat', '名称')}</td>
-            <td style={{ ...TD, width: '35%' }}>{L('Level, Keterangan', 'レベルや詳細')}</td>
+            <td style={{ ...TD, width: '35%' }}>{L('Detil, Keterangan', '詳細・備考')}</td>
           </tr>
           {certRows.map((row, i) =>
             row ? (

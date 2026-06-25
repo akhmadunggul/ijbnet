@@ -393,7 +393,7 @@ export function buildCandidateCvHtml(
       <tr style="text-align:center;">
         <td style="${TD}width:25%;">Tgl Penerbitan ・ 発行日</td>
         <td style="${TD}width:40%;">Nama Sertifikat ・ 名称</td>
-        <td style="${TD}width:35%;">Level, Keterangan ・ レベルや詳細</td>
+        <td style="${TD}width:35%;">Detil, Keterangan ・ 詳細・備考</td>
       </tr>
       ${certRowsHtml}
     </tbody>

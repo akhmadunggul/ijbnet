@@ -553,7 +553,7 @@ export default function CandidateCVv2({
           <tr style={{ textAlign: 'center' }}>
             <td style={{ ...TD, width: '25%' }}>発行日</td>
             <td style={{ ...TD, width: '40%' }}>名称</td>
-            <td style={{ ...TD, width: '35%' }}>レベルや詳細</td>
+            <td style={{ ...TD, width: '35%' }}>詳細・備考</td>
           </tr>
           {certRows.map((row, i) =>
             row ? (
