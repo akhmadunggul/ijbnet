@@ -1096,6 +1096,9 @@
       "interview_passed": "Lulus Wawancara",
       "interview_failed": "Tidak Lulus Wawancara",
       "recruiter_accepted": "Diterima Rekruter",
+      "hired": "Surat Penawaran Kerja Diterbitkan",
+      "recruiter_rejected": "Tidak Diterima Rekruter",
+      "returned_to_pool": "Dikembalikan ke Pool Kandidat",
       "provisional_acceptance": "Surat Penerimaan Sementara (仮内定)"
     }
   },

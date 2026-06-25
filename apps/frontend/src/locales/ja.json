@@ -1095,6 +1095,9 @@
       "interview_passed": "面接合格",
       "interview_failed": "面接不合格",
       "recruiter_accepted": "採用担当者承認済み",
+      "hired": "内定通知書発行済み",
+      "recruiter_rejected": "不採用通知",
+      "returned_to_pool": "プール返却",
       "provisional_acceptance": "仮内定"
     }
   },

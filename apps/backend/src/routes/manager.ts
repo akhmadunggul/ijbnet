@@ -553,7 +553,7 @@ router.patch('/batches/:batchId/candidates/:candidateId/approve', wrap(async (re
 
   const candidate = await Candidate.findByPk(candidateId, { attributes: ['id', 'fullName', 'email', 'userId'] });
   if (candidate) {
-    await candidate.update({ profileStatus: 'confirmed', isLocked: true });
+    await candidate.update({ isLocked: true });
 
     // Notify candidate
     if (candidate.userId) {
@@ -622,7 +622,7 @@ router.post('/batches/:id/approve-all', wrap(async (req: Request, res: Response)
         attributes: ['id', 'fullName', 'email', 'userId'],
       });
       if (candidate) {
-        await candidate.update({ profileStatus: 'confirmed', isLocked: true });
+        await candidate.update({ isLocked: true });
 
         if (candidate.userId) {
           await notifyUser(

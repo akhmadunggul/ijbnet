@@ -7,7 +7,8 @@ type StepKey =
   | 'registered' | 'consent_given' | 'profile_submitted' | 'profile_under_review'
   | 'profile_approved' | 'profile_rejected' | 'batch_allocated'
   | 'interview_proposed' | 'interview_date_confirmed' | 'interview_scheduled'
-  | 'interview_passed' | 'interview_failed' | 'recruiter_accepted' | 'manager_confirmed'
+  | 'interview_passed' | 'interview_failed' | 'recruiter_accepted'
+  | 'hired' | 'recruiter_rejected' | 'returned_to_pool'
   | 'provisional_acceptance';
 
 interface TimelineEvent {
@@ -24,12 +25,12 @@ const PROCESS_STEPS: StepKey[] = [
   'registered', 'consent_given', 'profile_submitted', 'profile_under_review',
   'profile_approved', 'batch_allocated', 'interview_proposed',
   'interview_date_confirmed', 'interview_scheduled', 'interview_passed',
-  'recruiter_accepted', 'manager_confirmed', 'provisional_acceptance',
+  'recruiter_accepted', 'hired', 'provisional_acceptance',
 ];
 
-const NEGATIVE_TERMINALS: Partial<Record<StepKey, StepKey>> = {
-  profile_approved: 'profile_rejected',
-  interview_passed: 'interview_failed',
+const NEGATIVE_TERMINALS: Partial<Record<StepKey, StepKey[]>> = {
+  profile_approved: ['profile_rejected'],
+  interview_passed: ['interview_failed', 'recruiter_rejected'],
 };
 
 const STEP_ICON: Record<StepKey, string> = {
@@ -46,7 +47,9 @@ const STEP_ICON: Record<StepKey, string> = {
   interview_passed:         '🎯',
   interview_failed:         '💔',
   recruiter_accepted:       '🏅',
-  manager_confirmed:        '🏆',
+  hired:                    '🏆',
+  recruiter_rejected:       '📋',
+  returned_to_pool:         '🔄',
   provisional_acceptance:   '🎌',
 };
 
@@ -66,7 +69,9 @@ const STEP_COLORS: Record<StepKey, StepColors> = {
   interview_passed:         { card: 'bg-teal-50 border-teal-200',      iconBg: 'bg-teal-100',    text: 'text-teal-800',    subtext: 'text-teal-500',    badge: 'bg-teal-500' },
   interview_failed:         { card: 'bg-red-50 border-red-200',        iconBg: 'bg-red-100',     text: 'text-red-800',     subtext: 'text-red-400',     badge: 'bg-red-500' },
   recruiter_accepted:       { card: 'bg-amber-50 border-amber-300',    iconBg: 'bg-amber-100',   text: 'text-amber-800',   subtext: 'text-amber-500',   badge: 'bg-amber-600' },
-  manager_confirmed:        { card: 'bg-yellow-50 border-yellow-300',  iconBg: 'bg-yellow-100',  text: 'text-yellow-800',  subtext: 'text-yellow-600',  badge: 'bg-yellow-600' },
+  hired:                    { card: 'bg-yellow-50 border-yellow-400',  iconBg: 'bg-yellow-100',  text: 'text-yellow-800',  subtext: 'text-yellow-600',  badge: 'bg-yellow-600' },
+  recruiter_rejected:       { card: 'bg-red-50 border-red-200',        iconBg: 'bg-red-100',     text: 'text-red-800',     subtext: 'text-red-400',     badge: 'bg-red-500' },
+  returned_to_pool:         { card: 'bg-orange-50 border-orange-200',  iconBg: 'bg-orange-100',  text: 'text-orange-800',  subtext: 'text-orange-400',  badge: 'bg-orange-500' },
   provisional_acceptance:   { card: 'bg-red-50 border-red-300',        iconBg: 'bg-red-100',     text: 'text-red-800',     subtext: 'text-red-500',     badge: 'bg-red-600' },
 };
 
@@ -190,13 +195,17 @@ export default function CandidateJourney() {
   // Detect negative terminal
   let negativeTerminalEvent: TimelineEvent | null = null;
   let negativeAfterIndex = -1;
-  for (const [pos, neg] of Object.entries(NEGATIVE_TERMINALS)) {
-    if (eventMap.has(neg as StepKey)) {
-      negativeTerminalEvent = eventMap.get(neg as StepKey)!;
-      negativeAfterIndex = PROCESS_STEPS.indexOf(pos as StepKey);
-      break;
+  outer: for (const [pos, negs] of Object.entries(NEGATIVE_TERMINALS)) {
+    for (const neg of negs) {
+      if (eventMap.has(neg as StepKey)) {
+        negativeTerminalEvent = eventMap.get(neg as StepKey)!;
+        negativeAfterIndex = PROCESS_STEPS.indexOf(pos as StepKey);
+        break outer;
+      }
     }
   }
+
+  const hasReturnedToPool = eventMap.has('returned_to_pool');
 
   // Last completed index (among positive steps)
   let lastCompletedIndex = -1;
@@ -236,6 +245,16 @@ export default function CandidateJourney() {
 
       {/* Japan welcome banner — shown only when final step achieved */}
       {hasProvisional && <JapanWelcomeBanner lang={lang} />}
+
+      {/* Returned-to-pool notice */}
+      {hasReturnedToPool && !hasProvisional && (
+        <div className="rounded-xl border border-orange-200 bg-orange-50 px-4 py-3 text-sm text-orange-800">
+          🔄&nbsp;
+          {lang === 'ja'
+            ? 'プールに返却されました。採用プロセスが再開される場合があります。'
+            : 'Anda telah dikembalikan ke pool kandidat. Proses rekrutmen dapat dimulai kembali.'}
+        </div>
+      )}
 
       {/* Step cards */}
       <div className="space-y-2">

@@ -635,8 +635,10 @@ router.get('/candidates/:id/timeline', wrap(async (req: Request, res: Response):
   // Recruiters see only post-allocation events
   const RECRUITER_EVENTS = [
     'batch_allocated', 'interview_proposed',
-    'interview_date_confirmed', 'interview_scheduled', 'manager_confirmed',
-    'interview_passed', 'interview_failed', 'recruiter_accepted',
+    'interview_date_confirmed', 'interview_scheduled',
+    'interview_passed', 'interview_failed',
+    'recruiter_accepted', 'hired', 'recruiter_rejected', 'returned_to_pool',
+    'provisional_acceptance',
   ];
 
   const { Op } = await import('sequelize');

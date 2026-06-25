@@ -11,12 +11,14 @@ type TimelineEventType =
   | 'profile_rejected'
   | 'batch_allocated'
   | 'interview_proposed'
-  | 'interview_scheduled'
   | 'interview_date_confirmed'
+  | 'interview_scheduled'
   | 'interview_passed'
   | 'interview_failed'
   | 'recruiter_accepted'
-  | 'manager_confirmed'
+  | 'hired'
+  | 'recruiter_rejected'
+  | 'returned_to_pool'
   | 'provisional_acceptance';
 
 interface TimelineEvent {
@@ -42,18 +44,18 @@ const PROCESS_STEPS: TimelineEventType[] = [
   'profile_approved',
   'batch_allocated',
   'interview_proposed',
-  'interview_scheduled',
   'interview_date_confirmed',
+  'interview_scheduled',
   'interview_passed',
   'recruiter_accepted',
-  'manager_confirmed',
+  'hired',
   'provisional_acceptance',
 ];
 
 // Negative terminal events that end the process early
-const NEGATIVE_TERMINALS: Partial<Record<TimelineEventType, TimelineEventType>> = {
-  profile_approved: 'profile_rejected',
-  interview_passed: 'interview_failed',
+const NEGATIVE_TERMINALS: Partial<Record<TimelineEventType, TimelineEventType[]>> = {
+  profile_approved: ['profile_rejected'],
+  interview_passed: ['interview_failed', 'recruiter_rejected'],
 };
 
 function formatDate(iso: string) {
@@ -117,10 +119,13 @@ export default function CandidateTimeline({
   // Detect negative terminal state
   let negativeTerminal: TimelineEvent | null = null;
   let negativeAfterStep = -1;
-  for (const [positiveStep, negativeStep] of Object.entries(NEGATIVE_TERMINALS)) {
-    if (eventMap.has(negativeStep as TimelineEventType)) {
-      negativeTerminal = eventMap.get(negativeStep as TimelineEventType)!;
-      negativeAfterStep = PROCESS_STEPS.indexOf(positiveStep as TimelineEventType);
+  outer: for (const [positiveStep, negativeSteps] of Object.entries(NEGATIVE_TERMINALS)) {
+    for (const negativeStep of negativeSteps) {
+      if (eventMap.has(negativeStep as TimelineEventType)) {
+        negativeTerminal = eventMap.get(negativeStep as TimelineEventType)!;
+        negativeAfterStep = PROCESS_STEPS.indexOf(positiveStep as TimelineEventType);
+        break outer;
+      }
     }
   }
 
@@ -255,7 +260,7 @@ export default function CandidateTimeline({
                       )}
 
                       {/* Provisional acceptance action inline (manager only) */}
-                      {step === 'manager_confirmed' && provisionalAcceptanceCandidateId && !hasProvisionalAcceptance && (
+                      {step === 'hired' && provisionalAcceptanceCandidateId && !hasProvisionalAcceptance && (
                         <button
                           onClick={() => provisionalMutation.mutate(provisionalAcceptanceCandidateId)}
                           disabled={provisionalMutation.isPending}

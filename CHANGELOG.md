@@ -5,6 +5,454 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ---
 
+## [v0.9.1] - 2026-06-24
+
+### Fixed
+- **CV 2-page overflow**: Reduce Skill section minimum height 60px→40px and Promosi Diri minimum height 100px→60px in all six CV templates (CandidateCVv1/v2/v3.tsx + candidateCvHtmlV1/v2/v3.ts); cells grow with content but no longer hold unnecessary empty space when text is short.
+
+---
+
+## [v0.9.0] - 2026-06-24
+
+### Added
+- **Admin batch import from Excel**: `POST /api/admin/candidates/import` accepts `.xlsx` files; upserts candidates by email; replaces education/career/tests associations. Downloadable template with 6 sheets (Petunjuk instructions, Kandidat, Pendidikan, Pengalaman_Kerja, Tes_JP, Referensi_Bidang_SSW read-only); dropdown validation + cell notes. `AdminImportPage` with drag-and-drop upload and result summary.
+
+### Fixed
+- **Excel import header normalisation**: `sheetToRows` now strips trailing `*` suffix from column headers so required-field column lookups no longer silently fail.
+
+---
+
+## [v0.8.10] - 2026-06-18
+
+### Fixed
+- **Batch CV logo cut off**: Replaced `overflow:hidden` float clearfix with an explicit `clear:both` div in all three CV HTML templates (v1/v2/v3); logo now renders correctly in both single and batch PDF export.
+
+---
+
+## [v0.8.9] - 2026-06-18
+
+### Added
+- **CV v3**: Bilingual layout identical to v1 but education status shown in Japanese only (卒業/中退/在学中). Superadmin CV tab has separate v2 and v3 per-LPK checkbox lists; v1 unchanged.
+
+---
+
+## [v0.8.8] - 2026-06-18
+
+### Fixed
+- **Hiring letter UNAUTHORIZED**: `ManagerInterviews` had a bare `<a href="/api/...">` that opened the PDF endpoint in a new tab with no `Authorization` header; replaced with `navigate()` to `HiringLetterPage`.
+
+---
+
+## [v0.8.7] - 2026-06-18
+
+### Added
+- **Hiring letter in-browser viewer**: New `HiringLetterPage` renders 内定通知書/不採用通知書 as a React component (A4 layout, Noto Serif JP, zoom controls, print + PDF save). `/letter-data` JSON endpoints added for all 3 roles. Notifications now navigate to the viewer instead of triggering a file download with no auth header.
+
+---
+
+## [v0.8.6] - 2026-06-18
+
+### Fixed
+- **Interview flow notification gaps**: Step 1 (recruiter proposes) now notifies candidate + manager (was admin LPK only); Step 2 (candidate confirms) now notifies adminLPK + recruiter (was manager only); Step 3b (manager sets link) now notifies recruiter (was candidate only).
+
+### Changed
+- **Candidate date picker**: Redesigned to two-step flow (radio select → Terima button).
+- Regression tests expanded to 35.
+
+---
+
+## [v0.8.5] - 2026-06-18
+
+### Fixed
+- **Meeting link not exposed in recruiter portal**: Added `meetingLink` to `InterviewProposalData` type; teal join button (or pending message) shown in `RecruiterInterviews` expanded panel for scheduled proposals.
+- Regression test suite expanded to 21 tests.
+
+---
+
+## [v0.8.4] - 2026-06-18
+
+### Added
+- **Manager meeting link**: `PATCH /api/manager/interviews/:id/meeting-link` sets a Zoom/Meet/Teams URL on scheduled proposals. Link shown in manager table and candidate dashboard; candidate dashboard polls every 60s and shows teal join button when link is available.
+
+### Fixed
+- **Recruiter portal blank when batch is closed**: Added `closed` to `getActiveBatch` status filter.
+
+---
+
+## [v0.8.3] - 2026-06-18
+
+### Added
+- **Auto-submit on 100% completeness**: `autoSubmitIfComplete()` utility called after every candidate profile save (personal data, consent, NIK, career, certifications, education, tests, photos).
+- **Admin bulk-submit endpoint**: `POST /api/admin/candidates/bulk-submit-complete` + "Submit Semua yang Lengkap" button in admin candidates page to backfill existing stuck candidates.
+
+---
+
+## [v0.8.2] - 2026-06-18
+
+### Changed
+- **Interview workflow redesign**: Manager marks interview completion only (no pass/fail). Recruiter issues 内定通知書/不採用通知書 as the sole hiring determination. `hiring_letter` notifications include a download button (role-aware endpoint). On-demand letter PDF endpoints for manager/recruiter/candidate. Manager Return-to-Pool for rejected candidates resets batch allocation + profileStatus; `returned_to_pool` timeline event recorded.
+
+---
+
+## [v0.8.1] - 2026-06-18
+
+### Added
+- **Notifications UX**: Search bar (client-side filter by title/body), collapsible section for notifications older than 7 days (auto-expands when searching). Shared `NotificationsPage` component across all 4 roles. Fetch limit raised 50→100.
+
+---
+
+## [v0.8.0] - 2026-06-18
+
+### Fixed
+- **Manager interviews blank page**: Null-guard `batchCandidate.candidate` (LEFT JOIN orphan crash); fix `bc?.batch?.company` optional chain.
+- **CandidateTimeline Sequelize ENUM**: Added missing `hired` / `recruiter_rejected` values.
+- **Superadmin user create/edit**: `companyId` required for recruiter, `lpkId` required for admin.
+
+---
+
+## [v0.7.26] - 2026-06-15
+
+### Added
+- **Recruiter final hiring decision**: Configurable 1-week/2-week deadline (superadmin Sistem tab); per-candidate accept/reject with checkbox digital-signature confirmation; auto-generated 内定通知書/不採用通知書 PDF downloaded on submit; accepted → `profileStatus=hired`; rejected → candidate returned to pool; deadline countdown badges on interview list; notifications to candidate and manager.
+
+---
+
+## [v0.7.25] - 2026-06-15
+
+### Added
+- **Superadmin Tampilan Kolom Rekruter — Resume toggle**: Resume (経歴書) column in Dalam Seleksi now respects both `shokumu_recruiter_enabled` and the new `cols.resume` visibility flag.
+
+---
+
+## [v0.7.24] - 2026-06-15
+
+### Fixed
+- **unhandledRejection crash**: Strengthened `isoDate` Zod validator to reject semantically invalid dates (e.g. month 13) in addition to format check. Added try-catch to career + education bulkCreate routes and `.catch()` to shokumu PDF career update.
+
+---
+
+## [v0.7.23] - 2026-06-15
+
+### Fixed
+- **Admin portal — profile submission**: Added `incomplete → submitted` transition for admin role. "Ajukan Profil" button shown only when profile is 100% complete; completeness gate enforced on backend; `profile_submitted` timeline event recorded; candidate notified.
+
+---
+
+## [v0.7.22] - 2026-06-15
+
+### Fixed
+- **Superadmin user search always returning empty**: Added `subQuery: false` to `User.findAndCountAll` (Sequelize subQuery+Op.or+LEFT JOINs silently returns 0 rows on MySQL 8.0). Debounced search input 300ms. Shows error state instead of silent empty table.
+
+---
+
+## [v0.7.21] - 2026-06-15
+
+### Added
+- **Recruiter Permintaan Kandidat — edit and delete**: `PATCH` + `DELETE /api/recruiter/requests/:id` (ownership check, 409 if not pending). Edit modal pre-filled with existing data, cascading SSW dropdowns, delete confirm dialog. Actions column hidden for non-pending rows.
+
+---
+
+## [v0.7.19] - 2026-06-10
+
+### Fixed
+- **JP learning**: `candidateId` was read from JWT (`undefined`) instead of DB. Refactored gate helper `getGatedCandidate()` to return `candidate.id` for all progress queries. Fixed migration-000044 `addIndex` race condition.
+
+---
+
+## [v0.7.18] - 2026-06-10
+
+### Changed
+- **JP learning gate diagnostics**: `isEnabledForCandidate` logs gate failure reason (no config / no candidate record / null lpkId / lpk mismatch) to backend console for production debugging.
+
+---
+
+## [v0.7.17] - 2026-06-10
+
+### Fixed
+- **Migration 000044**: Use `DataTypes.UUID` (not `CHAR(36)`) for all `jp_*` FK columns to match `candidates.id` collation. Serialise `dataJson` with `JSON.stringify` in bulkInsert. Replace `require('uuid')` with ESM import. Raise backend health check `start_period` 30s→120s.
+
+---
+
+## [v0.7.16] - 2026-06-10
+
+### Added
+- **Superadmin LPK deployment control for JP learning**: New Fitur tab in Data Entry Settings with per-LPK checkbox list (auto-save). `GET/PUT /api/superadmin/jp-learning-config`. All `/api/jp/*` endpoints gate by candidate `lpkId`. Candidate nav item hidden when LPK not enabled; graceful 403 message on `JpLearningPage`.
+
+---
+
+## [v0.7.15] - 2026-06-10
+
+### Added
+- **Survey (アンケート)**: Japanese manufacturing company survey at `/angket` — 26 questions, Japanese-only display.
+- **A1 Japanese learning module**: 6 Irodori Starter topics, 12 lessons (flash card + quiz), 84 exercises seeded to DB, 3D flip flash cards, MCQ quiz with score tracking, progress rings at `/portal/jp-learning`.
+
+---
+
+## [v0.7.14] - 2026-06-08
+
+### Added
+- **Structured address**: Replaced single address textarea with 4-level cascading dropdowns (Provinsi → Kota/Kabupaten → Kecamatan → Kelurahan/Desa) backed by ihsaninh/wilayah-indonesia API. Kode Pos auto-filled from subdistrict; flat address field auto-composed server-side. `addressStructured` masked for recruiters; legacy address notice for existing candidates.
+
+---
+
+## [v0.7.13] - 2026-06-05
+
+### Changed
+- **Remove A/B testing engine**: Replaced with simple `cv_v2_lpk_ids` GlobalSetting. Superadmin CV tab shows per-LPK v2 checkbox list. Batch PDF uses candidate `lpkId` to pick v1/v2. `AuthInitializer` retained (prevents 401 on page reload).
+
+---
+
+## [v0.7.12] - 2026-06-05
+
+### Changed
+- **CV v2 — Japanese-only labels**: No Indonesian field names. IJBNet logo moved from below-photo/Promosi Diri to bottom-right of CV. Applies to `CandidateCVv2.tsx`, `candidateCvHtmlV2.ts`, and `generate-cv-v2-sample.mjs`.
+
+---
+
+## [v0.7.11] - 2026-06-05
+
+### Fixed
+- **A/B cv-layout not routing to v2**: Variant was resolved from the viewer's `lpkId` (null for manager/recruiter/superadmin) instead of the candidate being viewed. Backend now includes `lpkVariants` map in assignments response. `CandidateCV` dispatcher checks `candidate.lpkId` against that map first; stale assignments reconciled on every fetch when `lpkVariants` config has changed.
+
+---
+
+## [v0.7.10] - 2026-06-05
+
+### Added
+- **A/B per-LPK variant assignment**: `AbTargeting` gains `lpkVariants` (`lpkId→variantKey` map); `lpkVariantFor()` util skips hash-bucketing when explicit mapping is set. SuperAdminExperiments LPK scope shows all LPKs with per-LPK variant dropdown.
+
+---
+
+## [v0.7.9] - 2026-06-05
+
+### Added
+- **CV v2 rirekisho layout**: `CandidateCVv2` / `candidateCvHtmlV2` replace Pendidikan and Pengalaman Kerja tables with 2-row-per-entry Japanese rirekisho format (入学/卒業, 入社/退社). `CandidateCV.tsx` dispatcher uses `useExperiment('cv-layout')` to route v1 vs v2.
+
+---
+
+## [v0.7.8] - 2026-06-05
+
+### Added
+- **A/B testing engine**: DB migrations (`ab_experiments`, `ab_assignments`, `ab_events`), models, deterministic FNV-1a 32-bit bucketing, REST API, Zustand `abStore`, `useExperiment` hook, `AbInitializer` in `App.tsx`, SuperAdminExperiments management page with bilingual CRUD + results panel.
+
+---
+
+## [v0.7.7] - 2026-06-04
+
+### Changed
+- **Superadmin Data Entry Settings — 6-tab navigation**: Profil/CV/Resume/Foto/Terjemahan/Sistem tabs.
+
+### Fixed
+- **Tab labels showing raw i18n keys**: Locale file changes from prior session were never committed.
+
+---
+
+## [v0.7.6] - 2026-06-04
+
+### Changed
+- **CV polish**: Uniform 25/40/35% column layout across all three CV tables (Pendidikan/Pekerjaan/Sertifikasi); 在学状況 shown inline right-aligned in 学校名 cell; base font size bumped 12px→13px.
+- **Superadmin Data Entry Settings UX overhaul**: Auto-save on every control change (8 save buttons removed), Toggle switches replace Active/Inactive radio pairs, CV Font+Layout+Language grouped into one card, Translation merged into single section, Resume sub-options dim when disabled.
+
+---
+
+## [v0.7.5] - 2026-06-04
+
+### Changed
+- **Education status merged into 学校名 cell**: No separate column/header. All dropdown option text uppercased in education form.
+- **Career date standardized to 年月 format**: Migration 000039 adds `endDate` to `candidate_careers`; career form uses month/year dropdowns matching education pattern. CV uses `formatPeriodJa()` with period-text fallback for existing data.
+
+---
+
+## [v0.7.4] - 2026-06-04
+
+### Changed
+- **Education history redesign**: 4-column form (Periode via month/year dropdowns, Nama Sekolah, Status enum Lulus/Drop Out/Masih Belajar, Jurusan); end date supports "Sekarang (現在)" → null. DB migration 000038 adds `status` column. CV education table updated with Japanese status labels (卒業/中退/在学中).
+
+---
+
+## [v0.7.3] - 2026-06-04
+
+### Added
+- **Japanese-only CV format**: Configurable per LPK by superadmin (`cv_lang_mode` + `cv_lang_ja_lpk_ids` GlobalSettings); all field labels/values in Japanese, 年月日 dates, no `text-transform:uppercase`; exceptions: address, birthplace, school name, company name, major.
+- **Resume column in Dalam Seleksi table**: Shown when recruiter resume is enabled.
+
+### Changed
+- **CV fields**: Remove Hobi and Motivasi. Redistribute space to Skill (40→60px, 200→300 chars) and Promosi Diri (60→100px, 300→400 chars).
+
+---
+
+## [v0.7.2] - 2026-06-02
+
+### Added
+- **Recruiter Resume in-browser display**: `RecruiterShokumuPage` at `/recruiter/candidates/:id/shokumu`; `GET /api/recruiter/candidates/:id/gakken-resume` endpoint (batch-RBAC). Resume button navigates to display page instead of triggering PDF download.
+
+### Fixed
+- **ShokumuResume internal query**: Was calling candidate-only `/me/shokumu` → 403 for recruiters; now uses `/superadmin/shokumu-config`.
+
+---
+
+## [v0.7.1] - 2026-06-02
+
+### Added
+- **Superadmin toggle to enable/disable Resume download for recruiters** (`shokumu_recruiter_enabled`). New `GET /api/recruiter/candidates/:id/shokumu-pdf` endpoint (batch-RBAC + feature gate + audit log). Gold Resume button on recruiter CV page shown only when enabled.
+
+---
+
+## [v0.7.0] - 2026-06-02
+
+### Fixed
+- **Completeness score mismatch**: Superadmin list and manager batch detail computed `calcCompleteness()` on candidate data missing `educationHistory`/`career`/`tests` associations → always showed 95% (20/21 in CV mode) while candidate portal correctly showed 100%. Extracted shared `candidateIncludes()` utility (`utils/candidateIncludes.ts`) used by all four routes so association set is guaranteed identical.
+
+---
+
+## [v0.6.34] - 2026-06-01
+
+### Fixed
+- **Batch CV date of birth**: Sequelize `DATEONLY` returns `Date` object on some rows — `toDateStr()` normalises both `Date` objects and strings.
+- **Batch CV auto-translate**: `Promise.allSettled` ensures a single failure never aborts the batch; translations saved to DB for caching.
+
+---
+
+## [v0.6.33] - 2026-06-01
+
+### Fixed
+- **Batch CV logo base64 corrupted**: Replaced with correct bytes.
+- **Batch CV 2-page overflow**: Matched print CSS values (TD padding 3px 4px, container width 100%, row heights 18/24/32px, margins 4px, `renderPdf` 5mm margins).
+- **K6 users**: Clear `selectedIds` via `useEffect` when any filter changes.
+
+---
+
+## [v0.6.32] - 2026-06-01
+
+### Changed
+- **Batch CV format**: New `candidateCvHtml.ts` mirrors `CandidateCV.tsx` as pure HTML (bilingual, IJBNet logo, closeup photo embedded per candidate); reads `cv_layout` + `cv_font` settings.
+
+---
+
+## [v0.6.31] - 2026-06-01
+
+### Added
+- **Manager batch CV download**: Checkboxes on ManagerCandidates table (select-all per page + individual). "Download CV (n)" button POSTs `candidateIds` to `POST /api/export/candidates/batch-cv.pdf`; backend concatenates HTML and renders as one PDF (max 50). Audit log per candidate.
+
+---
+
+## [v0.6.30] - 2026-06-01
+
+### Fixed
+- **Gakken resume auto-translate**: (1) Wrong DB key `auto_translate` → `auto_translate_enabled`; (2) Stale JA value in payload blocked re-translation — backend now discards client JA values when auto-translate is on and always re-translates ID fields; same fix for per-company entries.
+
+---
+
+## [v0.6.29] - 2026-06-01
+
+### Fixed
+- **Gakken form**: Remove `(自己PR)` from 職務要約 Japanese field label. Japanese fields greyed and locked when auto-translate is enabled.
+
+### Changed
+- Superadmin shokumu section shows auto-translate status badge when Gakken template is active.
+
+---
+
+## [v0.6.28] - 2026-06-01
+
+### Added
+- **Gakken resume redesign**: New `candidate_gakken_resumes` + `candidate_gakken_companies` DB tables (migrations 000034, 000035). Dedicated `GET/PATCH /api/candidates/me/gakken-resume` routes with auto-translate. Gakken `ShokumuTab` shows structured form. `GakkenCV` renders from new tables.
+
+---
+
+## [v0.6.27] - 2026-06-01
+
+### Fixed
+- **Career save silently failing since v0.6.13**: `defaultValues` spread (`…c`) included `id` + shokumu fields not in the `.strict()` schema — every save returned 422. `mutationFn` now strips entries to only the 5 expected fields. Adds visible `onError` banner.
+
+---
+
+## [v0.6.26] - 2026-06-01
+
+### Fixed
+- Bump version; verify career translation logic — no regressions found.
+
+---
+
+## [v0.6.25] - 2026-06-01
+
+### Added
+- **Auto-translate Uraian Pekerjaan**: `division`/`skillGroup` translated to Japanese on career save; `divisionJa` + `skillGroupJa` stored in DB (migration 000033). `CandidateCV` renders Japanese text with Indonesian fallback. `candidatePdf.ts` uses Japanese text for career columns.
+
+---
+
+## [v0.6.24] - 2026-06-01
+
+### Fixed
+- **Stale JP certification gate on profile submit**: Submit button checked `candidate.tests.length === 0` and blocked submission for candidates who had fulfilled all 21 fields — Japanese tests were removed from completeness requirements so this gate was obsolete. Removed check, `showJpWarning` state, and dialog entirely.
+
+---
+
+## [v0.6.23] - 2026-06-01
+
+### Fixed
+- **Data Utama Simpan button always staying dirty**: `personalSchema` included `email` and `nik` but `patchMeSchema`'s `.strict()` (v0.6.13) rejects unknown keys — every save silently returned 422, `reset(data)` was never reached, `isDirty` stayed true. Fix strips `email`+`nik` before calling `onSave`. Also resolves marital status update failure for LPK Humaira candidates.
+
+---
+
+## [v0.6.22] - 2026-06-01
+
+### Security
+- **Self-host fonts**: DM Serif Display and Inter WOFF2 fonts moved to `public/fonts/`; removed Google Fonts `<link>` tags from `index.html`. Eliminates SRI gap.
+- **CV print CSS extracted**: From `dangerouslySetInnerHTML` into static files (`public/css/candidate-cv-print.css`, `shokumu-print.css`, `gakken-print.css`); dropped `'unsafe-inline'` from `style-src` in all Caddyfiles.
+
+---
+
+## [v0.6.21] - 2026-05-31
+
+### Security
+- **Explicit HTTP→HTTPS redirect**: Permanent redirect block added to `Caddyfile.prod` (plain HTTP was serving content without CSP or redirect).
+- **Cache-Control for SPA shell**: `no-cache, no-store, must-revalidate` for `/` and `*.html` across all three Caddyfiles.
+
+---
+
+## [v0.6.20] - 2026-05-31
+
+### Security
+- **Content-Security-Policy header**: Added to all three Caddyfiles (ZAP pentest finding). Policy covers Google Fonts, Google OAuth, YouTube embeds, `'unsafe-inline'` styles. Helmet CSP made explicit with strict API-only policy.
+
+---
+
+## [v0.6.19] - 2026-05-31
+
+### Added
+- **Gakken template**: 5-column 職務経歴 table; 3 new bilingual career fields (`productId/Ja`, `jobTitleId/Ja`, `memberRoleId/Ja`) with DB migration 000032. Auto-translate extended to all 5 ID→JA field pairs.
+
+---
+
+## [v0.6.18] - 2026-05-31
+
+### Fixed
+- **Gakken template rewrite**: Faithfully follows reference document structure — spread title, 職務要約 boxed section, per-company 職務経歴 blocks, 経験・知識・技術 section, bordered 資格 and 自己ＰＲ boxes, 以上 footer.
+
+---
+
+## [v0.6.17] - 2026-05-31
+
+### Added
+- **Two resume templates**: Generic (existing modern layout) and Gakken Template (standard Japanese table-based form). Superadmin template selector; candidate tab shows active template badge.
+
+---
+
+## [v0.6.16] - 2026-05-31
+
+### Fixed
+- **ShokumuCV preview**: Added A4 page border (2px solid #000), white background, print-margin padding, `boxSizing` to `S.doc`.
+
+---
+
+## [v0.6.15] - 2026-05-31
+
+### Changed
+- **ShokumuCV preview — aligned with CandidateCV**: −/[pct%]/+ zoom controls (right-aligned, 50–200% in 10% steps); print CSS via `dangerouslySetInnerHTML` inside container; `<>` fragment wrapper.
+
+---
+
 ## [v0.6.14] - 2026-05-31
 
 ### Changed

@@ -8,7 +8,6 @@ export type TimelineEventType =
   | 'profile_approved'
   | 'profile_rejected'
   | 'batch_allocated'
-  | 'recruiter_selected'
   | 'interview_proposed'
   | 'interview_date_confirmed'
   | 'interview_scheduled'
@@ -66,7 +65,6 @@ export function initCandidateTimeline(sequelize: Sequelize): void {
           'profile_approved',
           'profile_rejected',
           'batch_allocated',
-          'recruiter_selected',
           'interview_proposed',
           'interview_date_confirmed',
           'interview_scheduled',

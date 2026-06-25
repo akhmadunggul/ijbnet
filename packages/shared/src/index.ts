@@ -5,7 +5,6 @@ export type ProfileStatus =
   | 'submitted'
   | 'under_review'
   | 'approved'
-  | 'confirmed'
   | 'rejected'
   | 'hired';
 
