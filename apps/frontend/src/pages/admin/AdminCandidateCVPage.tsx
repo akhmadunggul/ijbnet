@@ -43,6 +43,15 @@ export default function AdminCandidateCVPage() {
     );
   }
 
+  const handlePrint = () => {
+    const date = new Date().toISOString().slice(0, 10).replace(/-/g, '');
+    const name = (data.candidate.fullName ?? '').toUpperCase().replace(/\s+/g, '_');
+    const prev = document.title;
+    document.title = `${date}_${name}`;
+    window.addEventListener('afterprint', () => { document.title = prev; }, { once: true });
+    window.print();
+  };
+
   return (
     <div className="max-w-4xl mx-auto space-y-4">
       <div className="flex items-center justify-between no-print">
@@ -58,7 +67,7 @@ export default function AdminCandidateCVPage() {
             ← Kembali
           </button>
           <button
-            onClick={() => window.print()}
+            onClick={handlePrint}
             className="text-sm px-4 py-2 bg-navy-700 text-white rounded-lg hover:bg-navy-900 transition"
           >
             Cetak / 印刷

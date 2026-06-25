@@ -5,6 +5,13 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ---
 
+## [v0.9.3] - 2026-06-25
+
+### Changed
+- **CV print filename**: All four CV pages (`CandidateCVPage`, `AdminCandidateCVPage`, `ManagerCandidateCVPage`, `RecruiterCandidateCVPage`) now set `document.title` to `yyyymmdd_CANDIDATENAME` before calling `window.print()` and restore the original title via the `afterprint` event. The browser print-to-PDF dialog now defaults to a meaningful filename instead of the page title.
+
+---
+
 ## [v0.9.2] - 2026-06-25
 
 ### Changed

@@ -162,9 +162,9 @@ apps/frontend/src/
 See [CHANGELOG.md](./CHANGELOG.md) for full version history.
 
 ### Recent changes
+- v0.9.3 — CV print filename: all four CV pages set document.title to yyyymmdd_CANDIDATENAME before window.print() and restore via afterprint event
 - v0.9.2 — Streamline candidate journey: remove manager_confirmed from stepper, add hired step, recruiter_rejected as visible negative terminal, returned_to_pool banner; drop dead profileStatus 'confirmed' and timeline 'recruiter_selected' ENUM values (migration 000049)
 - v0.9.1 — Fix CV 2-page overflow: reduce Skill/Promosi Diri min-heights in all six CV templates (CandidateCVv1/v2/v3.tsx + candidateCvHtmlV1/v2/v3.ts)
-- v0.9.0 — Admin batch import from Excel: POST /api/admin/candidates/import (.xlsx upsert, downloadable template, AdminImportPage with drag-and-drop)
 
-Current: v0.9.2
+Current: v0.9.3
 Live at: https://jinzai.jobagus.id
