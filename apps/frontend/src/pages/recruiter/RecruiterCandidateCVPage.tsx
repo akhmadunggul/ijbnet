@@ -1,13 +1,11 @@
 import { useNavigate, useParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { useTranslation } from 'react-i18next';
 import { api } from '../../lib/api';
 import CandidateCV from '../../components/CandidateCV';
 
 export default function RecruiterCandidateCVPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { t } = useTranslation();
 
   const { data, isLoading, error } = useQuery({
     queryKey: ['recruiter-candidate-cv', id],
@@ -15,12 +13,6 @@ export default function RecruiterCandidateCVPage() {
     enabled: !!id,
     retry: false,
   });
-
-  const { data: shokumuConfig } = useQuery<{ recruiterEnabled: boolean }>({
-    queryKey: ['shokumu-config'],
-    queryFn: () => api.get('/superadmin/shokumu-config').then((r) => r.data),
-  });
-  const recruiterResumeEnabled = shokumuConfig?.recruiterEnabled === true;
 
   if (isLoading) {
     return (
@@ -76,14 +68,6 @@ export default function RecruiterCandidateCVPage() {
           >
             ← Kembali
           </button>
-          {recruiterResumeEnabled && (
-            <button
-              onClick={() => navigate(`/recruiter/candidates/${id}/shokumu`)}
-              className="text-sm px-4 py-2 bg-gold-600 text-white rounded-lg hover:bg-gold-700 transition"
-            >
-              {t('recruiter.cv.downloadResume', { defaultValue: 'Resume / 職務経歴書' })}
-            </button>
-          )}
           <button
             onClick={handlePrint}
             className="text-sm px-4 py-2 bg-navy-700 text-white rounded-lg hover:bg-navy-900 transition"
