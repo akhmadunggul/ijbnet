@@ -5,6 +5,20 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ---
 
+## [v0.9.2] - 2026-06-25
+
+### Changed
+- **Candidate journey stepper**: Removed `manager_confirmed` step (fired after the recruiter had already decided — redundant). Added `hired` as a visible step between `recruiter_accepted` and `provisional_acceptance` so candidates see the 内定通知書 issuance. Fixed `interview_date_confirmed`/`interview_scheduled` order in `CandidateTimeline`. Manager's "Issue 仮内定" button moved from `manager_confirmed` → `hired` step.
+- **Negative terminals**: `recruiter_rejected` now appears as a visible red ❌ node after `interview_passed`; a rejected candidate's journey no longer freezes silently. `returned_to_pool` shown as an orange info banner.
+- **Recruiter timeline events**: `RECRUITER_EVENTS` expanded to include `hired`, `recruiter_rejected`, `returned_to_pool`, `provisional_acceptance`; `manager_confirmed` removed.
+- **Manager batch-confirm routes**: Removed `profileStatus: 'confirmed'` update — candidates stay `approved` until `hired`. `isLocked: true` still applied.
+
+### Removed
+- **`confirmed` profileStatus**: Was set by manager batch-confirm but never filtered on; `isLocked` and `batch_candidates.isConfirmed` carry this state. Migration 000049 migrates existing rows to `approved` and drops the ENUM value.
+- **`recruiter_selected` timeline event**: Removed from recording in v0.5.2 but ENUM value persisted. Dropped in migration 000049.
+
+---
+
 ## [v0.9.1] - 2026-06-24
 
 ### Fixed
