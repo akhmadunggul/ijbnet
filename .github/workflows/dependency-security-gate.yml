@@ -1,0 +1,166 @@
+name: Dependency Security Gate
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - '**/package.json'
+      - 'pnpm-lock.yaml'
+  push:
+    branches: [main]
+    paths:
+      - '**/package.json'
+      - 'pnpm-lock.yaml'
+  schedule:
+    # Weekly scan on Monday 02:00 UTC — catches newly published CVEs
+    # even when no packages changed
+    - cron: '0 2 * * 1'
+
+jobs:
+  sca-gate:
+    name: SCA — SBOM + Grype
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Generate SBOM
+        run: |
+          VERSION=$(node -p "require('./package.json').version")
+          npx --yes @cyclonedx/cdxgen \
+            -t js \
+            -o sbom-ci.cdx.json \
+            --project-name ijbnet \
+            --project-version "$VERSION"
+
+      - name: Install Grype
+        run: |
+          curl -sSfL \
+            https://raw.githubusercontent.com/anchore/grype/main/install.sh \
+            | sh -s -- -b /usr/local/bin
+
+      - name: Run Grype scan
+        run: |
+          grype sbom:sbom-ci.cdx.json -o json 2>/dev/null > grype-ci.json || true
+
+      # ── Gate 1: zero Critical findings (absolute block) ──────────────────────
+      - name: Gate — no Critical vulnerabilities
+        run: |
+          CRITICAL=$(jq '[.matches[] | select(.vulnerability.severity=="Critical")] | length' grype-ci.json)
+          if [ "$CRITICAL" -gt 0 ]; then
+            echo "❌ $CRITICAL Critical vulnerability(ies) found:"
+            jq -r '.matches[]
+              | select(.vulnerability.severity=="Critical")
+              | "  \(.artifact.name) \(.artifact.version) — \(.vulnerability.id)"' grype-ci.json
+            exit 1
+          fi
+          echo "✅ No Critical vulnerabilities."
+
+      # ── Gate 2: no new findings vs committed baseline ─────────────────────────
+      - name: Compute new findings vs baseline
+        id: diff
+        run: |
+          jq -r '.matches[]
+            | "\(.artifact.name)|\(.artifact.version)|\(.vulnerability.id)|\(.vulnerability.severity)"' \
+            documentation/grype-report.json | sort > baseline.txt
+
+          jq -r '.matches[]
+            | "\(.artifact.name)|\(.artifact.version)|\(.vulnerability.id)|\(.vulnerability.severity)"' \
+            grype-ci.json | sort > current.txt
+
+          # Lines in current but not in baseline = newly introduced findings
+          comm -13 baseline.txt current.txt > new-findings.txt || true
+
+          COUNT=$(wc -l < new-findings.txt | tr -d ' ')
+          echo "count=$COUNT" >> "$GITHUB_OUTPUT"
+
+          if [ "$COUNT" -gt 0 ]; then
+            echo "⚠️ $COUNT new finding(s) not in baseline:"
+            cat new-findings.txt
+          else
+            echo "✅ No new vulnerabilities vs baseline."
+          fi
+
+      - name: Gate — fail on new High or Critical findings
+        if: steps.diff.outputs.count > 0
+        run: |
+          FAIL=0
+          while IFS='|' read -r pkg ver cve sev; do
+            if [[ "$sev" == "Critical" || "$sev" == "High" ]]; then
+              echo "❌ New $sev: $pkg $ver — $cve"
+              FAIL=1
+            else
+              echo "ℹ️  New $sev (non-blocking): $pkg $ver — $cve"
+            fi
+          done < new-findings.txt
+          [ "$FAIL" -eq 1 ] && exit 1 || true
+
+      # ── Artifacts ─────────────────────────────────────────────────────────────
+      - name: Upload reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: vulnerability-reports-${{ github.run_number }}
+          path: |
+            sbom-ci.cdx.json
+            grype-ci.json
+          retention-days: 30
+
+      # ── PR comment with new findings ─────────────────────────────────────────
+      - name: Comment on PR
+        if: github.event_name == 'pull_request' && steps.diff.outputs.count > 0
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+
+            const current  = JSON.parse(fs.readFileSync('grype-ci.json', 'utf8'));
+            const baseline = new Set(
+              JSON.parse(fs.readFileSync('documentation/grype-report.json', 'utf8'))
+                .matches.map(m =>
+                  `${m.artifact.name}|${m.artifact.version}|${m.vulnerability.id}`)
+            );
+
+            const newFindings = current.matches.filter(m =>
+              !baseline.has(
+                `${m.artifact.name}|${m.artifact.version}|${m.vulnerability.id}`
+              )
+            );
+
+            const sevIcon = s =>
+              ({ Critical:'🔴', High:'🟠', Medium:'🟡', Low:'🔵' })[s] ?? '⚪';
+
+            let body = '## 🛡️ Dependency Security Gate — New Findings\n\n';
+            body += `This PR introduces **${newFindings.length}** new vulnerability finding(s) not present in the baseline.\n\n`;
+            body += '| Pkg | Version | Advisory | Severity | Fix |\n';
+            body += '|---|---|---|---|---|\n';
+
+            newFindings.forEach(m => {
+              const fix  = m.vulnerability.fix?.versions?.slice(-1)[0] ?? '—';
+              const link = m.vulnerability.dataSource
+                ? `[${m.vulnerability.id}](${m.vulnerability.dataSource})`
+                : m.vulnerability.id;
+              body += `| \`${m.artifact.name}\` | ${m.artifact.version} | ${link} | ${sevIcon(m.vulnerability.severity)} ${m.vulnerability.severity} | \`${fix}\` |\n`;
+            });
+
+            const highOrCrit = newFindings.filter(
+              m => ['Critical','High'].includes(m.vulnerability.severity)
+            ).length;
+
+            if (highOrCrit > 0) {
+              body += `\n> ❌ **${highOrCrit} High/Critical finding(s) block this PR.** `;
+              body += 'Upgrade the affected package(s) or update the baseline in `documentation/grype-report.json` with justification.\n';
+            } else {
+              body += '\n> ℹ️ All new findings are Medium/Low — this PR is not blocked, but consider addressing them.\n';
+            }
+
+            await github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body
+            });

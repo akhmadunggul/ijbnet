@@ -162,9 +162,10 @@ apps/frontend/src/
 See [CHANGELOG.md](./CHANGELOG.md) for full version history.
 
 ### Recent changes
+- v0.9.5 — Dependency Security Gate: GitHub Actions workflow (cdxgen SBOM + Grype) blocks PRs on Critical/new-High findings; Dependabot extended to all three npm workspaces
 - v0.9.4 — Vulnerability Management Dashboard (superadmin): CycloneDX SBOM + Grype scan, direct/transitive classification, severity filters, GHSA links; fix token refresh dropping mfaVerified for super_admin MFA accounts
 - v0.9.3 — CV print filename: all four CV pages set document.title to yyyymmdd_CANDIDATENAME before window.print() and restore via afterprint event
 - v0.9.2 — Streamline candidate journey: remove manager_confirmed from stepper, add hired step, recruiter_rejected as visible negative terminal, returned_to_pool banner; drop dead profileStatus 'confirmed' and timeline 'recruiter_selected' ENUM values (migration 000049)
 
-Current: v0.9.4
+Current: v0.9.5
 Live at: https://jinzai.jobagus.id

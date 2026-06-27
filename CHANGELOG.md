@@ -5,6 +5,14 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ---
 
+## [v0.9.5] - 2026-06-27
+
+### Added
+- **Dependency Security Gate** (`.github/workflows/dependency-security-gate.yml`): GitHub Actions workflow that runs on every PR and push to `main` (when `package.json` or `pnpm-lock.yaml` changes) plus a weekly Monday schedule. Generates a fresh CycloneDX SBOM with cdxgen, scans it with Grype, and blocks the build on: (a) any Critical finding (zero tolerance), and (b) any new High/Critical finding not present in the committed baseline (`documentation/grype-report.json`). Posts a markdown findings table as a PR comment. Uploads SBOM and scan report as workflow artifacts (30-day retention).
+- **Dependabot npm coverage** (`.github/dependabot.yml`): Extended to watch all three pnpm workspaces (`/`, `/apps/backend`, `/apps/frontend`) for npm security updates in addition to the existing GitHub Actions coverage.
+
+---
+
 ## [v0.9.4] - 2026-06-27
 
 ### Added
