@@ -52,6 +52,7 @@ import SuperAdminDataEntrySettings from './pages/superadmin/SuperAdminDataEntryS
 import SuperAdminRecruiterSettings from './pages/superadmin/SuperAdminRecruiterSettings';
 import SuperAdminMonitor from './pages/superadmin/SuperAdminMonitor';
 import SuperAdminSurveys from './pages/superadmin/SuperAdminSurveys';
+import SuperAdminVulnerabilityPage from './pages/superadmin/SuperAdminVulnerabilityPage';
 import SurveyPublicPage from './pages/SurveyPublicPage';
 import HiringLetterPage from './pages/HiringLetterPage';
 import type { UserRole } from '@ijbnet/shared';
@@ -229,6 +230,7 @@ export default function App() {
           <Route path="settings" element={<SuperAdminSettings />} />
           <Route path="monitor" element={<SuperAdminMonitor />} />
           <Route path="surveys" element={<SuperAdminSurveys />} />
+          <Route path="vulnerability" element={<SuperAdminVulnerabilityPage />} />
         </Route>
 
         {/* Fallback */}

@@ -1388,4 +1388,78 @@ router.put('/jp-learning-config', wrap(async (req, res) => {
   res.json({ lpkIds });
 }));
 
+// ── GET /api/superadmin/vulnerability-report ─────────────────────────────────
+router.get('/vulnerability-report', authenticate, requireRole('super_admin'), wrap(async (_req, res) => {
+  const fs = await import('fs/promises');
+  const path = await import('path');
+
+  const docsDir = path.resolve(__dirname, '../../../../documentation');
+  const sbomPath = path.join(docsDir, 'sbom.cdx.json');
+  const grypeReportPath = path.join(docsDir, 'grype-report.json');
+
+  const [sbomRaw, grypeRaw] = await Promise.all([
+    fs.readFile(sbomPath, 'utf-8'),
+    fs.readFile(grypeReportPath, 'utf-8'),
+  ]);
+
+  const sbom = JSON.parse(sbomRaw);
+  const grype = JSON.parse(grypeRaw);
+
+  // Collect direct dependency names from both workspaces
+  const feePkg = JSON.parse(await fs.readFile(
+    path.resolve(__dirname, '../../../../apps/frontend/package.json'), 'utf-8'
+  ));
+  const bePkg = JSON.parse(await fs.readFile(
+    path.resolve(__dirname, '../../../../apps/backend/package.json'), 'utf-8'
+  ));
+  const directDeps = new Set<string>([
+    ...Object.keys(feePkg.dependencies ?? {}),
+    ...Object.keys(feePkg.devDependencies ?? {}),
+    ...Object.keys(bePkg.dependencies ?? {}),
+    ...Object.keys(bePkg.devDependencies ?? {}),
+  ]);
+
+  const matches = (grype.matches ?? []).map((m: any) => ({
+    id: m.vulnerability.id,
+    packageName: m.artifact.name,
+    packageVersion: m.artifact.version,
+    severity: m.vulnerability.severity,
+    fixState: m.vulnerability.fix?.state ?? 'unknown',
+    fixVersions: m.vulnerability.fix?.versions ?? [],
+    epssScore: m.vulnerability.epss?.epss ?? null,
+    epssPercentile: m.vulnerability.epss?.percentile ?? null,
+    dataSource: m.vulnerability.dataSource ?? '',
+    isDirect: directDeps.has(m.artifact.name),
+  }));
+
+  const count = (sev: string) => matches.filter((m: any) => m.severity === sev).length;
+
+  res.json({
+    sbom: {
+      componentCount: (sbom.components ?? []).length,
+      version: sbom.metadata?.component?.version ?? '',
+      generatedAt: sbom.metadata?.timestamp ?? '',
+      format: sbom.bomFormat ?? 'CycloneDX',
+      specVersion: sbom.specVersion ?? '',
+    },
+    scan: {
+      tool: grype.descriptor?.name ?? 'grype',
+      toolVersion: grype.descriptor?.version ?? '',
+      scannedAt: grype.descriptor?.timestamp ?? '',
+      dbBuiltAt: grype.descriptor?.db?.status?.built ?? '',
+    },
+    summary: {
+      critical:   count('Critical'),
+      high:       count('High'),
+      medium:     count('Medium'),
+      low:        count('Low'),
+      negligible: count('Negligible'),
+      total:      matches.length,
+      directCount:     matches.filter((m: any) =>  m.isDirect).length,
+      transitiveCount: matches.filter((m: any) => !m.isDirect).length,
+    },
+    matches,
+  });
+}));
+
 export default router;

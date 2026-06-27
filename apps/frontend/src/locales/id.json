@@ -937,6 +937,9 @@
       "colClosed": "Tutup",
       "colFeatured": "Featured",
       "colActions": "Aksi"
+    },
+    "vulnerability": {
+      "navLabel": "Manajemen Kerentanan"
     }
   },
   "export": {

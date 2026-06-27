@@ -20,8 +20,9 @@ const navItems = [
   { to: '/superadmin/data-entry-settings',  icon: '🗂️', key: 'superadmin.dataEntrySettings.navLabel' },
   { to: '/superadmin/recruiter-settings',   icon: '📋', key: 'superadmin.recruiterSettings.navLabel' },
   { to: '/superadmin/settings',             icon: '⚙️', key: 'navSettings' },
-  { to: '/superadmin/monitor',             icon: '🖥️', key: 'superadmin.monitor.navLabel' },
-  { to: '/superadmin/surveys',             icon: '📝', key: 'superadmin.surveys.navLabel' },
+  { to: '/superadmin/monitor',              icon: '🖥️', key: 'superadmin.monitor.navLabel' },
+  { to: '/superadmin/surveys',              icon: '📝', key: 'superadmin.surveys.navLabel' },
+  { to: '/superadmin/vulnerability',        icon: '🛡️', key: 'superadmin.vulnerability.navLabel' },
 ];
 
 export default function SuperAdminLayout() {

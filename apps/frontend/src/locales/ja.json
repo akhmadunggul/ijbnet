@@ -936,6 +936,9 @@
       "colClosed": "終了日",
       "colFeatured": "Featured",
       "colActions": "操作"
+    },
+    "vulnerability": {
+      "navLabel": "脆弱性管理"
     }
   },
   "export": {
