@@ -1394,7 +1394,7 @@ router.put('/jp-learning-config', wrap(async (req, res) => {
 router.get('/vulnerability-report', wrap(async (_req, res) => {
   const stripBom = (s: string) => s.charCodeAt(0) === 0xFEFF ? s.slice(1) : s;
 
-  const docsDir = path.resolve(__dirname, '../../../../documentation');
+  const docsDir = path.resolve(process.cwd(), '../../documentation');
   const sbomPath = path.join(docsDir, 'sbom.cdx.json');
   const grypeReportPath = path.join(docsDir, 'grype-report.json');
 
@@ -1408,10 +1408,10 @@ router.get('/vulnerability-report', wrap(async (_req, res) => {
 
   // Collect direct dependency names from both workspaces
   const feePkg = JSON.parse(await fs.readFile(
-    path.resolve(__dirname, '../../../../apps/frontend/package.json'), 'utf-8'
+    path.resolve(process.cwd(), '../frontend/package.json'), 'utf-8'
   ));
   const bePkg = JSON.parse(await fs.readFile(
-    path.resolve(__dirname, '../../../../apps/backend/package.json'), 'utf-8'
+    path.resolve(process.cwd(), 'package.json'), 'utf-8'
   ));
   const directDeps = new Set<string>([
     ...Object.keys(feePkg.dependencies ?? {}),

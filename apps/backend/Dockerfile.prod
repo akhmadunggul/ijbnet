@@ -60,6 +60,9 @@ COPY apps/backend/tsconfig.json ./apps/backend/
 COPY apps/backend/src/db/migrations ./apps/backend/src/db/migrations
 COPY apps/backend/src/db/seeders ./apps/backend/src/db/seeders
 
+# Copy SBOM and Grype report for the vulnerability dashboard
+COPY documentation ./documentation
+
 # Create uploads directory
 RUN mkdir -p /app/uploads
 
