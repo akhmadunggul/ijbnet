@@ -1461,6 +1461,8 @@ router.get('/vulnerability-report', wrap(async (_req, res) => {
       total:      matches.length,
       directCount:     matches.filter((m: any) =>  m.isDirect).length,
       transitiveCount: matches.filter((m: any) => !m.isDirect).length,
+      epssHigh: matches.filter((m: any) => (m.epssScore ?? 0) >= 0.1).length,
+      epssMax:  matches.reduce((max: number, m: any) => Math.max(max, m.epssScore ?? 0), 0),
     },
     matches,
   });
