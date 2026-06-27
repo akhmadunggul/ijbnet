@@ -5,6 +5,18 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ---
 
+## [v0.9.4] - 2026-06-27
+
+### Added
+- **Vulnerability Management Dashboard** (`/superadmin/vulnerability`): live SBOM + Grype scan dashboard for super-admin; shows CycloneDX SBOM metadata, severity stat cards (Critical/High/Medium/Low), direct vs transitive classification, free-text search, scope filter, and a full findings table with GHSA links and EPSS scores.
+- **SBOM** (`documentation/sbom.cdx.json`): CycloneDX JSON v1.6, 892 components, generated with cdxgen v12.7.0 from the pnpm workspace lockfile.
+- **Grype report** (`documentation/grype-report.json`): vulnerability scan report generated with Grype v0.115.0 against the SBOM (65 findings: 30 High, 32 Medium, 3 Low).
+
+### Fixed
+- **Auth — token refresh drops `mfaVerified`**: the `/refresh` endpoint was issuing new access tokens without `mfaVerified: true` for MFA-enrolled super_admin accounts. After a silent refresh the `authenticate` middleware returned 403 on every subsequent request; the Axios interceptor (401-only) never recovered it. Fixed by mirroring the `mfaSecret` check from the login handler into the refresh handler.
+
+---
+
 ## [v0.9.3] - 2026-06-25
 
 ### Changed
