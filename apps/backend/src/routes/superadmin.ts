@@ -1407,12 +1407,15 @@ router.get('/vulnerability-report', wrap(async (_req, res) => {
   const grype = JSON.parse(stripBom(grypeRaw));
 
   // Collect direct dependency names from both workspaces
-  const feePkg = JSON.parse(await fs.readFile(
-    path.resolve(process.cwd(), '../frontend/package.json'), 'utf-8'
-  ));
-  const bePkg = JSON.parse(await fs.readFile(
-    path.resolve(process.cwd(), 'package.json'), 'utf-8'
-  ));
+  const readPkg = async (rel: string) => {
+    try {
+      return JSON.parse(await fs.readFile(path.resolve(process.cwd(), rel), 'utf-8'));
+    } catch { return {}; }
+  };
+  const [feePkg, bePkg] = await Promise.all([
+    readPkg('../frontend/package.json'),
+    readPkg('package.json'),
+  ]);
   const directDeps = new Set<string>([
     ...Object.keys(feePkg.dependencies ?? {}),
     ...Object.keys(feePkg.devDependencies ?? {}),
