@@ -144,7 +144,13 @@ router.post('/refresh', async (req: Request, res: Response): Promise<void> => {
 
     // Rotate: blacklist the used refresh token and issue a new one
     await blacklistToken(token, ttlSeconds(payload));
-    const newRefreshToken = signRefreshToken({ sub: user.id, role: user.role, email: user.email });
+    const tokenPayload = {
+      sub: user.id,
+      role: user.role,
+      email: user.email,
+      ...(user.mfaSecret ? { mfaVerified: true } : {}),
+    };
+    const newRefreshToken = signRefreshToken(tokenPayload);
     res.cookie('refreshToken', newRefreshToken, {
       httpOnly: true,
       secure: config.NODE_ENV === 'production',
@@ -152,7 +158,7 @@ router.post('/refresh', async (req: Request, res: Response): Promise<void> => {
       maxAge: 7 * 24 * 60 * 60 * 1000,
     });
 
-    const accessToken = signAccessToken({ sub: user.id, role: user.role, email: user.email });
+    const accessToken = signAccessToken(tokenPayload);
     res.json({ accessToken });
   } catch {
     res.status(401).json({ error: 'UNAUTHORIZED', message: 'Invalid or expired refresh token.' });
