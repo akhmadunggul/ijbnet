@@ -1,4 +1,6 @@
 import { Router, Request, Response } from 'express';
+import fs from 'fs/promises';
+import path from 'path';
 import { v4 as uuidv4 } from 'uuid';
 import { Op, fn, col } from 'sequelize';
 import { isUUID, isEmail } from 'validator';
@@ -1389,9 +1391,8 @@ router.put('/jp-learning-config', wrap(async (req, res) => {
 }));
 
 // ── GET /api/superadmin/vulnerability-report ─────────────────────────────────
-router.get('/vulnerability-report', authenticate, requireRole('super_admin'), wrap(async (_req, res) => {
-  const fs = await import('fs/promises');
-  const path = await import('path');
+router.get('/vulnerability-report', wrap(async (_req, res) => {
+  const stripBom = (s: string) => s.charCodeAt(0) === 0xFEFF ? s.slice(1) : s;
 
   const docsDir = path.resolve(__dirname, '../../../../documentation');
   const sbomPath = path.join(docsDir, 'sbom.cdx.json');
@@ -1402,8 +1403,8 @@ router.get('/vulnerability-report', authenticate, requireRole('super_admin'), wr
     fs.readFile(grypeReportPath, 'utf-8'),
   ]);
 
-  const sbom = JSON.parse(sbomRaw);
-  const grype = JSON.parse(grypeRaw);
+  const sbom = JSON.parse(stripBom(sbomRaw));
+  const grype = JSON.parse(stripBom(grypeRaw));
 
   // Collect direct dependency names from both workspaces
   const feePkg = JSON.parse(await fs.readFile(
