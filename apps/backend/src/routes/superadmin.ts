@@ -1430,8 +1430,8 @@ router.get('/vulnerability-report', wrap(async (_req, res) => {
     severity: m.vulnerability.severity,
     fixState: m.vulnerability.fix?.state ?? 'unknown',
     fixVersions: m.vulnerability.fix?.versions ?? [],
-    epssScore: m.vulnerability.epss?.epss ?? null,
-    epssPercentile: m.vulnerability.epss?.percentile ?? null,
+    epssScore: m.vulnerability.epss?.[0]?.epss ?? null,
+    epssPercentile: m.vulnerability.epss?.[0]?.percentile ?? null,
     dataSource: m.vulnerability.dataSource ?? '',
     isDirect: directDeps.has(m.artifact.name),
   }));
