@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '../../lib/api';
+import { useCvDisplayMode } from '../../hooks/useCvDisplayMode';
 import AuthImage from '../../components/AuthImage';
 import { useSelectionStore } from '../../store/selectionStore';
 import type {
@@ -632,6 +633,7 @@ export default function RecruiterSelection() {
   const { t, i18n } = useTranslation();
   const lang = i18n.language;
   const navigate = useNavigate();
+  const { openCv } = useCvDisplayMode();
   const queryClient = useQueryClient();
 
   const [filters, setFilters] = useState<Filters>({
@@ -1018,7 +1020,7 @@ export default function RecruiterSelection() {
                     {cols.profil && (
                       <td className="px-3 py-3 text-center">
                         <button
-                          onClick={() => navigate(`/recruiter/candidates/${bc.candidateId}/cv`)}
+                          onClick={() => openCv(`/recruiter/candidates/${bc.candidateId}/cv`)}
                           className="text-xs text-navy-600 hover:underline"
                         >
                           CV

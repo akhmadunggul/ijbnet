@@ -8,6 +8,7 @@ type TabKey = 'tab1'|'tab2'|'tab3'|'tab4'|'tab5'|'tab6'|'tab7'|'tab8'|'tab9';
 const ALL_TABS: TabKey[] = ['tab1','tab2','tab3','tab4','tab5','tab6','tab7','tab8','tab9'];
 type FontKey = 'ms-mincho'|'yu-mincho'|'yu-gothic'|'noto-serif-jp'|'noto-sans-jp';
 type LayoutKey = 'layout1'|'layout2';
+type CvDisplayMode = 'same_page'|'new_tab';
 type CompletenessMode = 'legacy'|'cv';
 type JourneyVizMode = 'text'|'graphical';
 type ShokumuLayout = 'reverse'|'chronological'|'career';
@@ -63,6 +64,7 @@ export default function SuperAdminDataEntrySettings() {
   const [translateEnabled, setTranslateEnabled] = useState(true);
   const [fontKey, setFontKey] = useState<FontKey>('ms-mincho');
   const [layoutKey, setLayoutKey] = useState<LayoutKey>('layout1');
+  const [cvDisplayMode, setCvDisplayMode] = useState<CvDisplayMode>('same_page');
   const [cvLangMode, setCvLangMode] = useState<'bilingual'|'lpk'>('bilingual');
   const [cvLangJaLpkIds, setCvLangJaLpkIds] = useState<string[]>([]);
   const [cvV2LpkIds, setCvV2LpkIds] = useState<string[]>([]);
@@ -120,6 +122,10 @@ export default function SuperAdminDataEntrySettings() {
   const { data: layoutData } = useQuery<{ layout: LayoutKey }>({
     queryKey: ['cv-layout'],
     queryFn: () => api.get('/superadmin/cv-layout').then(r => r.data),
+  });
+  const { data: cvDisplayModeData } = useQuery<{ mode: CvDisplayMode }>({
+    queryKey: ['cv-display-mode'],
+    queryFn: () => api.get('/superadmin/cv-display-mode').then(r => r.data),
   });
   const { data: completenessModeData } = useQuery<{ mode: CompletenessMode }>({
     queryKey: ['completeness-mode'],
@@ -180,6 +186,7 @@ export default function SuperAdminDataEntrySettings() {
   useEffect(() => { if (translateData !== undefined) setTranslateEnabled(translateData.enabled !== false); }, [translateData]);
   useEffect(() => { if (fontData?.fontKey) setFontKey(fontData.fontKey); }, [fontData]);
   useEffect(() => { if (layoutData?.layout) setLayoutKey(layoutData.layout as LayoutKey); }, [layoutData]);
+  useEffect(() => { if (cvDisplayModeData?.mode) setCvDisplayMode(cvDisplayModeData.mode); }, [cvDisplayModeData]);
   useEffect(() => { if (completenessModeData?.mode) setCompletenessMode(completenessModeData.mode); }, [completenessModeData]);
   useEffect(() => {
     if (photoBgData !== undefined) {
@@ -242,6 +249,11 @@ export default function SuperAdminDataEntrySettings() {
     mutationFn: (key: LayoutKey) => api.put('/superadmin/cv-layout', { layout: key }).then(r => r.data),
     onSuccess: () => { markSaved('layout'); void qc.invalidateQueries({ queryKey: ['cv-layout'] }); },
     onError: () => markError('layout'),
+  });
+  const cvDisplayModeMutation = useMutation({
+    mutationFn: (mode: CvDisplayMode) => api.put('/superadmin/cv-display-mode', { mode }).then(r => r.data),
+    onSuccess: () => { markSaved('cvdisplay'); void qc.invalidateQueries({ queryKey: ['cv-display-mode'] }); },
+    onError: () => markError('cvdisplay'),
   });
   const cvLangMutation = useMutation({
     mutationFn: ({ mode, jaLpkIds }: { mode: string; jaLpkIds: string[] }) =>
@@ -614,6 +626,33 @@ export default function SuperAdminDataEntrySettings() {
                       </div>
                     </div>
                     <span style={{ fontFamily: opt.value }} className="text-base text-gray-700 select-none">日本語のサンプル</span>
+                  </label>
+                ))}
+              </div>
+            </div>
+
+            {/* CV Display Mode */}
+            <div className="px-5 py-4">
+              {subHead(t('superadmin.dataEntrySettings.cvDisplayModeTitle'), 'cvdisplay')}
+              <p className="text-xs text-gray-500 mb-3">{t('superadmin.dataEntrySettings.cvDisplayModeDesc')}</p>
+              <div className="space-y-3">
+                {([
+                  { value: 'same_page' as CvDisplayMode, labelKey: 'cvDisplaySamePage', descKey: 'cvDisplaySamePageDesc' },
+                  { value: 'new_tab'   as CvDisplayMode, labelKey: 'cvDisplayNewTab',   descKey: 'cvDisplayNewTabDesc'   },
+                ] as const).map(opt => (
+                  <label key={opt.value} className="flex items-start gap-3 cursor-pointer">
+                    <input
+                      type="radio"
+                      name="cv_display_mode"
+                      value={opt.value}
+                      checked={cvDisplayMode === opt.value}
+                      onChange={() => { setCvDisplayMode(opt.value); cvDisplayModeMutation.mutate(opt.value); }}
+                      className="accent-navy-700 mt-0.5"
+                    />
+                    <div>
+                      <p className="text-sm font-medium text-gray-800">{t(`superadmin.dataEntrySettings.${opt.labelKey}`)}</p>
+                      <p className="text-xs text-gray-400">{t(`superadmin.dataEntrySettings.${opt.descKey}`)}</p>
+                    </div>
                   </label>
                 ))}
               </div>

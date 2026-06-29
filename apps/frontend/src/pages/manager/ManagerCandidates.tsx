@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { useQuery } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import { api } from '../../lib/api';
+import { useCvDisplayMode } from '../../hooks/useCvDisplayMode';
 import { useAuthStore } from '../../store/authStore';
 import type { ManagerCandidate } from '../../types/manager';
 
@@ -62,6 +63,7 @@ export default function ManagerCandidates() {
   const { t, i18n } = useTranslation();
   const lang = i18n.language;
   const navigate = useNavigate();
+  const { openCv } = useCvDisplayMode();
   const { accessToken } = useAuthStore();
 
   const [search, setSearch] = useState('');
@@ -320,7 +322,7 @@ export default function ManagerCandidates() {
                           {t('btnView')}
                         </button>
                         <button
-                          onClick={() => navigate(`/manager/candidates/${c.id}/cv`)}
+                          onClick={() => openCv(`/manager/candidates/${c.id}/cv`)}
                           className="text-xs text-gray-500 hover:text-gray-700 font-medium hover:underline"
                         >
                           CV

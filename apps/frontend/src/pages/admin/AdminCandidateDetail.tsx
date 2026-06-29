@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '../../lib/api';
+import { useCvDisplayMode } from '../../hooks/useCvDisplayMode';
 import AuthImage from '../../components/AuthImage';
 import CandidateTimeline from '../../components/CandidateTimeline';
 import type { AdminCandidate, AuditLogEntry } from '../../types/admin';
@@ -53,6 +54,7 @@ export default function AdminCandidateDetail() {
   const { t, i18n } = useTranslation();
   const lang = i18n.language;
   const navigate = useNavigate();
+  const { openCv } = useCvDisplayMode();
   const queryClient = useQueryClient();
 
   const [notes, setNotes] = useState('');
@@ -151,7 +153,7 @@ export default function AdminCandidateDetail() {
           )}
           {/* Quick nav */}
           <button
-            onClick={() => navigate(`/admin/candidates/${c.id}/cv`)}
+            onClick={() => openCv(`/admin/candidates/${c.id}/cv`)}
             className="px-3 py-2 rounded-lg text-sm border border-gray-200 hover:bg-gray-50 transition"
           >
             {lang === 'ja' ? 'CV' : 'Lihat CV'}

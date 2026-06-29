@@ -199,6 +199,16 @@ router.get('/cv-layout', wrap(async (_req, res) => {
   res.json(payload);
 }));
 
+// ── GET /api/superadmin/cv-display-mode — PUBLIC ─────────────────────────────
+router.get('/cv-display-mode', wrap(async (_req, res) => {
+  const cached = await cacheGet('gs:cv_display_mode');
+  if (cached) { res.json(JSON.parse(cached)); return; }
+  const row = await GlobalSettings.findOne({ where: { key: 'cv_display_mode' } });
+  const payload = { mode: row ? (row.toJSON() as unknown as Record<string, unknown>)['value'] : 'same_page' };
+  await cacheSet('gs:cv_display_mode', JSON.stringify(payload), 60);
+  res.json(payload);
+}));
+
 // ── GET /api/superadmin/completeness-mode — PUBLIC ───────────────────────────
 router.get('/completeness-mode', wrap(async (_req, res) => {
   const cached = await cacheGet('gs:completeness');
@@ -542,6 +552,20 @@ router.put('/cv-layout', wrap(async (req, res) => {
 
   await cacheDel('gs:cv_layout');
   res.json({ layout });
+}));
+
+// ── PUT /api/superadmin/cv-display-mode ──────────────────────────────────────
+router.put('/cv-display-mode', wrap(async (req, res) => {
+  const body = req.body as Record<string, unknown>;
+  const valid = ['same_page', 'new_tab'];
+  const mode = valid.includes(String(body['mode'])) ? String(body['mode']) : 'same_page';
+  const [row, created] = await GlobalSettings.findOrCreate({
+    where: { key: 'cv_display_mode' },
+    defaults: { key: 'cv_display_mode', value: mode },
+  });
+  if (!created) await row.update({ value: mode });
+  await cacheDel('gs:cv_display_mode');
+  res.json({ mode });
 }));
 
 // ── PUT /api/superadmin/cv-lang-config ───────────────────────────────────────
