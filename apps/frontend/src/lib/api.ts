@@ -21,6 +21,26 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
+// Singleton refresh promise — prevents concurrent refresh races when multiple
+// 401s arrive before the first refresh completes (e.g. new tab with no accessToken
+// where AuthInitializer and the first API call both trigger refresh simultaneously).
+let pendingRefresh: Promise<string> | null = null;
+
+export function doRefresh(): Promise<string> {
+  if (!pendingRefresh) {
+    pendingRefresh = axios
+      .post<{ accessToken: string }>('/api/auth/refresh', {}, { withCredentials: true })
+      .then((res) => {
+        const { accessToken } = res.data;
+        const store = useAuthStore.getState();
+        if (store.user) store.login(accessToken, store.user);
+        return accessToken;
+      })
+      .finally(() => { pendingRefresh = null; });
+  }
+  return pendingRefresh;
+}
+
 // On 401, attempt a silent token refresh then replay
 api.interceptors.response.use(
   (r) => r,
@@ -32,14 +52,7 @@ api.interceptors.response.use(
     if (err.response?.status === 401 && err.config && !err.config._retry) {
       err.config._retry = true;
       try {
-        const res = await axios.post<{ accessToken: string }>(
-          '/api/auth/refresh',
-          {},
-          { withCredentials: true },
-        );
-        const { accessToken } = res.data;
-        const store = useAuthStore.getState();
-        if (store.user) store.login(accessToken, store.user);
+        const accessToken = await doRefresh();
         if (err.config.headers && typeof err.config.headers === 'object') {
           (err.config.headers as Record<string, string>)['Authorization'] = `Bearer ${accessToken}`;
         }

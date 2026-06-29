@@ -1,8 +1,8 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useEffect } from 'react';
-import axios from 'axios';
 import { useAuthStore } from './store/authStore';
+import { doRefresh } from './lib/api';
 import LoginPage, { OAuthCallbackPage } from './pages/LoginPage';
 import CandidateLayout from './pages/candidate/CandidateLayout';
 import CandidateDashboard from './pages/candidate/CandidateDashboard';
@@ -92,15 +92,15 @@ function ProtectedRoute({
 // accessToken is in-memory only — without this, the first authenticated API call
 // after a page refresh would fire with no token and receive a 401.
 function AuthInitializer() {
-  const { login, logout } = useAuthStore();
+  const { logout } = useAuthStore();
 
   useEffect(() => {
     const user = useAuthStore.getState().user;
     if (!user) return;
-    axios
-      .post<{ accessToken: string }>('/api/auth/refresh', {}, { withCredentials: true })
-      .then(res => { login(res.data.accessToken, user); })
-      .catch(() => { logout(); });
+    // doRefresh is a singleton — if the Axios 401 interceptor already fired a
+    // refresh in this page load (e.g. new tab opening a protected route), this
+    // reuses that in-flight promise instead of sending a second rotating-token request.
+    doRefresh().catch(() => { logout(); });
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   return null;
