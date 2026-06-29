@@ -5,6 +5,21 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ---
 
+## [v0.9.6] - 2026-06-30
+
+### Added
+- **CV — LPK name field**: all six CV templates (V1–V3 React + V1–V3 HTML) now display a Nama LPK / LPK名 cell next to 日本語レベル. `candidateIncludes()` extended to include the `Lpk` association so the field is populated across all roles.
+- **CV display mode** (superadmin setting): super-admin can configure whether CV links open in the same page (navigate) or a new tab (`window.open`). Setting stored in `global_settings` (`cv_display_mode`), exposed via `GET/PUT /api/superadmin/cv-display-mode`, cached in Redis 60 s. Frontend hook `useCvDisplayMode` consumed by admin, manager, and recruiter CV buttons.
+
+### Changed
+- **CV — skill section label**: replaced `SKILL ・ 技能` with `特技・趣味・スキル` in all six CV templates.
+
+### Fixed
+- **Auth — new-tab CV shows login page**: opening a CV in a new tab triggered a refresh-token rotation race: `AuthInitializer` (useEffect) and the Axios 401 interceptor both fired `/api/auth/refresh` simultaneously against a single-use rotating token; the losing request received 401 and called `logout()`. Fixed with a singleton `doRefresh()` promise in `api.ts` — concurrent callers share the same in-flight HTTP request, so only one rotation occurs per page load.
+- **Vulnerability dashboard — EPSS columns empty**: Grype returns `vulnerability.epss` as an array `[{cve, epss, percentile, date}]`, not an object. Backend was reading `m.vulnerability.epss?.epss` (always `undefined`); fixed to `m.vulnerability.epss?.[0]?.epss`.
+
+---
+
 ## [v0.9.5] - 2026-06-27
 
 ### Added
