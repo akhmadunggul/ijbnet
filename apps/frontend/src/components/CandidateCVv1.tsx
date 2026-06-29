@@ -469,7 +469,9 @@ export default function CandidateCV({
             </tr>
             <tr>
               <td style={TD}>{L('Level JP', '日本語レベル')}</td>
-              <td style={TD} colSpan={3}>{jpLevelDisplay}</td>
+              <td style={TD}>{jpLevelDisplay}</td>
+              <td style={TD}>{L('Nama LPK', 'LPK名')}</td>
+              <td style={TD}>{v((c.lpk as Record<string, unknown>)?.['name'])}</td>
             </tr>
           </tbody>
         </table>

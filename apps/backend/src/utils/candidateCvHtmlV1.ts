@@ -337,7 +337,9 @@ export function buildCandidateCvHtml(
         </tr>
         <tr>
           <td style="${TD}">Level JP ・ 日本語レベル</td>
-          <td style="${TD}" colspan="3">${jpLevelDisplay}</td>
+          <td style="${TD}">${jpLevelDisplay}</td>
+          <td style="${TD}">Nama LPK ・ LPK名</td>
+          <td style="${TD}">${he(v((cj['lpk'] as Record<string, unknown>)?.['name']))}</td>
         </tr>
       </tbody>
     </table>

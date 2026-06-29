@@ -7,6 +7,7 @@ import {
   ToolsDictionary,
   CandidateCertification,
   CandidateEducationHistory,
+  Lpk,
 } from '../db/models/index';
 
 /**
@@ -27,5 +28,6 @@ export function candidateIncludes() {
     { model: ToolsDictionary,           as: 'tools',            required: false },
     { model: CandidateCertification,    as: 'certifications',   required: false, separate: true, order: [['issuedDate', 'ASC'] as [string, string]] },
     { model: CandidateEducationHistory, as: 'educationHistory', required: false, separate: true, order: [['startDate',  'ASC'] as [string, string]] },
+    { model: Lpk,                       as: 'lpk',              required: false, attributes: ['name'] },
   ];
 }

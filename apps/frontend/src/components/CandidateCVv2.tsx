@@ -443,7 +443,9 @@ export default function CandidateCVv2({
             </tr>
             <tr>
               <td style={TD}>日本語レベル</td>
-              <td style={TD} colSpan={3}>{jpLevelDisplay}</td>
+              <td style={TD}>{jpLevelDisplay}</td>
+              <td style={TD}>LPK名</td>
+              <td style={TD}>{v((c.lpk as Record<string, unknown>)?.['name'])}</td>
             </tr>
           </tbody>
         </table>
