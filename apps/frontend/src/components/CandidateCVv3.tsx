@@ -612,15 +612,7 @@ export default function CandidateCVv3({
       <table className="cv-tbl" style={S.table}>
         <tbody>
           <tr>
-            <td style={ST}>
-              {isJaMode ? '技能' : (
-                <>
-                  Skill ・ 技能
-                  <span style={{ fontWeight: 'normal', fontSize: '11px' }}>
-                    {' '}(Keahlian yang berhubungan dengan bidang yang dilamar)
-                  </span>
-                </>
-              )}
+            <td style={ST}>特技・趣味・スキル
             </td>
           </tr>
           <tr className="cv-row-md">

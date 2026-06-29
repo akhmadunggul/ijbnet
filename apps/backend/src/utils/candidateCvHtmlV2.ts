@@ -392,7 +392,7 @@ export function buildCandidateCvHtmlV2(
   <!-- Skill -->
   <table>
     <tbody>
-      <tr><td style="${ST}">技能</td></tr>
+      <tr><td style="${ST}">特技・趣味・スキル</td></tr>
       <tr class="cv-row-md">
         <td style="${TD}height:40px;white-space:pre-wrap;">${he(trunc(getJa(cj, 'selfPrJa', 'selfPrId'), 300))}</td>
       </tr>

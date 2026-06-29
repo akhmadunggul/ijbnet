@@ -405,7 +405,7 @@ export function buildCandidateCvHtml(
   <table>
     <tbody>
       <tr>
-        <td style="${ST}">Skill ・ 技能 <span style="font-weight:normal;font-size:11px;">(Keahlian yang berhubungan dengan bidang yang dilamar)</span></td>
+        <td style="${ST}">特技・趣味・スキル</td>
       </tr>
       <tr class="cv-row-md">
         <td style="${TD}height:40px;white-space:pre-wrap;">${he(trunc(getJa(cj, 'selfPrJa', 'selfPrId'), 300))}</td>

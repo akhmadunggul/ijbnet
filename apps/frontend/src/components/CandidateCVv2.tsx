@@ -581,7 +581,7 @@ export default function CandidateCVv2({
       <table className="cv-tbl" style={S.table}>
         <tbody>
           <tr>
-            <td style={ST}>技能</td>
+            <td style={ST}>特技・趣味・スキル</td>
           </tr>
           <tr className="cv-row-md">
             <td style={{ ...TD, height: '40px', whiteSpace: 'pre-wrap' }}>
