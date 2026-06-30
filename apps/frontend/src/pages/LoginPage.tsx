@@ -7,7 +7,6 @@ import { api } from '../lib/api';
 import type { LoginResponse, MfaRequiredResponse, User } from '@ijbnet/shared';
 import { version } from '../../../../package.json';
 import ijbnetLogo from '../assets/IJBNet_LOGO.png';
-import gakkenLogo from '../assets/Gakken_company_logo.svg.png';
 
 type LoginStep = 'credentials' | 'mfa';
 
@@ -190,9 +189,8 @@ export default function LoginPage() {
       {/* Powered by */}
       <div className="flex flex-col items-center gap-3 py-2">
         <span className="text-xs text-gray-400 font-medium">Powered by</span>
-        <div className="flex items-center justify-center gap-6">
+        <div className="flex justify-center">
           <img src={ijbnetLogo} alt="IJBNet" className="h-16 w-auto object-contain" />
-          <img src={gakkenLogo} alt="Gakken" className="h-16 w-auto object-contain" />
         </div>
       </div>
     </div>
