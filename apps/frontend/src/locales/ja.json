@@ -1203,5 +1203,10 @@
     "saveBtn": "保存",
     "saved": "保存しました。",
     "autoTranslateNote": "日本語欄が空の場合は自動翻訳されます。"
+  },
+  "accessStats": {
+    "title": "アクセス統計",
+    "total": "総訪問数",
+    "byCountry": "国別アクセス"
   }
 }

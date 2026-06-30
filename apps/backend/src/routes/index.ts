@@ -12,6 +12,7 @@ import exportRouter from './export';
 import translateRouter from './translate';
 import surveysRouter from './surveys';
 import jpLearningRouter from './jpLearning';
+import statsRouter from './stats';
 import { sequelize } from '../db/connection';
 import { redisClient } from '../utils/redis';
 import { getMetrics, recordDbError } from '../utils/monitor';
@@ -32,6 +33,7 @@ router.use('/export', exportRouter);
 router.use('/translate', translateRouter);
 router.use('/surveys', surveysRouter);
 router.use('/jp', jpLearningRouter);
+router.use('/stats', statsRouter);
 
 // Prometheus scrape endpoint — internal Docker network only (blocked externally by Caddy)
 router.get('/metrics', async (req, res) => {

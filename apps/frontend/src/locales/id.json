@@ -1204,5 +1204,10 @@
     "saveBtn": "Simpan",
     "saved": "Data berhasil disimpan.",
     "autoTranslateNote": "Versi Jepang akan diterjemahkan otomatis jika kosong."
+  },
+  "accessStats": {
+    "title": "Statistik Akses",
+    "total": "Total Kunjungan",
+    "byCountry": "Berdasarkan Negara"
   }
 }

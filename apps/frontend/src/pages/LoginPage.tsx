@@ -30,6 +30,16 @@ export default function LoginPage() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
+  const [accessStats, setAccessStats] = useState<{
+    total: number;
+    breakdown: { country: string; count: number }[];
+  } | null>(null);
+
+  useEffect(() => {
+    axios.post('/api/stats/hit').catch(() => {});
+    axios.get('/api/stats/access').then(r => setAccessStats(r.data)).catch(() => {});
+  }, []);
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError('');
@@ -194,6 +204,48 @@ export default function LoginPage() {
           <img src={ijbnetLogo} alt="IJBNet" className="h-16 w-auto object-contain" />
         </div>
       </div>
+
+      {/* Access Stats */}
+      {accessStats && (
+        <div className="bg-white/70 backdrop-blur-sm rounded-2xl shadow-sm px-6 py-4 w-full max-w-md">
+          <p className="text-xs font-semibold text-navy-600 text-center mb-3 uppercase tracking-wide">
+            {t('accessStats.title')}
+          </p>
+          <div className="flex justify-center mb-3">
+            <div className="text-center">
+              <p className="text-2xl font-bold text-navy-900">{accessStats.total.toLocaleString()}</p>
+              <p className="text-xs text-gray-500">{t('accessStats.total')}</p>
+            </div>
+          </div>
+          {accessStats.breakdown.length > 0 && (
+            <>
+              <p className="text-xs text-gray-400 text-center mb-2">{t('accessStats.byCountry')}</p>
+              <div className="flex flex-col gap-1">
+                {accessStats.breakdown.slice(0, 8).map(({ country, count }) => {
+                  const flag = country === 'XX'
+                    ? '🌐'
+                    : [...country.toUpperCase()].map(c => String.fromCodePoint(c.charCodeAt(0) - 65 + 0x1F1E6)).join('');
+                  const label = country === 'XX'
+                    ? 'Unknown'
+                    : (new Intl.DisplayNames([i18n.language], { type: 'region' }).of(country) ?? country);
+                  const max = accessStats.breakdown[0].count;
+                  const pct = Math.round((count / max) * 100);
+                  return (
+                    <div key={country} className="flex items-center gap-2 text-xs">
+                      <span className="text-base leading-none">{flag}</span>
+                      <span className="w-24 truncate text-gray-700">{label}</span>
+                      <div className="flex-1 bg-gray-100 rounded-full h-1.5 overflow-hidden">
+                        <div className="bg-navy-400 h-1.5 rounded-full" style={{ width: `${pct}%` }} />
+                      </div>
+                      <span className="text-gray-500 w-8 text-right">{count.toLocaleString()}</span>
+                    </div>
+                  );
+                })}
+              </div>
+            </>
+          )}
+        </div>
+      )}
     </div>
     </div>
   );
