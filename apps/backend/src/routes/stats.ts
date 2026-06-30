@@ -7,11 +7,19 @@ const router = Router();
 const TOTAL_KEY = 'stats:access:total';
 const COUNTRY_KEY = 'stats:access:countries';
 
+function resolveClientIp(req: import('express').Request): string {
+  // X-Forwarded-For set by Caddy contains the real client IP as the leftmost entry.
+  // Prefer it over req.ip which may resolve to a Docker bridge address (172.x.x.x)
+  // when multiple internal hops are in play despite trust proxy: 1.
+  const xff = req.headers['x-forwarded-for'];
+  const raw = (typeof xff === 'string' ? xff.split(',')[0] : req.ip ?? '').trim();
+  return raw.replace(/^::ffff:/, '');
+}
+
 // POST /api/stats/hit — one call per login-page load, no auth required
 router.post('/hit', async (req, res) => {
   try {
-    const raw = req.ip ?? '';
-    const ip = raw.startsWith('::ffff:') ? raw.slice(7) : raw;
+    const ip = resolveClientIp(req);
     const geo = geoip.lookup(ip);
     const country = geo?.country || 'XX';
 
