@@ -80,7 +80,8 @@ services:
       NODE_OPTIONS: --max-old-space-size=2048
       CLUSTER_WORKERS: "1"
     ports:
-      - "127.0.0.1:3001:3001"   # loopback-only — used by server-side k6 tests; not public
+      - "127.0.0.1:3001:3001"   # loopback-only — used by Caddy (host network) and k6 tests
+      - "::1:3001:3001"         # IPv6 loopback
     volumes:
       - uploads_data:/app/uploads
       - hf_cache:/opt/hf-cache
@@ -128,6 +129,9 @@ services:
       GF_AUTH_ANONYMOUS_ENABLED: "false"
       GF_ANALYTICS_REPORTING_ENABLED: "false"
       GF_ANALYTICS_CHECK_FOR_UPDATES: "false"
+    ports:
+      - "127.0.0.1:3000:3000"   # loopback-only — used by Caddy (host network)
+      - "::1:3000:3000"         # IPv6 loopback
     volumes:
       - grafana_data:/var/lib/grafana
       - ./monitoring/grafana/provisioning:/etc/grafana/provisioning:ro
@@ -145,19 +149,16 @@ services:
         CADDY_ENV: prod
     container_name: ijbnet_frontend
     restart: unless-stopped
-    ports:
-      - "0.0.0.0:80:80"
-      - "[::]:80:80"
-      - "0.0.0.0:443:443"
-      - "[::]:443:443"
+    # network_mode: host — Caddy binds directly to the host network stack so it
+    # sees real client IPs (IPv4 + IPv6) instead of the Docker bridge gateway.
+    # Ports 80/443 are claimed by Caddy on the host; no port mappings needed.
+    network_mode: host
     volumes:
       - caddy_data:/data
       - caddy_config:/config
     depends_on:
       backend:
         condition: service_healthy
-    networks:
-      - ijbnet
 
 volumes:
   db_data:

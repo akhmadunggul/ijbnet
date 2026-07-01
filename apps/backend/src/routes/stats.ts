@@ -23,7 +23,6 @@ router.post('/hit', async (req, res) => {
     const geo = geoip.lookup(ip);
     const country = geo?.country || 'XX';
 
-    console.log(`[stats:hit] xff=${req.headers['x-forwarded-for']} req.ip=${req.ip} resolved=${ip} country=${country}`);
     await Promise.all([
       redisClient.incr(TOTAL_KEY),
       redisClient.hIncrBy(COUNTRY_KEY, country, 1),
@@ -32,18 +31,6 @@ router.post('/hit', async (req, res) => {
   } catch {
     res.json({ ok: false });
   }
-});
-
-// GET /api/stats/debug-ip — temporary: inspect what IP the backend resolves (remove after diagnosis)
-router.get('/debug-ip', (req, res) => {
-  const ip = resolveClientIp(req);
-  const geo = geoip.lookup(ip);
-  res.json({
-    resolvedIp: ip,
-    reqIp: req.ip,
-    allHeaders: req.headers,
-    geo,
-  });
 });
 
 // GET /api/stats/access — public; returns total visits + per-country breakdown

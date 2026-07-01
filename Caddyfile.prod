@@ -12,7 +12,7 @@ jinzai.jobagus.id {
     }
 
     handle /api/* {
-        reverse_proxy backend:3001 {
+        reverse_proxy localhost:3001 {
             header_up Host {host}
             header_up X-Real-IP {remote_host}
             header_up X-Forwarded-For {remote_host}
@@ -23,7 +23,7 @@ jinzai.jobagus.id {
 
     # Grafana — served at /grafana/ subpath
     handle /grafana* {
-        reverse_proxy grafana:3000 {
+        reverse_proxy localhost:3000 {
             header_up Host {host}
             header_up X-Forwarded-Proto {scheme}
         }
