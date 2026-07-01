@@ -33,6 +33,18 @@ router.post('/hit', async (req, res) => {
   }
 });
 
+// GET /api/stats/debug-ip — temporary diagnosis endpoint
+router.get('/debug-ip', (req, res) => {
+  const ip = resolveClientIp(req);
+  res.json({
+    resolvedIp: ip,
+    reqIp: req.ip,
+    xff: req.headers['x-forwarded-for'],
+    xri: req.headers['x-real-ip'],
+    geo: geoip.lookup(ip),
+  });
+});
+
 // GET /api/stats/access — public; returns total visits + per-country breakdown
 router.get('/access', async (_req, res) => {
   try {
