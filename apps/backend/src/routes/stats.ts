@@ -41,7 +41,7 @@ router.get('/debug-ip', (req, res) => {
   res.json({
     resolvedIp: ip,
     reqIp: req.ip,
-    xff: req.headers['x-forwarded-for'],
+    allHeaders: req.headers,
     geo,
   });
 });
